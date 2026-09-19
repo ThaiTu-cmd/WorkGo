@@ -1,24 +1,24 @@
 server:
-  port: 8888
-
-app:
-  api-prefix: /api/v1
+  port: ${IDENTITY_PORT:8081}
+  servlet:
+    context-path: /identity
 
 spring:
   application:
-    name: api-gateway
-  cloud:
-    gateway:
-      routes:
-        - id: identity_service
-          uri: http://localhost:8090
-          predicates:
-          - Path=${app.api-prefix}/identity/**
-          filters:
-          - StripPrefix=2
-        - id: profile_service
-          uri: http://localhost:8081
-          predicates:
-          - Path=${app.api-prefix}/profile/users/**
-          filters:
-          - StripPrefix=2
+    name: identity-service
+  datasource:
+    url: jdbc:postgresql://localhost:5433/${IDENTITY_DB:identity_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:admin123}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  signerKey: ${JWT_SIGNER_KEY:your-default-secret-key-for-dev-only}

@@ -1,24 +1,11 @@
 server:
-  port: 8888
-
-app:
-  api-prefix: /api/v1
+  port: ${ORDER_PORT:8083}
+  servlet:
+    context-path: /order
 
 spring:
   application:
-    name: api-gateway
-  cloud:
-    gateway:
-      routes:
-        - id: identity_service
-          uri: http://localhost:8090
-          predicates:
-          - Path=${app.api-prefix}/identity/**
-          filters:
-          - StripPrefix=2
-        - id: profile_service
-          uri: http://localhost:8081
-          predicates:
-          - Path=${app.api-prefix}/profile/users/**
-          filters:
-          - StripPrefix=2
+    name: order-service
+
+# TODO: Thêm datasource khi order-service có DB
+# TODO: Thêm kafka config khi cần

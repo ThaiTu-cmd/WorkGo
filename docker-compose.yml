@@ -1,0 +1,32 @@
+version: "3.9"
+
+# Docker Compose tự động đọc file .env ở cùng thư mục (root)
+
+services:
+  postgres-identity:
+    image: postgres:16-alpine
+    container_name: identity-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${IDENTITY_DB:-identity_db}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    ports:
+      - "${IDENTITY_DB_PORT:-5432}:5432"
+    volumes:
+      - identity_pgdata:/var/lib/postgresql/data
+    networks:
+      - identity-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${IDENTITY_DB:-identity_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  identity_pgdata:
+    driver: local
+
+networks:
+  identity-net:
+    driver: bridge

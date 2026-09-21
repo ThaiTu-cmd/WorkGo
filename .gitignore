@@ -37,3 +37,7 @@ build/
 **/.env
 .env.local
 .env.*.local
+
+### Spring Local Profile (chứa secret — không commit) ###
+**/application-local.yaml
+**/application-local.yml

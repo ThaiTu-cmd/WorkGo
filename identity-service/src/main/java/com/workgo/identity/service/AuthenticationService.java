@@ -9,8 +9,10 @@ import com.workgo.identity.Exception.AppException;
 import com.workgo.identity.Exception.ErrorCode;
 import com.workgo.identity.dto.request.AuthenticationRequest;
 import com.workgo.identity.dto.request.IntrospectRequest;
+import com.workgo.identity.dto.request.LogoutRequest;
 import com.workgo.identity.dto.response.AuthenticationResponse;
 import com.workgo.identity.dto.response.IntrospectResponse;
+import com.workgo.identity.entity.InvalidatedToken;
 import com.workgo.identity.entity.User;
 import com.workgo.identity.repository.InvalidatedTokenRepository;
 import com.workgo.identity.repository.UserRepository;
@@ -80,6 +82,30 @@ public class AuthenticationService {
                 .build();
     }
 
+    public void logout(LogoutRequest request){
+        try{
+            var signToken = verifyToken(request.getToken());
+
+            String jit = signToken.getJWTClaimsSet().getJWTID();
+
+            Date expiredTime = signToken.getJWTClaimsSet().getExpirationTime();
+
+            InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                    .id(jit)
+                    .expiryTime(expiredTime.toInstant())
+                    .build();
+
+            invalidatedTokenRepository.save(invalidatedToken);
+
+        } catch (AppException e){
+            log.info("Token already expired !");
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        } catch (JOSEException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
 
         JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
@@ -130,7 +156,7 @@ public class AuthenticationService {
     }
 
     private String buildScope(User user){
-        StringJoiner stringJoiner = new StringJoiner("");
+        StringJoiner stringJoiner = new StringJoiner(" ");
 
         if(!CollectionUtils.isEmpty(user.getUserRoles()))
             user.getUserRoles().forEach(userRole -> {

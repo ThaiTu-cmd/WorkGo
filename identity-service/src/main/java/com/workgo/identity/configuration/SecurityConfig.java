@@ -3,6 +3,7 @@ package com.workgo.identity.configuration;
 import com.workgo.identity.configuration.CustomJwtDecoder;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,7 +30,7 @@ public class SecurityConfig {
     CustomJwtDecoder customJwtDecoder;
 
     private final String[] PUBLIC_ENDPOINTS = {
-            "/users/registration"
+            "/users/registration" , "/auth/token", "/auth/introspect", "/auth/logout"
     };
 
     @Bean
@@ -58,7 +59,7 @@ public class SecurityConfig {
     JwtAuthenticationConverter jwtAuthenticationConverter(){
         JwtGrantedAuthoritiesConverter converter = new JwtGrantedAuthoritiesConverter();
 
-        converter.setAuthorityPrefix("ROLE_");
+        converter.setAuthorityPrefix("");
         converter.setAuthoritiesClaimName("scope");
 
         JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();

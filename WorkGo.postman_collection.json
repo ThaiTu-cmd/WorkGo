@@ -1,0 +1,466 @@
+{
+  "info": {
+    "name": "WorkGo",
+    "_postman_id": "workgo-collection-v1",
+    "description": "WorkGo Microservices API Collection\n\nCấu trúc:\n- workgo/\n  - identity-service/\n    - auth/\n    - users/\n    - addresses/",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081",
+      "type": "string",
+      "description": "Base URL của Identity Service (port 8081)"
+    },
+    {
+      "key": "contextPath",
+      "value": "/identity",
+      "type": "string",
+      "description": "Context path của Identity Service"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT access token — tự động set sau khi gọi Login"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string",
+      "description": "UUID của user — điền vào sau khi tạo user"
+    },
+    {
+      "key": "addressId",
+      "value": "",
+      "type": "string",
+      "description": "UUID của address — điền vào sau khi tạo address"
+    }
+  ],
+  "item": [
+    {
+      "name": "identity-service",
+      "description": "Identity Service — port 8081, context path /identity",
+      "item": [
+        {
+          "name": "auth",
+          "description": "Các API xác thực (public, không cần JWT)",
+          "item": [
+            {
+              "name": "Login (lấy token)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var json = pm.response.json();",
+                      "if (json && json.result && json.result.token) {",
+                      "    pm.collectionVariables.set('accessToken', json.result.token);",
+                      "    console.log('✅ accessToken đã được lưu vào collection variable');",
+                      "} else {",
+                      "    console.warn('⚠️ Không tìm thấy token trong response');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userName\": \"admin\",\n  \"password\": \"admin123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}{{contextPath}}/auth/token",
+                  "host": ["{{baseUrl}}{{contextPath}}"],
+                  "path": ["auth", "token"]
+                },
+                "description": "Đăng nhập để lấy JWT access token.\n\n**Public endpoint** — không cần Authorization header.\n\n> Sau khi gọi thành công, `accessToken` sẽ tự động được lưu vào collection variable."
+              },
+              "response": []
+            },
+            {
+              "name": "Introspect Token",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"{{accessToken}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}{{contextPath}}/auth/introspect",
+                  "host": ["{{baseUrl}}{{contextPath}}"],
+                  "path": ["auth", "introspect"]
+                },
+                "description": "Kiểm tra token có hợp lệ không (introspect).\n\n**Public endpoint** — không cần Authorization header."
+              },
+              "response": []
+            },
+            {
+              "name": "Logout",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"{{accessToken}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}{{contextPath}}/auth/logout",
+                  "host": ["{{baseUrl}}{{contextPath}}"],
+                  "path": ["auth", "logout"]
+                },
+                "description": "Đăng xuất — blacklist JWT token hiện tại.\n\n**Public endpoint** — không cần Authorization header."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "users",
+          "description": "Quản lý người dùng",
+          "item": [
+            {
+              "name": "Đăng ký tài khoản",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Nguyen\",\n  \"lastName\": \"Van A\",\n  \"userName\": \"nguyenvana\",\n  \"password\": \"Password@123\",\n  \"phone\": \"0901234567\",\n  \"email\": \"nguyenvana@example.com\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}{{contextPath}}/users/registration",
+                  "host": ["{{baseUrl}}{{contextPath}}"],
+                  "path": ["users", "registration"]
+                },
+                "description": "Tạo tài khoản mới.\n\n**Public endpoint** — không cần Authorization header."
+              },
+              "response": []
+            },
+            {
+              "name": "Lấy thông tin bản thân (My Info)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}{{contextPath}}/users/myInfo",
+                  "host": ["{{baseUrl}}{{contextPath}}"],
+                  "path": ["users", "myInfo"]
+                },
+                "description": "Lấy thông tin của user đang đăng nhập (trích xuất từ JWT).\n\n🔐 **Yêu cầu JWT** trong Authorization header."
+              },
+              "response": []
+            },
+            {
+              "name": "Danh sách Users (phân trang)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}{{contextPath}}/users?page=1&size=10",
+                  "host": ["{{baseUrl}}{{contextPath}}"],
+                  "path": ["users"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "description": "Số trang (bắt đầu từ 1)"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10",
+                      "description": "Số phần tử mỗi trang"
+                    }
+                  ]
+                },
+                "description": "Lấy danh sách tất cả users có phân trang.\n\n🔐 **Yêu cầu JWT** trong Authorization header."
+              },
+              "response": []
+            },
+            {
+              "name": "Lấy User theo ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}{{contextPath}}/users/{{userId}}",
+                  "host": ["{{baseUrl}}{{contextPath}}"],
+                  "path": ["users", "{{userId}}"]
+                },
+                "description": "Lấy thông tin user theo UUID.\n\n🔐 **Yêu cầu JWT** trong Authorization header.\n\n> Điền `userId` vào collection variable hoặc thay thẳng vào URL."
+              },
+              "response": []
+            },
+            {
+              "name": "Cập nhật User",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Nguyen\",\n  \"lastName\": \"Van B\",\n  \"userName\": \"nguyenvanb\",\n  \"password\": \"NewPassword@123\",\n  \"email\": \"nguyenvanb@example.com\",\n  \"phone\": \"0907654321\",\n  \"avatarUrl\": \"https://example.com/avatar.png\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}{{contextPath}}/users/{{userId}}",
+                  "host": ["{{baseUrl}}{{contextPath}}"],
+                  "path": ["users", "{{userId}}"]
+                },
+                "description": "Cập nhật thông tin user theo UUID.\n\n🔐 **Yêu cầu JWT** trong Authorization header."
+              },
+              "response": []
+            },
+            {
+              "name": "Xóa User",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}{{contextPath}}/users/{{userId}}",
+                  "host": ["{{baseUrl}}{{contextPath}}"],
+                  "path": ["users", "{{userId}}"]
+                },
+                "description": "Xóa user theo UUID.\n\n🔐 **Yêu cầu JWT** trong Authorization header.\n\n⚠️ **Hành động không thể hoàn tác.**"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "addresses",
+          "description": "Quản lý địa chỉ của user",
+          "item": [
+            {
+              "name": "Tạo Address mới",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"label\": \"Nhà riêng\",\n  \"contactName\": \"Nguyen Van A\",\n  \"contactPhone\": \"0901234567\",\n  \"line1\": \"123 Đường Lê Lợi\",\n  \"ward\": \"Phường Bến Nghé\",\n  \"district\": \"Quận 1\",\n  \"city\": \"Hồ Chí Minh\",\n  \"countryCode\": \"VN\",\n  \"latitude\": \"10.7769\",\n  \"longitude\": \"106.7009\",\n  \"note\": \"Nhà màu xanh, gọi trước khi đến\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}{{contextPath}}/addresses",
+                  "host": ["{{baseUrl}}{{contextPath}}"],
+                  "path": ["addresses"]
+                },
+                "description": "Tạo địa chỉ mới cho user đang đăng nhập.\n\n🔐 **Yêu cầu JWT** trong Authorization header."
+              },
+              "response": []
+            },
+            {
+              "name": "Lấy Address theo ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}{{contextPath}}/addresses/{{addressId}}",
+                  "host": ["{{baseUrl}}{{contextPath}}"],
+                  "path": ["addresses", "{{addressId}}"]
+                },
+                "description": "Lấy thông tin một địa chỉ theo UUID.\n\n🔐 **Yêu cầu JWT** trong Authorization header."
+              },
+              "response": []
+            },
+            {
+              "name": "Danh sách Address của tôi (phân trang)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}{{contextPath}}/addresses/my?page=1&size=10",
+                  "host": ["{{baseUrl}}{{contextPath}}"],
+                  "path": ["addresses", "my"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "description": "Số trang (bắt đầu từ 1)"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10",
+                      "description": "Số phần tử mỗi trang"
+                    }
+                  ]
+                },
+                "description": "Lấy danh sách địa chỉ của user đang đăng nhập, có phân trang.\n\n🔐 **Yêu cầu JWT** trong Authorization header."
+              },
+              "response": []
+            },
+            {
+              "name": "Cập nhật Address",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"label\": \"Văn phòng\",\n  \"contactName\": \"Nguyen Van A\",\n  \"contactPhone\": \"0901234567\",\n  \"line1\": \"456 Đường Nguyễn Huệ\",\n  \"ward\": \"Phường Bến Nghé\",\n  \"district\": \"Quận 1\",\n  \"city\": \"Hồ Chí Minh\",\n  \"countryCode\": \"VN\",\n  \"latitude\": \"10.7756\",\n  \"longitude\": \"106.7022\",\n  \"note\": \"Tầng 5, tòa nhà ABC\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}{{contextPath}}/addresses/{{addressId}}",
+                  "host": ["{{baseUrl}}{{contextPath}}"],
+                  "path": ["addresses", "{{addressId}}"]
+                },
+                "description": "Cập nhật thông tin địa chỉ theo UUID.\n\n🔐 **Yêu cầu JWT** trong Authorization header."
+              },
+              "response": []
+            },
+            {
+              "name": "Xóa Address",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}{{contextPath}}/addresses/{{addressId}}",
+                  "host": ["{{baseUrl}}{{contextPath}}"],
+                  "path": ["addresses", "{{addressId}}"]
+                },
+                "description": "Xóa địa chỉ theo UUID.\n\n🔐 **Yêu cầu JWT** trong Authorization header.\n\n⚠️ **Hành động không thể hoàn tác.**"
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

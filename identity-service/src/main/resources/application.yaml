@@ -21,4 +21,4 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
 jwt:
-  signerKey: ${JWT_SIGNER_KEY:your-default-secret-key-for-dev-only}
+  signerKey: ${JWT_SIGNER_KEY}

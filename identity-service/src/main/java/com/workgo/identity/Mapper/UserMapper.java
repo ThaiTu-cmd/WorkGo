@@ -1,10 +1,13 @@
 package com.workgo.identity.Mapper;
 
 import com.workgo.identity.dto.request.UserCreationRequest;
+import com.workgo.identity.dto.request.UserUpdateRequest;
 import com.workgo.identity.dto.response.UserCreationResponse;
 import com.workgo.identity.dto.response.UserResponse;
 import com.workgo.identity.entity.User;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
@@ -13,6 +16,9 @@ public interface UserMapper {
 
     UserCreationResponse toUserCreationResponse(User user);
 
+    @Mapping(target = "roles", source = "userRoles")
     UserResponse toUserResponse(User user);
+
+    void updateUser(@MappingTarget User user, UserUpdateRequest request);
 
 }

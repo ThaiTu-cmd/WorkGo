@@ -3,6 +3,7 @@ package com.workgo.identity.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -14,6 +15,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "addresses")
+@SQLRestriction("is_deleted = 0")
 public class Address {
 
     @Id
@@ -61,10 +63,14 @@ public class Address {
     @Column(name = "created_at")
     Instant createdAt = Instant.now();
 
+    @Builder.Default
+    @Column(name = "is_deleted")
+    private int isDeleted = 0;
+
     //===FK===
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    User user;
+    User userId;
 
 }

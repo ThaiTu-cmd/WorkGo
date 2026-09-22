@@ -9,6 +9,7 @@ import com.workgo.identity.enumeration.RoleName;
 import com.workgo.identity.enumeration.UserStatus;
 import com.workgo.identity.repository.RoleRepository;
 import com.workgo.identity.repository.UserRepository;
+import com.workgo.identity.repository.UserRoleRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -43,7 +44,9 @@ public class ApplicationInitConfig {
 //            value = "datasource.driverClassName",
 //            havingValue = "org.postgresql.Driver"
 //    )
-    ApplicationRunner applicationRunner(UserRepository userRepository, RoleRepository roleRepository){
+    ApplicationRunner applicationRunner(UserRepository userRepository,
+                                        RoleRepository roleRepository,
+                                        UserRoleRepository userRoleRepository){
         log.info("Initializing application ...");
 
         return args -> {
@@ -63,6 +66,8 @@ public class ApplicationInitConfig {
                         .status(UserStatus.ACTIVE)
                         .build();
 
+                userRepository.save(user);
+
                 Role role = roleRepository.findById(RoleName.ADMIN)
                         .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
 
@@ -75,8 +80,10 @@ public class ApplicationInitConfig {
 
                 HashSet<UserRole> userRoles = new HashSet<>();
                 userRoles.add(userRole);
-                user.setUserRoles(userRoles);
 
+                userRoleRepository.save(userRole);
+
+                user.setUserRoles(userRoles);
                 userRepository.save(user);
 
                 log.info("ADMIN info : " + user);

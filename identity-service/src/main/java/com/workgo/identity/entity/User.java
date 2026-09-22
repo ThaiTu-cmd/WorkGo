@@ -62,11 +62,11 @@ public class User {
 
     // 1-N role
     @Builder.Default
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Set<UserRole> userRoles = new HashSet<>();
 
     // 1-N address
     @Builder.Default
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "userId", fetch = FetchType.LAZY)
     Set<Address> addresses = new HashSet<>();
 }

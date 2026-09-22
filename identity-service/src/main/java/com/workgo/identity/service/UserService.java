@@ -4,7 +4,10 @@ import com.workgo.identity.Exception.AppException;
 import com.workgo.identity.Exception.ErrorCode;
 import com.workgo.identity.Mapper.RoleMapper;
 import com.workgo.identity.Mapper.UserMapper;
+import com.workgo.identity.dto.ApiResponse;
+import com.workgo.identity.dto.PageResponse;
 import com.workgo.identity.dto.request.UserCreationRequest;
+import com.workgo.identity.dto.request.UserUpdateRequest;
 import com.workgo.identity.dto.response.UserCreationResponse;
 import com.workgo.identity.dto.response.UserResponse;
 import com.workgo.identity.entity.Role;
@@ -14,15 +17,22 @@ import com.workgo.identity.enumeration.RoleName;
 import com.workgo.identity.enumeration.UserStatus;
 import com.workgo.identity.repository.RoleRepository;
 import com.workgo.identity.repository.UserRepository;
+import com.workgo.identity.repository.UserRoleRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.UUID;
 
 
 @Service
@@ -34,6 +44,7 @@ public class UserService {
     UserRepository userRepository;
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
+    UserRoleRepository userRoleRepository;
     RoleMapper roleMapper;
 
     public UserCreationResponse createUser(UserCreationRequest request) {
@@ -53,6 +64,8 @@ public class UserService {
                 .status(UserStatus.ACTIVE)
                 .build();
 
+        userRepository.save(user);
+
         Role role = roleRepository.findById(RoleName.CLIENT)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
 
@@ -63,10 +76,12 @@ public class UserService {
                 .role(role)
                 .build();
 
+        userRoleRepository.save(userRole);
+
         HashSet<UserRole> userRoles = new HashSet<>();
         userRoles.add(userRole);
-        user.setUserRoles(userRoles);
 
+        user.setUserRoles(userRoles);
         userRepository.save(user);
 
         return UserCreationResponse.builder()
@@ -88,4 +103,52 @@ public class UserService {
         return userMapper.toUserResponse(user);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public PageResponse<UserResponse> getUsers(int page, int size){
+
+        Sort sort = Sort.by("createdAt").descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        var pageData = userRepository.findAll(pageable);
+
+        return PageResponse.<UserResponse>builder()
+                .currentPage(page)
+                .pageSize(pageData.getSize())
+                .totalElements(pageData.getTotalElements())
+                .totalPages(pageData.getTotalPages())
+                .data(pageData.stream()
+                        .map(userMapper::toUserResponse)
+                        .toList())
+                .build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserResponse getUser(UUID userId){
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        return userMapper.toUserResponse(user);
+    }
+
+    public UserResponse updateUser(UUID userId, UserUpdateRequest request){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        userMapper.updateUser(user, request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        return userMapper.toUserResponse(userRepository.save(user));
+    }
+
+
+    public void deleteUser(UUID userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        user.setStatus(UserStatus.DISABLE);
+
+        userRepository.save(user);
+    }
 }

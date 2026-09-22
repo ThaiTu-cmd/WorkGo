@@ -35,7 +35,7 @@ public enum ErrorCode {
     WRONG_PASSWORD(1020, "Current password is incorrect", HttpStatus.BAD_REQUEST),
     ROLE_NOT_EXISTED(1021, "This role is not existed", HttpStatus.BAD_REQUEST),
 
-
+    ADDRESS_NOT_EXISTED(1022, "This address is not existed", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

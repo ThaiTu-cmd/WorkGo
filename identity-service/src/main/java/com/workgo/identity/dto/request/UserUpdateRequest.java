@@ -1,11 +1,8 @@
-package com.workgo.identity.dto.response;
+package com.workgo.identity.dto.request;
 
 import com.workgo.identity.enumeration.UserStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.time.Instant;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -13,7 +10,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserResponse {
+public class UserUpdateRequest {
 
     String firstName;
 
@@ -21,15 +18,11 @@ public class UserResponse {
 
     String userName;
 
+    String password;
+
     String email;
 
     String phone;
 
-    UserStatus status;
-
     String avatarUrl;
-
-    Instant createdAt;
-
-    Set<RoleResponse> roles;
 }

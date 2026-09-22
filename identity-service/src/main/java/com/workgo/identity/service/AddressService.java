@@ -11,31 +11,32 @@ import com.workgo.identity.entity.Address;
 import com.workgo.identity.entity.User;
 import com.workgo.identity.repository.AddressRepository;
 import com.workgo.identity.repository.UserRepository;
-import com.workgo.identity.util.UserUtil;
+import com.workgo.identity.util.Util;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.UUID;
 
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@Slf4j
 public class AddressService {
 
     AddressMapper addressMapper;
     AddressRepository addressRepository;
     UserRepository userRepository;
-    UserUtil userUtil;
+    Util util;
 
     public AddressResponse createAddress(AddressCreationRequest request){
-        User user = userUtil.getCurrentUser();
+        User user = util.getCurrentUser();
 
         Address address = Address.builder()
                 .label(request.getLabel())
@@ -50,7 +51,7 @@ public class AddressService {
                 .longitude(request.getLongitude())
                 .note(request.getNote())
                 .isDefault(false)
-                .userId(user)
+                .user(user)
                 .build();
 
         addressRepository.save(address);
@@ -69,11 +70,13 @@ public class AddressService {
 
         Sort sort = Sort.by("createdAt").descending();
 
-        User user = userUtil.getCurrentUser();
+        User user = util.getCurrentUser();
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        var pageData = addressRepository.findAllByUserId(user.getUserId(), pageable);
+        var pageData = addressRepository.findAllByUser_UserId(user.getUserId(), pageable);
+
+        log.info("Du lieu cua pageData : " + pageData.toString());
 
         return PageResponse.<AddressResponse>builder()
                 .currentPage(page)
@@ -101,7 +104,11 @@ public class AddressService {
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new AppException(ErrorCode.ADDRESS_NOT_EXISTED));
 
-        int mark = Integer.parseInt(Instant.now().toString());
+        log.info(address.toString());
+
+        int mark = util.createDeletedMark();
+
+        log.info("Du lieu cua mark : " + mark);
 
         address.setIsDeleted(mark);
 

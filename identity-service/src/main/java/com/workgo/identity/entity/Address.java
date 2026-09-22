@@ -71,6 +71,6 @@ public class Address {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    User userId;
+    User user;
 
 }

@@ -67,6 +67,6 @@ public class User {
 
     // 1-N address
     @Builder.Default
-    @OneToMany(mappedBy = "userId", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     Set<Address> addresses = new HashSet<>();
 }

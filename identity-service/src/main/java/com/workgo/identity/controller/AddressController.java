@@ -49,7 +49,7 @@ public class AddressController {
     @GetMapping("/my")
     PageResponse<AddressResponse> getMyAddresses(
         @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-        @RequestParam(value = "page", required = false, defaultValue =  "10") int size
+        @RequestParam(value = "size", required = false, defaultValue =  "10") int size
     ){
         return addressService.getMyAddresses(page, size);
     }
@@ -74,6 +74,8 @@ public class AddressController {
         addressService.deleteAddress(addressId);
 
         return ApiResponse.<Void>builder()
+                .code(1000)
+                .message("Delete successful")
                 .build();
     }
 

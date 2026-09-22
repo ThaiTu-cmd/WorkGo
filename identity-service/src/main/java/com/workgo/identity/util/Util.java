@@ -7,15 +7,16 @@ import com.workgo.identity.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.data.util.Optionals;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class UserUtil {
+public class Util {
 
         UserRepository userRepository;
 
@@ -27,6 +28,14 @@ public class UserUtil {
             if(user == null) throw new AppException(ErrorCode.USER_NOT_EXISTED);
 
             return user;
+        }
+
+        public int createDeletedMark(){
+
+            int mark = Instant.now().getNano() * 1000;
+
+            return mark;
+
         }
 
 }

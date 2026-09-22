@@ -18,6 +18,8 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AddressResponse {
 
+    UUID addressId;
+
     String label;
 
     String contactName;
@@ -39,4 +41,6 @@ public class AddressResponse {
     String longitude;
 
     String note;
+
+    UUID userId;
 }

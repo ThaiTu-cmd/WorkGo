@@ -1,6 +1,5 @@
 package com.workgo.identity.repository;
 
-import com.workgo.identity.dto.response.AddressResponse;
 import com.workgo.identity.entity.Address;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,5 +11,5 @@ import java.util.UUID;
 @Repository
 public interface AddressRepository extends JpaRepository<Address, UUID> {
 
-    Page<Address> findAllByUserId(UUID userId, Pageable pageable);
+    Page<Address> findAllByUser_UserId(UUID userId, Pageable pageable);
 }

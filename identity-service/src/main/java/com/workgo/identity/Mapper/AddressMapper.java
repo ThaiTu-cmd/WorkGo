@@ -10,8 +10,11 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface AddressMapper {
 
+    @Mapping(target = "userId", source = "user.userId")
     AddressResponse toAddressResponse(Address address);
 
     void updateAddress(@MappingTarget Address address, AddressUpdateRequest request);
+
+
 
 }

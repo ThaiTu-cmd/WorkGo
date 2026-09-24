@@ -20,7 +20,11 @@ import java.util.UUID;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "users")
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_email_status", columnNames = {"userName", "status"}),
+        @UniqueConstraint(name = "uk_user_name_status", columnNames = {"email", "status"}),
+        @UniqueConstraint(name = "uk_phone_status", columnNames = {"phone", "status"})
+})
 @SQLRestriction("status = 'ACTIVE'")
 public class User {
 
@@ -35,16 +39,16 @@ public class User {
     @Column(name = "last_name")
     String lastName;
 
-    @Column(name = "user_name", unique = true)
+    @Column(name = "user_name")
     String userName;
 
     @Column(name = "password")
     String password;
 
-    @Column(name = "phone", unique = true)
+    @Column(name = "phone")
     String phone;
 
-    @Column(name = "email", unique = true)
+    @Column(name = "email")
     String email;
 
     @Enumerated(EnumType.STRING)

@@ -23,7 +23,7 @@ public enum ErrorCode {
     USER_NOT_EXISTED(1006, "User dose not exist", HttpStatus.NOT_FOUND),
     UNAUTHORIZED(1007, "You do not have that permission", HttpStatus.UNAUTHORIZED),
     DISPLAYNAME_INVALID(1008, "DisplayName must be at least 5 characters", HttpStatus.BAD_REQUEST),
-    USERNAME_NOT_BLANK(1009, "UserName must not be blank", HttpStatus.BAD_REQUEST),
+    USERNAME_EXISTED(1009, "UserName has already existed !", HttpStatus.BAD_REQUEST),
     PASSWORD_NOT_BLANK(1010, "Password must not be blank", HttpStatus.BAD_REQUEST),
     DISPLAYNAME_NOT_BLANK(1011, "DisplayName must not be blank", HttpStatus.BAD_REQUEST),
     EMAIL_NOT_BLANK(1012, "Email must not be blank", HttpStatus.BAD_REQUEST),

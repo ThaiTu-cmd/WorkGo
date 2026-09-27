@@ -49,7 +49,7 @@ public class UserService {
 
     public UserCreationResponse createUser(UserCreationRequest request) {
 
-        if (userRepository.existsByUserName(request.getUserName()))
+        if (userRepository.existsByUserName(request.getUserName()) || userRepository.existsByEmail(request.getEmail()))
             throw new AppException(ErrorCode.USER_EXISTED);
 
         String hashedPassword = passwordEncoder.encode(request.getPassword());

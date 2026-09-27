@@ -8,15 +8,15 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8081",
+      "value": "http://localhost:8888",
       "type": "string",
-      "description": "Base URL của Identity Service (port 8081)"
+      "description": "Base URL của API Gateway (port 8888)"
     },
     {
       "key": "contextPath",
-      "value": "/identity",
+      "value": "/api/v1/identity",
       "type": "string",
-      "description": "Context path của Identity Service"
+      "description": "Prefix của API Gateway cho Identity Service"
     },
     {
       "key": "accessToken",
@@ -40,7 +40,7 @@
   "item": [
     {
       "name": "identity-service",
-      "description": "Identity Service — port 8081, context path /identity",
+      "description": "Identity Service thông qua API Gateway — port 8888, prefix /api/v1/identity",
       "item": [
         {
           "name": "auth",

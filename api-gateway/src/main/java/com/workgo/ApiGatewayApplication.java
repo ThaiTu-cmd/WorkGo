@@ -1,5 +1,5 @@
-package com.devteria.gateway;
 
+package com.workgo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

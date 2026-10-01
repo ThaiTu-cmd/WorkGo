@@ -42,5 +42,8 @@ build/
 **/application-local.yaml
 **/application-local.yml
 
+mvnw
+mvnw.cmd
+
 ### Docs (local only — không push lên github) ###
 docs/

@@ -2,21 +2,33 @@
   "info": {
     "name": "WorkGo",
     "_postman_id": "workgo-collection-v1",
-    "description": "WorkGo Microservices API Collection\n\nCấu trúc:\n- workgo/\n  - identity-service/\n    - auth/\n    - users/\n    - addresses/",
+    "description": "WorkGo Microservices API Collection\n\nCấu trúc:\n- workgo/\n  - identity-service/ (qua API Gateway :8888)\n    - auth/\n    - users/\n    - addresses/\n  - catalog-service/ (trực tiếp :8082)\n    - categories/",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
-      "key": "baseUrl",
+      "key": "gatewayUrl",
       "value": "http://localhost:8888",
       "type": "string",
       "description": "Base URL của API Gateway (port 8888)"
     },
     {
-      "key": "contextPath",
+      "key": "identityPath",
       "value": "/api/v1/identity",
       "type": "string",
       "description": "Prefix của API Gateway cho Identity Service"
+    },
+    {
+      "key": "catalogUrl",
+      "value": "http://localhost:8082",
+      "type": "string",
+      "description": "Base URL của Catalog Service (trực tiếp, port 8082)"
+    },
+    {
+      "key": "catalogPath",
+      "value": "/catalog",
+      "type": "string",
+      "description": "Context-path của Catalog Service"
     },
     {
       "key": "accessToken",
@@ -35,6 +47,30 @@
       "value": "",
       "type": "string",
       "description": "UUID của address — điền vào sau khi tạo address"
+    },
+    {
+      "key": "categoryId",
+      "value": "",
+      "type": "string",
+      "description": "UUID của category — tự động set sau khi tạo category"
+    },
+    {
+      "key": "parentCategoryId",
+      "value": "",
+      "type": "string",
+      "description": "UUID của category cha — điền sau khi tạo root category"
+    },
+    {
+      "key": "providerId",
+      "value": "",
+      "type": "string",
+      "description": "UUID của provider — tự động set sau khi tạo profile"
+    },
+    {
+      "key": "verificationId",
+      "value": "",
+      "type": "string",
+      "description": "UUID của provider verification — tự động set sau khi nộp hồ sơ"
     }
   ],
   "item": [
@@ -75,16 +111,99 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"userName\": \"admin\",\n  \"password\": \"admin123\"\n}"
+                  "raw": "{\n  \"userName\": \"admin\",\n  \"password\": \"admin123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
-                  "raw": "{{baseUrl}}{{contextPath}}/auth/token",
-                  "host": ["{{baseUrl}}{{contextPath}}"],
-                  "path": ["auth", "token"]
+                  "raw": "{{gatewayUrl}}{{identityPath}}/auth/token",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "token"
+                  ]
                 },
                 "description": "Đăng nhập để lấy JWT access token.\n\n**Public endpoint** — không cần Authorization header.\n\n> Sau khi gọi thành công, `accessToken` sẽ tự động được lưu vào collection variable."
               },
-              "response": []
+              "response": [
+                {
+                  "name": "Login thành công",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"userName\": \"admin\",\n  \"password\": \"admin123\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{gatewayUrl}}{{identityPath}}/auth/token",
+                      "host": [
+                        "{{gatewayUrl}}{{identityPath}}"
+                      ],
+                      "path": [
+                        "auth",
+                        "token"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTcxMDAwMDAwMH0.sample_token\",\n    \"authenticated\": true\n  }\n}"
+                },
+                {
+                  "name": "Login thất bại - sai mật khẩu",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"userName\": \"admin\",\n  \"password\": \"wrongpassword\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{gatewayUrl}}{{identityPath}}/auth/token",
+                      "host": [
+                        "{{gatewayUrl}}{{identityPath}}"
+                      ],
+                      "path": [
+                        "auth",
+                        "token"
+                      ]
+                    }
+                  },
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1006,\n  \"message\": \"Unauthenticated\"\n}"
+                }
+              ]
             },
             {
               "name": "Introspect Token",
@@ -98,16 +217,63 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"token\": \"{{accessToken}}\"\n}"
+                  "raw": "{\n  \"token\": \"{{accessToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
-                  "raw": "{{baseUrl}}{{contextPath}}/auth/introspect",
-                  "host": ["{{baseUrl}}{{contextPath}}"],
-                  "path": ["auth", "introspect"]
+                  "raw": "{{gatewayUrl}}{{identityPath}}/auth/introspect",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "introspect"
+                  ]
                 },
                 "description": "Kiểm tra token có hợp lệ không (introspect).\n\n**Public endpoint** — không cần Authorization header."
               },
-              "response": []
+              "response": [
+                {
+                  "name": "Token hợp lệ",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"token\": \"{{accessToken}}\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{gatewayUrl}}{{identityPath}}/auth/introspect",
+                      "host": [
+                        "{{gatewayUrl}}{{identityPath}}"
+                      ],
+                      "path": [
+                        "auth",
+                        "introspect"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"valid\": true\n  }\n}"
+                }
+              ]
             },
             {
               "name": "Logout",
@@ -121,16 +287,63 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"token\": \"{{accessToken}}\"\n}"
+                  "raw": "{\n  \"token\": \"{{accessToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
-                  "raw": "{{baseUrl}}{{contextPath}}/auth/logout",
-                  "host": ["{{baseUrl}}{{contextPath}}"],
-                  "path": ["auth", "logout"]
+                  "raw": "{{gatewayUrl}}{{identityPath}}/auth/logout",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "logout"
+                  ]
                 },
                 "description": "Đăng xuất — blacklist JWT token hiện tại.\n\n**Public endpoint** — không cần Authorization header."
               },
-              "response": []
+              "response": [
+                {
+                  "name": "Logout thành công",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"token\": \"{{accessToken}}\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{gatewayUrl}}{{identityPath}}/auth/logout",
+                      "host": [
+                        "{{gatewayUrl}}{{identityPath}}"
+                      ],
+                      "path": [
+                        "auth",
+                        "logout"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\"\n}"
+                }
+              ]
             }
           ]
         },
@@ -140,6 +353,21 @@
           "item": [
             {
               "name": "Đăng ký tài khoản",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var json = pm.response.json();",
+                      "if (json && json.result && json.result.userId) {",
+                      "    pm.collectionVariables.set('userId', json.result.userId);",
+                      "    console.log('✅ userId đã được lưu: ' + json.result.userId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
               "request": {
                 "method": "POST",
                 "header": [
@@ -150,16 +378,63 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"firstName\": \"Nguyen\",\n  \"lastName\": \"Van A\",\n  \"userName\": \"nguyenvana\",\n  \"password\": \"Password@123\",\n  \"phone\": \"0901234567\",\n  \"email\": \"nguyenvana@example.com\"\n}"
+                  "raw": "{\n  \"firstName\": \"Nguyen\",\n  \"lastName\": \"Van A\",\n  \"userName\": \"nguyenvana\",\n  \"password\": \"Password@123\",\n  \"phone\": \"0901234567\",\n  \"email\": \"nguyenvana@example.com\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
-                  "raw": "{{baseUrl}}{{contextPath}}/users/registration",
-                  "host": ["{{baseUrl}}{{contextPath}}"],
-                  "path": ["users", "registration"]
+                  "raw": "{{gatewayUrl}}{{identityPath}}/users/registration",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "users",
+                    "registration"
+                  ]
                 },
                 "description": "Tạo tài khoản mới.\n\n**Public endpoint** — không cần Authorization header."
               },
-              "response": []
+              "response": [
+                {
+                  "name": "Đăng ký thành công",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"firstName\": \"Nguyen\",\n  \"lastName\": \"Van A\",\n  \"userName\": \"nguyenvana\",\n  \"password\": \"Password@123\",\n  \"phone\": \"0901234567\",\n  \"email\": \"nguyenvana@example.com\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{gatewayUrl}}{{identityPath}}/users/registration",
+                      "host": [
+                        "{{gatewayUrl}}{{identityPath}}"
+                      ],
+                      "path": [
+                        "users",
+                        "registration"
+                      ]
+                    }
+                  },
+                  "status": "Created",
+                  "code": 201,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"userId\": \"550e8400-e29b-41d4-a716-446655440001\",\n    \"firstName\": \"Nguyen\",\n    \"lastName\": \"Van A\",\n    \"userName\": \"nguyenvana\",\n    \"phone\": \"0901234567\",\n    \"email\": \"nguyenvana@example.com\"\n  }\n}"
+                }
+              ]
             },
             {
               "name": "Lấy thông tin bản thân (My Info)",
@@ -177,13 +452,46 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}{{contextPath}}/users/myInfo",
-                  "host": ["{{baseUrl}}{{contextPath}}"],
-                  "path": ["users", "myInfo"]
+                  "raw": "{{gatewayUrl}}{{identityPath}}/users/myInfo",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "users",
+                    "myInfo"
+                  ]
                 },
                 "description": "Lấy thông tin của user đang đăng nhập (trích xuất từ JWT).\n\n🔐 **Yêu cầu JWT** trong Authorization header."
               },
-              "response": []
+              "response": [
+                {
+                  "name": "Lấy myInfo thành công",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{gatewayUrl}}{{identityPath}}/users/myInfo",
+                      "host": [
+                        "{{gatewayUrl}}{{identityPath}}"
+                      ],
+                      "path": [
+                        "users",
+                        "myInfo"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"userId\": \"550e8400-e29b-41d4-a716-446655440001\",\n    \"firstName\": \"Nguyen\",\n    \"lastName\": \"Van A\",\n    \"userName\": \"nguyenvana\",\n    \"phone\": \"0901234567\",\n    \"email\": \"nguyenvana@example.com\",\n    \"avatarUrl\": null\n  }\n}"
+                }
+              ]
             },
             {
               "name": "Danh sách Users (phân trang)",
@@ -201,9 +509,13 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}{{contextPath}}/users?page=1&size=10",
-                  "host": ["{{baseUrl}}{{contextPath}}"],
-                  "path": ["users"],
+                  "raw": "{{gatewayUrl}}{{identityPath}}/users?page=1&size=10",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "users"
+                  ],
                   "query": [
                     {
                       "key": "page",
@@ -237,9 +549,14 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}{{contextPath}}/users/{{userId}}",
-                  "host": ["{{baseUrl}}{{contextPath}}"],
-                  "path": ["users", "{{userId}}"]
+                  "raw": "{{gatewayUrl}}{{identityPath}}/users/{{userId}}",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "users",
+                    "{{userId}}"
+                  ]
                 },
                 "description": "Lấy thông tin user theo UUID.\n\n🔐 **Yêu cầu JWT** trong Authorization header.\n\n> Điền `userId` vào collection variable hoặc thay thẳng vào URL."
               },
@@ -267,12 +584,22 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"firstName\": \"Nguyen\",\n  \"lastName\": \"Van B\",\n  \"userName\": \"nguyenvanb\",\n  \"password\": \"NewPassword@123\",\n  \"email\": \"nguyenvanb@example.com\",\n  \"phone\": \"0907654321\",\n  \"avatarUrl\": \"https://example.com/avatar.png\"\n}"
+                  "raw": "{\n  \"firstName\": \"Nguyen\",\n  \"lastName\": \"Van B\",\n  \"userName\": \"nguyenvanb\",\n  \"password\": \"NewPassword@123\",\n  \"email\": \"nguyenvanb@example.com\",\n  \"phone\": \"0907654321\",\n  \"avatarUrl\": \"https://example.com/avatar.png\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
-                  "raw": "{{baseUrl}}{{contextPath}}/users/{{userId}}",
-                  "host": ["{{baseUrl}}{{contextPath}}"],
-                  "path": ["users", "{{userId}}"]
+                  "raw": "{{gatewayUrl}}{{identityPath}}/users/{{userId}}",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "users",
+                    "{{userId}}"
+                  ]
                 },
                 "description": "Cập nhật thông tin user theo UUID.\n\n🔐 **Yêu cầu JWT** trong Authorization header."
               },
@@ -294,9 +621,14 @@
                 "method": "DELETE",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}{{contextPath}}/users/{{userId}}",
-                  "host": ["{{baseUrl}}{{contextPath}}"],
-                  "path": ["users", "{{userId}}"]
+                  "raw": "{{gatewayUrl}}{{identityPath}}/users/{{userId}}",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "users",
+                    "{{userId}}"
+                  ]
                 },
                 "description": "Xóa user theo UUID.\n\n🔐 **Yêu cầu JWT** trong Authorization header.\n\n⚠️ **Hành động không thể hoàn tác.**"
               },
@@ -310,6 +642,21 @@
           "item": [
             {
               "name": "Tạo Address mới",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var json = pm.response.json();",
+                      "if (json && json.result && json.result.addressId) {",
+                      "    pm.collectionVariables.set('addressId', json.result.addressId);",
+                      "    console.log('✅ addressId đã được lưu: ' + json.result.addressId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
               "request": {
                 "auth": {
                   "type": "bearer",
@@ -330,16 +677,61 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"label\": \"Nhà riêng\",\n  \"contactName\": \"Nguyen Van A\",\n  \"contactPhone\": \"0901234567\",\n  \"line1\": \"123 Đường Lê Lợi\",\n  \"ward\": \"Phường Bến Nghé\",\n  \"district\": \"Quận 1\",\n  \"city\": \"Hồ Chí Minh\",\n  \"countryCode\": \"VN\",\n  \"latitude\": \"10.7769\",\n  \"longitude\": \"106.7009\",\n  \"note\": \"Nhà màu xanh, gọi trước khi đến\"\n}"
+                  "raw": "{\n  \"label\": \"Nhà riêng\",\n  \"contactName\": \"Nguyen Van A\",\n  \"contactPhone\": \"0901234567\",\n  \"line1\": \"123 Đường Lê Lợi\",\n  \"ward\": \"Phường Bến Nghé\",\n  \"district\": \"Quận 1\",\n  \"city\": \"Hồ Chí Minh\",\n  \"countryCode\": \"VN\",\n  \"latitude\": \"10.7769\",\n  \"longitude\": \"106.7009\",\n  \"note\": \"Nhà màu xanh, gọi trước khi đến\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
-                  "raw": "{{baseUrl}}{{contextPath}}/addresses",
-                  "host": ["{{baseUrl}}{{contextPath}}"],
-                  "path": ["addresses"]
+                  "raw": "{{gatewayUrl}}{{identityPath}}/addresses",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "addresses"
+                  ]
                 },
                 "description": "Tạo địa chỉ mới cho user đang đăng nhập.\n\n🔐 **Yêu cầu JWT** trong Authorization header."
               },
-              "response": []
+              "response": [
+                {
+                  "name": "Tạo address thành công",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"label\": \"Nhà riêng\",\n  \"contactName\": \"Nguyen Van A\",\n  \"contactPhone\": \"0901234567\",\n  \"line1\": \"123 Đường Lê Lợi\",\n  \"ward\": \"Phường Bến Nghé\",\n  \"district\": \"Quận 1\",\n  \"city\": \"Hồ Chí Minh\",\n  \"countryCode\": \"VN\",\n  \"latitude\": \"10.7769\",\n  \"longitude\": \"106.7009\",\n  \"note\": \"Nhà màu xanh, gọi trước khi đến\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{gatewayUrl}}{{identityPath}}/addresses",
+                      "host": [
+                        "{{gatewayUrl}}{{identityPath}}"
+                      ],
+                      "path": [
+                        "addresses"
+                      ]
+                    }
+                  },
+                  "status": "Created",
+                  "code": 201,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"addressId\": \"660e8400-e29b-41d4-a716-446655440001\",\n    \"label\": \"Nhà riêng\",\n    \"contactName\": \"Nguyen Van A\",\n    \"contactPhone\": \"0901234567\",\n    \"line1\": \"123 Đường Lê Lợi\",\n    \"ward\": \"Phường Bến Nghé\",\n    \"district\": \"Quận 1\",\n    \"city\": \"Hồ Chí Minh\",\n    \"countryCode\": \"VN\"\n  }\n}"
+                }
+              ]
             },
             {
               "name": "Lấy Address theo ID",
@@ -357,9 +749,14 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}{{contextPath}}/addresses/{{addressId}}",
-                  "host": ["{{baseUrl}}{{contextPath}}"],
-                  "path": ["addresses", "{{addressId}}"]
+                  "raw": "{{gatewayUrl}}{{identityPath}}/addresses/{{addressId}}",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "addresses",
+                    "{{addressId}}"
+                  ]
                 },
                 "description": "Lấy thông tin một địa chỉ theo UUID.\n\n🔐 **Yêu cầu JWT** trong Authorization header."
               },
@@ -381,9 +778,14 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}{{contextPath}}/addresses/my?page=1&size=10",
-                  "host": ["{{baseUrl}}{{contextPath}}"],
-                  "path": ["addresses", "my"],
+                  "raw": "{{gatewayUrl}}{{identityPath}}/addresses/my?page=1&size=10",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "addresses",
+                    "my"
+                  ],
                   "query": [
                     {
                       "key": "page",
@@ -423,12 +825,22 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"label\": \"Văn phòng\",\n  \"contactName\": \"Nguyen Van A\",\n  \"contactPhone\": \"0901234567\",\n  \"line1\": \"456 Đường Nguyễn Huệ\",\n  \"ward\": \"Phường Bến Nghé\",\n  \"district\": \"Quận 1\",\n  \"city\": \"Hồ Chí Minh\",\n  \"countryCode\": \"VN\",\n  \"latitude\": \"10.7756\",\n  \"longitude\": \"106.7022\",\n  \"note\": \"Tầng 5, tòa nhà ABC\"\n}"
+                  "raw": "{\n  \"label\": \"Văn phòng\",\n  \"contactName\": \"Nguyen Van A\",\n  \"contactPhone\": \"0901234567\",\n  \"line1\": \"456 Đường Nguyễn Huệ\",\n  \"ward\": \"Phường Bến Nghé\",\n  \"district\": \"Quận 1\",\n  \"city\": \"Hồ Chí Minh\",\n  \"countryCode\": \"VN\",\n  \"latitude\": \"10.7756\",\n  \"longitude\": \"106.7022\",\n  \"note\": \"Tầng 5, tòa nhà ABC\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
-                  "raw": "{{baseUrl}}{{contextPath}}/addresses/{{addressId}}",
-                  "host": ["{{baseUrl}}{{contextPath}}"],
-                  "path": ["addresses", "{{addressId}}"]
+                  "raw": "{{gatewayUrl}}{{identityPath}}/addresses/{{addressId}}",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "addresses",
+                    "{{addressId}}"
+                  ]
                 },
                 "description": "Cập nhật thông tin địa chỉ theo UUID.\n\n🔐 **Yêu cầu JWT** trong Authorization header."
               },
@@ -450,13 +862,1142 @@
                 "method": "DELETE",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}{{contextPath}}/addresses/{{addressId}}",
-                  "host": ["{{baseUrl}}{{contextPath}}"],
-                  "path": ["addresses", "{{addressId}}"]
+                  "raw": "{{gatewayUrl}}{{identityPath}}/addresses/{{addressId}}",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "addresses",
+                    "{{addressId}}"
+                  ]
                 },
                 "description": "Xóa địa chỉ theo UUID.\n\n🔐 **Yêu cầu JWT** trong Authorization header.\n\n⚠️ **Hành động không thể hoàn tác.**"
               },
               "response": []
+            }
+          ]
+        },
+        {
+          "name": "providers",
+          "description": "Quản lý Provider Profile (Hồ sơ nhà cung cấp dịch vụ)",
+          "item": [
+            {
+              "name": "Đăng ký làm Provider",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var json = pm.response.json();",
+                      "if (json && json.result && json.result.providerId) {",
+                      "    pm.collectionVariables.set('providerId', json.result.providerId);",
+                      "    console.log('✅ providerId đã được lưu: ' + json.result.providerId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"providerType\": \"INDIVIDUAL\",\n  \"businessName\": \"Freelancer Nguyen Van A\",\n  \"bio\": \"Chuyên sửa chữa điện nước tại nhà với 5 năm kinh nghiệm.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{gatewayUrl}}{{identityPath}}/providers",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "providers"
+                  ]
+                },
+                "description": "Tạo provider profile mới cho user đang đăng nhập.\n\n🔐 **Yêu cầu JWT** trong Authorization header."
+              },
+              "response": []
+            },
+            {
+              "name": "Lấy Provider Profile của tôi",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}{{identityPath}}/providers/myProfile",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "providers",
+                    "myProfile"
+                  ]
+                },
+                "description": "Lấy provider profile của user đang đăng nhập.\n\n🔐 **Yêu cầu JWT** trong Authorization header."
+              },
+              "response": []
+            },
+            {
+              "name": "Lấy Provider Profile theo ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}{{identityPath}}/providers/{{providerId}}",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "providers",
+                    "{{providerId}}"
+                  ]
+                },
+                "description": "Lấy thông tin provider profile bất kỳ theo UUID.\n\n**Public endpoint** — không cần Authorization header."
+              },
+              "response": []
+            },
+            {
+              "name": "Danh sách Providers (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}{{identityPath}}/providers?status=PENDING&page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "providers"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "PENDING",
+                      "description": "Trạng thái xác minh (UNVERIFIED, PENDING, VERIFIED, REJECTED)"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0",
+                      "description": "Số trang"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10",
+                      "description": "Kích thước trang"
+                    }
+                  ]
+                },
+                "description": "Lấy danh sách provider theo trạng thái xác minh (Dành cho ADMIN duyệt).\n\n🔐 **Yêu cầu JWT (ADMIN)** trong Authorization header."
+              },
+              "response": []
+            },
+            {
+              "name": "Cập nhật Provider Profile",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"businessName\": \"Dịch vụ Điện nước A+\",\n  \"bio\": \"Cập nhật bio mới.\",\n  \"isAcceptingOrders\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{gatewayUrl}}{{identityPath}}/providers/myProfile",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "providers",
+                    "myProfile"
+                  ]
+                },
+                "description": "Provider tự cập nhật thông tin profile của mình.\n\n🔐 **Yêu cầu JWT** trong Authorization header."
+              },
+              "response": []
+            },
+            {
+              "name": "Duyệt / Từ chối Provider (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}{{identityPath}}/providers/{{providerId}}/verification?status=VERIFIED",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "providers",
+                    "{{providerId}}",
+                    "verification"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "VERIFIED",
+                      "description": "Trạng thái mới (VERIFIED, REJECTED, PENDING, UNVERIFIED)"
+                    }
+                  ]
+                },
+                "description": "ADMIN duyệt hoặc từ chối provider.\n\n🔐 **Yêu cầu JWT (ADMIN)** trong Authorization header."
+              },
+              "response": []
+            },
+            {
+              "name": "Xóa Provider Profile",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}{{identityPath}}/providers/myProfile",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "providers",
+                    "myProfile"
+                  ]
+                },
+                "description": "Provider tự xóa profile của mình (soft delete).\n\n🔐 **Yêu cầu JWT** trong Authorization header."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "provider-verifications",
+          "description": "Quản lý hồ sơ xác minh Provider",
+          "item": [
+            {
+              "name": "Nộp hồ sơ xác minh",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "var json = pm.response.json();",
+                      "if (json && json.result && json.result.providerVerificationId) {",
+                      "    pm.collectionVariables.set('verificationId', json.result.providerVerificationId);",
+                      "    console.log('✅ verificationId saved: ' + json.result.providerVerificationId);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"verificationType\": \"IDENTITY_CARD\",\n  \"documentType\": \"Căn cước công dân gắn chip\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{gatewayUrl}}{{identityPath}}/provider-verifications",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "provider-verifications"
+                  ]
+                },
+                "description": "Provider nộp hồ sơ xác minh danh tính / doanh nghiệp.\n\n**verificationType:** `IDENTITY_CARD` | `BUSINESS_LICENSE` | `TAX_CODE` | `PROFESSIONAL_CERT`\n\n🔐 **Yêu cầu JWT** (role PROVIDER).\n\n> `verificationId` sẽ tự động lưu vào collection variable sau khi gọi thành công."
+              },
+              "response": []
+            },
+            {
+              "name": "Danh sách hồ sơ của tôi",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}{{identityPath}}/provider-verifications/my?page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "provider-verifications",
+                    "my"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "Provider xem danh sách hồ sơ xác minh đã nộp, có phân trang.\n\n🔐 **Yêu cầu JWT** (role PROVIDER)."
+              },
+              "response": []
+            },
+            {
+              "name": "Chi tiết hồ sơ xác minh",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}{{identityPath}}/provider-verifications/{{verificationId}}",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "provider-verifications",
+                    "{{verificationId}}"
+                  ]
+                },
+                "description": "Xem chi tiết một hồ sơ xác minh theo UUID.\n\n🔐 **Yêu cầu JWT**."
+              },
+              "response": []
+            },
+            {
+              "name": "Danh sách hồ sơ theo trạng thái (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}{{identityPath}}/provider-verifications?status=PENDING&page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "provider-verifications"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "PENDING"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "ADMIN lọc danh sách hồ sơ xác minh theo trạng thái để xét duyệt.\n\n**status:** `UNVERIFIED` | `PENDING` | `VERIFIED` | `REJECTED`\n\n🔐 **Yêu cầu JWT (ADMIN)**."
+              },
+              "response": []
+            },
+            {
+              "name": "Duyệt / Từ chối hồ sơ (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"verificationStatus\": \"VERIFIED\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{gatewayUrl}}{{identityPath}}/provider-verifications/{{verificationId}}/review",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "provider-verifications",
+                    "{{verificationId}}",
+                    "review"
+                  ]
+                },
+                "description": "ADMIN duyệt hoặc từ chối hồ sơ xác minh.\n\nKhi duyệt `VERIFIED`, hệ thống tự động cập nhật `ProviderProfile.verificationStatus = VERIFIED`.\n\n**verificationStatus:** `VERIFIED` | `REJECTED` | `PENDING`\n\n🔐 **Yêu cầu JWT (ADMIN)**."
+              },
+              "response": []
+            },
+            {
+              "name": "Xóa hồ sơ xác minh",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}{{identityPath}}/provider-verifications/{{verificationId}}",
+                  "host": [
+                    "{{gatewayUrl}}{{identityPath}}"
+                  ],
+                  "path": [
+                    "provider-verifications",
+                    "{{verificationId}}"
+                  ]
+                },
+                "description": "Provider xóa hồ sơ xác minh của mình (soft delete).\n\n🔐 **Yêu cầu JWT** (role PROVIDER)."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "catalog-service",
+      "description": "Catalog Service — port 8082, context-path /catalog\n\n> Gọi trực tiếp (chưa đi qua API Gateway). Nếu sau này thêm route vào gateway thì đổi base URL.",
+      "item": [
+        {
+          "name": "categories",
+          "description": "Quản lý danh mục sản phẩm (Category)\n\nCấu trúc phân cấp: Root Category → Sub-Category → ...",
+          "item": [
+            {
+              "name": "Tạo Root Category",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var json = pm.response.json();",
+                      "if (json && json.result && json.result.categoryId) {",
+                      "    pm.collectionVariables.set('categoryId', json.result.categoryId);",
+                      "    pm.collectionVariables.set('parentCategoryId', json.result.categoryId);",
+                      "    console.log('✅ categoryId đã được lưu: ' + json.result.categoryId);",
+                      "    console.log('✅ parentCategoryId đã được lưu (dùng để tạo sub-category)');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Điện tử\",\n  \"slug\": \"dien-tu\",\n  \"description\": \"Các sản phẩm điện tử, thiết bị công nghệ\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/categories",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "categories"
+                  ]
+                },
+                "description": "Tạo category gốc (không có parent).\n\n**Lưu ý:** Bỏ trống field `parent` để tạo root category.\n\n> Sau khi tạo thành công, `categoryId` sẽ tự động lưu vào collection variable."
+              },
+              "response": [
+                {
+                  "name": "Tạo root category thành công",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Điện tử\",\n  \"slug\": \"dien-tu\",\n  \"description\": \"Các sản phẩm điện tử, thiết bị công nghệ\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/categories",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "categories"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"categoryId\": \"770e8400-e29b-41d4-a716-446655440001\",\n    \"name\": \"Điện tử\",\n    \"slug\": \"dien-tu\",\n    \"description\": \"Các sản phẩm điện tử, thiết bị công nghệ\",\n    \"parent\": null,\n    \"children\": [],\n    \"createdAt\": \"2026-09-28T07:11:40Z\",\n    \"createdBy\": null,\n    \"updatedAt\": null,\n    \"updatedBy\": null\n  }\n}"
+                },
+                {
+                  "name": "Lỗi - slug đã tồn tại",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Điện tử 2\",\n  \"slug\": \"dien-tu\",\n  \"description\": \"Slug bị trùng\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/categories",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "categories"
+                      ]
+                    }
+                  },
+                  "status": "Bad Request",
+                  "code": 400,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 9001,\n  \"message\": \"Category slug already exists\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Tạo Sub-Category (có parent)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var json = pm.response.json();",
+                      "if (json && json.result && json.result.categoryId) {",
+                      "    pm.collectionVariables.set('categoryId', json.result.categoryId);",
+                      "    console.log('✅ categoryId (sub) đã được lưu: ' + json.result.categoryId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Điện thoại\",\n  \"slug\": \"dien-thoai\",\n  \"description\": \"Điện thoại thông minh các loại\",\n  \"parent\": \"{{parentCategoryId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/categories",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "categories"
+                  ]
+                },
+                "description": "Tạo category con (sub-category) bằng cách truyền `parent` là UUID của category cha.\n\n> Cần chạy **Tạo Root Category** trước để có `parentCategoryId`."
+              },
+              "response": [
+                {
+                  "name": "Tạo sub-category thành công",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Điện thoại\",\n  \"slug\": \"dien-thoai\",\n  \"description\": \"Điện thoại thông minh các loại\",\n  \"parent\": \"770e8400-e29b-41d4-a716-446655440001\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/categories",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "categories"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"categoryId\": \"880e8400-e29b-41d4-a716-446655440002\",\n    \"name\": \"Điện thoại\",\n    \"slug\": \"dien-thoai\",\n    \"description\": \"Điện thoại thông minh các loại\",\n    \"parent\": \"770e8400-e29b-41d4-a716-446655440001\",\n    \"children\": [],\n    \"createdAt\": \"2026-09-28T07:15:00Z\",\n    \"createdBy\": null,\n    \"updatedAt\": null,\n    \"updatedBy\": null\n  }\n}"
+                }
+              ]
+            },
+            {
+              "name": "Lấy Category theo ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/categories/{{categoryId}}",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "categories",
+                    "{{categoryId}}"
+                  ]
+                },
+                "description": "Lấy thông tin chi tiết của một category theo UUID, bao gồm danh sách children."
+              },
+              "response": [
+                {
+                  "name": "Lấy category thành công",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/categories/770e8400-e29b-41d4-a716-446655440001",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "categories",
+                        "770e8400-e29b-41d4-a716-446655440001"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"categoryId\": \"770e8400-e29b-41d4-a716-446655440001\",\n    \"name\": \"Điện tử\",\n    \"slug\": \"dien-tu\",\n    \"description\": \"Các sản phẩm điện tử, thiết bị công nghệ\",\n    \"parent\": null,\n    \"children\": [\n      {\n        \"categoryId\": \"880e8400-e29b-41d4-a716-446655440002\",\n        \"name\": \"Điện thoại\",\n        \"slug\": \"dien-thoai\"\n      }\n    ],\n    \"createdAt\": \"2026-09-28T07:11:40Z\",\n    \"createdBy\": null,\n    \"updatedAt\": null,\n    \"updatedBy\": null\n  }\n}"
+                },
+                {
+                  "name": "Lỗi - không tìm thấy category",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/categories/00000000-0000-0000-0000-000000000000",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "categories",
+                        "00000000-0000-0000-0000-000000000000"
+                      ]
+                    }
+                  },
+                  "status": "Not Found",
+                  "code": 404,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 9002,\n  \"message\": \"Category not found\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Danh sách tất cả Categories (phân trang)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/categories?page=0&size=10",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "categories"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0",
+                      "description": "Số trang (bắt đầu từ 0)"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10",
+                      "description": "Số phần tử mỗi trang"
+                    }
+                  ]
+                },
+                "description": "Lấy toàn bộ danh sách categories có phân trang (bao gồm cả root và sub-category).\n\n**Note:** `page` bắt đầu từ 0 (Spring Pageable mặc định)."
+              },
+              "response": [
+                {
+                  "name": "Danh sách category thành công",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/categories?page=0&size=10",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "categories"
+                      ],
+                      "query": [
+                        {
+                          "key": "page",
+                          "value": "0"
+                        },
+                        {
+                          "key": "size",
+                          "value": "10"
+                        }
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"data\": [\n      {\n        \"categoryId\": \"770e8400-e29b-41d4-a716-446655440001\",\n        \"name\": \"Điện tử\",\n        \"slug\": \"dien-tu\",\n        \"description\": \"Các sản phẩm điện tử, thiết bị công nghệ\",\n        \"parent\": null\n      },\n      {\n        \"categoryId\": \"880e8400-e29b-41d4-a716-446655440002\",\n        \"name\": \"Điện thoại\",\n        \"slug\": \"dien-thoai\",\n        \"description\": \"Điện thoại thông minh các loại\",\n        \"parent\": \"770e8400-e29b-41d4-a716-446655440001\"\n      }\n    ],\n    \"currentPage\": 0,\n    \"pageSize\": 10,\n    \"totalElements\": 2,\n    \"totalPages\": 1\n  }\n}"
+                }
+              ]
+            },
+            {
+              "name": "Danh sách Root Categories (phân trang)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/categories/roots?page=0&size=10",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "categories",
+                    "roots"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0",
+                      "description": "Số trang (bắt đầu từ 0)"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10",
+                      "description": "Số phần tử mỗi trang"
+                    }
+                  ]
+                },
+                "description": "Lấy danh sách các category gốc (root — không có parent), có phân trang."
+              },
+              "response": [
+                {
+                  "name": "Danh sách root categories",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/categories/roots?page=0&size=10",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "categories",
+                        "roots"
+                      ],
+                      "query": [
+                        {
+                          "key": "page",
+                          "value": "0"
+                        },
+                        {
+                          "key": "size",
+                          "value": "10"
+                        }
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"data\": [\n      {\n        \"categoryId\": \"770e8400-e29b-41d4-a716-446655440001\",\n        \"name\": \"Điện tử\",\n        \"slug\": \"dien-tu\",\n        \"description\": \"Các sản phẩm điện tử, thiết bị công nghệ\",\n        \"parent\": null,\n        \"children\": [\n          {\n            \"categoryId\": \"880e8400-e29b-41d4-a716-446655440002\",\n            \"name\": \"Điện thoại\",\n            \"slug\": \"dien-thoai\"\n          }\n        ]\n      },\n      {\n        \"categoryId\": \"990e8400-e29b-41d4-a716-446655440003\",\n        \"name\": \"Thời trang\",\n        \"slug\": \"thoi-trang\",\n        \"description\": \"Quần áo, giày dép, phụ kiện\",\n        \"parent\": null,\n        \"children\": []\n      }\n    ],\n    \"currentPage\": 0,\n    \"pageSize\": 10,\n    \"totalElements\": 2,\n    \"totalPages\": 1\n  }\n}"
+                }
+              ]
+            },
+            {
+              "name": "Danh sách Children của một Category",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/categories/{{parentCategoryId}}/children?page=0&size=10",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "categories",
+                    "{{parentCategoryId}}",
+                    "children"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0",
+                      "description": "Số trang (bắt đầu từ 0)"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10",
+                      "description": "Số phần tử mỗi trang"
+                    }
+                  ]
+                },
+                "description": "Lấy danh sách category con của một category cha theo UUID.\n\n> Điền `parentCategoryId` vào collection variable hoặc thay UUID trực tiếp vào URL."
+              },
+              "response": [
+                {
+                  "name": "Danh sách children thành công",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/categories/770e8400-e29b-41d4-a716-446655440001/children?page=0&size=10",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "categories",
+                        "770e8400-e29b-41d4-a716-446655440001",
+                        "children"
+                      ],
+                      "query": [
+                        {
+                          "key": "page",
+                          "value": "0"
+                        },
+                        {
+                          "key": "size",
+                          "value": "10"
+                        }
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"data\": [\n      {\n        \"categoryId\": \"880e8400-e29b-41d4-a716-446655440002\",\n        \"name\": \"Điện thoại\",\n        \"slug\": \"dien-thoai\",\n        \"description\": \"Điện thoại thông minh các loại\",\n        \"parent\": \"770e8400-e29b-41d4-a716-446655440001\"\n      },\n      {\n        \"categoryId\": \"aa0e8400-e29b-41d4-a716-446655440004\",\n        \"name\": \"Laptop\",\n        \"slug\": \"laptop\",\n        \"description\": \"Máy tính xách tay\",\n        \"parent\": \"770e8400-e29b-41d4-a716-446655440001\"\n      }\n    ],\n    \"currentPage\": 0,\n    \"pageSize\": 10,\n    \"totalElements\": 2,\n    \"totalPages\": 1\n  }\n}"
+                }
+              ]
+            },
+            {
+              "name": "Cập nhật Category",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Điện tử & Công nghệ\",\n  \"slug\": \"dien-tu-cong-nghe\",\n  \"description\": \"Điện tử, thiết bị công nghệ và phụ kiện\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/categories/{{categoryId}}",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "categories",
+                    "{{categoryId}}"
+                  ]
+                },
+                "description": "Cập nhật thông tin category theo UUID.\n\n> Có thể thay đổi cả `parent` để di chuyển category sang nhánh khác."
+              },
+              "response": [
+                {
+                  "name": "Cập nhật thành công",
+                  "originalRequest": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Điện tử & Công nghệ\",\n  \"slug\": \"dien-tu-cong-nghe\",\n  \"description\": \"Điện tử, thiết bị công nghệ và phụ kiện\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/categories/770e8400-e29b-41d4-a716-446655440001",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "categories",
+                        "770e8400-e29b-41d4-a716-446655440001"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"categoryId\": \"770e8400-e29b-41d4-a716-446655440001\",\n    \"name\": \"Điện tử & Công nghệ\",\n    \"slug\": \"dien-tu-cong-nghe\",\n    \"description\": \"Điện tử, thiết bị công nghệ và phụ kiện\",\n    \"parent\": null,\n    \"children\": [],\n    \"createdAt\": \"2026-09-28T07:11:40Z\",\n    \"createdBy\": null,\n    \"updatedAt\": \"2026-09-28T07:30:00Z\",\n    \"updatedBy\": null\n  }\n}"
+                }
+              ]
+            },
+            {
+              "name": "Xóa Category",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/categories/{{categoryId}}",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "categories",
+                    "{{categoryId}}"
+                  ]
+                },
+                "description": "Xóa mềm (soft delete) category theo UUID.\n\n⚠️ **Lưu ý:** Category có `is_deleted = 0` mới hiển thị, sau khi xóa sẽ không còn truy vấn được.\n\n> **Lỗi trong code hiện tại:** `@DeleteMapping(\"/categoryId\")` thiếu dấu `{` — nên sẽ không hoạt động đúng. Cần sửa thành `@DeleteMapping(\"/{categoryId}\")`."
+              },
+              "response": [
+                {
+                  "name": "Xóa thành công",
+                  "originalRequest": {
+                    "method": "DELETE",
+                    "header": [],
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/categories/770e8400-e29b-41d4-a716-446655440001",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "categories",
+                        "770e8400-e29b-41d4-a716-446655440001"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\"\n}"
+                }
+              ]
             }
           ]
         }

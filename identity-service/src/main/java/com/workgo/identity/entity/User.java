@@ -73,4 +73,8 @@ public class User {
     @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     Set<Address> addresses = new HashSet<>();
+
+    @OneToOne
+    @JoinColumn(name = "provider_id")
+    ProviderProfile providerProfile;
 }

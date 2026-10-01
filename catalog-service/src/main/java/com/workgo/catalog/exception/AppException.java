@@ -1,4 +1,6 @@
-package com.workgo.identity.Exception;
+package com.workgo.catalog.exception;
+
+
 
 public class AppException extends RuntimeException{
 

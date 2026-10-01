@@ -36,7 +36,20 @@ public enum ErrorCode {
     ROLE_NOT_EXISTED(1021, "This role is not existed", HttpStatus.BAD_REQUEST),
 
     ADDRESS_NOT_EXISTED(1022, "This address is not existed", HttpStatus.BAD_REQUEST),
+
+    //===============PROVIDER====================
+    PROVIDER_PROFILE_EXISTED(1023, "Provider profile already existed", HttpStatus.BAD_REQUEST),
+    PROVIDER_PROFILE_NOT_EXISTED(1024, "Provider profile does not exist", HttpStatus.NOT_FOUND),
+    USER_ALREADY_PROVIDER(1025, "This user is already a provider", HttpStatus.BAD_REQUEST),
+
+
+    //=================PROVIDER VERIFICATION============
+    PROVIDER_VERIFICATION_NOT_EXISTED(1026, "Provider verification does not exist", HttpStatus.NOT_FOUND),
+    PROVIDER_VERIFICATION_PENDING(1027, "You already have a pending verification request", HttpStatus.BAD_REQUEST),
+
+
     ;
+
 
     private int code;
     private String message;

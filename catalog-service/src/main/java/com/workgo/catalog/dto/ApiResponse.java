@@ -1,4 +1,4 @@
-package com.workgo.identity.dto;
+package com.workgo.catalog.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;

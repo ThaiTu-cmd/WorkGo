@@ -6,6 +6,24 @@ server:
 spring:
   application:
     name: catalog-service
+  datasource:
+    url: jdbc:postgresql://postgres-catalog:5432/${CATALOG_DB:catalog_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:admin123}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
-# TODO: Thêm datasource khi catalog-service có DB
-# TODO: Thêm kafka config khi cần
+jwt:
+  signerKey: ${JWT_SIGNER_KEY}
+
+app:
+  service:
+    identity:
+      url: ${APP_SERVICE_IDENTITY_URL}

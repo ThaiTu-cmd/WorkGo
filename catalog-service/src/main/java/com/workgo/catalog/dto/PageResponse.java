@@ -1,10 +1,9 @@
-package com.workgo.identity.dto;
+package com.workgo.catalog.dto;
 
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.Collections;
 import java.util.List;
 
 @Getter

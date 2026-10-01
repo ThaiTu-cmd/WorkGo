@@ -13,8 +13,10 @@ import com.workgo.identity.dto.request.LogoutRequest;
 import com.workgo.identity.dto.response.AuthenticationResponse;
 import com.workgo.identity.dto.response.IntrospectResponse;
 import com.workgo.identity.entity.InvalidatedToken;
+import com.workgo.identity.entity.ProviderProfile;
 import com.workgo.identity.entity.User;
 import com.workgo.identity.repository.InvalidatedTokenRepository;
+import com.workgo.identity.repository.ProviderProfileRepository;
 import com.workgo.identity.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -140,6 +142,8 @@ public class AuthenticationService {
                 ))
                 .jwtID(UUID.randomUUID().toString())
                 .claim("scope", buildScope(user))
+                .claim("userId", user.getUserId())
+//                .claim("providerId", user.getProviderId)
                 .build();
 
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());

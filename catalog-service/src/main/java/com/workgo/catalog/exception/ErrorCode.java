@@ -1,4 +1,4 @@
-package com.workgo.identity.Exception;
+package com.workgo.catalog.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,20 +22,16 @@ public enum ErrorCode {
     UNAUTHENTICATED(1005, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     USER_NOT_EXISTED(1006, "User dose not exist", HttpStatus.NOT_FOUND),
     UNAUTHORIZED(1007, "You do not have that permission", HttpStatus.UNAUTHORIZED),
-    DISPLAYNAME_INVALID(1008, "DisplayName must be at least 5 characters", HttpStatus.BAD_REQUEST),
-    USERNAME_EXISTED(1009, "UserName has already existed !", HttpStatus.BAD_REQUEST),
-    PASSWORD_NOT_BLANK(1010, "Password must not be blank", HttpStatus.BAD_REQUEST),
-    DISPLAYNAME_NOT_BLANK(1011, "DisplayName must not be blank", HttpStatus.BAD_REQUEST),
-    EMAIL_NOT_BLANK(1012, "Email must not be blank", HttpStatus.BAD_REQUEST),
-    EMAIL_MAX_SIZE(1013, "Email at maximum 30 characters", HttpStatus.BAD_REQUEST),
-    PHONE_NOT_BLANK(1014, "Phone must not be blank", HttpStatus.BAD_REQUEST),
-    PHONE_SIZE(1015, "Phone size must between 10 and 11 numbers", HttpStatus.BAD_REQUEST),
-    EMAIL_EXISTED(1018, "Email already in use", HttpStatus.BAD_REQUEST),
-    PHONE_EXISTED(1019, "Phone number already in use", HttpStatus.BAD_REQUEST),
-    WRONG_PASSWORD(1020, "Current password is incorrect", HttpStatus.BAD_REQUEST),
-    ROLE_NOT_EXISTED(1021, "This role is not existed", HttpStatus.BAD_REQUEST),
 
-    ADDRESS_NOT_EXISTED(1022, "This address is not existed", HttpStatus.BAD_REQUEST),
+    //===============CATEGORY===================
+    CATEGORY_EXISTED(1008, "Category is already existed ", HttpStatus.BAD_REQUEST),
+    CATEGORY_NOT_EXISTED(1009, "Category is not existed !", HttpStatus.BAD_REQUEST),
+    PARENT_CATEGORY_NOT_EXISTED(1010, "The parent of this category is not existed", HttpStatus.BAD_REQUEST),
+
+    //===============SERVICE==============================
+    SERVICE_EXISTED(1011, "This service is already existed !", HttpStatus.BAD_REQUEST),
+    SERVICE_NOT_EXISTED(1012, "This service is not existed !", HttpStatus.BAD_REQUEST),
+
     ;
 
     private int code;

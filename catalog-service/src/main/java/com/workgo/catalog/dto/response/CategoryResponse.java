@@ -2,12 +2,10 @@ package com.workgo.catalog.dto.response;
 
 
 import com.workgo.catalog.entity.Category;
-import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -16,7 +14,7 @@ import java.util.UUID;
 @Builder
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class CategoryCreationResponse {
+public class CategoryResponse {
 
 
     UUID categoryId;
@@ -37,6 +35,6 @@ public class CategoryCreationResponse {
 
     UUID parent;
 
-    Set<Category> children;
+    Set<CategorySecondResponse> children;
 
 }

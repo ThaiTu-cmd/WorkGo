@@ -1,6 +1,7 @@
-package com.workgo.identity.Exception;
+package com.workgo.catalog.exception;
 
-import com.workgo.identity.dto.ApiResponse;
+import com.workgo.catalog.dto.ApiResponse;
+import com.workgo.catalog.exception.ErrorCode;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;

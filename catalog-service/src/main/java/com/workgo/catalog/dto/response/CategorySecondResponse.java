@@ -14,7 +14,7 @@ import java.util.UUID;
 @Builder
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class CategoryResponse {
+public class CategorySecondResponse {
 
 
     UUID categoryId;
@@ -22,19 +22,5 @@ public class CategoryResponse {
     String name;
 
     String slug;
-
-    String description;
-
-    Instant createdAt;
-
-    UUID createdBy;
-
-    Instant updatedAt;
-
-    UUID updatedBy;
-
-    UUID parent;
-
-    Set<Category> children;
 
 }

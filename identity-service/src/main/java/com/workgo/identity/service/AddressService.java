@@ -11,7 +11,7 @@ import com.workgo.identity.entity.Address;
 import com.workgo.identity.entity.User;
 import com.workgo.identity.repository.AddressRepository;
 import com.workgo.identity.repository.UserRepository;
-import com.workgo.identity.util.Util;
+import com.workgo.identity.util.AttributeUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -33,10 +33,10 @@ public class AddressService {
     AddressMapper addressMapper;
     AddressRepository addressRepository;
     UserRepository userRepository;
-    Util util;
+    AttributeUtil attributeUtil;
 
     public AddressResponse createAddress(AddressCreationRequest request){
-        User user = util.getCurrentUser();
+        User user = attributeUtil.getCurrentUser();
 
         Address address = Address.builder()
                 .label(request.getLabel())
@@ -70,7 +70,7 @@ public class AddressService {
 
         Sort sort = Sort.by("createdAt").descending();
 
-        User user = util.getCurrentUser();
+        User user = attributeUtil.getCurrentUser();
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
@@ -106,7 +106,7 @@ public class AddressService {
 
         log.info(address.toString());
 
-        int mark = util.createDeletedMark();
+        int mark = attributeUtil.createDeletedMark();
 
         log.info("Du lieu cua mark : " + mark);
 

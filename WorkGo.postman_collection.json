@@ -71,6 +71,12 @@
       "value": "",
       "type": "string",
       "description": "UUID của provider verification — tự động set sau khi nộp hồ sơ"
+    },
+    {
+      "key": "serviceId",
+      "value": "",
+      "type": "string",
+      "description": "UUID của service — tự động set sau khi tạo service mới"
     }
   ],
   "item": [
@@ -1983,6 +1989,468 @@
                       "path": [
                         "categories",
                         "770e8400-e29b-41d4-a716-446655440001"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "services",
+          "description": "Quản lý dịch vụ (Service) của Provider trong Catalog Service\n\n🔐 Tất cả các API write (POST, PUT, DELETE) và GET /my-services yêu cầu JWT với role ROLE_PROVIDER.\nGET /{serviceId} là public.",
+          "item": [
+            {
+              "name": "Tạo Service mới",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var json = pm.response.json();",
+                      "if (json && json.result && json.result.serviceId) {",
+                      "    pm.collectionVariables.set('serviceId', json.result.serviceId);",
+                      "    console.log('✅ serviceId đã được lưu: ' + json.result.serviceId);",
+                      "} else {",
+                      "    console.warn('⚠️ Không tìm thấy serviceId trong response');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"categoryId\": \"{{categoryId}}\",\n  \"executionType\": \"DIGITAL\",\n  \"title\": \"Thiết kế logo chuyên nghiệp\",\n  \"slug\": \"thiet-ke-logo-chuyen-nghiep\",\n  \"description\": \"Dịch vụ thiết kế logo độc đáo, sáng tạo cho doanh nghiệp của bạn.\",\n  \"basePrice\": 500000,\n  \"currency\": \"VND\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/services",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "services"
+                  ]
+                },
+                "description": "Tạo service mới cho provider đang đăng nhập.\n\n`providerId` được lấy tự động từ JWT token (claim `userId`) — không cần truyền trong body.\n\n🔐 **Yêu cầu JWT** với role `ROLE_PROVIDER`.\n\n> Sau khi tạo thành công, `serviceId` sẽ tự động được lưu vào collection variable."
+              },
+              "response": [
+                {
+                  "name": "Tạo service thành công",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"categoryId\": \"770e8400-e29b-41d4-a716-446655440001\",\n  \"executionType\": \"DIGITAL\",\n  \"title\": \"Thiết kế logo chuyên nghiệp\",\n  \"slug\": \"thiet-ke-logo-chuyen-nghiep\",\n  \"description\": \"Dịch vụ thiết kế logo độc đáo, sáng tạo cho doanh nghiệp của bạn.\",\n  \"basePrice\": 500000,\n  \"currency\": \"VND\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/services",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "services"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"serviceId\": \"880e8400-e29b-41d4-a716-446655440001\",\n    \"providerId\": \"550e8400-e29b-41d4-a716-446655440001\",\n    \"categoryId\": \"770e8400-e29b-41d4-a716-446655440001\",\n    \"executionType\": \"DIGITAL\",\n    \"title\": \"Thiết kế logo chuyên nghiệp\",\n    \"slug\": \"thiet-ke-logo-chuyen-nghiep\",\n    \"description\": \"Dịch vụ thiết kế logo độc đáo, sáng tạo cho doanh nghiệp của bạn.\",\n    \"basePrice\": 500000,\n    \"currency\": \"VND\",\n    \"status\": \"DRAFT\",\n    \"createdAt\": \"2026-10-02T11:49:37Z\",\n    \"updatedAt\": \"2026-10-02T11:49:37Z\"\n  }\n}"
+                },
+                {
+                  "name": "Lỗi - slug đã tồn tại",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"categoryId\": \"770e8400-e29b-41d4-a716-446655440001\",\n  \"executionType\": \"DIGITAL\",\n  \"title\": \"Thiết kế logo chuyên nghiệp\",\n  \"slug\": \"thiet-ke-logo-chuyen-nghiep\",\n  \"basePrice\": 500000\n}"
+                    },
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/services",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "services"
+                      ]
+                    }
+                  },
+                  "status": "Bad Request",
+                  "code": 400,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1011,\n  \"message\": \"This service is already existed !\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Lấy Service theo ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/services/{{serviceId}}",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": "Lấy chi tiết một service theo UUID.\n\n**Public endpoint** — không cần Authorization header."
+              },
+              "response": [
+                {
+                  "name": "Lấy service thành công",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/services/880e8400-e29b-41d4-a716-446655440001",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "services",
+                        "880e8400-e29b-41d4-a716-446655440001"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"serviceId\": \"880e8400-e29b-41d4-a716-446655440001\",\n    \"providerId\": \"550e8400-e29b-41d4-a716-446655440001\",\n    \"categoryId\": \"770e8400-e29b-41d4-a716-446655440001\",\n    \"executionType\": \"DIGITAL\",\n    \"title\": \"Thiết kế logo chuyên nghiệp\",\n    \"slug\": \"thiet-ke-logo-chuyen-nghiep\",\n    \"description\": \"Dịch vụ thiết kế logo độc đáo, sáng tạo cho doanh nghiệp của bạn.\",\n    \"basePrice\": 500000,\n    \"currency\": \"VND\",\n    \"status\": \"DRAFT\",\n    \"avgRating\": 0.0,\n    \"reviewCount\": 0,\n    \"orderCount\": 0,\n    \"publishedAt\": null,\n    \"createdAt\": \"2026-10-02T11:49:37Z\",\n    \"updatedAt\": \"2026-10-02T11:49:37Z\"\n  }\n}"
+                },
+                {
+                  "name": "Lỗi - service không tồn tại",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/services/00000000-0000-0000-0000-000000000000",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "services",
+                        "00000000-0000-0000-0000-000000000000"
+                      ]
+                    }
+                  },
+                  "status": "Bad Request",
+                  "code": 400,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1012,\n  \"message\": \"This service is not existed !\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "My Services (phân trang)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/services/my-services?page=0&size=10",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "services",
+                    "my-services"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0",
+                      "description": "Số trang (bắt đầu từ 0)"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10",
+                      "description": "Số phần tử mỗi trang"
+                    }
+                  ]
+                },
+                "description": "Lấy danh sách tất cả service của provider đang đăng nhập (phân trang, sắp xếp mới nhất trước).\n\n🔐 **Yêu cầu JWT** với role `ROLE_PROVIDER`."
+              },
+              "response": [
+                {
+                  "name": "Lấy my-services thành công",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/services/my-services?page=0&size=10",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "services",
+                        "my-services"
+                      ],
+                      "query": [
+                        {
+                          "key": "page",
+                          "value": "0"
+                        },
+                        {
+                          "key": "size",
+                          "value": "10"
+                        }
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"currentPage\": 0,\n    \"pageSize\": 10,\n    \"totalPages\": 1,\n    \"totalElements\": 2,\n    \"data\": [\n      {\n        \"serviceId\": \"880e8400-e29b-41d4-a716-446655440001\",\n        \"providerId\": \"550e8400-e29b-41d4-a716-446655440001\",\n        \"categoryId\": \"770e8400-e29b-41d4-a716-446655440001\",\n        \"executionType\": \"DIGITAL\",\n        \"title\": \"Thiết kế logo chuyên nghiệp\",\n        \"slug\": \"thiet-ke-logo-chuyen-nghiep\",\n        \"basePrice\": 500000,\n        \"currency\": \"VND\",\n        \"status\": \"DRAFT\",\n        \"avgRating\": 0.0,\n        \"reviewCount\": 0,\n        \"orderCount\": 0,\n        \"createdAt\": \"2026-10-02T11:49:37Z\",\n        \"updatedAt\": \"2026-10-02T11:49:37Z\"\n      }\n    ]\n  }\n}"
+                }
+              ]
+            },
+            {
+              "name": "Cập nhật Service",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"categoryId\": \"{{categoryId}}\",\n  \"executionType\": \"ONSITE\",\n  \"title\": \"Thiết kế logo cao cấp\",\n  \"slug\": \"thiet-ke-logo-cao-cap\",\n  \"description\": \"Dịch vụ thiết kế logo cao cấp, tư vấn trực tiếp tại văn phòng.\",\n  \"basePrice\": 1200000,\n  \"currency\": \"VND\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/services/{{serviceId}}",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": "Cập nhật thông tin service theo UUID.\n\n🔐 **Yêu cầu JWT** với role `ROLE_PROVIDER`.\n\n⚠️ **Chỉ owner (provider tạo ra service) mới có quyền cập nhật.** Nếu không phải owner sẽ nhận lỗi `UNAUTHORIZED`."
+              },
+              "response": [
+                {
+                  "name": "Cập nhật thành công",
+                  "originalRequest": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"title\": \"Thiết kế logo cao cấp\",\n  \"slug\": \"thiet-ke-logo-cao-cap\",\n  \"basePrice\": 1200000\n}"
+                    },
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/services/880e8400-e29b-41d4-a716-446655440001",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "services",
+                        "880e8400-e29b-41d4-a716-446655440001"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1000,\n  \"message\": \"Success\",\n  \"result\": {\n    \"serviceId\": \"880e8400-e29b-41d4-a716-446655440001\",\n    \"providerId\": \"550e8400-e29b-41d4-a716-446655440001\",\n    \"categoryId\": \"770e8400-e29b-41d4-a716-446655440001\",\n    \"executionType\": \"ONSITE\",\n    \"title\": \"Thiết kế logo cao cấp\",\n    \"slug\": \"thiet-ke-logo-cao-cap\",\n    \"description\": \"Dịch vụ thiết kế logo cao cấp, tư vấn trực tiếp tại văn phòng.\",\n    \"basePrice\": 1200000,\n    \"currency\": \"VND\",\n    \"status\": \"DRAFT\",\n    \"avgRating\": 0.0,\n    \"reviewCount\": 0,\n    \"orderCount\": 0,\n    \"createdAt\": \"2026-10-02T11:49:37Z\",\n    \"updatedAt\": \"2026-10-02T12:05:00Z\"\n  }\n}"
+                },
+                {
+                  "name": "Lỗi - không phải owner",
+                  "originalRequest": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"title\": \"Hacker update\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/services/880e8400-e29b-41d4-a716-446655440001",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "services",
+                        "880e8400-e29b-41d4-a716-446655440001"
+                      ]
+                    }
+                  },
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"code\": 1007,\n  \"message\": \"You do not have that permission\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Xóa Service (soft delete)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{accessToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/services/{{serviceId}}",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": "Xóa mềm (soft delete) service theo UUID. Service sẽ bị ẩn khỏi mọi query (do `@SQLRestriction`) nhưng dữ liệu vẫn còn trong DB.\n\n🔐 **Yêu cầu JWT** với role `ROLE_PROVIDER`.\n\n⚠️ **Chỉ owner mới có quyền xóa.** Sau khi xóa, GET theo ID sẽ trả về `SERVICE_NOT_EXISTED`."
+              },
+              "response": [
+                {
+                  "name": "Xóa thành công",
+                  "originalRequest": {
+                    "method": "DELETE",
+                    "header": [],
+                    "url": {
+                      "raw": "{{catalogUrl}}{{catalogPath}}/services/880e8400-e29b-41d4-a716-446655440001",
+                      "host": [
+                        "{{catalogUrl}}{{catalogPath}}"
+                      ],
+                      "path": [
+                        "services",
+                        "880e8400-e29b-41d4-a716-446655440001"
                       ]
                     }
                   },

@@ -130,6 +130,11 @@ public class AuthenticationService {
     }
 
     private String generateToken(User user) throws JOSEException {
+        String providerId = null;
+        if(user.getProviderProfile() != null && user.getProviderProfile().getProviderProfileId() != null){
+            providerId = user.getProviderProfile().getProviderProfileId().toString();
+        }
+
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
@@ -143,7 +148,7 @@ public class AuthenticationService {
                 .jwtID(UUID.randomUUID().toString())
                 .claim("scope", buildScope(user))
                 .claim("userId", user.getUserId())
-//                .claim("providerId", user.getProviderId)
+                .claim("providerId", providerId)
                 .build();
 
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());

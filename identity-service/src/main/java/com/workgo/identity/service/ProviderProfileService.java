@@ -8,9 +8,15 @@ import com.workgo.identity.dto.request.ProviderProfileCreationRequest;
 import com.workgo.identity.dto.request.ProviderProfileUpdateRequest;
 import com.workgo.identity.dto.response.ProviderProfileResponse;
 import com.workgo.identity.entity.ProviderProfile;
+import com.workgo.identity.entity.Role;
 import com.workgo.identity.entity.User;
+import com.workgo.identity.entity.UserRole;
+import com.workgo.identity.enumeration.RoleName;
 import com.workgo.identity.enumeration.VerificationStatus;
 import com.workgo.identity.repository.ProviderProfileRepository;
+import com.workgo.identity.repository.RoleRepository;
+import com.workgo.identity.repository.UserRepository;
+import com.workgo.identity.repository.UserRoleRepository;
 import com.workgo.identity.util.AttributeUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +37,11 @@ public class ProviderProfileService {
 
     ProviderProfileRepository providerProfileRepository;
     ProviderProfileMapper providerProfileMapper;
+    UserRepository userRepository;
+    RoleRepository roleRepository;
+    UserRoleRepository userRoleRepository;
     AttributeUtil attributeUtil;
+
 
     //Tao provider profile
     public ProviderProfileResponse createProviderProfile(ProviderProfileCreationRequest request) {
@@ -43,11 +53,29 @@ public class ProviderProfileService {
                 .providerType(request.getProviderType())
                 .businessName(request.getBusinessName())
                 .bio(request.getBio())
+                .verificationStatus(VerificationStatus.PENDING)
                 .user(user)
                 .build();
 
-        providerProfileRepository.save(providerProfile);
-        return providerProfileMapper.toProviderProfileResponse(providerProfile);
+        ProviderProfile savedProfile = providerProfileRepository.save(providerProfile);
+
+        Role role = roleRepository.findById(RoleName.PROVIDER)
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+
+        UserRole userRole = UserRole.builder()
+                .grantedAt(Instant.now())
+                .userNameHost("System")
+                .user(user)
+                .role(role)
+                .build();
+
+        userRoleRepository.save(userRole);
+
+        user.getUserRoles().add(userRole);
+        user.setProviderProfile(savedProfile);
+        userRepository.save(user);
+
+        return providerProfileMapper.toProviderProfileResponse(savedProfile);
     }
 
     public ProviderProfileResponse getMyProviderProfile() {

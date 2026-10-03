@@ -86,5 +86,4 @@ public class Service {
     @JoinColumn(name = "category_id")
     Category category;
 
-
 }

@@ -7,7 +7,10 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Setter
@@ -18,7 +21,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "services", uniqueConstraints = {
-        @UniqueConstraint(name = "slug-isDeleted", columnNames = {"slug", "isDeleted"})
+        @UniqueConstraint(name = "slug-isDeleted", columnNames = {"slug", "is_deleted"})
 })
 @SQLRestriction("is_deleted = 0")
 public class Service {
@@ -42,7 +45,7 @@ public class Service {
     String description;
 
     @Column(name = "base_price", nullable = false)
-    double basePrice;
+    BigDecimal basePrice;
 
     @Builder.Default
     @Column(name = "currency", nullable = false, length = 10)
@@ -85,5 +88,14 @@ public class Service {
     @ManyToOne
     @JoinColumn(name = "category_id")
     Category category;
+
+    @OneToMany(mappedBy = "service")
+    Set<BookingSlot> bookingSlot = new HashSet<>();
+
+    @OneToMany(mappedBy = "service")
+    Set<Package> packages = new HashSet<>();
+
+    @OneToMany(mappedBy = "service")
+    Set<ServiceMedia> serviceMedia = new HashSet<>();
 
 }

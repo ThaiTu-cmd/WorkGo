@@ -4,6 +4,7 @@ import com.workgo.catalog.enumeration.ExecutionType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter
@@ -24,7 +25,7 @@ public class ServiceCreationRequest {
 
     String description;
 
-    double basePrice;
+    BigDecimal basePrice;
 
     String currency;
 

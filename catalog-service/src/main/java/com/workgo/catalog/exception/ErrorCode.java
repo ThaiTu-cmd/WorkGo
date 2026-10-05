@@ -32,6 +32,14 @@ public enum ErrorCode {
     SERVICE_EXISTED(1011, "This service is already existed !", HttpStatus.BAD_REQUEST),
     SERVICE_NOT_EXISTED(1012, "This service is not existed !", HttpStatus.BAD_REQUEST),
 
+    //===============PACKAGE==============================
+    PACKAGE_EXISTED(1013, "This package name already exists in this service !", HttpStatus.BAD_REQUEST),
+    PACKAGE_NOT_EXISTED(1014, "This package does not exist !", HttpStatus.NOT_FOUND),
+
+    //===============MEDIA==============================
+    MEDIA_EXISTED(1015, "This media URL already exists in this service !", HttpStatus.BAD_REQUEST),
+    MEDIA_NOT_EXISTED(1016, "This media does not exist !", HttpStatus.NOT_FOUND),
+
     ;
 
     private int code;

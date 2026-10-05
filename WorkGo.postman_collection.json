@@ -2468,6 +2468,266 @@
               ]
             }
           ]
+        },
+        {
+          "name": "Packages",
+          "item": [
+            {
+              "name": "Create Package",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Gói Cơ Bản\",\n  \"description\": \"Gói dịch vụ cơ bản\",\n  \"price\": 100000,\n  \"currency\": \"VND\",\n  \"deliveryDay\": 2,\n  \"durationMinute\": 60,\n  \"revisionLimit\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/packages/services/{{serviceId}}",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "packages",
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Packages by Service",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/packages/services/{{serviceId}}?page=0&size=10",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "packages",
+                    "services",
+                    "{{serviceId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Package",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/packages/{{packageId}}",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "packages",
+                    "{{packageId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Update Package",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Gói Nâng Cao\",\n  \"description\": \"Gói dịch vụ nâng cao có nhiều tính năng\",\n  \"price\": 500000,\n  \"currency\": \"VND\",\n  \"deliveryDay\": 3,\n  \"durationMinute\": 120,\n  \"revisionLimit\": 5\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/packages/{{packageId}}",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "packages",
+                    "{{packageId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Delete Package",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/packages/{{packageId}}",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "packages",
+                    "{{packageId}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Service Medias",
+          "item": [
+            {
+              "name": "Create Service Media",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"url\": \"https://example.com/image.png\",\n  \"mediaType\": \"IMAGE\",\n  \"cover\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/medias/services/{{serviceId}}",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "medias",
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Service Medias by Service",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/medias/services/{{serviceId}}?page=0&size=10",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "medias",
+                    "services",
+                    "{{serviceId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Service Media",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/medias/{{mediaId}}",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "medias",
+                    "{{mediaId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Update Service Media",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"url\": \"https://example.com/video.mp4\",\n  \"mediaType\": \"VIDEO\",\n  \"cover\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/medias/{{mediaId}}",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "medias",
+                    "{{mediaId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Delete Service Media",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/medias/{{mediaId}}",
+                  "host": [
+                    "{{catalogUrl}}{{catalogPath}}"
+                  ],
+                  "path": [
+                    "medias",
+                    "{{mediaId}}"
+                  ]
+                }
+              }
+            }
+          ]
         }
       ]
     }

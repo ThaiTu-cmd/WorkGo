@@ -12,6 +12,7 @@ import com.workgo.catalog.exception.ErrorCode;
 import com.workgo.catalog.mapper.ServiceMapper;
 import com.workgo.catalog.repository.CategoryRepository;
 import com.workgo.catalog.repository.ServiceRepository;
+import com.workgo.catalog.utils.TokenUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -32,18 +33,7 @@ public class ServiceService {
     ServiceRepository serviceRepository;
     ServiceMapper serviceMapper;
     CategoryRepository categoryRepository;
-
-   //lay providerId tu token
-    private UUID getCurrentProviderId() {
-        Jwt jwt = (Jwt) SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getPrincipal();
-        String providerId = jwt.getClaimAsString("providerId");
-
-        if(providerId == null) throw new AppException(ErrorCode.UNAUTHORIZED);
-
-        return UUID.fromString(providerId);
-    }
+    TokenUtils tokenUtils;
 
     public ServiceCreationResponse createService(ServiceCreationRequest request) {
 
@@ -58,7 +48,7 @@ public class ServiceService {
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
 
 
-        UUID providerId = getCurrentProviderId();
+        UUID providerId = tokenUtils.getCurrentProviderId();
 
         Service service = Service.builder()
                 .providerId(providerId)
@@ -86,7 +76,7 @@ public class ServiceService {
     }
 
     public PageResponse<ServiceResponse> getMyServices(int page, int size) {
-        UUID providerId = getCurrentProviderId();
+        UUID providerId = tokenUtils.getCurrentProviderId();
 
         Sort sort = Sort.by("createdAt").descending();
         Pageable pageable = PageRequest.of(page, size, sort);

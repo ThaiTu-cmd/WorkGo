@@ -17,7 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
-import { MockChip } from "@/components/ui/mock-chip";
 import { formatVND, formatDate } from "@/lib/format";
 import { trustApi } from "@/lib/adapters/trust";
 import { ReportModal } from "@/components/domain/report-modal";
@@ -67,7 +66,7 @@ export default function DisputeDetailPage() {
 
   return (
     <PageContainer>
-      <div className="flex items-center justify-between gap-3 mb-2">
+      <div className="mb-2">
         <Breadcrumb
           locale={locale}
           items={[
@@ -76,7 +75,6 @@ export default function DisputeDetailPage() {
             { label: dispute.disputeId },
           ]}
         />
-        <MockChip />
       </div>
 
       <SectionHeading

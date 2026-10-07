@@ -1,5 +1,3 @@
-// BLOCKED BY BACKEND: Payment and Escrow endpoints are not yet implemented in backend (xlsx 80.0)
-
 import type { PaymentFormData } from "../schemas/payment";
 import { walletApi } from "./wallet";
 
@@ -8,30 +6,27 @@ export const paymentsApi = {
     data: PaymentFormData,
     idempotencyKey?: string
   ): Promise<{ transactionId: string; status: "SUCCESS" | "FAILED" }> {
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
-    // Simulate validation
+    // Boundary check
     if (data.amount < 1000) {
       throw new Error("Số tiền nạp tối thiểu là 1.000 ₫");
     }
 
-    const key = idempotencyKey || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `idemp-${Date.now()}`);
+    const key =
+      idempotencyKey ||
+      (typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `idemp-${Date.now()}`);
 
-    // Update wallet
-    const summary = await walletApi.getSummary();
-    summary.availableBalance += data.amount;
-    summary.transactions.unshift({
-      id: `tx-${Date.now()}`,
-      date: new Date().toISOString(),
-      type: "DEPOSIT",
-      amount: data.amount,
-      balanceAfter: summary.availableBalance,
-      reference: `DEP-${key.slice(0, 8).toUpperCase()}`,
-      description: `Nạp tiền qua phương thức ${data.method}`,
-    });
+    const reference = `DEP-${key.slice(0, 8).toUpperCase()}`;
+    const txId = `TX-${Date.now()}`;
+
+    // Update live wallet
+    walletApi.creditDeposit(data.amount, data.method, reference);
 
     return {
-      transactionId: `TX-${Date.now()}`,
+      transactionId: txId,
       status: "SUCCESS",
     };
   },

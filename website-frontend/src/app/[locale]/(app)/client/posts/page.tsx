@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
-import { MockChip } from "@/components/ui/mock-chip";
 import { formatVND, formatDateOnly } from "@/lib/format";
 import { postsApi, type PostItem } from "@/lib/adapters/posts";
 import { useToast } from "@/components/ui/toast";
@@ -69,15 +68,12 @@ export default function MyPostsPage() {
         subtitle="Theo dõi tiến độ, số lượng đề xuất và trạng thái tuyển dụng các bài đăng của bạn"
         level={1}
         action={
-          <div className="flex items-center gap-3">
-            <MockChip />
-            <Link href={`/${locale}/client/posts/new`}>
-              <Button variant="primary" size="md" className="gap-2">
-                <PlusCircle className="h-4 w-4" />
-                <span>Đăng việc mới</span>
-              </Button>
-            </Link>
-          </div>
+          <Link href={`/${locale}/client/posts/new`}>
+            <Button variant="primary" size="md" className="gap-2">
+              <PlusCircle className="h-4 w-4" />
+              <span>Đăng việc mới</span>
+            </Button>
+          </Link>
         }
       />
 

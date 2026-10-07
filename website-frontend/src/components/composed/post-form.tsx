@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { MockChip } from "@/components/ui/mock-chip";
 import type { CategoryItem } from "@/lib/adapters/catalog";
 import type { PostItem } from "@/lib/adapters/posts";
 
@@ -107,10 +106,7 @@ export function PostForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-4xl">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>{isEdit ? t("editTitle") : t("createTitle")}</CardTitle>
-            <MockChip />
-          </div>
+          <CardTitle>{isEdit ? t("editTitle") : t("createTitle")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
           {/* Title */}

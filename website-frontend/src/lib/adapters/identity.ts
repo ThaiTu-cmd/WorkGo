@@ -1,4 +1,4 @@
-import { apiFetch, normalizeSpringPage, type Page, type SpringPageResponse } from "../api-client";
+import { apiFetch, normalizeSpringPage, type Envelope, type Page, type SpringPageResponse } from "../api-client";
 import type { AddressFormData } from "../schemas/address";
 import type { UserProfileFormData, ProviderProfileFormData } from "../schemas/profile";
 
@@ -43,9 +43,52 @@ export interface ProviderProfileResponse {
   userId: string;
 }
 
+export type BackendRole = string | { roleName?: string };
+
+export interface RawBackendUser {
+  userId?: string | number;
+  firstName?: string;
+  lastName?: string;
+  userName?: string;
+  phone?: string;
+  email?: string;
+  avatarUrl?: string;
+  roles?: BackendRole[];
+}
+
+export function normalizeUserRoles(rawRoles?: unknown): string[] {
+  if (!rawRoles || !Array.isArray(rawRoles)) return ["USER"];
+  return rawRoles.map((r: unknown) => {
+    if (typeof r === "string") return r.replace(/^ROLE_/, "");
+    if (r && typeof r === "object" && "roleName" in r && typeof (r as { roleName?: unknown }).roleName === "string") {
+      return ((r as { roleName: string }).roleName).replace(/^ROLE_/, "");
+    }
+    return "USER";
+  });
+}
+
+export function normalizeUserResponse(raw: unknown): UserResponse {
+  const envelope = raw as Envelope<RawBackendUser> | undefined;
+  const result = (envelope && typeof envelope === "object" && "result" in envelope && envelope.result
+    ? envelope.result
+    : raw) as RawBackendUser;
+
+  return {
+    userId: String(result?.userId || ""),
+    firstName: result?.firstName || "",
+    lastName: result?.lastName || "",
+    userName: result?.userName || "",
+    phone: result?.phone || "",
+    email: result?.email || "",
+    avatarUrl: result?.avatarUrl || undefined,
+    roles: normalizeUserRoles(result?.roles),
+  };
+}
+
 export const identityApi = {
   async getMyInfo(token?: string): Promise<UserResponse> {
-    return apiFetch<UserResponse>("/api/v1/identity/users/myInfo", { token });
+    const res = await apiFetch<Envelope<RawBackendUser> | RawBackendUser>("/api/v1/identity/users/myInfo", { token });
+    return normalizeUserResponse(res);
   },
 
   async updateMyInfo(
@@ -53,11 +96,12 @@ export const identityApi = {
     data: Partial<UserProfileFormData> & { avatarUrl?: string },
     token?: string
   ): Promise<UserResponse> {
-    return apiFetch<UserResponse>(`/api/v1/identity/users/${userId}`, {
+    const res = await apiFetch<Envelope<RawBackendUser> | RawBackendUser>(`/api/v1/identity/users/${userId}`, {
       method: "PUT",
       body: data,
       token,
     });
+    return normalizeUserResponse(res);
   },
 
   async getMyAddresses(page = 0, size = 10, token?: string): Promise<Page<AddressResponse>> {
@@ -70,11 +114,12 @@ export const identityApi = {
   },
 
   async createAddress(data: AddressFormData, token?: string): Promise<AddressResponse> {
-    return apiFetch<AddressResponse>("/api/v1/identity/addresses", {
+    const res = await apiFetch<Envelope<AddressResponse> | AddressResponse>("/api/v1/identity/addresses", {
       method: "POST",
       body: data,
       token,
     });
+    return (res && "result" in res && res.result ? res.result : res) as AddressResponse;
   },
 
   async updateAddress(
@@ -82,11 +127,12 @@ export const identityApi = {
     data: AddressFormData,
     token?: string
   ): Promise<AddressResponse> {
-    return apiFetch<AddressResponse>(`/api/v1/identity/addresses/${id}`, {
+    const res = await apiFetch<Envelope<AddressResponse> | AddressResponse>(`/api/v1/identity/addresses/${id}`, {
       method: "PUT",
       body: data,
       token,
     });
+    return (res && "result" in res && res.result ? res.result : res) as AddressResponse;
   },
 
   async deleteAddress(id: string, token?: string): Promise<void> {
@@ -100,21 +146,23 @@ export const identityApi = {
     data: Omit<ProviderProfileFormData, "isAcceptingOrders">,
     token?: string
   ): Promise<ProviderProfileResponse> {
-    return apiFetch<ProviderProfileResponse>("/api/v1/identity/providers", {
+    const res = await apiFetch<Envelope<ProviderProfileResponse> | ProviderProfileResponse>("/api/v1/identity/providers", {
       method: "POST",
       body: data,
       token,
     });
+    return (res && "result" in res && res.result ? res.result : res) as ProviderProfileResponse;
   },
 
   async getMyProviderProfile(token?: string): Promise<ProviderProfileResponse | null> {
     try {
-      return await apiFetch<ProviderProfileResponse>(
+      const res = await apiFetch<Envelope<ProviderProfileResponse> | ProviderProfileResponse>(
         "/api/v1/identity/providers/myProfile",
         { token }
       );
+      return (res && "result" in res && res.result ? res.result : (res as ProviderProfileResponse)) || null;
     } catch (err: unknown) {
-      if (err && typeof err === "object" && "status" in err && err.status === 404) {
+      if (err && typeof err === "object" && "status" in err && (err as { status: unknown }).status === 404) {
         return null;
       }
       throw err;
@@ -122,14 +170,15 @@ export const identityApi = {
   },
 
   async getProviderProfile(id: string): Promise<ProviderProfileResponse> {
-    return apiFetch<ProviderProfileResponse>(`/api/v1/identity/providers/${id}`);
+    const res = await apiFetch<Envelope<ProviderProfileResponse> | ProviderProfileResponse>(`/api/v1/identity/providers/${id}`);
+    return (res && "result" in res && res.result ? res.result : res) as ProviderProfileResponse;
   },
 
   async updateMyProviderProfile(
     data: Partial<ProviderProfileFormData>,
     token?: string
   ): Promise<ProviderProfileResponse> {
-    return apiFetch<ProviderProfileResponse>(
+    const res = await apiFetch<Envelope<ProviderProfileResponse> | ProviderProfileResponse>(
       "/api/v1/identity/providers/myProfile",
       {
         method: "PUT",
@@ -137,5 +186,6 @@ export const identityApi = {
         token,
       }
     );
+    return (res && "result" in res && res.result ? res.result : res) as ProviderProfileResponse;
   },
 };

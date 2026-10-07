@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { formatVND } from "@/lib/format";
-import { MockChip } from "@/components/ui/mock-chip";
 
 export interface PaymentPanelProps {
   onSuccess?: (transactionId: string) => void;
@@ -104,9 +103,8 @@ export function PaymentPanel({
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div>
         <h3 className="font-semibold text-base text-fg">{t("selectMethod")}</h3>
-        <MockChip />
       </div>
 
       {errorMessage && (

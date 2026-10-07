@@ -9,7 +9,6 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
-import { MockChip } from "@/components/ui/mock-chip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
 import { walletApi } from "@/lib/adapters/wallet";
@@ -45,7 +44,7 @@ export default function WalletPage() {
     setDepositOpen(false);
     toast({
       type: "success",
-      title: "Nạp tiền thành công! (Mock)",
+      title: "Nạp tiền thành công!",
       description: `Mã giao dịch: ${txId}`,
     });
     await loadWallet();
@@ -57,7 +56,6 @@ export default function WalletPage() {
         title={t("title")}
         subtitle="Quản lý nguồn tiền khả dụng, tiền tạm giữ Escrow và lịch sử giao dịch chi tiết"
         level={1}
-        action={<MockChip />}
       />
 
       {loading ? (

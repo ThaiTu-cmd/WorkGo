@@ -9,7 +9,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
-import { MockChip } from "@/components/ui/mock-chip";
 import {
   Dialog,
   DialogContent,
@@ -103,7 +102,6 @@ function ClientApplicationsContent() {
         title={t("title")}
         subtitle="Xem xét các đề xuất thực hiện, báo giá và kế hoạch triển khai từ các đối tác ứng tuyển"
         level={1}
-        action={<MockChip />}
       />
 
       <div className="mb-6">

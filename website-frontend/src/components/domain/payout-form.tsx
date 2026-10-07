@@ -14,7 +14,6 @@ import { Field } from "@/components/ui/field";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { MockChip } from "@/components/ui/mock-chip";
 import { useToast } from "@/components/ui/toast";
 
 export function PayoutForm() {
@@ -91,7 +90,6 @@ export function PayoutForm() {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-fg">{t("title")}</h2>
-            <MockChip />
           </div>
           <p className="text-sm text-fg-secondary mt-0.5">{t("description")}</p>
         </div>

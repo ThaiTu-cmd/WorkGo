@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ui/field";
 import { StarRating } from "@/components/ui/star-rating";
-import { MockChip } from "@/components/ui/mock-chip";
 import { Spinner } from "@/components/ui/spinner";
 import { reviewSchema, type ReviewFormData } from "@/lib/schemas/review";
 import { trustApi } from "@/lib/adapters/trust";
@@ -89,7 +88,6 @@ function NewReviewContent() {
         title={t("modalTitle")}
         subtitle="Ý kiến đánh giá khách quan của bạn là động lực giúp các Provider hoàn thiện dịch vụ"
         level={1}
-        action={<MockChip />}
       />
 
       {loading ? (

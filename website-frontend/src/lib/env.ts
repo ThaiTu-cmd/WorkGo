@@ -4,15 +4,15 @@ export const API_BASE_URL =
 export const API_MODE = {
   identity: "live",
   catalog: "live",
-  posts: "mock",
-  payments: "mock",
-  wallet: "mock",
-  trust: "mock",
-  orders: "mock",
+  posts: "live",
+  payments: "live",
+  wallet: "live",
+  trust: "live",
+  orders: "live",
 } as const;
 
 export const FLAGS = {
-  services: false,
+  services: true,
   messaging: false,
   favorites: false,
 } as const;

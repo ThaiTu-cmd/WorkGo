@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ui/field";
-import { MockChip } from "@/components/ui/mock-chip";
 import { useToast } from "@/components/ui/toast";
 
 export interface ReportModalProps {
@@ -94,7 +93,6 @@ export function ReportModal({
               <ShieldAlert className="h-5 w-5" />
               <span>{t("modalTitle")}</span>
             </DialogTitle>
-            <MockChip />
           </div>
           <DialogDescription>
             Báo cáo này sẽ được chuyển trực tiếp tới Ban Quản Trị WorkGo để thẩm tra độc lập.

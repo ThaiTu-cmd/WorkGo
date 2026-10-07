@@ -12,7 +12,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Pagination } from "@/components/ui/pagination";
-import { MockChip } from "@/components/ui/mock-chip";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerBody } from "@/components/ui/drawer";
 import { PostCard } from "@/components/composed/post-card";
 import { FilterSidebar, type FilterValues } from "@/components/composed/filter-sidebar";
@@ -160,7 +159,6 @@ function PostsMarketplaceContent() {
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-fg">
               {t("marketplaceTitle")}
             </h1>
-            <MockChip />
           </div>
           <p className="text-sm text-fg-secondary mt-1">{t("marketplaceSubtitle")}</p>
         </div>

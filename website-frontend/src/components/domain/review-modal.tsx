@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ui/field";
 import { StarRating } from "@/components/ui/star-rating";
-import { MockChip } from "@/components/ui/mock-chip";
 import { useToast } from "@/components/ui/toast";
 
 export interface ReviewModalProps {
@@ -98,7 +97,6 @@ export function ReviewModal({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>{t("modalTitle")}</DialogTitle>
-            <MockChip />
           </div>
           {order && (
             <DialogDescription>

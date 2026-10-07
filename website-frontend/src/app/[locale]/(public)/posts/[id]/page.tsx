@@ -21,7 +21,6 @@ import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
-import { MockChip } from "@/components/ui/mock-chip";
 import { formatVND, formatDateOnly } from "@/lib/format";
 import { postsApi, type PostItem } from "@/lib/adapters/posts";
 import { proposalsApi } from "@/lib/adapters/proposals";
@@ -83,7 +82,7 @@ export default function PostDetailPage() {
 
   return (
     <PageContainer>
-      <div className="flex items-center justify-between gap-3 mb-2">
+      <div className="mb-2">
         <Breadcrumb
           locale={locale}
           items={[
@@ -92,7 +91,6 @@ export default function PostDetailPage() {
             { label: post.title },
           ]}
         />
-        <MockChip />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -16,7 +16,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
-import { MockChip } from "@/components/ui/mock-chip";
 import { formatVND, formatDateOnly } from "@/lib/format";
 import { proposalSchema, type ProposalFormData } from "@/lib/schemas/proposal";
 import { postsApi, type PostItem } from "@/lib/adapters/posts";
@@ -125,12 +124,9 @@ export default function PostApplyFallbackPage() {
         ]}
       />
 
-      <div className="flex items-center justify-between gap-3 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-fg">{t("drawerTitle")}</h1>
-          <p className="text-sm text-fg-secondary">Điền thông tin báo giá và cam kết triển khai</p>
-        </div>
-        <MockChip />
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-fg">{t("drawerTitle")}</h1>
+        <p className="text-sm text-fg-secondary">Điền thông tin báo giá và cam kết triển khai</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

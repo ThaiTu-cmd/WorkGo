@@ -50,3 +50,6 @@ docs/
 
 ### Team workspace (local only — không push lên github) ###
 .team/
+
+### Local test credentials & cookies ###
+cookie.txt

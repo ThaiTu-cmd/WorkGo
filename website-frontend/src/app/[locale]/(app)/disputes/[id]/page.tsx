@@ -98,7 +98,7 @@ export default function DisputeDetailPage() {
         {/* Left Column: Order context & Timeline */}
         <div className="lg:col-span-2 space-y-6">
           {/* Order Context Card */}
-          <Card className="border-border bg-slate-50">
+          <Card className="border-border bg-muted/30">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold uppercase tracking-wider text-fg-tertiary">
                 {t("orderInfo")}
@@ -130,7 +130,7 @@ export default function DisputeDetailPage() {
 
               <div>
                 <span className="text-xs font-semibold text-fg-secondary">Mô tả chi tiết:</span>
-                <p className="text-sm text-fg leading-relaxed mt-0.5 whitespace-pre-line bg-slate-50 p-4 rounded-control border border-border">
+                <p className="text-sm text-fg leading-relaxed mt-0.5 whitespace-pre-line bg-muted/30 p-4 rounded-control border border-border">
                   {dispute.description}
                 </p>
               </div>
@@ -212,7 +212,7 @@ export default function DisputeDetailPage() {
                 <h4 className="text-xs font-semibold text-fg-secondary uppercase tracking-wider mb-2">
                   {t("resolutionTitle")}
                 </h4>
-                <div className="p-4 rounded-control bg-slate-50 border border-border text-xs text-fg leading-relaxed">
+                <div className="p-4 rounded-control bg-muted/40 border border-border text-xs text-fg leading-relaxed">
                   {dispute.resolution}
                 </div>
               </div>

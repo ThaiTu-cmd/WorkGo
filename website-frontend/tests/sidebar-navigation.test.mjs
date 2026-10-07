@@ -96,3 +96,23 @@ test("Sidebar Navigation - (public)/layout.tsx preserves Sidebar for authenticat
     "(public)/layout.tsx must check session.isAuthenticated"
   );
 });
+
+test("Sidebar Navigation - Modular separation of AppContentArea and zero-scroll Sidebar", () => {
+  const contentAreaPath = path.resolve(__dirname, "../src/components/shell/app-content-area.tsx");
+  assert.ok(fs.existsSync(contentAreaPath), "app-content-area.tsx must exist as a separate module");
+  const contentAreaSrc = fs.readFileSync(contentAreaPath, "utf-8");
+  assert.match(contentAreaSrc, /export function AppContentArea/, "Must export AppContentArea component");
+  assert.match(contentAreaSrc, /overflow-y-auto/, "AppContentArea must enable independent scroll with overflow-y-auto");
+  assert.match(contentAreaSrc, /h-\[calc\(100vh-4rem\)\]/, "AppContentArea must lock height to h-[calc(100vh-4rem)]");
+
+  const shellPath = path.resolve(__dirname, "../src/components/shell/app-shell-client.tsx");
+  const shellSrc = fs.readFileSync(shellPath, "utf-8");
+  assert.match(shellSrc, /import\s+{\s*AppContentArea\s*}\s*from\s*["']\.\/app-content-area["']/, "AppShellClient must import AppContentArea");
+  assert.match(shellSrc, /<AppContentArea>\{children\}<\/AppContentArea>/, "AppShellClient must wrap children in AppContentArea");
+  assert.match(shellSrc, /h-screen\s+max-h-screen\s+overflow-hidden/, "AppShellClient must lock viewport with h-screen max-h-screen overflow-hidden");
+
+  const sidebarPath = path.resolve(__dirname, "../src/components/shell/sidebar.tsx");
+  const sidebarSrc = fs.readFileSync(sidebarPath, "utf-8");
+  assert.match(sidebarSrc, /h-\[calc\(100vh-4rem\)\]/, "Sidebar must have fixed viewport height");
+  assert.match(sidebarSrc, /m-0\s+left-0/, "Sidebar must be docked flush to the outer edge (m-0 left-0)");
+});

@@ -30,18 +30,17 @@ test("Happy Path - Locale root page.tsx renders AscendLandingView at http://loca
   assert.match(content, /title:\s*["']WorkGo — Nền Tảng Kết Nối Việc Làm & Dịch Vụ Chuyên Nghiệp["']/, "SEO metadata matches WorkGo branding");
 });
 
-test("Happy Path - AscendLandingView component integrates quick action dock and SSR-safe iframe", () => {
+test("Happy Path - AscendLandingView component integrates clean bottom utility dock and SSR-safe iframe without header overlap", () => {
   const landingViewPath = path.resolve(__dirname, "../src/components/landing/ascend-landing-view.tsx");
   assert.ok(fs.existsSync(landingViewPath), "ascend-landing-view.tsx must exist");
   const content = fs.readFileSync(landingViewPath, "utf-8");
 
   assert.match(content, /"use client"/, "Must be client component");
   assert.match(content, /useSyncExternalStore/, "Uses useSyncExternalStore for hydration safety without mismatch");
-  assert.match(content, /href=\{`\/\$\{locale\}\/posts`\}/, "Quick dock links to posts");
-  assert.match(content, /href=\{`\/\$\{locale\}\/login`\}/, "Quick dock links to login");
-  assert.match(content, /href=\{`\/\$\{locale\}\/register`\}/, "Quick dock links to register");
-  assert.match(content, /<LanguageSwitcher\s*currentLocale=\{locale\}\s*\/>/, "Quick dock includes LanguageSwitcher");
+  assert.match(content, /<LanguageSwitcher\s*currentLocale=\{locale\}\s*\/>/, "Utility dock includes LanguageSwitcher");
+  assert.match(content, /<ThemeToggle\s*\/>/, "Utility dock includes ThemeToggle");
   assert.match(content, /src=\{`\/landing\/index\.html\?locale=\$\{locale\}`\}/, "Iframe src loads landing page with locale param");
+  assert.doesNotMatch(content, /<header className="fixed top-0/, "Must not have floating top header overlay obstructing landing nav");
 });
 
 // =========================================================================
@@ -140,9 +139,9 @@ test("Happy Path - Client Dashboard features Holographic Command Center and mint
   const clientPagePath = path.resolve(__dirname, "../src/app/[locale]/(app)/client/page.tsx");
   const content = fs.readFileSync(clientPagePath, "utf-8");
 
-  assert.match(content, /bg-gradient-to-r from-\[rgba\(12,18,38,0\.9\)\]/, "Hero banner uses holographic dark glass gradient");
+  assert.match(content, /bg-gradient-to-r (from-\[rgba\(12,18,38,0\.9\)\]|from-surface)/, "Hero banner uses responsive surface gradient");
   assert.match(content, /Sparkles/, "Includes Sparkles greeting icon");
-  assert.match(content, /shadow-lg shadow-\[#5df0a8\]\/25/, "CTA button uses mint glow shadow");
+  assert.match(content, /shadow-lg (shadow-\[#5df0a8\]\/25|shadow-primary\/20)/, "CTA button uses mint glow shadow");
   assert.match(content, /Card glass/, "Features glass cards for metrics and actions");
 });
 
@@ -153,7 +152,7 @@ test("Happy Path - Provider Dashboard features Top Pro badge, ShieldCheck icon a
   assert.match(content, /Top Pro/i, "Features Top Pro reputation badge");
   assert.match(content, /ShieldCheck/, "Features ShieldCheck verification icon");
   assert.match(content, /Card hoverable glass|Card glass/, "Features glass cards for metrics and proposals");
-  assert.match(content, /shadow-\[#5df0a8\]/, "Uses mint glow accents");
+  assert.match(content, /shadow-(primary\/20|\[#5df0a8\])/, "Uses mint glow accents");
 });
 
 test("Happy Path - WalletSummary incorporates glass cards and mint mono currency styling", () => {

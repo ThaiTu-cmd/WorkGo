@@ -96,7 +96,7 @@ export function AcceptConfirmModal({
 
           {/* 2-Step Checkbox Guard (Anti-misclick) */}
           <div className="pt-2">
-            <div className="flex items-start gap-2.5 p-3 rounded-card bg-slate-50 border border-border">
+            <div className="flex items-start gap-2.5 p-3 rounded-card bg-muted/40 border border-border">
               <Checkbox
                 id="acceptTermsAck"
                 checked={acknowledged}

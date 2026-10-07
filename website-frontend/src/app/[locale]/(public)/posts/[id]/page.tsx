@@ -154,7 +154,7 @@ export default function PostDetailPage() {
                   {post.attachments.map((file, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-3 rounded-control border border-border bg-slate-50 text-sm"
+                      className="flex items-center justify-between p-3 rounded-control border border-border bg-muted/40 text-sm"
                     >
                       <div className="flex items-center gap-2 text-fg font-medium truncate">
                         <FileText className="h-4 w-4 text-primary shrink-0" />

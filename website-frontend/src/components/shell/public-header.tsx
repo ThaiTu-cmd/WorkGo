@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Briefcase, ArrowRight } from "lucide-react";
 import { Button } from "../ui/button";
 import { LanguageSwitcher } from "./language-switcher";
+import { ThemeToggle } from "./theme-toggle";
 
 export function PublicHeader({ locale }: { locale: string }) {
   const t = useTranslations("common");
@@ -42,8 +43,9 @@ export function PublicHeader({ locale }: { locale: string }) {
           </nav>
         </div>
 
-        {/* Right: Lang Switcher & Auth Buttons */}
+        {/* Right: Theme Toggle, Lang Switcher & Auth Buttons */}
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <LanguageSwitcher currentLocale={locale} />
 
           <Link href={`/${locale}/login`}>

@@ -117,7 +117,10 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "shrink-0 border-r border-border bg-surface/95 backdrop-blur-md min-h-[calc(100vh-4rem)] p-3 hidden md:flex flex-col justify-between transition-all duration-300 ease-in-out",
+        "shrink-0 border-r border-border bg-surface/95 backdrop-blur-md",
+        "h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden p-3",
+        "hidden md:flex flex-col justify-between transition-all duration-300 ease-in-out",
+        "m-0 left-0",
         isCollapsed ? "w-20" : "w-[264px]",
         className
       )}

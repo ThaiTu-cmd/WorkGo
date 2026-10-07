@@ -130,7 +130,7 @@ export function PaymentPanel({
                 className={`flex items-start gap-3.5 p-3.5 rounded-card border transition-all cursor-pointer ${
                   isSelected
                     ? "border-primary bg-primary-subtle/30 ring-1 ring-primary"
-                    : "border-border bg-surface hover:bg-slate-50"
+                    : "border-border bg-surface hover:bg-muted/50"
                 }`}
               >
                 <input
@@ -178,7 +178,7 @@ export function PaymentPanel({
         )}
 
         {/* Security Assurance */}
-        <div className="p-3 rounded-card bg-slate-50 border border-border flex items-center gap-2.5 text-xs text-fg-secondary">
+        <div className="p-3 rounded-card bg-muted/40 border border-border flex items-center gap-2.5 text-xs text-fg-secondary">
           <ShieldCheck className="h-4 w-4 text-success shrink-0" />
           <span>Thanh toán mã hóa 256-bit chuẩn PCI-DSS. Không lưu trữ thông tin thẻ.</span>
         </div>

@@ -209,7 +209,7 @@ export function PayoutForm() {
         {loading ? (
           <div className="space-y-3">
             {[1, 2].map((i) => (
-              <div key={i} className="h-20 bg-slate-100 rounded-card animate-pulse" />
+              <div key={i} className="h-20 bg-muted rounded-card animate-pulse" />
             ))}
           </div>
         ) : accounts.length === 0 ? (

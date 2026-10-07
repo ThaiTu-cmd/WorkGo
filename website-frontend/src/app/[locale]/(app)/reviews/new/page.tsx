@@ -125,14 +125,14 @@ function NewReviewContent() {
       ) : (
         <div className="space-y-6">
           {/* Order Context Card */}
-          <Card className="bg-slate-50 border-border">
+          <Card className="bg-muted/30 border-border">
             <CardContent className="p-5 flex items-center justify-between gap-4">
               <div>
                 <span className="text-xs text-fg-tertiary">Mã đơn: {order.orderNumber}</span>
                 <h4 className="font-semibold text-sm text-fg mt-0.5">{order.serviceTitle}</h4>
                 <p className="text-xs text-fg-secondary mt-1">Đối tác: {order.providerName}</p>
               </div>
-              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-green-100 text-success">
+              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-primary-subtle text-primary">
                 Đã hoàn thành
               </span>
             </CardContent>
@@ -142,7 +142,7 @@ function NewReviewContent() {
           <Card>
             <CardContent className="p-6 md:p-8">
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <div className="flex flex-col items-center justify-center p-6 rounded-card bg-slate-50 border border-border space-y-3">
+                <div className="flex flex-col items-center justify-center p-6 rounded-card bg-muted/40 border border-border space-y-3">
                   <label className="text-sm font-semibold text-fg">
                     {t("ratingLabel")}
                   </label>

@@ -32,9 +32,11 @@ export function UserMenu({
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // Ignore network errors during logout
     } finally {
-      router.push(`/${locale}/login`);
-      router.refresh();
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- Hard reload flushes client router cache
+      window.location.href = `/${locale}/login`;
     }
   };
 

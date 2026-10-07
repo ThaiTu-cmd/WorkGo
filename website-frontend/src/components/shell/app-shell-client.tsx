@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AppHeader } from "./app-header";
 import { Sidebar } from "./sidebar";
+import { AppContentArea } from "./app-content-area";
 import { MobileNav } from "./mobile-nav";
 import { CLIENT_NAV_ITEMS, PROVIDER_NAV_ITEMS, type NavItem } from "./nav-config";
 import {
@@ -111,7 +112,7 @@ export function AppShellClient({
   };
 
   return (
-    <div className="min-h-screen bg-app flex flex-col relative overflow-x-hidden">
+    <div className="h-screen max-h-screen overflow-hidden bg-app flex flex-col relative">
       <ParticleOceanAmbient />
 
       {/* Top Header with Hamburger for Mobile */}
@@ -123,15 +124,15 @@ export function AppShellClient({
         onOpenMobileMenu={() => setMobileDrawerOpen(true)}
       />
 
-      {/* Main Body Area: Sidebar flush to viewport left edge */}
-      <div className="flex-1 flex w-full relative z-10">
+      {/* Main Body Area: Sidebar flush to viewport left edge + Independent Content Area */}
+      <div className="flex-1 flex w-full relative z-10 overflow-hidden">
         <Sidebar
           role={role}
           locale={locale}
           isCollapsed={sidebarCollapsed}
           onToggleCollapse={handleToggleSidebar}
         />
-        <main className="flex-1 min-w-0 pb-20 md:pb-8">{children}</main>
+        <AppContentArea>{children}</AppContentArea>
       </div>
 
       {/* Mobile Bottom Navigation */}

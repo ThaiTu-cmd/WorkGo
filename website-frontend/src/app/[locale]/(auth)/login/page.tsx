@@ -6,7 +6,7 @@ import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
-import { Eye, EyeOff, AlertCircle, Zap } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, Zap, ArrowLeft } from "lucide-react";
 import { loginSchema, type LoginFormData } from "@/lib/schemas/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -230,6 +230,16 @@ function LoginFormContent() {
               className="font-semibold text-primary hover:underline underline-offset-2 ml-1"
             >
               {t("registerNow")}
+            </Link>
+          </div>
+
+          <div className="text-center pt-2">
+            <Link
+              href={`/${locale}`}
+              className="inline-flex items-center gap-1.5 text-xs text-fg-tertiary hover:text-fg transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>{locale === "vi" ? "Quay về trang giới thiệu" : "Back to landing page"}</span>
             </Link>
           </div>
         </form>

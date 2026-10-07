@@ -61,7 +61,7 @@ export function ApplicationCard({
         </div>
 
         {/* Message */}
-        <p className="text-xs text-fg-secondary leading-relaxed line-clamp-3 bg-slate-50 p-2.5 rounded-control">
+        <p className="text-xs text-fg-secondary leading-relaxed line-clamp-3 bg-muted/40 border border-border/50 p-2.5 rounded-control">
           {proposal.message}
         </p>
 

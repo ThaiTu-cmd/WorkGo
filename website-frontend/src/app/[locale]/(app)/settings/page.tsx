@@ -12,6 +12,8 @@ import {
   CreditCard,
   Plus,
   Info,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { PageContainer } from "@/components/shell/page-container";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -78,6 +80,23 @@ function SettingsContent() {
   const [addressDialogOpen, setAddressDialogOpen] = React.useState(false);
   const [addressToEdit, setAddressToEdit] = React.useState<AddressResponse | null>(null);
   const [addressToDelete, setAddressToDelete] = React.useState<string | null>(null);
+
+  // Theme state
+  const [currentTheme, setCurrentTheme] = React.useState<"dark" | "light">("dark");
+
+  React.useEffect(() => {
+    const saved = (localStorage.getItem("workgo_theme") as "dark" | "light") || "dark";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrentTheme(saved);
+  }, []);
+
+  const handleThemeChange = (newTheme: "dark" | "light") => {
+    setCurrentTheme(newTheme);
+    localStorage.setItem("workgo_theme", newTheme);
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(newTheme);
+    document.documentElement.setAttribute("data-theme", newTheme);
+  };
 
   // Provider onboarding state
   const [showProviderForm, setShowProviderForm] = React.useState(false);
@@ -269,52 +288,56 @@ function SettingsContent() {
 
   return (
     <PageContainer>
-      <SectionHeading
-        title={t("title")}
-        subtitle="Quản lý thông tin cá nhân, địa chỉ giao nhận và hồ sơ đối tác"
-        level={1}
-      />
+      <div className="max-w-4xl mx-auto space-y-6">
+        <SectionHeading
+          title={t("title")}
+          subtitle="Quản lý thông tin cá nhân, địa chỉ giao nhận và hồ sơ đối tác"
+          level={1}
+          className="text-center sm:text-left"
+        />
 
-      <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="overflow-x-auto no-scrollbar">
-          <TabsTrigger value="profile" className="gap-2 shrink-0">
-            <User className="h-4 w-4" />
-            <span>{t("tabProfile")}</span>
-          </TabsTrigger>
-          <TabsTrigger value="addresses" className="gap-2 shrink-0">
-            <MapPin className="h-4 w-4" />
-            <span>{t("tabAddresses")} ({addresses.length})</span>
-          </TabsTrigger>
-          <TabsTrigger value="provider" className="gap-2 shrink-0">
-            <ShieldCheck className="h-4 w-4" />
-            <span>{t("tabProvider")}</span>
-          </TabsTrigger>
-          {isProvider && (
-            <TabsTrigger value="payout" className="gap-2 shrink-0">
-              <CreditCard className="h-4 w-4" />
-              <span>{t("tabPayout")}</span>
-            </TabsTrigger>
-          )}
-        </TabsList>
-
-        {loading ? (
-          <div className="py-16 flex items-center justify-center">
-            <Spinner size="lg" />
+        <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
+          <div className="flex justify-center sm:justify-start mb-6">
+            <TabsList className="overflow-x-auto no-scrollbar">
+              <TabsTrigger value="profile" className="gap-2 shrink-0">
+                <User className="h-4 w-4" />
+                <span>{t("tabProfile")}</span>
+              </TabsTrigger>
+              <TabsTrigger value="addresses" className="gap-2 shrink-0">
+                <MapPin className="h-4 w-4" />
+                <span>{t("tabAddresses")} ({addresses.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="provider" className="gap-2 shrink-0">
+                <ShieldCheck className="h-4 w-4" />
+                <span>{t("tabProvider")}</span>
+              </TabsTrigger>
+              {isProvider && (
+                <TabsTrigger value="payout" className="gap-2 shrink-0">
+                  <CreditCard className="h-4 w-4" />
+                  <span>{t("tabPayout")}</span>
+                </TabsTrigger>
+              )}
+            </TabsList>
           </div>
-        ) : (
-          <>
-            {/* TAB 1: PROFILE */}
-            <TabsContent value="profile" className="space-y-6 max-w-3xl">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{tProfile("title")}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={submitProfile(onProfileSave)} className="space-y-4">
-                    <div className="p-3 rounded-control bg-slate-50 border border-border text-xs text-fg-secondary flex items-center gap-2">
-                      <Info className="h-4 w-4 text-primary shrink-0" />
-                      <span>{t("avatarNotice")}</span>
-                    </div>
+
+          {loading ? (
+            <div className="py-16 flex items-center justify-center">
+              <Spinner size="lg" />
+            </div>
+          ) : (
+            <>
+              {/* TAB 1: PROFILE */}
+              <TabsContent value="profile" className="space-y-6 max-w-3xl mx-auto">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{tProfile("title")}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={submitProfile(onProfileSave)} className="space-y-4">
+                      <div className="p-3 rounded-control bg-muted/50 border border-border text-xs text-fg-secondary flex items-center gap-2">
+                        <Info className="h-4 w-4 text-primary shrink-0" />
+                        <span>{t("avatarNotice")}</span>
+                      </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Field label="Họ và tên đệm" required error={profileErrors.lastName?.message}>
@@ -376,10 +399,80 @@ function SettingsContent() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Theme Settings Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    {currentTheme === "dark" ? (
+                      <Moon className="h-4 w-4 text-indigo-400" />
+                    ) : (
+                      <Sun className="h-4 w-4 text-amber-500" />
+                    )}
+                    <span>Giao diện hiển thị (Theme)</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Tùy chỉnh chế độ hiển thị Sáng hoặc Tối phù hợp với điều kiện ánh sáng của bạn
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => handleThemeChange("dark")}
+                      className={`p-4 rounded-card border text-left flex items-start gap-3 transition-all cursor-pointer ${
+                        currentTheme === "dark"
+                          ? "border-primary bg-primary-subtle/30 ring-2 ring-primary/30"
+                          : "border-border bg-muted/20 hover:border-border-strong hover:bg-muted/40"
+                      }`}
+                    >
+                      <div className="h-9 w-9 rounded-control bg-slate-900 border border-slate-700 flex items-center justify-center shrink-0">
+                        <Moon className="h-5 w-5 text-indigo-400" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-fg">Chế độ Tối (Dark)</span>
+                          {currentTheme === "dark" && (
+                            <Badge variant="primary" className="text-[10px] h-4">Đang dùng</Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-fg-secondary mt-1">
+                          Nền Deep Space cao cấp, bảo vệ mắt khi làm việc buổi tối
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleThemeChange("light")}
+                      className={`p-4 rounded-card border text-left flex items-start gap-3 transition-all cursor-pointer ${
+                        currentTheme === "light"
+                          ? "border-primary bg-primary-subtle/30 ring-2 ring-primary/30"
+                          : "border-border bg-muted/20 hover:border-border-strong hover:bg-muted/40"
+                      }`}
+                    >
+                      <div className="h-9 w-9 rounded-control bg-slate-100 border border-slate-300 flex items-center justify-center shrink-0">
+                        <Sun className="h-5 w-5 text-amber-500" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-fg">Chế độ Sáng (Light)</span>
+                          {currentTheme === "light" && (
+                            <Badge variant="primary" className="text-[10px] h-4">Đang dùng</Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-fg-secondary mt-1">
+                          Giao diện sáng tinh tế, rõ nét dưới môi trường ánh sáng mạnh
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* TAB 2: ADDRESSES */}
-            <TabsContent value="addresses" className="space-y-6">
+            <TabsContent value="addresses" className="space-y-6 max-w-3xl mx-auto">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-fg">{tAddr("title")}</h2>
@@ -435,7 +528,7 @@ function SettingsContent() {
             </TabsContent>
 
             {/* TAB 3: PROVIDER ONBOARDING */}
-            <TabsContent value="provider" className="space-y-6 max-w-3xl">
+            <TabsContent value="provider" className="space-y-6 max-w-3xl mx-auto">
               {!providerProfile && !showProviderForm ? (
                 <EmptyState
                   title={tOnboard("title")}
@@ -538,7 +631,7 @@ function SettingsContent() {
                       </Field>
 
                       {providerProfile && (
-                        <div className="flex items-center justify-between p-3.5 rounded-card border border-border bg-slate-50">
+                        <div className="flex items-center justify-between p-3.5 rounded-card border border-border bg-muted/40">
                           <div>
                             <Label htmlFor="acceptJobs" className="font-medium text-sm cursor-pointer">
                               {tOnboard("isAcceptingOrders")}
@@ -584,13 +677,14 @@ function SettingsContent() {
 
             {/* TAB 4: PAYOUT (Provider Only) */}
             {isProvider && (
-              <TabsContent value="payout" className="max-w-3xl">
+              <TabsContent value="payout" className="space-y-6 max-w-3xl mx-auto">
                 <PayoutForm />
               </TabsContent>
             )}
           </>
         )}
       </Tabs>
+      </div>
 
       {/* Address Add / Edit Dialog */}
       <AddressDialog

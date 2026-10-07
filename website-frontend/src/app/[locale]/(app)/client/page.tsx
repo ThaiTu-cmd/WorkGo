@@ -41,15 +41,15 @@ export default function ClientDashboardPage() {
   return (
     <PageContainer>
       {/* 1. Welcome Hero Banner */}
-      <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-r from-[rgba(12,18,38,0.9)] via-[rgba(16,24,52,0.85)] to-[rgba(8,14,32,0.9)] border border-[rgba(150,175,230,0.18)] p-6 md:p-8 shadow-2xl mb-8 animate-fade-up backdrop-blur-xl">
+      <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-r from-surface via-surface/95 to-surface border border-border p-6 md:p-8 shadow-md mb-8 animate-fade-up backdrop-blur-xl">
         {/* Glow ambient background effects */}
-        <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-[#5df0a8]/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute left-1/3 -top-16 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute left-1/3 -top-16 w-48 h-48 bg-info/10 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-xl">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#5df0a8]/15 text-[#5df0a8] text-xs font-semibold border border-[#5df0a8]/30 backdrop-blur-md">
-              <Sparkles className="h-3.5 w-3.5 text-[#5df0a8] animate-pulse" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-semibold border border-primary/30 backdrop-blur-md">
+              <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
               <span>{greeting}</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-fg">
@@ -65,7 +65,7 @@ export default function ClientDashboardPage() {
               <Button
                 variant="primary"
                 size="lg"
-                className="gap-2 shadow-lg shadow-[#5df0a8]/25"
+                className="gap-2 shadow-lg shadow-primary/20"
               >
                 <PlusCircle className="h-5 w-5" />
                 <span>{t("newPost")}</span>

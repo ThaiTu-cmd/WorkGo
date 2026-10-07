@@ -132,7 +132,7 @@ export function ReviewModal({
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="flex flex-col items-center justify-center p-4 rounded-card bg-slate-50 border border-border space-y-2">
+            <div className="flex flex-col items-center justify-center p-4 rounded-card bg-muted/40 border border-border space-y-2">
               <label className="text-sm font-semibold text-fg">
                 {t("ratingLabel")}
               </label>

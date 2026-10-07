@@ -151,7 +151,7 @@ function PostsMarketplaceContent() {
   );
 
   return (
-    <PageContainer>
+    <PageContainer size="wide">
       {/* Page Title with Mock Chip and Live Counter */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border mb-6">
         <div>
@@ -331,7 +331,7 @@ function PostsMarketplaceContent() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* Left: Desktop Filter Sidebar */}
         <div className="hidden md:block md:col-span-1">
-          <div className="sticky top-24 p-5 rounded-card bg-surface border border-border shadow-xs">
+          <div className="sticky top-6 p-5 rounded-card bg-surface border border-border shadow-xs">
             <FilterSidebar
               categories={categories}
               values={filterValues}

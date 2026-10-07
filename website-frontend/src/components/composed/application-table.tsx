@@ -23,7 +23,7 @@ export function ApplicationTable({
     <div className="overflow-x-auto rounded-card border border-border bg-surface">
       <table className="w-full text-left border-collapse text-sm">
         <thead>
-          <tr className="bg-slate-50 border-b border-border text-[12px] font-semibold text-fg-tertiary uppercase tracking-wider">
+          <tr className="bg-muted/40 border-b border-border text-[12px] font-semibold text-fg-tertiary uppercase tracking-wider">
             <th className="py-3 px-4">Đối tác ứng tuyển</th>
             <th className="py-3 px-4">Đề xuất & Kế hoạch</th>
             <th className="py-3 px-4 whitespace-nowrap">Giá đề xuất</th>
@@ -34,7 +34,7 @@ export function ApplicationTable({
         </thead>
         <tbody className="divide-y divide-border">
           {proposals.map((prop) => (
-            <tr key={prop.proposalId} className="hover:bg-slate-50/70 transition-colors">
+            <tr key={prop.proposalId} className="hover:bg-muted/50 transition-colors">
               <td className="py-4 px-4 align-top">
                 <div className="flex items-center gap-3">
                   <Avatar name={prop.providerName} size="sm" />

@@ -32,7 +32,8 @@
     "applications": "Applications",
     "wallet": "My wallet",
     "home": "Home",
-    "all": "All"
+    "all": "All",
+    "backToLanding": "Back to landing page"
   },
   "nav": {
     "dashboard": "Overview",

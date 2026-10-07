@@ -1,9 +1,52 @@
 "use client";
 
 import * as React from "react";
+import { cn } from "@/lib/utils";
 
 export function ParticleOceanAmbient() {
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
+  const themeRef = React.useRef<"dark" | "light">("dark");
+  const [isLight, setIsLight] = React.useState(false);
+
+  React.useEffect(() => {
+    const updateTheme = () => {
+      const isCurrentLight =
+        document.documentElement.classList.contains("light") ||
+        document.documentElement.getAttribute("data-theme") === "light";
+      const nextTheme = isCurrentLight ? "light" : "dark";
+      themeRef.current = nextTheme;
+      setIsLight(isCurrentLight);
+    };
+
+    updateTheme();
+
+    const handleThemeChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ theme?: string }>;
+      if (customEvent.detail?.theme) {
+        const next = customEvent.detail.theme === "light";
+        themeRef.current = next ? "light" : "dark";
+        setIsLight(next);
+      } else {
+        updateTheme();
+      }
+    };
+
+    window.addEventListener("workgo-theme-change", handleThemeChange);
+
+    const observer = new MutationObserver(() => {
+      updateTheme();
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme"],
+    });
+
+    return () => {
+      window.removeEventListener("workgo-theme-change", handleThemeChange);
+      observer.disconnect();
+    };
+  }, []);
 
   React.useEffect(() => {
     const canvas = canvasRef.current;
@@ -75,6 +118,9 @@ export function ParticleOceanAmbient() {
         }
       }
 
+      // Check theme dynamically per frame
+      const isLightMode = themeRef.current === "light";
+
       // Render ambient mesh lines
       ctx.lineWidth = 1;
       for (let r = 0; r < rows; r++) {
@@ -85,7 +131,9 @@ export function ParticleOceanAmbient() {
           // Connect to right neighbor
           const pr = points[r]?.[c + 1];
           if (pr) {
-            ctx.strokeStyle = `rgba(93, 240, 168, ${p.alpha * 0.22})`;
+            ctx.strokeStyle = isLightMode
+              ? `rgba(16, 185, 129, ${p.alpha * 0.12})`
+              : `rgba(93, 240, 168, ${p.alpha * 0.22})`;
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(pr.x, pr.y);
@@ -95,7 +143,9 @@ export function ParticleOceanAmbient() {
           // Connect to row neighbor
           const pb = points[r + 1]?.[c];
           if (pb) {
-            ctx.strokeStyle = `rgba(93, 240, 168, ${p.alpha * 0.16})`;
+            ctx.strokeStyle = isLightMode
+              ? `rgba(16, 185, 129, ${p.alpha * 0.08})`
+              : `rgba(93, 240, 168, ${p.alpha * 0.16})`;
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(pb.x, pb.y);
@@ -103,7 +153,9 @@ export function ParticleOceanAmbient() {
           }
 
           // Render particle dot
-          ctx.fillStyle = `rgba(93, 240, 168, ${p.alpha * 0.8})`;
+          ctx.fillStyle = isLightMode
+            ? `rgba(16, 185, 129, ${p.alpha * 0.35})`
+            : `rgba(93, 240, 168, ${p.alpha * 0.8})`;
           ctx.beginPath();
           ctx.arc(p.x, p.y, 1.4, 0, Math.PI * 2);
           ctx.fill();
@@ -128,7 +180,10 @@ export function ParticleOceanAmbient() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0 opacity-40"
+      className={cn(
+        "fixed inset-0 pointer-events-none z-0 transition-opacity duration-300",
+        isLight ? "opacity-20" : "opacity-40"
+      )}
       style={{
         width: "100vw",
         height: "100vh",

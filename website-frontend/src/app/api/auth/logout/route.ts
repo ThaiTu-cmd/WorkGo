@@ -28,9 +28,16 @@ export async function POST() {
     message: "Đăng xuất thành công",
   });
 
-  response.cookies.delete(COOKIE_ACCESS_TOKEN);
-  response.cookies.delete(COOKIE_REFRESH_TOKEN);
-  response.cookies.delete(COOKIE_USER_ROLE);
+  const cookieOptions = {
+    path: "/",
+    maxAge: 0,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+  };
+
+  response.cookies.set({ name: COOKIE_ACCESS_TOKEN, value: "", ...cookieOptions });
+  response.cookies.set({ name: COOKIE_REFRESH_TOKEN, value: "", ...cookieOptions });
+  response.cookies.set({ name: COOKIE_USER_ROLE, value: "", ...cookieOptions });
 
   return response;
 }

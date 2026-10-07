@@ -247,7 +247,7 @@ export function PostForm({
             <label className="text-sm font-medium text-fg mb-1.5 block">
               {t("attachments")}
             </label>
-            <div className="border-2 border-dashed border-border-strong rounded-card p-6 text-center bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer relative">
+            <div className="border-2 border-dashed border-border-strong rounded-card p-6 text-center bg-muted/30 hover:bg-muted/60 transition-colors cursor-pointer relative">
               <input
                 type="file"
                 className="absolute inset-0 opacity-0 cursor-pointer"

@@ -56,7 +56,7 @@ export function TransactionRow({
   const isPositive = tx.amount > 0;
 
   return (
-    <tr className="hover:bg-slate-50 transition-colors text-sm">
+    <tr className="hover:bg-muted/50 transition-colors text-sm">
       <td className="py-3.5 px-4 whitespace-nowrap text-xs text-fg-secondary">
         {formatDate(tx.date, locale)}
       </td>

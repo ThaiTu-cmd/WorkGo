@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Menu } from "lucide-react";
 import { UserMenu } from "./user-menu";
 import { LanguageSwitcher } from "./language-switcher";
+import { ThemeToggle } from "./theme-toggle";
 
 export interface AppHeaderProps {
   locale: string;
@@ -46,8 +47,9 @@ export function AppHeader({
           </Link>
         </div>
 
-        {/* Right: Lang Switcher & User Avatar */}
+        {/* Right: Theme Toggle, Lang Switcher & User Avatar */}
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <LanguageSwitcher currentLocale={locale} />
           <UserMenu
             userName={userName}

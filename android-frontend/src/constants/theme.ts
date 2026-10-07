@@ -1,6 +1,6 @@
 /**
  * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Conforms to WorkGo Brand A Trust Blue design tokens.
  */
 
 import '@/global.css';
@@ -9,18 +9,36 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    primary: '#2563EB',
+    primaryHover: '#1D4ED8',
+    primarySubtle: '#EFF6FF',
+    background: '#F8FAFC',
+    surface: '#FFFFFF',
+    text: '#0F172A',
+    textSecondary: '#475569',
+    border: '#E2E8F0',
+    backgroundElement: '#F1F5F9',
+    backgroundSelected: '#E2E8F0',
+    success: '#15803D',
+    warning: '#B45309',
+    danger: '#DC2626',
+    info: '#0284C7',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    primary: '#3B82F6',
+    primaryHover: '#60A5FA',
+    primarySubtle: '#1E293B',
+    background: '#0F172A',
+    surface: '#1E293B',
+    text: '#F8FAFC',
+    textSecondary: '#94A3B8',
+    border: '#334155',
+    backgroundElement: '#1E293B',
+    backgroundSelected: '#334155',
+    success: '#22C55E',
+    warning: '#F59E0B',
+    danger: '#EF4444',
+    info: '#38BDF8',
   },
 } as const;
 

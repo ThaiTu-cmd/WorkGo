@@ -3,8 +3,8 @@ package com.workgo.catalog.dto.request;
 import com.workgo.catalog.enumeration.ExecutionType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.hibernate.service.spi.ServiceException;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter
@@ -25,7 +25,7 @@ public class ServiceCreationRequest {
 
     String description;
 
-    double basePrice;
+    BigDecimal basePrice;
 
     String currency;
 

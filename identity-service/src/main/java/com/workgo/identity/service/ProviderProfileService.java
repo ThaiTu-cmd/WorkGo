@@ -8,9 +8,12 @@ import com.workgo.identity.dto.request.ProviderProfileCreationRequest;
 import com.workgo.identity.dto.request.ProviderProfileUpdateRequest;
 import com.workgo.identity.dto.response.ProviderProfileResponse;
 import com.workgo.identity.entity.ProviderProfile;
+import com.workgo.identity.entity.Role;
 import com.workgo.identity.entity.User;
+import com.workgo.identity.entity.UserRole;
+import com.workgo.identity.enumeration.RoleName;
 import com.workgo.identity.enumeration.VerificationStatus;
-import com.workgo.identity.repository.ProviderProfileRepository;
+import com.workgo.identity.repository.*;
 import com.workgo.identity.util.AttributeUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +33,13 @@ import java.util.UUID;
 public class ProviderProfileService {
 
     ProviderProfileRepository providerProfileRepository;
+    ProviderVerificationRepository providerVerificationRepository;
     ProviderProfileMapper providerProfileMapper;
+    UserRepository userRepository;
+    RoleRepository roleRepository;
+    UserRoleRepository userRoleRepository;
     AttributeUtil attributeUtil;
+
 
     //Tao provider profile
     public ProviderProfileResponse createProviderProfile(ProviderProfileCreationRequest request) {
@@ -43,11 +51,13 @@ public class ProviderProfileService {
                 .providerType(request.getProviderType())
                 .businessName(request.getBusinessName())
                 .bio(request.getBio())
+                .verificationStatus(VerificationStatus.PENDING)
                 .user(user)
                 .build();
 
-        providerProfileRepository.save(providerProfile);
-        return providerProfileMapper.toProviderProfileResponse(providerProfile);
+        ProviderProfile savedProfile = providerProfileRepository.save(providerProfile);
+
+        return providerProfileMapper.toProviderProfileResponse(savedProfile);
     }
 
     public ProviderProfileResponse getMyProviderProfile() {
@@ -108,10 +118,41 @@ public class ProviderProfileService {
         ProviderProfile providerProfile = providerProfileRepository.findById(providerId)
                 .orElseThrow(() -> new AppException(ErrorCode.PROVIDER_PROFILE_NOT_EXISTED));
 
-        providerProfile.setVerificationStatus(status);
+        User user = providerProfile.getUser();
+
+        providerProfile.setVerificationStatus(
+                providerProfile.getVerificationStatus().transitionTo(status));
+
+        if(status == VerificationStatus.VERIFIED){
+            if(providerVerificationRepository.existsByVerificationStatusAndProviderProfile_ProviderProfileId
+                    (VerificationStatus.REJECTED, providerId)
+                    || providerVerificationRepository.existsByVerificationStatusAndProviderProfile_ProviderProfileId
+                    (VerificationStatus.SUSPENDED, providerId)){
+
+            }
+
+            Role role = roleRepository.findById(RoleName.PROVIDER)
+                    .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+
+            UserRole userRole = UserRole.builder()
+                    .grantedAt(Instant.now())
+                    .userNameHost("System")
+                    .user(user)
+                    .role(role)
+                    .build();
+
+            userRoleRepository.save(userRole);
+
+            user.getUserRoles().add(userRole);
+            user.setProviderProfile(providerProfile);
+            userRepository.save(user);
+        }
+
+
         providerProfile.setUpdatedAt(Instant.now());
 
-        return providerProfileMapper.toProviderProfileResponse(providerProfileRepository.save(providerProfile));
+        return providerProfileMapper.toProviderProfileResponse(
+                providerProfileRepository.save(providerProfile));
     }
 
 

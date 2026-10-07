@@ -1099,10 +1099,10 @@
       const oceanCtx = oceanCanvas.getContext('2d');
       const isMobile = window.innerWidth < 768;
       const OCEAN_CONFIG = {
-        cols: isMobile ? 28 : 44,
-        rows: isMobile ? 20 : 30,
-        spacingX: isMobile ? 48 : 38,
-        spacingZ: isMobile ? 48 : 38,
+        cols: isMobile ? 20 : 32,
+        rows: isMobile ? 14 : 20,
+        spacingX: isMobile ? 54 : 44,
+        spacingZ: isMobile ? 54 : 44,
         waveSpeed: 0.0016,
         waveHeight: 30,
         particleColor: 'rgba(93, 240, 168, 0.7)',
@@ -1126,7 +1126,7 @@
 
       function resizeOcean() {
         if (!oceanCanvas) return;
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
         const w = window.innerWidth;
         const h = window.innerHeight;
         oceanCanvas.width = w * dpr;
@@ -1149,9 +1149,14 @@
         oceanHidden = document.hidden;
       });
 
+      let lastOceanTime = 0;
+      const OCEAN_FRAME_INTERVAL = 1000 / 36; // ~36 FPS throttle
+
       function renderOcean(now) {
         requestAnimationFrame(renderOcean);
         if (oceanHidden || prefersReducedMotion) return;
+        if (now - lastOceanTime < OCEAN_FRAME_INTERVAL) return;
+        lastOceanTime = now;
 
         const w = window.innerWidth;
         const h = window.innerHeight;
@@ -1201,16 +1206,16 @@
         }
         oceanCtx.stroke();
 
-        // Draw mint wave crest particles
+        // Draw mint wave crest particles (Single batched path & fill)
+        oceanCtx.fillStyle = OCEAN_CONFIG.particleColor;
+        oceanCtx.beginPath();
         for (let i = 0; i < projected.length; i++) {
           const pt = projected[i];
-          oceanCtx.fillStyle = OCEAN_CONFIG.particleColor;
-          oceanCtx.globalAlpha = pt.alpha;
-          oceanCtx.beginPath();
-          oceanCtx.arc(pt.x, pt.y, Math.max(0.8, pt.size), 0, Math.PI * 2);
-          oceanCtx.fill();
+          const radius = Math.max(0.8, pt.size);
+          oceanCtx.moveTo(pt.x + radius, pt.y);
+          oceanCtx.arc(pt.x, pt.y, radius, 0, Math.PI * 2);
         }
-        oceanCtx.globalAlpha = 1.0;
+        oceanCtx.fill();
       }
 
       if (!prefersReducedMotion) {
@@ -1354,10 +1359,10 @@
 
       // Renderer
       const renderer = new THREE.WebGL1Renderer({ canvas, antialias: true, alpha: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
       renderer.setSize(width, height);
       renderer.outputEncoding = THREE.sRGBEncoding;
-      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.enabled = false;
       renderer.shadowMap.type = THREE.VSMShadowMap;
 
       const scene = new THREE.Scene();
@@ -1871,13 +1876,18 @@
       });
 
       // Main Render Loop
+      const TARGET_FRAME_MS = 1000 / 60; // 60 FPS frame pacing
+      let lastRenderTime = 0;
+
       function animate(now) {
         requestAnimationFrame(animate);
 
         if (isHidden) return;
+        if (now - lastRenderTime < TARGET_FRAME_MS) return;
 
         const dt = Math.min(0.05, (now - lastTime) / 1000);
         lastTime = now;
+        lastRenderTime = now;
 
         if (lenis) lenis.raf(now);
 
@@ -1927,13 +1937,7 @@
         worldGroup.scale.setScalar(curS);
         planetGroup.rotation.y = CONFIG.initRotation + spinPhase + curP * Math.PI * 1.6;
 
-        // 3-pass render chain
-        camera.layers.set(LAYERS.TORUS_SCENE);
-        torusComposer.render();
-
-        camera.layers.set(LAYERS.BLOOM_SCENE);
-        bloomComposer.render();
-
+        // Optimized single-pass composite (eliminate empty torus/bloom ghost passes)
         camera.layers.set(LAYERS.ENTIRE_SCENE);
         finalComposer.render();
       }

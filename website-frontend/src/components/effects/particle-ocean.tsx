@@ -77,7 +77,7 @@ export function ParticleOcean({
     };
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
       width = canvas.parentElement?.clientWidth || window.innerWidth;
       height = canvas.parentElement?.clientHeight || window.innerHeight;
 
@@ -125,15 +125,25 @@ export function ParticleOcean({
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
+    // Pre-extract connection color prefix once outside loop to eliminate per-frame RegEx execution
+    const colorPrefix = (() => {
+      const rgbaMatch = connectionColor.match(/^(rgba?\([^,]+,[^,]+,[^,]+,)/);
+      if (rgbaMatch) return `${rgbaMatch[1]} `;
+      const rgbMatch = connectionColor.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+      if (rgbMatch) return `rgba(${rgbMatch[1]}, ${rgbMatch[2]}, ${rgbMatch[3]}, `;
+      return "rgba(93, 240, 168, ";
+    })();
+
     // If reduced motion, render single static frame
     if (prefersReducedMotion) {
       ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = particleColor;
+      ctx.beginPath();
       for (const p of particles) {
-        ctx.beginPath();
+        ctx.moveTo(p.x + p.radius, p.y);
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = particleColor;
-        ctx.fill();
       }
+      ctx.fill();
       return () => {
         window.removeEventListener("mousemove", handleMouseMove);
         window.removeEventListener("mouseout", handleMouseLeave);
@@ -142,11 +152,17 @@ export function ParticleOcean({
       };
     }
 
+    const FRAME_INTERVAL = 1000 / 40; // ~40 FPS throttle for auth screens
+    const maxDistSq = maxConnectionDist * maxConnectionDist;
     let lastTime = performance.now();
     let timeAcc = 0;
 
-    const render = (now: number) => {
+    const render = (now: number = performance.now()) => {
       if (isHidden) return;
+
+      animationFrameId = requestAnimationFrame(render);
+
+      if (now - lastTime < FRAME_INTERVAL) return;
 
       const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
@@ -154,7 +170,7 @@ export function ParticleOcean({
 
       ctx.clearRect(0, 0, width, height);
 
-      // Update and draw particles
+      // Update particle physics
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
 
@@ -162,12 +178,13 @@ export function ParticleOcean({
         p.x += p.vx * speed * 60 * dt;
         p.y += (p.vy * speed + Math.sin(p.phase + timeAcc * 0.8) * 0.15) * 60 * dt;
 
-        // Mouse repulsion
+        // Mouse repulsion with squared distance pre-filter
         if (mouseX > 0 && mouseY > 0) {
           const dx = p.x - mouseX;
           const dy = p.y - mouseY;
-          const dist = Math.hypot(dx, dy);
-          if (dist < mouseInfluence && dist > 0) {
+          const distSq = dx * dx + dy * dy;
+          if (distSq < mouseInfluence * mouseInfluence && distSq > 0) {
+            const dist = Math.sqrt(distSq);
             const force = (1 - dist / mouseInfluence) * 2;
             p.x += (dx / dist) * force;
             p.y += (dy / dist) * force;
@@ -180,33 +197,75 @@ export function ParticleOcean({
 
         if (p.y < -10) p.y = height + 10;
         else if (p.y > height + 10) p.y = -10;
+      }
 
-        // Draw dot
-        ctx.beginPath();
+      // 1. Batched particle dots draw call (single beginPath + fill)
+      ctx.fillStyle = particleColor;
+      ctx.beginPath();
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        ctx.moveTo(p.x + p.radius, p.y);
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = particleColor;
-        ctx.fill();
+      }
+      ctx.fill();
 
-        // Connect nearby particles
+      // 2. Connect nearby particles: Pre-filter by squared distance, eliminate regex in loop, and bucket strokes
+      const bucket1: [number, number, number, number][] = [];
+      const bucket2: [number, number, number, number][] = [];
+      const bucket3: [number, number, number, number][] = [];
+
+      for (let i = 0; i < particles.length; i++) {
+        const p1 = particles[i];
         for (let j = i + 1; j < particles.length; j++) {
           const p2 = particles[j];
-          const dx = p.x - p2.x;
-          const dy = p.y - p2.y;
-          const dist = Math.hypot(dx, dy);
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const distSq = dx * dx + dy * dy;
 
-          if (dist < maxConnectionDist) {
-            const alpha = (1 - dist / maxConnectionDist) * 0.6;
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = connectionColor.replace(/[\d.]+\)$/, `${alpha})`);
-            ctx.lineWidth = 1;
-            ctx.stroke();
+          if (distSq < maxDistSq) {
+            const dist = Math.sqrt(distSq);
+            const norm = 1 - dist / maxConnectionDist;
+            if (norm > 0.66) {
+              bucket3.push([p1.x, p1.y, p2.x, p2.y]);
+            } else if (norm > 0.33) {
+              bucket2.push([p1.x, p1.y, p2.x, p2.y]);
+            } else {
+              bucket1.push([p1.x, p1.y, p2.x, p2.y]);
+            }
           }
         }
       }
 
-      animationFrameId = requestAnimationFrame(render);
+      ctx.lineWidth = 1;
+      if (bucket1.length > 0) {
+        ctx.strokeStyle = `${colorPrefix}0.12)`;
+        ctx.beginPath();
+        for (let k = 0; k < bucket1.length; k++) {
+          ctx.moveTo(bucket1[k][0], bucket1[k][1]);
+          ctx.lineTo(bucket1[k][2], bucket1[k][3]);
+        }
+        ctx.stroke();
+      }
+
+      if (bucket2.length > 0) {
+        ctx.strokeStyle = `${colorPrefix}0.26)`;
+        ctx.beginPath();
+        for (let k = 0; k < bucket2.length; k++) {
+          ctx.moveTo(bucket2[k][0], bucket2[k][1]);
+          ctx.lineTo(bucket2[k][2], bucket2[k][3]);
+        }
+        ctx.stroke();
+      }
+
+      if (bucket3.length > 0) {
+        ctx.strokeStyle = `${colorPrefix}0.45)`;
+        ctx.beginPath();
+        for (let k = 0; k < bucket3.length; k++) {
+          ctx.moveTo(bucket3[k][0], bucket3[k][1]);
+          ctx.lineTo(bucket3[k][2], bucket3[k][3]);
+        }
+        ctx.stroke();
+      }
     };
 
     animationFrameId = requestAnimationFrame(render);
@@ -231,6 +290,10 @@ export function ParticleOcean({
     <canvas
       ref={canvasRef}
       className={cn("pointer-events-none absolute inset-0 block h-full w-full", className)}
+      style={{
+        contain: "strict",
+        transform: "translateZ(0)",
+      }}
       aria-hidden="true"
     />
   );

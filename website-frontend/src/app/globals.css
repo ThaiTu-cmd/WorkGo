@@ -359,3 +359,17 @@ nextjs-portal,
   }
 }
 
+/* =============================================================================
+   GPU Hardware Acceleration & Canvas Isolation (Zero-Jank Background Engine)
+   ============================================================================= */
+.planet-canvas,
+.ocean-canvas,
+canvas[aria-hidden="true"],
+.gpu-accelerated {
+  contain: strict;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+

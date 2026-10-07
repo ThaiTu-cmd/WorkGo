@@ -59,6 +59,7 @@ export function ParticleOceanAmbient() {
     let width = 0;
     let height = 0;
     let time = 0;
+    let isHidden = false;
 
     const prefersReducedMotion =
       typeof window !== "undefined" &&
@@ -67,19 +68,41 @@ export function ParticleOceanAmbient() {
     const resize = () => {
       width = window.innerWidth;
       height = window.innerHeight;
-      canvas.width = width * window.devicePixelRatio;
-      canvas.height = height * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
     };
 
     window.addEventListener("resize", resize);
     resize();
 
+    // Tab visibility handling: pause render when tab is backgrounded
+    const handleVisibilityChange = () => {
+      isHidden = document.hidden;
+      if (!isHidden && !prefersReducedMotion) {
+        lastTime = performance.now();
+        animationFrameId = requestAnimationFrame(render);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     // Ambient wave grid configuration
     const cols = 28;
     const rows = 14;
+    const FRAME_INTERVAL = 1000 / 36; // ~36 FPS throttle
+    let lastTime = performance.now();
 
-    const render = () => {
+    const render = (now: number = performance.now()) => {
+      if (isHidden) return;
+
+      if (!prefersReducedMotion) {
+        animationFrameId = requestAnimationFrame(render);
+      }
+
+      if (now - lastTime < FRAME_INTERVAL) return;
+      lastTime = now;
+
       ctx.clearRect(0, 0, width, height);
 
       time += prefersReducedMotion ? 0 : 0.006;
@@ -121,56 +144,67 @@ export function ParticleOceanAmbient() {
       // Check theme dynamically per frame
       const isLightMode = themeRef.current === "light";
 
-      // Render ambient mesh lines
+      // 1. Batched horizontal right connections
+      const p = { alpha: 1 };
       ctx.lineWidth = 1;
+      ctx.strokeStyle = isLightMode
+        ? `rgba(16, 185, 129, ${p.alpha * 0.12})`
+        : `rgba(93, 240, 168, ${p.alpha * 0.22})`;
+
+      ctx.beginPath();
       for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const p = points[r]?.[c];
-          if (!p) continue;
-
-          // Connect to right neighbor
+        for (let c = 0; c < cols - 1; c++) {
+          const pt = points[r]?.[c];
           const pr = points[r]?.[c + 1];
-          if (pr) {
-            ctx.strokeStyle = isLightMode
-              ? `rgba(16, 185, 129, ${p.alpha * 0.12})`
-              : `rgba(93, 240, 168, ${p.alpha * 0.22})`;
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
+          if (pt && pr) {
+            ctx.moveTo(pt.x, pt.y);
             ctx.lineTo(pr.x, pr.y);
-            ctx.stroke();
           }
-
-          // Connect to row neighbor
-          const pb = points[r + 1]?.[c];
-          if (pb) {
-            ctx.strokeStyle = isLightMode
-              ? `rgba(16, 185, 129, ${p.alpha * 0.08})`
-              : `rgba(93, 240, 168, ${p.alpha * 0.16})`;
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(pb.x, pb.y);
-            ctx.stroke();
-          }
-
-          // Render particle dot
-          ctx.fillStyle = isLightMode
-            ? `rgba(16, 185, 129, ${p.alpha * 0.35})`
-            : `rgba(93, 240, 168, ${p.alpha * 0.8})`;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, 1.4, 0, Math.PI * 2);
-          ctx.fill();
         }
       }
+      ctx.stroke();
 
-      if (!prefersReducedMotion) {
-        animationFrameId = requestAnimationFrame(render);
+      // 2. Batched vertical row connections
+      ctx.strokeStyle = isLightMode
+        ? `rgba(16, 185, 129, ${p.alpha * 0.08})`
+        : `rgba(93, 240, 168, ${p.alpha * 0.16})`;
+
+      ctx.beginPath();
+      for (let r = 0; r < rows - 1; r++) {
+        for (let c = 0; c < cols; c++) {
+          const pt = points[r]?.[c];
+          const pb = points[r + 1]?.[c];
+          if (pt && pb) {
+            ctx.moveTo(pt.x, pt.y);
+            ctx.lineTo(pb.x, pb.y);
+          }
+        }
       }
+      ctx.stroke();
+
+      // 3. Batched particle dots
+      ctx.fillStyle = isLightMode
+        ? `rgba(16, 185, 129, ${p.alpha * 0.35})`
+        : `rgba(93, 240, 168, ${p.alpha * 0.8})`;
+
+      ctx.beginPath();
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const pt = points[r]?.[c];
+          if (pt) {
+            ctx.moveTo(pt.x + 1.4, pt.y);
+            ctx.arc(pt.x, pt.y, 1.4, 0, Math.PI * 2);
+          }
+        }
+      }
+      ctx.fill();
     };
 
     render();
 
     return () => {
       window.removeEventListener("resize", resize);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
@@ -187,6 +221,8 @@ export function ParticleOceanAmbient() {
       style={{
         width: "100vw",
         height: "100vh",
+        contain: "strict",
+        transform: "translateZ(0)",
       }}
       aria-hidden="true"
     />

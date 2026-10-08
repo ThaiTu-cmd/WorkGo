@@ -60,7 +60,7 @@ public class ProviderProfileController {
     // lay provider theo tieu chi
     @GetMapping
     ApiResponse<PageResponse<ProviderProfileResponse>> getProvidersByStatus(
-            @RequestParam(value = "status", required = false, defaultValue = "PENDING") VerificationStatus status,
+            @RequestParam(value = "status", required = false) VerificationStatus status,
             @RequestParam(value = "page", required = false, defaultValue = "0") int page,
             @RequestParam(value = "size", required = false, defaultValue = "10") int size
     ) {

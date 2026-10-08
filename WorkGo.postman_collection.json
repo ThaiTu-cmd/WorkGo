@@ -2478,76 +2478,106 @@
                 "method": "POST",
                 "header": [
                   {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
                     "key": "Content-Type",
-                    "value": "application/json"
+                    "value": "application/json",
+                    "type": "text"
                   }
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Gói Cơ Bản\",\n  \"description\": \"Gói dịch vụ cơ bản\",\n  \"price\": 100000,\n  \"currency\": \"VND\",\n  \"deliveryDay\": 2,\n  \"durationMinute\": 60,\n  \"revisionLimit\": 1\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
+                  "raw": "{}"
                 },
                 "url": {
                   "raw": "{{catalogUrl}}{{catalogPath}}/packages/services/{{serviceId}}",
                   "host": [
-                    "{{catalogUrl}}{{catalogPath}}"
+                    "{{catalogUrl}}"
                   ],
                   "path": [
+                    "{{catalogPath}}",
                     "packages",
                     "services",
                     "{{serviceId}}"
                   ]
-                }
-              }
+                },
+                "description": ""
+              },
+              "response": []
             },
             {
               "name": "Get Packages by Service",
               "request": {
                 "method": "GET",
-                "header": [],
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
                 "url": {
-                  "raw": "{{catalogUrl}}{{catalogPath}}/packages/services/{{serviceId}}?page=0&size=10",
+                  "raw": "{{catalogUrl}}{{catalogPath}}/packages/services/{{serviceId}}",
                   "host": [
-                    "{{catalogUrl}}{{catalogPath}}"
+                    "{{catalogUrl}}"
                   ],
                   "path": [
+                    "{{catalogPath}}",
                     "packages",
                     "services",
                     "{{serviceId}}"
-                  ],
-                  "query": [
-                    {
-                      "key": "page",
-                      "value": "0"
-                    },
-                    {
-                      "key": "size",
-                      "value": "10"
-                    }
                   ]
-                }
-              }
+                },
+                "description": ""
+              },
+              "response": []
             },
             {
               "name": "Get Package",
               "request": {
                 "method": "GET",
-                "header": [],
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
                 "url": {
                   "raw": "{{catalogUrl}}{{catalogPath}}/packages/{{packageId}}",
                   "host": [
-                    "{{catalogUrl}}{{catalogPath}}"
+                    "{{catalogUrl}}"
                   ],
                   "path": [
+                    "{{catalogPath}}",
                     "packages",
                     "{{packageId}}"
                   ]
-                }
-              }
+                },
+                "description": ""
+              },
+              "response": []
             },
             {
               "name": "Update Package",
@@ -2555,47 +2585,69 @@
                 "method": "PUT",
                 "header": [
                   {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
                     "key": "Content-Type",
-                    "value": "application/json"
+                    "value": "application/json",
+                    "type": "text"
                   }
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Gói Nâng Cao\",\n  \"description\": \"Gói dịch vụ nâng cao có nhiều tính năng\",\n  \"price\": 500000,\n  \"currency\": \"VND\",\n  \"deliveryDay\": 3,\n  \"durationMinute\": 120,\n  \"revisionLimit\": 5\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
+                  "raw": "{}"
                 },
                 "url": {
                   "raw": "{{catalogUrl}}{{catalogPath}}/packages/{{packageId}}",
                   "host": [
-                    "{{catalogUrl}}{{catalogPath}}"
+                    "{{catalogUrl}}"
                   ],
                   "path": [
+                    "{{catalogPath}}",
                     "packages",
                     "{{packageId}}"
                   ]
-                }
-              }
+                },
+                "description": ""
+              },
+              "response": []
             },
             {
               "name": "Delete Package",
               "request": {
                 "method": "DELETE",
-                "header": [],
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
                 "url": {
                   "raw": "{{catalogUrl}}{{catalogPath}}/packages/{{packageId}}",
                   "host": [
-                    "{{catalogUrl}}{{catalogPath}}"
+                    "{{catalogUrl}}"
                   ],
                   "path": [
+                    "{{catalogPath}}",
                     "packages",
                     "{{packageId}}"
                   ]
-                }
-              }
+                },
+                "description": ""
+              },
+              "response": []
             }
           ]
         },
@@ -2603,129 +2655,973 @@
           "name": "Service Medias",
           "item": [
             {
-              "name": "Create Service Media",
+              "name": "Create Media",
               "request": {
                 "method": "POST",
                 "header": [
                   {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
                     "key": "Content-Type",
-                    "value": "application/json"
+                    "value": "application/json",
+                    "type": "text"
                   }
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"url\": \"https://example.com/image.png\",\n  \"mediaType\": \"IMAGE\",\n  \"cover\": true\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
+                  "raw": "{}"
                 },
                 "url": {
                   "raw": "{{catalogUrl}}{{catalogPath}}/medias/services/{{serviceId}}",
                   "host": [
-                    "{{catalogUrl}}{{catalogPath}}"
+                    "{{catalogUrl}}"
                   ],
                   "path": [
+                    "{{catalogPath}}",
                     "medias",
                     "services",
                     "{{serviceId}}"
                   ]
-                }
-              }
+                },
+                "description": ""
+              },
+              "response": []
             },
             {
-              "name": "Get Service Medias by Service",
+              "name": "Get Medias by Service",
               "request": {
                 "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{catalogUrl}}{{catalogPath}}/medias/services/{{serviceId}}?page=0&size=10",
-                  "host": [
-                    "{{catalogUrl}}{{catalogPath}}"
-                  ],
-                  "path": [
-                    "medias",
-                    "services",
-                    "{{serviceId}}"
-                  ],
-                  "query": [
-                    {
-                      "key": "page",
-                      "value": "0"
-                    },
-                    {
-                      "key": "size",
-                      "value": "10"
-                    }
-                  ]
-                }
-              }
-            },
-            {
-              "name": "Get Service Media",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{catalogUrl}}{{catalogPath}}/medias/{{mediaId}}",
-                  "host": [
-                    "{{catalogUrl}}{{catalogPath}}"
-                  ],
-                  "path": [
-                    "medias",
-                    "{{mediaId}}"
-                  ]
-                }
-              }
-            },
-            {
-              "name": "Update Service Media",
-              "request": {
-                "method": "PUT",
                 "header": [
                   {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
                     "key": "Content-Type",
-                    "value": "application/json"
+                    "value": "application/json",
+                    "type": "text"
                   }
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"url\": \"https://example.com/video.mp4\",\n  \"mediaType\": \"VIDEO\",\n  \"cover\": false\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
+                  "raw": ""
                 },
                 "url": {
-                  "raw": "{{catalogUrl}}{{catalogPath}}/medias/{{mediaId}}",
+                  "raw": "{{catalogUrl}}{{catalogPath}}/medias/services/{{serviceId}}",
                   "host": [
-                    "{{catalogUrl}}{{catalogPath}}"
+                    "{{catalogUrl}}"
                   ],
                   "path": [
+                    "{{catalogPath}}",
                     "medias",
-                    "{{mediaId}}"
+                    "services",
+                    "{{serviceId}}"
                   ]
-                }
-              }
+                },
+                "description": ""
+              },
+              "response": []
             },
             {
-              "name": "Delete Service Media",
+              "name": "Get Media",
               "request": {
-                "method": "DELETE",
-                "header": [],
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
                 "url": {
-                  "raw": "{{catalogUrl}}{{catalogPath}}/medias/{{mediaId}}",
+                  "raw": "{{catalogUrl}}{{catalogPath}}/medias/{{serviceMediaId}}",
                   "host": [
-                    "{{catalogUrl}}{{catalogPath}}"
+                    "{{catalogUrl}}"
                   ],
                   "path": [
+                    "{{catalogPath}}",
                     "medias",
-                    "{{mediaId}}"
+                    "{{serviceMediaId}}"
                   ]
-                }
-              }
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Update Media",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/medias/{{serviceMediaId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "medias",
+                    "{{serviceMediaId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Media",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/medias/{{serviceMediaId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "medias",
+                    "{{serviceMediaId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Categories",
+          "item": [
+            {
+              "name": "Create Category",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/categories",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "categories"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Get Category",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/categories/{{categoryId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "categories",
+                    "{{categoryId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Get All Categories",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/categories",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "categories"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Get Root Categories",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/categories/roots",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "categories",
+                    "roots"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Get Children",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/categories/{{categoryId}}/children",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "categories",
+                    "{{categoryId}}",
+                    "children"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Update Category",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/categories/{{categoryId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "categories",
+                    "{{categoryId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Category",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/categories/{{categoryId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "categories",
+                    "{{categoryId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Services",
+          "item": [
+            {
+              "name": "Create Service",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/services",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "services"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Get Service",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/services/{{serviceId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Get My Services",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/services/my-services",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "services",
+                    "my-services"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Update Service",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/services/{{serviceId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Service",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/services/{{serviceId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Available Rules",
+          "item": [
+            {
+              "name": "Create Rule",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/rules/services/{{serviceId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "rules",
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Get Rules by Service",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/rules/services/{{serviceId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "rules",
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Get Rule",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/rules/{{ruleId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "rules",
+                    "{{ruleId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Update Rule",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/rules/{{ruleId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "rules",
+                    "{{ruleId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Rule",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/rules/{{ruleId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "rules",
+                    "{{ruleId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "AddOns",
+          "item": [
+            {
+              "name": "Create AddOn",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/addons/service/{{serviceId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "addons",
+                    "service",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Get AddOns by Service",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/addons/service/{{serviceId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "addons",
+                    "service",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Get AddOn",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/addons/{{addonId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "addons",
+                    "{{addonId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Update AddOn",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/addons/{{addonId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "addons",
+                    "{{addonId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "name": "Delete AddOn",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{catalogUrl}}{{catalogPath}}/addons/{{addonId}}",
+                  "host": [
+                    "{{catalogUrl}}"
+                  ],
+                  "path": [
+                    "{{catalogPath}}",
+                    "addons",
+                    "{{addonId}}"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
             }
           ]
         }

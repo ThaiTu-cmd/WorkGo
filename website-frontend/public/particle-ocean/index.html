@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Particle Ocean — Standalone WebGL Demo</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #FFFFFF;
+      color: #0B1B3F;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Fixed full-screen WebGL canvas background */
+    #particle-ocean-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      pointer-events: none;
+      display: block;
+    }
+
+    /* Top haze radial glow overlay */
+    .glow-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      background: radial-gradient(60% 42% at 50% 0%, rgba(255, 255, 255, 0.95) 0%, rgba(191, 216, 255, 0.35) 45%, transparent 70%);
+    }
+
+    /* CSS Fallback when WebGL is unavailable */
+    .fallback {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      pointer-events: none;
+      background: linear-gradient(180deg, #FFFFFF 0%, #BFD8FF 45%, #2F6BFF 100%);
+      filter: blur(0.5px);
+    }
+
+    /* Hero UI container (sits comfortably above canvas in top bright haze) */
+    .hero-container {
+      position: relative;
+      z-index: 10;
+      max-width: 1024px;
+      margin: 0 auto;
+      padding: 16vh 24px 64px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      background: rgba(47, 107, 255, 0.08);
+      border: 1px solid rgba(47, 107, 255, 0.2);
+      color: #1747C9;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      color: #0B1B3F;
+      font-size: clamp(2.75rem, 5vw, 4.25rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      max-width: 800px;
+    }
+
+    p.subtitle {
+      color: #33415E;
+      font-size: clamp(1.1rem, 1.8vw, 1.25rem);
+      line-height: 1.6;
+      max-width: 640px;
+      margin-top: 24px;
+      font-weight: 400;
+    }
+
+    .actions {
+      margin-top: 36px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 32px;
+      border-radius: 9999px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+      border: none;
+    }
+
+    .btn-primary {
+      background: #2F6BFF;
+      color: #FFFFFF;
+      box-shadow: 0 10px 25px -5px rgba(47, 107, 255, 0.35);
+    }
+
+    .btn-primary:hover {
+      background: #1747C9;
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px -5px rgba(23, 71, 201, 0.45);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.85);
+      color: #0B1B3F;
+      border: 1px solid #BFD8FF;
+      backdrop-filter: blur(8px);
+    }
+
+    .btn-secondary:hover {
+      background: #FFFFFF;
+      border-color: #2F6BFF;
+      transform: translateY(-2px);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn {
+        transition: none;
+        transform: none !important;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- Fallback Gradient when WebGL is unavailable -->
+  <div class="fallback" id="webgl-fallback"></div>
+
+  <!-- Background WebGL Canvas -->
+  <canvas id="particle-ocean-canvas"></canvas>
+
+  <!-- Atmospheric Glow Overlay -->
+  <div class="glow-overlay"></div>
+
+  <!-- Hero Content -->
+  <main class="hero-container">
+    <div class="badge">
+      <span>●</span> Autonomous Agentic Platform
+    </div>
+    <h1>Particle Ocean Engine</h1>
+    <p class="subtitle">
+      A bright, high-tech animated ocean background featuring tens of thousands of wave-bending particles, polygonal bokeh depth of field, and silky water kinematics.
+    </p>
+    <div class="actions">
+      <a href="#explore" class="btn btn-primary">Khám phá ngay</a>
+      <a href="#docs" class="btn btn-secondary">Xem tài liệu</a>
+    </div>
+  </main>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    // =========================================================================
+    // 14 CONFIGURABLE PARAMETERS (Tweak directly for custom aesthetics)
+    // =========================================================================
+    const CONFIG = {
+      particleCount: { cols: 400, rows: 250 }, // Grid resolution or total count (10k - 150k)
+      waveSpeed: 0.35,                         // Time multiplier for wave animation (0.0 - 1.5)
+      waveAmplitude: 1.0,                     // Vertical wave displacement scale (0.0 - 2.5)
+      waveScale: 0.055,                        // Spatial frequency multiplier (0.02 - 0.12)
+      particleSize: 1.6,                       // Base particle size multiplier (0.5 - 4.0)
+      bokehStrength: 1.0,                      // Foreground bokeh expansion & blur strength (0.0 - 2.0)
+      focusDistance: 26.0,                     // Mid-scene focal plane distance in world units (10.0 - 60.0)
+      colorNear: '#2F6BFF',                    // Royal blue for near wave crests
+      colorDeep: '#1747C9',                    // Cobalt blue for deep wave troughs
+      colorFar: '#BFD8FF',                     // Pale sky blue for far waves
+      fogColor: '#FFFFFF',                     // Atmospheric horizon fog color
+      bloomStrength: 0,                        // Bloom post-processing (0 = off)
+      cameraHeight: 6.0,                       // Camera elevation above water (3.0 - 10.0)
+      mouseParallax: true,                     // Enable/disable mouse-driven camera parallax
+      pauseOffscreen: true,                    // Pause RAF loop when tab is hidden
+    };
+
+    // Shared Wave Kinematics GLSL (Ashima Simplex 3D + 4 Directional Sines)
+    const WAVE_GLSL = /* glsl */ `
+    vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
+    vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
+
+    float snoise(vec3 v){
+      const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+      const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+
+      vec3 i = floor(v + dot(v, C.yyy));
+      vec3 x0 = v - i + dot(i, C.xxx);
+
+      vec3 g = step(x0.yzx, x0.xyz);
+      vec3 l = 1.0 - g;
+      vec3 i1 = min(g.xyz, l.zxy);
+      vec3 i2 = max(g.xyz, l.zxy);
+
+      vec3 x1 = x0 - i1 + 1.0 * C.xxx;
+      vec3 x2 = x0 - i2 + 2.0 * C.xxx;
+      vec3 x3 = x0 - 1.0 + 3.0 * C.xxx;
+
+      i = mod(i, 289.0);
+      vec4 p = permute(permute(permute(
+                 i.z + vec4(0.0, i1.z, i2.z, 1.0))
+               + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+               + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+
+      float n_ = 0.142857142857;
+      vec3 ns = n_ * D.wyz - D.xzx;
+
+      vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+      vec4 x_ = floor(j * ns.z);
+      vec4 y_ = floor(j - 7.0 * x_);
+
+      vec4 x = x_ * ns.x + ns.yyyy;
+      vec4 y = y_ * ns.x + ns.yyyy;
+      vec4 h = 1.0 - abs(x) - abs(y);
+
+      vec4 b0 = vec4(x.xy, y.xy);
+      vec4 b1 = vec4(x.zw, y.zw);
+
+      vec4 s0 = floor(b0)*2.0 + 1.0;
+      vec4 s1 = floor(b1)*2.0 + 1.0;
+      vec4 sh = -step(h, vec4(0.0));
+
+      vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+      vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+
+      vec3 p0 = vec3(a0.xy, h.x);
+      vec3 p1 = vec3(a0.zw, h.y);
+      vec3 p2 = vec3(a1.xy, h.z);
+      vec3 p3 = vec3(a1.zw, h.w);
+
+      vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+      p0 *= norm.x;
+      p1 *= norm.y;
+      p2 *= norm.z;
+      p3 *= norm.w;
+
+      vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+      m = m * m;
+      return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+    }
+
+    float waveHeight(vec2 p) {
+      float t = uTime;
+      float h = 0.0;
+      h += sin(dot(p, vec2(1.0, 0.28)) * 0.105 + t * 0.35) * 1.15;
+      h += sin(dot(p, vec2(-0.62, 1.0)) * 0.203 + t * 0.50) * 0.55;
+      h += sin(dot(p, vec2(0.84, -0.66)) * 0.370 + t * 0.72) * 0.28;
+      h += sin(dot(p, vec2(-0.24, -1.0)) * 0.698 + t * 1.05) * 0.12;
+      h += snoise(vec3(p.x * 0.02, p.z * 0.02, t * 0.06)) * 0.9;
+      return h * uAmplitude;
+    }
+    `;
+
+    const POINTS_VERTEX_SHADER = /* glsl */ `
+    attribute vec2 aRandom;
+    uniform float uTime, uAmplitude, uScale, uPixelRatio, uParticleSize, uFocusDistance, uBokehStrength;
+    uniform vec3 uColorNear, uColorDeep, uColorFar, uFogColor;
+    varying vec3 vColor;
+    varying float vAlpha, vBokeh, vFog;
+
+    ${WAVE_GLSL}
+
+    void main() {
+      vec2 sp = position.xz * (uScale / 0.055);
+      float h = waveHeight(sp);
+      float e = 0.6;
+      float hx = waveHeight(sp + vec2(e, 0.0));
+      float hz = waveHeight(sp + vec2(0.0, e));
+      vec3 n = normalize(vec3(-(hx - h) / e, 1.0, -(hz - h) / e));
+      vec3 displaced = vec3(position.x, h, position.z - 45.0);
+
+      vec4 mv = modelViewMatrix * vec4(displaced, 1.0);
+      float dist = -mv.z;
+      gl_Position = projectionMatrix * mv;
+
+      vec3 lightDir = normalize(vec3(0.35, 0.8, 0.25));
+      float diff = clamp(dot(n, lightDir), 0.0, 1.0);
+      float crest = smoothstep(-1.2, 2.2, h);
+      float twinkle = 0.85 + 0.15 * sin(uTime * 0.8 + aRandom.y);
+      float brightness = clamp(0.35 + crest * 0.9 + diff * 0.55, 0.0, 1.6) * twinkle;
+
+      float tFar = smoothstep(8.0, 95.0, dist);
+      vec3 base = mix(mix(uColorDeep, uColorNear, crest), uColorFar, tFar);
+      base = mix(base, vec3(1.0), crest * 0.35 * (1.0 - tFar));
+      vColor = base * (0.75 + brightness * 0.6);
+
+      float focus = uFocusDistance;
+      vBokeh = (1.0 - smoothstep(focus * 0.5, focus * 1.4, dist)) * uBokehStrength;
+      float ps = uParticleSize * aRandom.x * (0.7 + brightness * 0.5);
+      ps *= (1.0 + vBokeh * 3.2);
+      gl_PointSize = clamp(ps * uPixelRatio * (180.0 / dist), 1.0, 64.0 * uPixelRatio);
+
+      vAlpha = mix(0.95, 0.28, vBokeh);
+      vAlpha *= 1.0 - smoothstep(95.0, 140.0, dist);
+      vFog = smoothstep(45.0, 120.0, dist);
+      vColor = mix(vColor, uFogColor, vFog * 0.85);
+    }
+    `;
+
+    const POINTS_FRAGMENT_SHADER = /* glsl */ `
+    varying vec3 vColor;
+    varying float vAlpha, vBokeh, vFog;
+
+    void main() {
+      vec2 uv = gl_PointCoord - 0.5;
+      float r = length(uv) * 2.0;
+      float oct = 0.0;
+      {
+        vec2 q = abs(uv * 2.0);
+        float s = 0.9239; // cos(pi/8) approx regular octagon distance
+        oct = max(dot(q, vec2(s, 0.3827)), max(q.x, q.y));
+      }
+      float crispMask = 1.0 - smoothstep(0.55, 1.0, r);
+      float glowMask  = 1.0 - smoothstep(0.0, 1.0, r);
+      float bokehMask = 1.0 - smoothstep(0.45, 0.95, oct);
+      bokehMask *= 1.0 - smoothstep(0.7, 1.0, r);
+      float mask = mix(crispMask + glowMask * 0.35, bokehMask * 0.85 + glowMask * 0.25, clamp(vBokeh, 0.0, 1.0));
+      if (mask < 0.01) discard;
+      vec3 col = vColor + vec3(0.08) * glowMask * (1.0 - vBokeh);
+      float d = (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) / 255.0;
+      gl_FragColor = vec4(col + d, vAlpha * mask);
+    }
+    `;
+
+    const WATER_VERTEX_SHADER = /* glsl */ `
+    uniform float uTime, uAmplitude, uScale;
+    uniform vec3 uColorNear, uColorDeep, uColorFar, uFogColor;
+    varying float vH, vDist;
+    varying vec3 vNormal, vViewDir;
+
+    ${WAVE_GLSL}
+
+    void main() {
+      vec2 sp = position.xz * (uScale / 0.055);
+      float h = waveHeight(sp);
+      float e = 0.6;
+      float hx = waveHeight(sp + vec2(e, 0.0));
+      float hz = waveHeight(sp + vec2(0.0, e));
+      vec3 n = normalize(vec3(-(hx - h) / e, 1.0, -(hz - h) / e));
+      vec3 displaced = vec3(position.x, h - 0.05, position.z - 45.0);
+
+      vec4 mv = modelViewMatrix * vec4(displaced, 1.0);
+      vDist = -mv.z;
+      vH = h;
+      vNormal = normalMatrix * n;
+      vViewDir = -mv.xyz;
+      gl_Position = projectionMatrix * mv;
+    }
+    `;
+
+    const WATER_FRAGMENT_SHADER = /* glsl */ `
+    uniform vec3 uColorNear, uColorDeep, uColorFar, uFogColor;
+    varying float vH, vDist;
+    varying vec3 vNormal, vViewDir;
+
+    void main() {
+      vec3 deep = uColorDeep;
+      vec3 near = uColorNear;
+      vec3 far = uColorFar;
+      vec3 col = mix(mix(deep, near, smoothstep(-1.5, 1.5, vH)), far, smoothstep(10.0, 100.0, vDist));
+      float fres = pow(1.0 - max(dot(normalize(vNormal), normalize(vViewDir)), 0.0), 2.5);
+      col += vec3(1.0) * fres * 0.55;
+      col += vec3(1.0) * smoothstep(1.2, 2.4, vH) * 0.18;
+      col = mix(col, uFogColor, smoothstep(45.0, 120.0, vDist) * 0.9);
+      float alpha = mix(0.55, 0.15, smoothstep(5.0, 110.0, vDist));
+      float d = (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) / 255.0;
+      gl_FragColor = vec4(col + d, alpha);
+    }
+    `;
+
+    // Initialization with WebGL Fallback detection
+    const canvas = document.getElementById('particle-ocean-canvas');
+    const fallback = document.getElementById('webgl-fallback');
+
+    function triggerFallback() {
+      if (fallback) fallback.style.display = 'block';
+      if (canvas) canvas.style.display = 'none';
+    }
+
+    if (!window.WebGLRenderingContext) {
+      triggerFallback();
+    } else {
+      initApp();
+    }
+
+    function initApp() {
+      let gl = null;
+      try {
+        gl = canvas.getContext('webgl2', { antialias: true, alpha: true }) || canvas.getContext('webgl', { antialias: true, alpha: true });
+      } catch (e) {
+        gl = null;
+      }
+
+      if (!gl) {
+        triggerFallback();
+        return;
+      }
+
+      canvas.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault();
+        triggerFallback();
+      }, false);
+
+      const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth < 768;
+      const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2);
+
+      const renderer = new THREE.WebGLRenderer({
+        canvas,
+        context: gl,
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance'
+      });
+
+      renderer.setPixelRatio(dpr);
+      renderer.setSize(window.innerWidth, window.innerHeight, false);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.1;
+      renderer.setClearColor(0x000000, 0);
+
+      const scene = new THREE.Scene();
+
+      const isPortrait = window.innerHeight > window.innerWidth;
+      const cameraFov = isPortrait ? 58 : 50;
+      const camera = new THREE.PerspectiveCamera(cameraFov, window.innerWidth / Math.max(1, window.innerHeight), 0.1, 500);
+      const baseCamY = isPortrait ? 6.8 : CONFIG.cameraHeight;
+      const baseCamZ = 16;
+      const targetLookY = isPortrait ? 0.6 : 1.2;
+      const targetLookZ = isPortrait ? -28 : -30;
+      camera.position.set(0, baseCamY, baseCamZ);
+      camera.lookAt(0, targetLookY, targetLookZ);
+
+      // Particle Grid Resolution
+      let cols = CONFIG.particleCount.cols || 400;
+      let rows = CONFIG.particleCount.rows || 250;
+      if (isMobile) {
+        cols = Math.min(cols, 220);
+        rows = Math.min(rows, 140);
+      }
+      if (isPortrait) {
+        cols = Math.round(cols * 0.75);
+      }
+
+      const totalPoints = cols * rows;
+      const positions = new Float32Array(totalPoints * 3);
+      const randoms = new Float32Array(totalPoints * 2);
+      const gridW = 220;
+      const gridD = 160;
+
+      let p3 = 0, p2 = 0;
+      for (let r = 0; r < rows; r++) {
+        const zNorm = r / Math.max(1, rows - 1);
+        const zPos = -gridD / 2 + zNorm * gridD;
+        for (let c = 0; c < cols; c++) {
+          const xNorm = c / Math.max(1, cols - 1);
+          const xPos = -gridW / 2 + xNorm * gridW;
+
+          positions[p3] = xPos;
+          positions[p3 + 1] = 0;
+          positions[p3 + 2] = zPos;
+          p3 += 3;
+
+          randoms[p2] = 0.6 + Math.random() * 0.8;
+          randoms[p2 + 1] = Math.random() * Math.PI * 2;
+          p2 += 2;
+        }
+      }
+
+      const pointsGeo = new THREE.BufferGeometry();
+      pointsGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      pointsGeo.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 2));
+
+      const pointsUniforms = {
+        uTime: { value: 0 },
+        uAmplitude: { value: CONFIG.waveAmplitude },
+        uScale: { value: CONFIG.waveScale },
+        uPixelRatio: { value: dpr },
+        uParticleSize: { value: CONFIG.particleSize },
+        uFocusDistance: { value: CONFIG.focusDistance },
+        uBokehStrength: { value: CONFIG.bokehStrength },
+        uColorNear: { value: new THREE.Color(CONFIG.colorNear) },
+        uColorDeep: { value: new THREE.Color(CONFIG.colorDeep) },
+        uColorFar: { value: new THREE.Color(CONFIG.colorFar) },
+        uFogColor: { value: new THREE.Color(CONFIG.fogColor) },
+      };
+
+      const pointsMat = new THREE.ShaderMaterial({
+        vertexShader: POINTS_VERTEX_SHADER,
+        fragmentShader: POINTS_FRAGMENT_SHADER,
+        uniforms: pointsUniforms,
+        transparent: true,
+        depthWrite: false,
+        depthTest: true,
+        blending: THREE.NormalBlending,
+      });
+
+      const pointsMesh = new THREE.Points(pointsGeo, pointsMat);
+      pointsMesh.renderOrder = 1;
+      scene.add(pointsMesh);
+
+      // Water Body Plane
+      const waterGeo = new THREE.PlaneGeometry(220, 160, 110, 80);
+      waterGeo.rotateX(-Math.PI / 2);
+
+      const waterUniforms = {
+        uTime: { value: 0 },
+        uAmplitude: { value: CONFIG.waveAmplitude },
+        uScale: { value: CONFIG.waveScale },
+        uColorNear: { value: new THREE.Color(CONFIG.colorNear) },
+        uColorDeep: { value: new THREE.Color(CONFIG.colorDeep) },
+        uColorFar: { value: new THREE.Color(CONFIG.colorFar) },
+        uFogColor: { value: new THREE.Color(CONFIG.fogColor) },
+      };
+
+      const waterMat = new THREE.ShaderMaterial({
+        vertexShader: WATER_VERTEX_SHADER,
+        fragmentShader: WATER_FRAGMENT_SHADER,
+        uniforms: waterUniforms,
+        transparent: true,
+        depthWrite: false,
+        depthTest: true,
+        blending: THREE.NormalBlending,
+        side: THREE.FrontSide,
+      });
+
+      const waterMesh = new THREE.Mesh(waterGeo, waterMat);
+      waterMesh.renderOrder = 0;
+      scene.add(waterMesh);
+
+      // Mouse Parallax
+      let targetMouseX = 0, targetMouseY = 0, curMouseX = 0, curMouseY = 0;
+      const isCoarse = window.matchMedia('(pointer: coarse)').matches;
+      if (CONFIG.mouseParallax && !isCoarse) {
+        window.addEventListener('mousemove', (e) => {
+          const mx = (e.clientX / window.innerWidth) * 2 - 1;
+          const my = -(e.clientY / window.innerHeight) * 2 + 1;
+          targetMouseX = mx * 2.2;
+          targetMouseY = my * 0.9;
+        }, { passive: true });
+      }
+
+      // Responsive Resize
+      window.addEventListener('resize', () => {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const portr = h > w;
+        const curDpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2);
+
+        renderer.setPixelRatio(curDpr);
+        renderer.setSize(w, h, false);
+        pointsUniforms.uPixelRatio.value = curDpr;
+
+        camera.fov = portr ? 58 : 50;
+        camera.aspect = w / Math.max(1, h);
+        camera.updateProjectionMatrix();
+      });
+
+      // Reduced Motion
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let isReduced = prefersReducedMotion.matches;
+      prefersReducedMotion.addEventListener('change', (e) => {
+        isReduced = e.matches;
+      });
+
+      // Animation Loop
+      let animId = null;
+      let lastTime = performance.now();
+      let accumulatedTime = 0;
+      let isVisible = !document.hidden;
+
+      document.addEventListener('visibilitychange', () => {
+        isVisible = !document.hidden;
+        if (isVisible && animId === null && !isReduced) {
+          lastTime = performance.now();
+          animId = requestAnimationFrame(tick);
+        } else if (!isVisible && animId !== null) {
+          cancelAnimationFrame(animId);
+          animId = null;
+        }
+      });
+
+      function tick(now) {
+        const dt = Math.min((now - lastTime) / 1000, 0.05);
+        lastTime = now;
+
+        const speed = isReduced ? 0 : CONFIG.waveSpeed;
+        accumulatedTime += dt * speed;
+
+        pointsUniforms.uTime.value = accumulatedTime;
+        waterUniforms.uTime.value = accumulatedTime;
+
+        const driftX = Math.sin(accumulatedTime * 0.1) * 1.1;
+        const driftY = Math.sin(accumulatedTime * 0.13) * 0.35;
+
+        curMouseX += (targetMouseX - curMouseX) * 0.04;
+        curMouseY += (targetMouseY - curMouseY) * 0.04;
+
+        camera.position.x = driftX + curMouseX;
+        camera.position.y = baseCamY + driftY + curMouseY;
+        camera.lookAt(0, targetLookY, targetLookZ);
+
+        renderer.render(scene, camera);
+
+        if (!isReduced && isVisible) {
+          animId = requestAnimationFrame(tick);
+        }
+      }
+
+      if (isReduced) {
+        renderer.render(scene, camera);
+      } else {
+        animId = requestAnimationFrame(tick);
+      }
+    }
+  </script>
+</body>
+</html>

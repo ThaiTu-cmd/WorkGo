@@ -93,8 +93,13 @@ test("Dark Palette - Form inputs eliminate blinding white focus and hardcoded li
   );
   assert.match(
     switchContent,
+    /data-\[state=unchecked\]:bg-muted/,
+    "Switch component must use semantic bg-muted for unchecked state (slate-700 looks ON in light mode)"
+  );
+  assert.doesNotMatch(
+    switchContent,
     /data-\[state=unchecked\]:bg-slate-700/,
-    "Switch component must use darker muted slate for unchecked state"
+    "Switch component must not hardcode bg-slate-700 for unchecked state"
   );
 
   const avatarFile = path.join(ROOT, "src/components/ui/avatar.tsx");

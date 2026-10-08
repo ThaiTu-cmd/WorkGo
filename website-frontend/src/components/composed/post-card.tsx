@@ -56,8 +56,8 @@ export function PostCard({ post, locale = "vi" }: PostCardProps) {
                   className={cn(
                     "text-xs",
                     isDigital
-                      ? "border-cyan-500/30 text-cyan-400 bg-cyan-950/30"
-                      : "border-amber-500/30 text-amber-400 bg-amber-950/30"
+                      ? "border-cyan-500/30 text-cyan-600 dark:text-cyan-400 bg-cyan-500/10"
+                      : "border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10"
                   )}
                 >
                   {EXECUTION_LABELS[post.executionType] || post.executionType}
@@ -86,7 +86,7 @@ export function PostCard({ post, locale = "vi" }: PostCardProps) {
             </h3>
 
             {/* 2. Budget (Formatted prominently with mono font) */}
-            <div className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary font-bold font-mono text-sm mb-3 border border-primary/25 shadow-xs">
+            <div className="inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-primary/15 text-primary font-bold font-mono text-sm mb-3 border border-primary/25 shadow-xs leading-none">
               {isBudgetRange
                 ? `${formatVND(post.budgetMin, locale)} - ${formatVND(post.budgetMax, locale)}`
                 : formatVND(post.budgetMin, locale)}
@@ -101,11 +101,11 @@ export function PostCard({ post, locale = "vi" }: PostCardProps) {
           <div>
             {/* 4. Location and Deadline captions */}
             <div className="space-y-1.5 text-xs text-fg-tertiary pt-3 border-t border-border mb-3">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 [&>svg]:shrink-0">
                 <MapPin className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">{post.locationSnapshot || "Trực tuyến"}</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 [&>svg]:shrink-0">
                 <Clock className="h-3.5 w-3.5 shrink-0" />
                 <span>Hạn nộp: {formatDateOnly(post.deadlineAt, locale)}</span>
               </div>
@@ -121,7 +121,7 @@ export function PostCard({ post, locale = "vi" }: PostCardProps) {
               </div>
 
               <div className="flex items-center gap-1 text-xs text-fg-tertiary shrink-0">
-                <MessageSquare className="h-3.5 w-3.5" />
+                <MessageSquare className="h-3.5 w-3.5 shrink-0" />
                 <span>{post.proposalsCount} đề xuất</span>
               </div>
             </div>

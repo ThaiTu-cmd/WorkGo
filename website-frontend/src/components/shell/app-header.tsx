@@ -40,7 +40,7 @@ export function AppHeader({
             href={`/${locale}/posts`}
             className="flex items-center gap-2.5 font-bold text-xl tracking-tight group"
           >
-            <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-[#1677FF] to-[#0B4DBB] flex items-center justify-center text-white font-black text-sm shadow-md shadow-[#1677FF]/25 group-hover:scale-105 transition-all duration-200">
+            <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-[#1677FF] to-[#0B4DBB] flex items-center justify-center text-white font-black text-sm leading-none select-none shadow-md shadow-[#1677FF]/25 group-hover:scale-105 transition-all duration-200">
               W
             </div>
             <span className="text-fg group-hover:text-primary transition-colors font-semibold tracking-tight">WorkGo</span>

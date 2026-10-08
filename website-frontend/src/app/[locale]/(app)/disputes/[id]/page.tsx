@@ -86,7 +86,7 @@ export default function DisputeDetailPage() {
             variant="outline"
             size="sm"
             onClick={() => setReportOpen(true)}
-            className="gap-1.5 text-danger border-red-200 hover:bg-red-50"
+            className="gap-1.5 text-danger border-danger/30 hover:bg-danger-bg"
           >
             <Flag className="h-4 w-4" />
             <span>Báo cáo bổ sung</span>

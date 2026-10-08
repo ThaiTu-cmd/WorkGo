@@ -215,7 +215,7 @@ export default function PostDetailPage() {
                 </p>
 
                 {hasApplied ? (
-                  <div className="p-3.5 rounded-control bg-green-50 border border-green-200 text-success text-xs flex items-center gap-2">
+                  <div className="p-3.5 rounded-control bg-success-bg border border-success/30 text-success text-xs flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 shrink-0" />
                     <span className="font-medium">Bạn đã nộp đề xuất cho công việc này</span>
                   </div>

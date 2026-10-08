@@ -184,7 +184,7 @@ export function Sidebar({
 
                 {/* Optional Badge */}
                 {!isCollapsed && item.badge && (
-                  <span className="ml-auto text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                  <span className="ml-auto inline-flex items-center justify-center leading-none text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
                     {item.badge}
                   </span>
                 )}

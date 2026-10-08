@@ -31,9 +31,16 @@ export interface BadgeProps
 
 function Badge({ className, variant, icon, children, ...props }: BadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props}>
-      {icon && <span className="shrink-0">{icon}</span>}
-      <span>{children}</span>
+    <div
+      className={cn(
+        badgeVariants({ variant }),
+        "inline-flex items-center justify-center leading-none select-none",
+        className
+      )}
+      {...props}
+    >
+      {icon && <span className="shrink-0 inline-flex items-center justify-center">{icon}</span>}
+      <span className="inline-flex items-center gap-1.5 leading-none">{children}</span>
     </div>
   );
 }

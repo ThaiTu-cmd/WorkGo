@@ -142,10 +142,10 @@ export function AppShellClient({
 
       {/* Mobile Drawer Navigation (Slides from Left) */}
       <Drawer open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
-        <DrawerContent side="left" className="h-[100dvh] bg-[#06142F]/95 backdrop-blur-2xl border-r border-[rgba(148,184,255,0.14)]">
+        <DrawerContent side="left" className="h-[100dvh] bg-surface/95 backdrop-blur-2xl border-r border-border">
           <DrawerHeader>
             <div className="flex items-center gap-2.5">
-              <div className="h-7 w-7 rounded-control bg-gradient-to-br from-[#1677FF] to-[#0B4DBB] flex items-center justify-center text-white font-black text-sm shadow-xs">
+              <div className="h-7 w-7 rounded-control bg-gradient-to-br from-[#1677FF] to-[#0B4DBB] flex items-center justify-center text-white font-black text-sm leading-none select-none shadow-xs">
                 W
               </div>
               <DrawerTitle className="text-base font-bold text-primary">WorkGo</DrawerTitle>

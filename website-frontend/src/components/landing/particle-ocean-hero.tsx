@@ -70,8 +70,8 @@ export function ParticleOceanHero({
         )}
       >
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium mb-6 border border-[#38BDF8]/30 bg-[#1677FF]/10 text-primary backdrop-blur-md">
-          <span className="w-2 h-2 rounded-full bg-[#38BDF8] animate-pulse" />
-          <span>
+          <span className="w-2 h-2 rounded-full bg-[#38BDF8] animate-pulse shrink-0" />
+          <span className="leading-none">
             {locale === "en"
               ? "Digital Talent & Escrow-Backed Marketplace WorkGo"
               : "Thị trường nhân lực số & công việc bảo chứng WorkGo"}

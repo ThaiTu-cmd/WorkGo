@@ -28,7 +28,7 @@ export function WorkgoNavbar({ locale }: WorkgoNavbarProps) {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href={`/${locale}`} className="flex items-center gap-2.5 group select-none">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1677FF] to-[#0B4DBB] flex items-center justify-center text-white font-black text-lg shadow-md shadow-[#1677FF]/30 group-hover:scale-105 transition-transform duration-200">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1677FF] to-[#0B4DBB] flex items-center justify-center text-white font-black text-lg leading-none select-none shadow-md shadow-[#1677FF]/30 group-hover:scale-105 transition-transform duration-200">
               W
             </div>
             <div className="flex flex-col">
@@ -81,7 +81,7 @@ export function WorkgoNavbar({ locale }: WorkgoNavbarProps) {
               className="pressable inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-white bg-gradient-to-r from-[#1677FF] to-[#0B4DBB] hover:brightness-110 shadow-sm shadow-[#1677FF]/30 transition-all"
             >
               <span>{t("getStarted")}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
             </Link>
           </div>
 

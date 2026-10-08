@@ -56,7 +56,7 @@ export function Avatar({
           onError={() => setImageError(true)}
         />
       ) : (
-        <span>{getInitials(name || alt)}</span>
+        <span className="leading-none flex items-center justify-center">{getInitials(name || alt)}</span>
       )}
     </div>
   );

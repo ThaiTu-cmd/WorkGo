@@ -81,10 +81,10 @@ function ToastCard({
   };
 
   const borderColors = {
-    success: "border-green-200 bg-surface",
-    error: "border-red-200 bg-surface",
-    warning: "border-amber-200 bg-surface",
-    info: "border-sky-200 bg-surface",
+    success: "border-success/30 bg-surface",
+    error: "border-danger/30 bg-surface",
+    warning: "border-warning/30 bg-surface",
+    info: "border-info/30 bg-surface",
   };
 
   const progressBg = {

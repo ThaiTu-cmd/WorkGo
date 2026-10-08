@@ -110,7 +110,7 @@ export function ReviewModal({
             Đang tải thông tin đơn hàng...
           </div>
         ) : !isCompleted ? (
-          <div className="p-4 rounded-card bg-amber-50 border border-amber-200 text-warning text-sm flex items-start gap-2.5">
+          <div className="p-4 rounded-card bg-warning-bg border border-warning/30 text-warning text-sm flex items-start gap-2.5">
             <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
             <p>{t("orderNotCompleted")}</p>
           </div>

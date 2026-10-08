@@ -22,7 +22,7 @@ export function AuthShell({ children, locale }: AuthShellProps) {
           className="flex items-center gap-2.5 font-bold text-xl text-primary tracking-tight group"
           title={locale === "vi" ? "Về trang giới thiệu" : "Back to Home"}
         >
-          <div className="h-8 w-8 rounded-control bg-gradient-to-br from-[#1677FF] to-[#0B4DBB] flex items-center justify-center text-white font-black text-lg shadow-sm shadow-[#1677FF]/30 group-hover:scale-105 transition-all duration-200">
+          <div className="h-8 w-8 rounded-control bg-gradient-to-br from-[#1677FF] to-[#0B4DBB] flex items-center justify-center text-white font-black text-lg leading-none select-none shadow-sm shadow-[#1677FF]/30 group-hover:scale-105 transition-all duration-200">
             W
           </div>
           <span className="text-fg group-hover:text-primary transition-colors">WorkGo</span>

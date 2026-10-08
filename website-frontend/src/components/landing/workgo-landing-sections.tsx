@@ -111,7 +111,7 @@ export function WorkgoLandingSections({ locale }: WorkgoLandingSectionsProps) {
         />
 
         <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 mb-4">
+          <div className="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 mb-4 leading-none">
             {t("features.sectionBadge")}
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-fg">
@@ -134,7 +134,7 @@ export function WorkgoLandingSections({ locale }: WorkgoLandingSectionsProps) {
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1677FF]/20 to-[#0B4DBB]/40 border border-[#1677FF]/30 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                     <Icon className="w-6 h-6" />
                   </div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-muted border border-border text-fg-tertiary">
+                  <span className="inline-flex items-center justify-center text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-muted border border-border text-fg-tertiary leading-none">
                     {feat.badge}
                   </span>
                 </div>
@@ -155,7 +155,7 @@ export function WorkgoLandingSections({ locale }: WorkgoLandingSectionsProps) {
       <section id="showcase" className="scroll-mt-20 relative py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-border">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 mb-3">
+            <div className="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 mb-3 leading-none">
               {t("showcase.sectionBadge")}
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg">
@@ -183,7 +183,7 @@ export function WorkgoLandingSections({ locale }: WorkgoLandingSectionsProps) {
               <div>
                 <div className="flex items-center justify-between text-xs text-fg-tertiary mb-3">
                   <span>{job.category}</span>
-                  <span className="flex items-center gap-1 text-[#34D399]">
+                  <span className="inline-flex items-center gap-1 text-[#34D399] leading-none [&>svg]:shrink-0">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     {locale === "en" ? "Escrow Protected" : "Bảo chứng Escrow"}
                   </span>

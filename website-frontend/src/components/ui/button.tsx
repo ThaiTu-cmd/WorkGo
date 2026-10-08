@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Spinner } from "./spinner";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 font-medium text-sm select-none cursor-pointer " +
+  "inline-flex items-center justify-center gap-2 font-medium text-sm select-none cursor-pointer leading-none [&>svg]:shrink-0 " +
   "transition-[transform,box-shadow,filter,background-color,border-color] duration-150 ease-[cubic-bezier(0.34,1.56,0.64,1)] " +
   "active:scale-[0.94] active:brightness-90 active:shadow-none " +
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 " +

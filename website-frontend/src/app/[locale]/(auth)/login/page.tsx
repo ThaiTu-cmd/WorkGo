@@ -108,7 +108,7 @@ function LoginFormContent() {
       <CardContent>
         {serverError && (
           <div
-            className="mb-5 p-3 rounded-control bg-danger-bg border border-red-200 text-danger text-sm flex items-start gap-2.5"
+            className="mb-5 p-3 rounded-control bg-danger-bg border border-danger/30 text-danger text-sm flex items-start gap-2.5"
             role="alert"
           >
             <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />

@@ -166,8 +166,8 @@ function PostsMarketplaceContent() {
         {/* Live post counter badge */}
         <div className="shrink-0 flex items-center gap-2">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-subtle text-primary text-xs font-semibold border border-primary/20 shadow-xs">
-            <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <span>
+            <span className="h-2 w-2 rounded-full bg-primary animate-pulse shrink-0" />
+            <span className="leading-none">
               {meta.total} {t("jobsAvailable")}
             </span>
           </div>
@@ -182,7 +182,7 @@ function PostsMarketplaceContent() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             prefixIcon={<Search className="h-4 w-4" />}
-            className="h-11 pl-10"
+            className="h-11 pl-10 pr-10"
           />
           {searchInput && (
             <button
@@ -279,7 +279,7 @@ function PostsMarketplaceContent() {
               <span>{categories.find((c) => c.categoryId === catParam)?.categoryName || catParam}</span>
               <button
                 onClick={() => updateQuery({ category: undefined, page: 1 })}
-                className="hover:text-danger cursor-pointer p-0.5"
+                className="inline-flex items-center justify-center rounded-full p-0.5 hover:text-danger hover:bg-muted/80 cursor-pointer"
                 aria-label="Xóa bộ lọc danh mục"
               >
                 <X className="h-3 w-3" />
@@ -292,7 +292,7 @@ function PostsMarketplaceContent() {
               <span>{execParam}</span>
               <button
                 onClick={() => updateQuery({ executionType: undefined, page: 1 })}
-                className="hover:text-danger cursor-pointer p-0.5"
+                className="inline-flex items-center justify-center rounded-full p-0.5 hover:text-danger hover:bg-muted/80 cursor-pointer"
                 aria-label="Xóa bộ lọc hình thức"
               >
                 <X className="h-3 w-3" />
@@ -308,7 +308,7 @@ function PostsMarketplaceContent() {
               </span>
               <button
                 onClick={() => updateQuery({ budgetMin: undefined, budgetMax: undefined, page: 1 })}
-                className="hover:text-danger cursor-pointer p-0.5"
+                className="inline-flex items-center justify-center rounded-full p-0.5 hover:text-danger hover:bg-muted/80 cursor-pointer"
                 aria-label="Xóa bộ lọc ngân sách"
               >
                 <X className="h-3 w-3" />

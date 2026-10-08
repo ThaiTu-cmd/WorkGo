@@ -8,7 +8,7 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default: "bg-primary/15 text-primary border border-primary/30 shadow-xs",
-        primary: "bg-gradient-to-r from-primary/20 to-emerald-400/20 text-primary border border-primary/35 shadow-xs font-semibold",
+        primary: "bg-gradient-to-r from-primary/20 to-[#38BDF8]/20 text-primary border border-primary/35 shadow-xs font-semibold",
         secondary: "bg-muted/80 text-fg-secondary border border-border",
         success: "bg-success/15 text-success border border-success/30 shadow-xs",
         warning: "bg-warning/15 text-warning border border-warning/30 shadow-xs",
@@ -31,9 +31,16 @@ export interface BadgeProps
 
 function Badge({ className, variant, icon, children, ...props }: BadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props}>
-      {icon && <span className="shrink-0">{icon}</span>}
-      <span>{children}</span>
+    <div
+      className={cn(
+        badgeVariants({ variant }),
+        "inline-flex items-center justify-center leading-none select-none",
+        className
+      )}
+      {...props}
+    >
+      {icon && <span className="shrink-0 inline-flex items-center justify-center">{icon}</span>}
+      <span className="inline-flex items-center gap-1.5 leading-none">{children}</span>
     </div>
   );
 }

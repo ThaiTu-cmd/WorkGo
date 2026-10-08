@@ -416,5 +416,62 @@
     "providerWalletDesc": "Theo dõi tiền công hoàn thành và cài đặt rút tiền ngân hàng",
     "providerProfileShortcut": "Hồ sơ năng lực Provider",
     "providerProfileShortcutDesc": "Cập nhật thông tin giới thiệu, kinh nghiệm và cài đặt nhận việc"
+  },
+  "landing": {
+    "nav": {
+      "features": "Tính năng",
+      "showcase": "Dự án tiêu biểu",
+      "pricing": "Bảng giá",
+      "posts": "Việc làm",
+      "signIn": "Đăng nhập",
+      "getStarted": "Bắt đầu ngay"
+    },
+    "hero": {
+      "badge": "Thị trường nhân lực số & công việc bảo chứng WorkGo",
+      "titlePart1": "Sàn giao dịch nhân lực công nghệ",
+      "titleHighlight": "Chuẩn Chuyên Nghiệp",
+      "subtitle": "Kết nối doanh nghiệp cùng các chuyên gia hàng đầu. Hệ thống ký quỹ minh bạch, tiến độ bảo chứng bằng hợp đồng điện tử và thanh toán tức thì.",
+      "ctaPrimary": "Khám phá việc làm",
+      "ctaSecondary": "Đăng nhập ngay",
+      "statCompletedJobs": "Dự án hoàn thành",
+      "statExperts": "Chuyên gia xác thực",
+      "statSatisfaction": "Tỷ lệ hài lòng"
+    },
+    "features": {
+      "sectionBadge": "Hệ thống toàn diện",
+      "sectionTitle": "Giải pháp vận hành dự án tự động & an toàn",
+      "sectionDesc": "WorkGo cung cấp hạ tầng kết nối, bảo vệ ngân sách và cam kết chất lượng chuẩn doanh nghiệp.",
+      "feature1Title": "Hợp đồng Escrow Ký quỹ",
+      "feature1Desc": "Bảo vệ 100% dòng tiền của đôi bên. Tiền chỉ được giải ngân khi sản phẩm bàn giao đạt chuẩn nghiệm thu.",
+      "feature2Title": "Hồ sơ Chuyên gia Bảo chứng",
+      "feature2Desc": "Chuyên gia được xác thực năng lực qua đánh giá đa chiều, kinh nghiệm thực tế và lịch sử giao dịch.",
+      "feature3Title": "Quy trình Trọng tài Phân xử",
+      "feature3Desc": "Cơ chế khiếu nại minh bạch với sự hỗ trợ của đội ngũ chuyên viên bảo vệ quyền lợi hợp pháp.",
+      "feature4Title": "Theo dõi Tiến độ Thời gian thực",
+      "feature4Desc": "Quản lý mốc dự án, cập nhật trạng thái bàn giao và phê duyệt công việc dễ dàng trên một giao diện.",
+      "feature5Title": "Bảo mật & Quyền riêng tư",
+      "feature5Desc": "Mã hóa dữ liệu cấp doanh nghiệp, tuân thủ tiêu chuẩn an toàn bảo mật và bảo vệ bí mật dự án.",
+      "feature6Title": "Thanh toán Đa kênh Siêu tốc",
+      "feature6Desc": "Nạp rút linh hoạt qua ngân hàng nội địa và thẻ quốc tế với độ trễ xử lý tối thiểu."
+    },
+    "showcase": {
+      "sectionBadge": "Dự án nổi bật",
+      "sectionTitle": "Cơ hội việc làm chất lượng cao",
+      "sectionDesc": "Hàng trăm dự án mới mỗi tuần từ các startup và doanh nghiệp hàng đầu.",
+      "viewAll": "Xem tất cả việc làm"
+    },
+    "cta": {
+      "title": "Sẵn sàng nâng tầm dự án công nghệ của bạn?",
+      "desc": "Tham gia mạng lưới hàng nghìn doanh nghiệp và chuyên gia hàng đầu trên WorkGo ngay hôm nay.",
+      "primaryBtn": "Đăng ký miễn phí",
+      "secondaryBtn": "Khám phá dự án"
+    },
+    "footer": {
+      "rights": "Bản quyền thuộc về WorkGo Platform. Bảo lưu mọi quyền.",
+      "description": "Nền tảng giao dịch nhân lực công nghệ chuyên nghiệp với hệ thống bảo chứng ký quỹ hiện đại.",
+      "solutions": "Giải pháp",
+      "company": "Công ty",
+      "legal": "Pháp lý"
+    }
   }
 }

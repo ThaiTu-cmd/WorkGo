@@ -49,8 +49,8 @@ export default function ClientDashboardPage() {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-xl">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-semibold border border-primary/30 backdrop-blur-md">
-              <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
-              <span>{greeting}</span>
+              <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse shrink-0" />
+              <span className="leading-none">{greeting}</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-fg">
               {t("clientTitle")}

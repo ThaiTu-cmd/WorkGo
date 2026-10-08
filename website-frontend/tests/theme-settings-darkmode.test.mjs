@@ -93,8 +93,13 @@ test("Dark Palette - Form inputs eliminate blinding white focus and hardcoded li
   );
   assert.match(
     switchContent,
+    /data-\[state=unchecked\]:bg-muted/,
+    "Switch component must use semantic bg-muted for unchecked state (slate-700 looks ON in light mode)"
+  );
+  assert.doesNotMatch(
+    switchContent,
     /data-\[state=unchecked\]:bg-slate-700/,
-    "Switch component must use darker muted slate for unchecked state"
+    "Switch component must not hardcode bg-slate-700 for unchecked state"
   );
 
   const avatarFile = path.join(ROOT, "src/components/ui/avatar.tsx");
@@ -117,19 +122,19 @@ test("Theme Engine - CSS tokens in globals.css support both Dark and Light modes
 
   // Dark mode tokens
   assert.match(cssContent, /\[data-theme="dark"\]/, "globals.css must support [data-theme='dark']");
-  assert.match(cssContent, /--bg-app:\s*#04060f/, "Dark mode must use Deep Space #04060f");
-  assert.match(cssContent, /--bg-surface:\s*#0c1226/, "Dark mode must use #0c1226 surface");
-  assert.match(cssContent, /--primary:\s*#5df0a8/, "Dark mode must use mint #5df0a8");
+  assert.match(cssContent, /--bg-app:\s*#030B1C/i, "Dark mode must use Deep Navy #030B1C");
+  assert.match(cssContent, /--bg-surface:\s*#06142F/i, "Dark mode must use #06142F surface");
+  assert.match(cssContent, /--primary:\s*#1677FF/i, "Dark mode must use electric blue #1677FF");
 
   // Light mode tokens
   assert.match(cssContent, /\[data-theme="light"\]/, "globals.css must support [data-theme='light']");
   assert.match(cssContent, /\.light/, "globals.css must support .light class");
-  assert.match(cssContent, /--bg-app:\s*#f8fafc/, "Light mode must use #f8fafc");
-  assert.match(cssContent, /--bg-surface:\s*#ffffff/, "Light mode must use #ffffff");
-  assert.match(cssContent, /--primary:\s*#10b981/, "Light mode must use emerald #10b981");
+  assert.match(cssContent, /--bg-app:\s*#F5F9FF/i, "Light mode must use #F5F9FF");
+  assert.match(cssContent, /--bg-surface:\s*#FFFFFF/i, "Light mode must use #FFFFFF");
+  assert.match(cssContent, /--primary:\s*#1677FF/i, "Light mode must use electric blue #1677FF");
 
   // Dynamic glassmorphism tokens
-  assert.match(cssContent, /--glass-bg:\s*rgba\(12,\s*18,\s*38/, "Dark mode defines dark --glass-bg");
+  assert.match(cssContent, /--glass-bg:\s*rgba\(6,\s*20,\s*47/, "Dark mode defines dark --glass-bg");
   assert.match(cssContent, /--glass-bg:\s*rgba\(255,\s*255,\s*255/, "Light mode defines light --glass-bg");
   assert.doesNotMatch(
     cssContent,

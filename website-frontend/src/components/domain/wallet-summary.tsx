@@ -22,13 +22,13 @@ export function WalletSummary({
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
       {/* 1. Available Balance */}
-      <Card glass className="border-primary/40 bg-gradient-to-br from-primary/10 via-[rgba(12,18,38,0.75)] to-[rgba(12,18,38,0.85)] shadow-xl shadow-primary/5 relative overflow-hidden">
+      <Card glass className="border-primary/40 bg-gradient-to-br from-primary/15 via-surface to-surface shadow-xl shadow-primary/5 relative overflow-hidden">
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-primary">
               Số dư khả dụng
             </span>
-            <div className="p-2.5 rounded-full bg-primary/20 text-primary border border-primary/30">
+            <div className="flex items-center justify-center shrink-0 p-2.5 rounded-full bg-primary/20 text-primary border border-primary/30">
               <Wallet className="h-4 w-4" />
             </div>
           </div>
@@ -65,7 +65,7 @@ export function WalletSummary({
             <span className="text-xs font-semibold uppercase tracking-wider text-fg-secondary">
               Đang giữ Escrow
             </span>
-            <div className="p-2.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
+            <div className="flex items-center justify-center shrink-0 p-2.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
               <ShieldAlert className="h-4 w-4" />
             </div>
           </div>
@@ -87,7 +87,7 @@ export function WalletSummary({
             <span className="text-xs font-semibold uppercase tracking-wider text-fg-secondary">
               Tổng thu nhập đã nhận
             </span>
-            <div className="p-2.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+            <div className="flex items-center justify-center shrink-0 p-2.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
               <ArrowDownLeft className="h-4 w-4" />
             </div>
           </div>

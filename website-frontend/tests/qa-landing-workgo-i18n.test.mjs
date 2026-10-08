@@ -6,85 +6,66 @@ import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const landingHtmlPath = path.resolve(__dirname, "../public/landing/index.html");
+const viDictPath = path.resolve(__dirname, "../src/dictionaries/vi.json");
+const enDictPath = path.resolve(__dirname, "../src/dictionaries/en.json");
 const ascendViewPath = path.resolve(__dirname, "../src/components/landing/ascend-landing-view.tsx");
 const localeRootPath = path.resolve(__dirname, "../src/app/[locale]/page.tsx");
 const rootPagePath = path.resolve(__dirname, "../src/app/page.tsx");
 const landingRoutePath = path.resolve(__dirname, "../src/app/[locale]/(public)/landing/page.tsx");
+const navbarPath = path.resolve(__dirname, "../src/components/landing/workgo-navbar.tsx");
+const sectionsPath = path.resolve(__dirname, "../src/components/landing/workgo-landing-sections.tsx");
 
 // =========================================================================
 // 1. HAPPY PATH: CORE SECTIONS, COPYWRITING & METADATA IN VIETNAMESE
 // =========================================================================
 
-test("QA Happy Path - Landing Page public/landing/index.html defines complete WorkGo Marketplace copywriting", () => {
-  assert.ok(fs.existsSync(landingHtmlPath), "Landing HTML file must exist");
-  const html = fs.readFileSync(landingHtmlPath, "utf-8");
+test("QA Happy Path - Dictionaries define complete WorkGo Marketplace copywriting", () => {
+  assert.ok(fs.existsSync(viDictPath), "vi.json must exist");
+  assert.ok(fs.existsSync(enDictPath), "en.json must exist");
+  const vi = JSON.parse(fs.readFileSync(viDictPath, "utf-8"));
 
   // Title & Brand
-  assert.match(html, /<title>WorkGo — Nền Tảng Kết Nối Việc Làm & Dịch Vụ Chuyên Nghiệp<\/title>/, "Default title is WorkGo");
-  assert.match(html, /id="navBrandText">WorkGo<\/span>/, "Brand logo text is WorkGo");
+  assert.equal(vi.common.appName, "WorkGo", "Brand logo text is WorkGo");
 
   // Navigation Links
-  assert.match(html, /Lĩnh vực dịch vụ/, "Nav link 1: Lĩnh vực dịch vụ");
-  assert.match(html, /Quy trình hoạt động/, "Nav link 2: Quy trình hoạt động");
-  assert.match(html, /Bảo chứng Escrow/, "Nav link 3: Bảo chứng Escrow");
-  assert.match(html, /Khám phá việc làm/, "Nav link 4: Khám phá việc làm");
-  assert.match(html, /Đăng nhập/, "Nav action: Đăng nhập");
-  assert.match(html, /Đăng ký ngay/, "Nav action: Đăng ký ngay");
+  assert.equal(vi.landing.nav.features, "Tính năng");
+  assert.equal(vi.landing.nav.showcase, "Dự án tiêu biểu");
+  assert.equal(vi.landing.nav.pricing, "Bảng giá");
+  assert.equal(vi.landing.nav.posts, "Việc làm");
+  assert.equal(vi.landing.nav.signIn, "Đăng nhập");
+  assert.equal(vi.landing.nav.getStarted, "Bắt đầu ngay");
 
   // Section 1: Hero
-  assert.match(html, /NỀN TẢNG DỊCH VỤ & VIỆC LÀM HÀNG ĐẦU/, "Hero eyebrow");
-  assert.match(html, /Kết Nối Tài Năng,<br>Nâng Tầm <em>Công Việc<\/em>/, "Hero headline with gradient em tag");
-  assert.match(html, /Sàn kết nối Khách hàng và Chuyên gia uy tín/, "Hero subtitle");
-  assert.match(html, /Bắt đầu ngay miễn phí/, "Primary CTA button text");
-  assert.match(html, /Được tin dùng bởi hơn 10\.000\+ cá nhân và doanh nghiệp/, "Social proof badge");
+  assert.match(vi.landing.hero.badge, /WorkGo/);
+  assert.match(vi.landing.hero.titlePart1, /Sàn giao dịch nhân lực công nghệ/);
+  assert.match(vi.landing.hero.titleHighlight, /Chuẩn Chuyên Nghiệp/);
+  assert.match(vi.landing.hero.ctaPrimary, /Khám phá việc làm/);
+  assert.match(vi.landing.hero.ctaSecondary, /Đăng nhập ngay/);
 
-  // 6 Verified Partner Brand Badges
-  const partnerLogos = ["TechVina", "DesignHub", "MediaPro", "FixIt Home", "CleanPlus", "BuildStack"];
-  for (const logo of partnerLogos) {
-    assert.match(html, new RegExp(`>${logo}</span>`), `Partner logo ${logo} exists`);
-  }
-
-  // Section 2: Features (6 core cards)
-  assert.match(html, /HỆ SINH THÁI TOÀN DIỆN/, "Features eyebrow");
-  assert.match(html, /Một nền tảng chuẩn hóa mọi nhu cầu dịch vụ & việc làm/, "Features title");
-  assert.match(html, /Đăng việc & Báo giá tức thì/, "Feature 1: Đăng việc & Báo giá");
-  assert.match(html, /Quản lý tiến độ minh bạch/, "Feature 2: Quản lý tiến độ");
-  assert.match(html, /Mạng lưới đối tác xác thực/, "Feature 3: Mạng lưới đối tác");
-  assert.match(html, /Đa dạng hình thức thực hiện/, "Feature 4: Đa dạng hình thức");
-  assert.match(html, /Bảo chứng thanh toán Escrow/, "Feature 5: Bảo chứng thanh toán");
-  assert.match(html, /Giải quyết khiếu nại công bằng/, "Feature 6: Giải quyết khiếu nại");
+  // Section 2: Features
+  assert.match(vi.landing.features.sectionBadge, /Hệ thống toàn diện/);
+  assert.match(vi.landing.features.feature1Title, /Hợp đồng Escrow Ký quỹ/);
+  assert.match(vi.landing.features.feature2Title, /Hồ sơ Chuyên gia Bảo chứng/);
+  assert.match(vi.landing.features.feature3Title, /Quy trình Trọng tài Phân xử/);
+  assert.match(vi.landing.features.feature4Title, /Theo dõi Tiến độ Thời gian thực/);
+  assert.match(vi.landing.features.feature5Title, /Bảo mật & Quyền riêng tư/);
+  assert.match(vi.landing.features.feature6Title, /Thanh toán Đa kênh Siêu tốc/);
 
   // Section 3: Showcase & Stats
-  assert.match(html, /MINH BẠCH & TỨC THỜI/, "Showcase eyebrow");
-  assert.match(html, /Theo dõi mọi chuyển động dự án theo thời gian thực/, "Showcase title");
-  assert.match(html, /Dự án & Đơn hàng · Quý 3/, "Dashboard title");
-  assert.match(html, /Đề xuất mới nhận/, "Dashboard row 1");
-  assert.match(html, /Hợp đồng đang thực hiện/, "Dashboard row 2");
-  assert.match(html, /Nghiệm thu thành công/, "Dashboard row 3");
-  assert.match(html, /Đánh giá hài lòng 5 sao/, "Dashboard row 4");
-  assert.match(html, /99\.4%/, "Stat 1: Escrow safety");
-  assert.match(html, /15 phút/, "Stat 2: Quick proposal");
-  assert.match(html, /25\.000\+/, "Stat 3: Completed orders");
-  assert.match(html, /50\+ Tỷ ₫/, "Stat 4: Paid to providers");
+  assert.match(vi.landing.showcase.sectionBadge, /Dự án nổi bật/);
+  assert.match(vi.landing.showcase.viewAll, /Xem tất cả việc làm/);
 
   // Section 4: CTA & Footer
-  assert.match(html, /SẴN SÀNG KHỞI ĐỘNG/, "CTA eyebrow");
-  assert.match(html, /Khởi đầu dự án thành công cùng WorkGo ngay hôm nay/, "CTA title");
-  assert.match(html, /Đăng ký tài khoản miễn phí/, "CTA primary button");
-  assert.match(html, /Tìm việc & Thuê đối tác/, "CTA secondary button");
-  assert.match(html, /Khám phá<\/h4>/, "Footer col 1: Khám phá");
-  assert.match(html, /Dành cho Provider<\/h4>/, "Footer col 2: Dành cho Provider");
-  assert.match(html, /Hỗ trợ & Pháp lý<\/h4>/, "Footer col 3: Hỗ trợ & Pháp lý");
-  assert.match(html, /WorkGo Platform\. Nâng tầm giá trị kết nối lao động chuyên nghiệp\./, "Footer copyright");
+  assert.match(vi.landing.cta.primaryBtn, /Đăng ký miễn phí/);
+  assert.match(vi.landing.cta.secondaryBtn, /Khám phá dự án/);
+  assert.match(vi.landing.footer.rights, /Bản quyền thuộc về WorkGo Platform/);
 });
 
 test("QA Happy Path - Next.js components and routes integrate WorkGo Platform branding", () => {
   // AscendLandingView Component
   const ascendContent = fs.readFileSync(ascendViewPath, "utf-8");
   assert.match(ascendContent, />WorkGo<\/span>/, "AscendLandingView brand name WorkGo");
-  assert.match(ascendContent, />\s*Platform\s*<\/span>/, "AscendLandingView platform badge");
-  assert.match(ascendContent, /src=\{`\/landing\/index\.html\?locale=\$\{locale\}`\}/, "Iframe src binds locale parameter");
+  assert.match(ascendContent, /<WorkgoLandingPage\s*locale=\{locale\}\s*\/>/, "Landing binds locale parameter");
 
   // Root Page app/page.tsx
   const rootContent = fs.readFileSync(rootPagePath, "utf-8");
@@ -105,32 +86,23 @@ test("QA Happy Path - Next.js components and routes integrate WorkGo Platform br
 // 2. EDGE CASES & CORNER CASES: i18n DICTIONARY PARITY & LOCALIZATION
 // =========================================================================
 
-test("QA Edge Case - Dynamic i18n: EN_TRANSLATIONS dictionary achieves 100% key parity with HTML elements", () => {
-  const html = fs.readFileSync(landingHtmlPath, "utf-8");
+test("QA Edge Case - Dynamic i18n: EN and VI dictionaries achieve 100% key parity for landing", () => {
+  const vi = JSON.parse(fs.readFileSync(viDictPath, "utf-8"));
+  const en = JSON.parse(fs.readFileSync(enDictPath, "utf-8"));
 
-  // Extract EN_TRANSLATIONS dictionary object
-  const dictMatch = html.match(/const EN_TRANSLATIONS = \{([\s\S]*?)\};/);
-  assert.ok(dictMatch, "EN_TRANSLATIONS dictionary must exist in script");
-
-  const dictContent = dictMatch[1];
-  const dictKeys = [...dictContent.matchAll(/['"]([^'"]+)['"]\s*:/g)].map((m) => m[1]);
-  assert.ok(dictKeys.length >= 60, `EN_TRANSLATIONS must have at least 60 keys (found ${dictKeys.length})`);
-
-  // Verify that every single key in EN_TRANSLATIONS has a corresponding data-i18n element in HTML
-  const missingInHtml = [];
-  for (const key of dictKeys) {
-    if (!html.includes(`data-i18n="${key}"`)) {
-      missingInHtml.push(key);
-    }
+  const sections = ["nav", "hero", "features", "showcase", "cta", "footer"];
+  for (const section of sections) {
+    const viKeys = Object.keys(vi.landing[section]).sort();
+    const enKeys = Object.keys(en.landing[section]).sort();
+    assert.deepEqual(viKeys, enKeys, `Section landing.${section} must have identical keys in vi and en`);
   }
-  assert.deepEqual(missingInHtml, [], "All keys in EN_TRANSLATIONS must correspond to HTML elements with data-i18n");
 
   // Verify key English translations
-  assert.match(dictContent, /'hero-title':\s*'Connect Top Talent,<br>Elevate <em>Every Project<\/em>'/);
-  assert.match(dictContent, /'feature-1-title':\s*'Instant Job Posts & Bids'/);
-  assert.match(dictContent, /'feature-5-title':\s*'100% Escrow Protection'/);
-  assert.match(dictContent, /'stat-4-val':\s*'50B\+ VND'/);
-  assert.match(dictContent, /'stat-1-label':\s*'Escrow transaction safety rate'/);
+  assert.equal(en.landing.nav.posts, "Explore Jobs");
+  assert.equal(en.landing.nav.signIn, "Sign In");
+  assert.equal(en.landing.nav.getStarted, "Get Started");
+  assert.match(en.landing.hero.titlePart1, /Premier Marketplace/);
+  assert.match(en.landing.features.feature1Title, /Smart Escrow Protection/);
 });
 
 test("QA Edge Case - Locale parameter parser and fallback resolution handles edge inputs safely", () => {
@@ -156,46 +128,27 @@ test("QA Edge Case - Locale parameter parser and fallback resolution handles edg
 });
 
 // =========================================================================
-// 3. EDGE CASES & CORNER CASES: IFRAME BREAKOUT & NAVIGATION TRAPPING
+// 3. EDGE CASES & CORNER CASES: NATIVE NEXT.JS LINKING & NO IFRAMES
 // =========================================================================
 
-test("QA Edge Case - 100% of out-of-iframe navigation links are protected against iframe entrapment", () => {
-  const html = fs.readFileSync(landingHtmlPath, "utf-8");
+test("QA Edge Case - 100% of landing navigation links use Next.js Link without iframe entrapment", () => {
+  const navbar = fs.readFileSync(navbarPath, "utf-8");
+  const sections = fs.readFileSync(sectionsPath, "utf-8");
 
-  // Extract all links with data-action
-  const actionMatches = [...html.matchAll(/<a[^>]*data-action=["']([^"']+)["'][^>]*>/g)];
-  assert.ok(actionMatches.length >= 10, `Must have at least 10 data-action links (found ${actionMatches.length})`);
+  assert.match(navbar, /import\s+Link\s+from\s+["']next\/link["']/, "Navbar imports Next.js Link");
+  assert.match(sections, /import\s+Link\s+from\s+["']next\/link["']/, "Sections import Next.js Link");
 
-  for (const match of actionMatches) {
-    const tag = match[0];
-    const action = match[1];
+  // Ensure no iframe tag
+  assert.doesNotMatch(navbar, /<iframe/i, "Navbar does not render iframe");
+  assert.doesNotMatch(sections, /<iframe/i, "Sections do not render iframe");
 
-    // Verify allowed action types
-    assert.ok(
-      ["login", "register", "posts"].includes(action),
-      `Action type ${action} must be one of login, register, posts`
-    );
-
-    // Verify that every link has both href and window.top.location.href breakout handler
-    assert.match(tag, /href=["']\/vi\/(login|register|posts)["']/, "Must have valid initial href");
-    assert.match(tag, /onclick=["']window\.top\.location\.href=/, "Must have window.top.location.href breakout");
-    assert.match(tag, /return false;["']/, "Must prevent default iframe navigation via return false");
-  }
-
-  // Ensure there are no naked internal app links that do not have data-action
-  const allAnchors = [...html.matchAll(/<a\s+[^>]*>/g)];
-  for (const anchor of allAnchors) {
-    const tag = anchor[0];
-    const hrefMatch = tag.match(/href=["']([^"']+)["']/);
-    const href = hrefMatch ? hrefMatch[1] : "";
-    if (href.startsWith("/vi/") || href.startsWith("/en/")) {
-      assert.match(tag, /data-action=/, `Internal link ${href} must have data-action attribute to escape iframe`);
-    }
-  }
+  // Verify internal links
+  assert.match(navbar, /href:\s*`\/\$\{locale\}\/posts`/, "Navbar links include posts route");
+  assert.match(navbar, /href=\{`\/\$\{locale\}\/login`\}/, "Navbar links include login route");
+  assert.match(navbar, /href=\{`\/\$\{locale\}\/register`\}/, "Navbar links include register route");
 });
 
-test("QA Edge Case - updateIframeLinks correctly mutates href and onclick for both vi and en locales", () => {
-  // Simulate DOM element structure
+test("QA Edge Case - updateIframeLinks simulation logic functions correctly", () => {
   const createMockLink = (action, initialHref) => ({
     dataset: { action },
     href: initialHref,
@@ -244,24 +197,20 @@ test("QA Edge Case - updateIframeLinks correctly mutates href and onclick for bo
 // =========================================================================
 
 test("QA Boundary & Layout - Typography and container widths prevent Vietnamese text overflow", () => {
-  const html = fs.readFileSync(landingHtmlPath, "utf-8");
+  const heroPath = path.resolve(__dirname, "../src/components/landing/particle-ocean-hero.tsx");
+  const heroContent = fs.readFileSync(heroPath, "utf-8");
 
-  // Hero Title width accommodation
-  assert.match(html, /\.hero-title\s*\{[^}]*max-width:\s*20ch/, "Hero title max-width widened to 20ch for Vietnamese");
-  assert.match(html, /\.hero-title\s*\{[^}]*clamp\(30px,\s*4\.8vw,\s*58px\)/, "Hero title uses fluid clamp font-size");
-
-  // Dashboard row labels accommodation (desktop 240px, mobile 140px)
-  assert.match(html, /\.dash-row\s*\{[^}]*grid-template-columns:\s*240px\s*1fr/, "Desktop dash-row allocates 240px for labels");
-  assert.match(html, /@media\s*\(max-width:\s*560px\)\s*\{[\s\S]*?\.dash-row\s*\{[^}]*grid-template-columns:\s*140px\s*1fr/, "Mobile dash-row allocates 140px for labels");
+  assert.match(heroContent, /max-w-4xl/, "Hero title container has max-w-4xl to prevent Vietnamese text overflow");
+  assert.match(heroContent, /text-(4xl|5xl)\s+sm:text-6xl\s+(md|lg):text-7xl/, "Hero title uses responsive font size scaling");
 });
 
 test("QA Temporal Resilience - Copyright year is dynamically assigned with SSR fallback", () => {
-  const html = fs.readFileSync(landingHtmlPath, "utf-8");
+  const sectionsContent = fs.readFileSync(sectionsPath, "utf-8");
 
-  // Dynamic assignment script
-  assert.match(html, /const yearEl = document\.getElementById\('year'\);/, "Script finds #year element");
-  assert.match(html, /if \(yearEl\) yearEl\.textContent = new Date\(\)\.getFullYear\(\);/, "Assigns current year dynamically");
-
-  // Static fallback for no-JS environments
-  assert.match(html, /<span id="year">\d{4}<\/span>/, "Static fallback year is present in markup");
+  assert.match(
+    sectionsContent,
+    /new\s+Date\(\)\.getFullYear\(\)/,
+    "Footer dynamically calculates current year via new Date().getFullYear()"
+  );
+  assert.match(sectionsContent, /WorkGo Platform/, "Footer retains platform name");
 });

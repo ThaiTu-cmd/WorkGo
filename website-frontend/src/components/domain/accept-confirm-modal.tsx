@@ -89,7 +89,7 @@ export function AcceptConfirmModal({
             </div>
           </div>
 
-          <div className="p-3 rounded-control bg-amber-50 border border-amber-200 text-xs text-warning flex items-start gap-2">
+          <div className="p-3 rounded-control bg-warning-bg border border-warning/30 text-xs text-warning flex items-start gap-2">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
             <span>{t("platformFeeNotice")}</span>
           </div>

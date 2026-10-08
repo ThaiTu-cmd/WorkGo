@@ -416,5 +416,62 @@
     "providerWalletDesc": "Track completed earnings and payout settings",
     "providerProfileShortcut": "Provider Profile",
     "providerProfileShortcutDesc": "Update bio, portfolio, and job intake settings"
+  },
+  "landing": {
+    "nav": {
+      "features": "Features",
+      "showcase": "Showcase",
+      "pricing": "Pricing",
+      "posts": "Explore Jobs",
+      "signIn": "Sign In",
+      "getStarted": "Get Started"
+    },
+    "hero": {
+      "badge": "Digital Talent & Escrow-Backed Marketplace WorkGo",
+      "titlePart1": "Premier Marketplace for Tech Talent",
+      "titleHighlight": "Professional Standard",
+      "subtitle": "Connect enterprises with verified top-tier specialists. Transparent escrow milestones, legally binding contracts, and instant settlements.",
+      "ctaPrimary": "Explore Jobs",
+      "ctaSecondary": "Sign In",
+      "statCompletedJobs": "Completed Projects",
+      "statExperts": "Verified Experts",
+      "statSatisfaction": "Satisfaction Rate"
+    },
+    "features": {
+      "sectionBadge": "Comprehensive System",
+      "sectionTitle": "Automated & Secure Project Execution",
+      "sectionDesc": "WorkGo provides the infrastructure for seamless connection, funds protection, and enterprise-grade delivery.",
+      "feature1Title": "Smart Escrow Protection",
+      "feature1Desc": "100% financial security for both parties. Funds are only released once milestones meet agreed acceptance criteria.",
+      "feature2Title": "Verified Expert Credentials",
+      "feature2Desc": "Specialists verified through multi-dimensional skill evaluation, real-world portfolio, and past transaction records.",
+      "feature3Title": "Fair Dispute Resolution",
+      "feature3Desc": "Transparent mediation framework supported by dedicated dispute specialists to protect legitimate interests.",
+      "feature4Title": "Real-time Milestone Tracking",
+      "feature4Desc": "Manage deliverables, project updates, and approvals frictionlessly within a unified workspace.",
+      "feature5Title": "Enterprise Security & Privacy",
+      "feature5Desc": "Military-grade data encryption, compliance with privacy standards, and robust project confidentiality.",
+      "feature6Title": "Instant Multi-channel Payouts",
+      "feature6Desc": "Flexible deposits and withdrawals via local banks and international cards with near-zero latency."
+    },
+    "showcase": {
+      "sectionBadge": "Featured Opportunities",
+      "sectionTitle": "High-Quality Projects",
+      "sectionDesc": "Hundreds of new opportunities posted weekly by leading startups and established companies.",
+      "viewAll": "View All Jobs"
+    },
+    "cta": {
+      "title": "Ready to accelerate your tech projects?",
+      "desc": "Join thousands of high-performing enterprises and elite talent on WorkGo today.",
+      "primaryBtn": "Get Started Free",
+      "secondaryBtn": "Explore Projects"
+    },
+    "footer": {
+      "rights": "All rights reserved by WorkGo Platform.",
+      "description": "Professional tech talent marketplace powered by modern escrow protection.",
+      "solutions": "Solutions",
+      "company": "Company",
+      "legal": "Legal"
+    }
   }
 }

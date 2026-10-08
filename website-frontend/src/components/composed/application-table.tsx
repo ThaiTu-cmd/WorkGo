@@ -108,7 +108,7 @@ export function ApplicationTable({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 px-2.5 text-xs gap-1 text-danger hover:text-danger hover:border-red-300"
+                      className="h-8 px-2.5 text-xs gap-1 text-danger hover:text-danger hover:border-danger/40 hover:bg-danger-bg"
                       onClick={() => onReject(prop)}
                     >
                       <XCircle className="h-3.5 w-3.5" />

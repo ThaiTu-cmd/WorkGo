@@ -153,35 +153,38 @@ test("QA Clean Header - ascend-landing-view.tsx has zero top header overlay obst
   );
 });
 
-test("QA Clean Header - public/landing/index.html navbar integrates Việc làm, Đăng nhập, Bắt đầu ngay", () => {
-  const indexHtmlPath = path.join(ROOT, "public/landing/index.html");
-  assert.ok(fs.existsSync(indexHtmlPath), "index.html must exist");
-  const content = fs.readFileSync(indexHtmlPath, "utf-8");
+test("QA Clean Header - workgo-navbar.tsx navbar integrates Việc làm, Đăng nhập, Bắt đầu ngay without iframe entrapment", () => {
+  const navbarPath = path.join(ROOT, "src/components/landing/workgo-navbar.tsx");
+  assert.ok(fs.existsSync(navbarPath), "workgo-navbar.tsx must exist");
+  const content = fs.readFileSync(navbarPath, "utf-8");
 
   // Nav Links & Actions
   assert.match(
     content,
-    /<a href="\/vi\/posts"\s+data-action="posts"[^>]*data-i18n="nav-link-4">Việc làm<\/a>/,
-    "Nav link 4 displays 'Việc làm'"
+    /href:\s*[`'"]\/\$\{locale\}\/posts[`'"]/,
+    "Nav links include posts route"
   );
   assert.match(
     content,
-    /<a href="\/vi\/login"\s+data-action="login"[^>]*data-i18n="nav-signin">Đăng nhập<\/a>/,
-    "Nav action displays 'Đăng nhập'"
+    /href=\{[`'"]\/\$\{locale\}\/login[`'"]\}/,
+    "Nav action includes login link"
   );
   assert.match(
     content,
-    /<a href="\/vi\/register"\s+data-action="register"[^>]*data-i18n="nav-signup"[^>]*>Bắt đầu ngay<\/a>/,
-    "Nav action displays 'Bắt đầu ngay'"
+    /href=\{[`'"]\/\$\{locale\}\/register[`'"]\}/,
+    "Nav action includes register link"
   );
 
-  // Iframe breakout onclick safety
-  assert.match(content, /window\.top\.location\.href\s*=\s*'\/vi\/posts'/, "Posts link breaks out of iframe");
-  assert.match(content, /window\.top\.location\.href\s*=\s*'\/vi\/login'/, "Login link breaks out of iframe");
-  assert.match(content, /window\.top\.location\.href\s*=\s*'\/vi\/register'/, "Register link breaks out of iframe");
+  // Uses Next.js Link instead of iframe breakout onclick
+  assert.match(content, /import\s+Link\s+from\s+["']next\/link["']/, "Navbar uses Next.js Link");
 
-  // English translations parity
-  assert.match(content, /'nav-link-4':\s*'Jobs'/, "English translation for nav-link-4 is 'Jobs'");
-  assert.match(content, /'nav-signin':\s*'Sign In'/, "English translation for nav-signin is 'Sign In'");
-  assert.match(content, /'nav-signup':\s*'Get Started'/, "English translation for nav-signup is 'Get Started'");
+  // Dictionaries verify Vietnamese and English translations
+  const viDict = JSON.parse(fs.readFileSync(path.join(ROOT, "src/dictionaries/vi.json"), "utf-8"));
+  const enDict = JSON.parse(fs.readFileSync(path.join(ROOT, "src/dictionaries/en.json"), "utf-8"));
+  assert.equal(viDict.landing.nav.posts, "Việc làm");
+  assert.equal(viDict.landing.nav.signIn, "Đăng nhập");
+  assert.equal(viDict.landing.nav.getStarted, "Bắt đầu ngay");
+  assert.equal(enDict.landing.nav.posts, "Explore Jobs");
+  assert.equal(enDict.landing.nav.signIn, "Sign In");
+  assert.equal(enDict.landing.nav.getStarted, "Get Started");
 });

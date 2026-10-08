@@ -2,18 +2,18 @@ import * as React from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { LanguageSwitcher } from "./language-switcher";
-import { ParticleOcean } from "@/components/effects/particle-ocean";
+import { AuthAtmosphere } from "@/components/effects/auth-atmosphere";
 
 export interface AuthShellProps {
   children: React.ReactNode;
   locale: string;
 }
 
-export function AuthShell({ children, locale }: { children: React.ReactNode; locale: string }) {
+export function AuthShell({ children, locale }: AuthShellProps) {
   return (
-    <div className="relative min-h-screen bg-app flex flex-col justify-between overflow-hidden">
-      {/* Dynamic Particle Ocean Background */}
-      <ParticleOcean className="fixed inset-0 z-0 pointer-events-none opacity-40" />
+    <div className="relative min-h-screen bg-transparent flex flex-col justify-between overflow-hidden">
+      {/* Subtle Atmospheric Auth Background */}
+      <AuthAtmosphere intensity="subtle" />
 
       {/* Top bar with logo & language */}
       <header className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -22,10 +22,10 @@ export function AuthShell({ children, locale }: { children: React.ReactNode; loc
           className="flex items-center gap-2.5 font-bold text-xl text-primary tracking-tight group"
           title={locale === "vi" ? "Về trang giới thiệu" : "Back to Home"}
         >
-          <div className="h-8 w-8 rounded-control bg-primary flex items-center justify-center text-white font-black text-lg shadow-sm group-hover:shadow-md group-hover:shadow-primary/30 transition-all duration-200">
+          <div className="h-8 w-8 rounded-control bg-gradient-to-br from-[#1677FF] to-[#0B4DBB] flex items-center justify-center text-white font-black text-lg shadow-sm shadow-[#1677FF]/30 group-hover:scale-105 transition-all duration-200">
             W
           </div>
-          <span className="group-hover:text-primary-hover transition-colors">WorkGo</span>
+          <span className="text-fg group-hover:text-primary transition-colors">WorkGo</span>
         </Link>
 
         <div className="flex items-center gap-3">

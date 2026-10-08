@@ -256,23 +256,23 @@ test("QA-TC-EDGE-07 - CSS Tokens: Complete symmetry between Dark and Light mode 
   const content = fs.readFileSync(cssPath, "utf-8");
 
   // Dark Theme tokens
-  assert.match(content, /--bg-app:\s*#04060f/, "Dark mode defines --bg-app as #04060f");
-  assert.match(content, /--bg-surface:\s*#0c1226/, "Dark mode defines --bg-surface as #0c1226");
-  assert.match(content, /--bg-deep-space:\s*#04060f/, "Dark mode defines --bg-deep-space as #04060f");
-  assert.match(content, /--glass-bg:\s*rgba\(12,\s*18,\s*38,\s*0\.7\)/, "Dark mode defines dark --glass-bg");
-  assert.match(content, /--glass-card-bg:\s*rgba\(12,\s*18,\s*38,\s*0\.6\)/, "Dark mode defines dark --glass-card-bg");
-  assert.match(content, /--glass-panel-bg:\s*rgba\(12,\s*18,\s*38,\s*0\.68\)/, "Dark mode defines dark --glass-panel-bg");
-  assert.match(content, /--glass-dock-bg:\s*rgba\(8,\s*12,\s*28,\s*0\.85\)/, "Dark mode defines dark --glass-dock-bg");
+  assert.match(content, /--bg-app:\s*(#030B1C|#04060f)/i, "Dark mode defines --bg-app");
+  assert.match(content, /--bg-surface:\s*(#06142F|#0c1226)/i, "Dark mode defines --bg-surface");
+  assert.match(content, /--bg-deep-space:\s*(#030B1C|#04060f)/i, "Dark mode defines --bg-deep-space");
+  assert.match(content, /--glass-bg:\s*rgba\((6,\s*20,\s*47|12,\s*18,\s*38),\s*0\.7\)/, "Dark mode defines dark --glass-bg");
+  assert.match(content, /--glass-card-bg:\s*rgba\((6,\s*20,\s*47|12,\s*18,\s*38),\s*0\.6\)/, "Dark mode defines dark --glass-card-bg");
+  assert.match(content, /--glass-panel-bg:\s*rgba\((6,\s*20,\s*47|12,\s*18,\s*38),\s*0\.(68|75)\)/, "Dark mode defines dark --glass-panel-bg");
+  assert.match(content, /--glass-dock-bg:\s*rgba\((3,\s*11,\s*28|8,\s*12,\s*28),\s*0\.85\)/, "Dark mode defines dark --glass-dock-bg");
 
   // Light Theme tokens
-  assert.match(content, /--bg-app:\s*#f8fafc/, "Light mode defines --bg-app as #f8fafc");
-  assert.match(content, /--bg-surface:\s*#ffffff/, "Light mode defines --bg-surface as #ffffff");
-  assert.match(content, /--bg-deep-space:\s*#f8fafc/, "Light mode defines --bg-deep-space as #f8fafc");
+  assert.match(content, /--bg-app:\s*(#F5F9FF|#f8fafc)/i, "Light mode defines --bg-app");
+  assert.match(content, /--bg-surface:\s*(#FFFFFF|#ffffff)/i, "Light mode defines --bg-surface");
+  assert.match(content, /--bg-deep-space:\s*(#F5F9FF|#f8fafc)/i, "Light mode defines --bg-deep-space");
   assert.match(content, /--glass-bg:\s*rgba\(255,\s*255,\s*255,\s*0\.85\)/, "Light mode defines light --glass-bg");
   assert.match(content, /--glass-card-bg:\s*rgba\(255,\s*255,\s*255,\s*0\.9\)/, "Light mode defines light --glass-card-bg");
-  assert.match(content, /--glass-panel-bg:\s*rgba\(248,\s*250,\s*252,\s*0\.92\)/, "Light mode defines light --glass-panel-bg");
+  assert.match(content, /--glass-panel-bg:\s*rgba\((245,\s*249,\s*255|248,\s*250,\s*252),\s*0\.92\)/, "Light mode defines light --glass-panel-bg");
   assert.match(content, /--glass-dock-bg:\s*rgba\(255,\s*255,\s*255,\s*0\.95\)/, "Light mode defines light --glass-dock-bg");
-  assert.match(content, /--shadow-md:\s*0\s+4px\s+14px\s+rgba\(0,\s*0,\s*0,\s*0\.07\)/, "Light mode defines soft --shadow-md");
+  assert.match(content, /--shadow-md:\s*0\s+4px\s+14px\s+rgba\((0,\s*0,\s*0|3,\s*11,\s*28),\s*0\.07\)/, "Light mode defines soft --shadow-md");
 
   // No override leaks
   assert.doesNotMatch(
@@ -309,92 +309,55 @@ test("QA-TC-EDGE-08 - Glassmorphism: Pure variable reliance with zero dark hardc
 // TEST SUITE 5: Theme-Aware Canvas Engine (`ParticleOceanAmbient`)
 // =============================================================================
 
-test("QA-TC-EDGE-09 - ParticleOceanAmbient: Theme change event listener and MutationObserver cleanup", () => {
-  const canvasPath = path.join(ROOT, "src/components/effects/particle-ocean-ambient.tsx");
-  assert.ok(fs.existsSync(canvasPath), "particle-ocean-ambient.tsx must exist");
-  const content = fs.readFileSync(canvasPath, "utf-8");
+test("QA-TC-EDGE-09 - Theme Synchronization: ThemeToggle registers workgo-theme-change and MutationObserver", () => {
+  const togglePath = path.join(ROOT, "src/components/shell/theme-toggle.tsx");
+  assert.ok(fs.existsSync(togglePath), "theme-toggle.tsx must exist");
+  const content = fs.readFileSync(togglePath, "utf-8");
 
   // Event listener registration
   assert.match(
     content,
-    /window\.addEventListener\(["']workgo-theme-change["'],\s*handleThemeChange\)/,
+    /window\.addEventListener\(["']workgo-theme-change["'],\s*onCustom\)/,
     "Must register workgo-theme-change event listener on window"
   );
 
   // Event listener cleanup
   assert.match(
     content,
-    /window\.removeEventListener\(["']workgo-theme-change["'],\s*handleThemeChange\)/,
+    /window\.removeEventListener\(["']workgo-theme-change["'],\s*onCustom\)/,
     "Must remove workgo-theme-change event listener on unmount"
   );
 
   // MutationObserver setup & observe
   assert.match(
     content,
-    /observer\.observe\(\s*document\.documentElement\s*,\s*\{[\s\S]*attributes:\s*true[\s\S]*attributeFilter:\s*\[["']class["'],\s*["']data-theme["']\]/s,
+    /obs\.observe\(\s*document\.documentElement\s*,\s*\{[\s\S]*attributes:\s*true[\s\S]*attributeFilter:\s*\[["']class["'],\s*["']data-theme["']\]/s,
     "Must observe document.documentElement for class and data-theme attribute modifications"
   );
 
   // MutationObserver disconnect cleanup
   assert.match(
     content,
-    /observer\.disconnect\(\)/,
+    /obs\.disconnect\(\)/,
     "Must disconnect MutationObserver on component unmount"
   );
 });
 
-test("QA-TC-EDGE-10 - ParticleOceanAmbient: Frame-by-frame color switching & accessibility", () => {
+test("QA-TC-EDGE-10 - Static Background: ParticleOceanAmbient removed and AppShellClient is clean", () => {
   const canvasPath = path.join(ROOT, "src/components/effects/particle-ocean-ambient.tsx");
-  const content = fs.readFileSync(canvasPath, "utf-8");
+  assert.ok(!fs.existsSync(canvasPath), "particle-ocean-ambient.tsx must be removed");
 
-  // Dynamic frame check: themeRef.current === 'light'
-  assert.match(
-    content,
-    /const\s+isLightMode\s*=\s*themeRef\.current\s*===\s*["']light["']/,
-    "Must read themeRef.current === 'light' inside render loop for zero-overhead frame dispatch"
+  const appShellPath = path.join(ROOT, "src/components/shell/app-shell-client.tsx");
+  const appShellContent = fs.readFileSync(appShellPath, "utf-8");
+  assert.doesNotMatch(
+    appShellContent,
+    /ParticleOceanAmbient/,
+    "AppShellClient must not import or render ParticleOceanAmbient"
   );
-
-  // Light mode emerald stroke and particle styling
-  assert.match(
-    content,
-    /rgba\(16,\s*185,\s*129,\s*\$\{p\.alpha\s*\*\s*0\.12\}\)/,
-    "Light mode mesh stroke must use subtle emerald rgba(16, 185, 129, alpha * 0.12)"
-  );
-  assert.match(
-    content,
-    /rgba\(16,\s*185,\s*129,\s*\$\{p\.alpha\s*\*\s*0\.35\}\)/,
-    "Light mode particle dots must use subtle emerald rgba(16, 185, 129, alpha * 0.35)"
-  );
-
-  // Dark mode mint neon stroke and particle styling
-  assert.match(
-    content,
-    /rgba\(93,\s*240,\s*168,\s*\$\{p\.alpha\s*\*\s*0\.22\}\)/,
-    "Dark mode mesh stroke must use mint rgba(93, 240, 168, alpha * 0.22)"
-  );
-  assert.match(
-    content,
-    /rgba\(93,\s*240,\s*168,\s*\$\{p\.alpha\s*\*\s*0\.8\}\)/,
-    "Dark mode particle dots must use mint rgba(93, 240, 168, alpha * 0.8)"
-  );
-
-  // Opacity contrast: opacity-20 for light mode, opacity-40 for dark mode
-  assert.match(
-    content,
-    /isLight\s*\?\s*["']opacity-20["']\s*:\s*["']opacity-40["']/,
-    "Canvas className must switch between opacity-20 (light) and opacity-40 (dark)"
-  );
-
-  // Edge Case: prefers-reduced-motion accessibility compliance
-  assert.match(
-    content,
-    /prefers-reduced-motion:\s*reduce/,
-    "Must check window.matchMedia for prefers-reduced-motion"
-  );
-  assert.match(
-    content,
-    /cancelAnimationFrame\(animationFrameId\)/,
-    "Must cancel animationFrameId during cleanup"
+  assert.doesNotMatch(
+    appShellContent,
+    /<canvas/i,
+    "AppShellClient must not render canvas background"
   );
 });
 

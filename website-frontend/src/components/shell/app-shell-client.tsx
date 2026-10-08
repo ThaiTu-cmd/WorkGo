@@ -27,7 +27,6 @@ import {
   DrawerTitle,
   DrawerBody,
 } from "@/components/ui/drawer";
-import { ParticleOceanAmbient } from "@/components/effects/particle-ocean-ambient";
 
 const iconMap: Record<string, LucideIcon> = {
   LayoutDashboard,
@@ -45,6 +44,7 @@ export interface AppShellClientProps {
   role?: string;
   userName?: string;
   fullName?: string;
+  ambient?: "subtle" | "off";
 }
 
 export function AppShellClient({
@@ -53,6 +53,7 @@ export function AppShellClient({
   role = "CLIENT",
   userName = "user",
   fullName = "Người dùng",
+  ambient = "subtle",
 }: AppShellClientProps) {
   const pathname = usePathname();
   const t = useTranslations();
@@ -111,10 +112,11 @@ export function AppShellClient({
     return pathname === fullHref || pathname.startsWith(fullHref);
   };
 
+  // Ambient intensity mode acknowledgment (deprecated)
+  void ambient;
+
   return (
     <div className="h-screen max-h-screen overflow-hidden bg-app flex flex-col relative">
-      <ParticleOceanAmbient />
-
       {/* Top Header with Hamburger for Mobile */}
       <AppHeader
         locale={locale}
@@ -140,10 +142,10 @@ export function AppShellClient({
 
       {/* Mobile Drawer Navigation (Slides from Left) */}
       <Drawer open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
-        <DrawerContent side="left" className="h-[100dvh] bg-[rgba(12,18,38,0.95)] backdrop-blur-2xl border-r border-[rgba(150,175,230,0.18)]">
+        <DrawerContent side="left" className="h-[100dvh] bg-[#06142F]/95 backdrop-blur-2xl border-r border-[rgba(148,184,255,0.14)]">
           <DrawerHeader>
             <div className="flex items-center gap-2.5">
-              <div className="h-7 w-7 rounded-control bg-primary flex items-center justify-center text-white font-black text-sm shadow-xs">
+              <div className="h-7 w-7 rounded-control bg-gradient-to-br from-[#1677FF] to-[#0B4DBB] flex items-center justify-center text-white font-black text-sm shadow-xs">
                 W
               </div>
               <DrawerTitle className="text-base font-bold text-primary">WorkGo</DrawerTitle>

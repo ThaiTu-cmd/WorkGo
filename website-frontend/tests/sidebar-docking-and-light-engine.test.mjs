@@ -160,37 +160,21 @@ test("QA-TC-05 - Dynamic Glassmorphism: CSS classes adapt to light and dark them
   );
 });
 
-test("QA-TC-06 - Background Canvas: ParticleOceanAmbient is theme-aware and responds to events", () => {
+test("QA-TC-06 - Background Canvas: ParticleOceanAmbient is removed in favor of static theme-aware architecture", () => {
   const canvasFile = path.join(ROOT, "src/components/effects/particle-ocean-ambient.tsx");
-  assert.ok(fs.existsSync(canvasFile), "particle-ocean-ambient.tsx must exist");
-  const canvasSource = fs.readFileSync(canvasFile, "utf-8");
+  assert.ok(!fs.existsSync(canvasFile), "particle-ocean-ambient.tsx must be removed");
 
-  // Must listen to workgo-theme-change event
-  assert.match(
-    canvasSource,
-    /workgo-theme-change/,
-    "ParticleOceanAmbient must listen to workgo-theme-change event"
+  const appShellFile = path.join(ROOT, "src/components/shell/app-shell-client.tsx");
+  const appShellSource = fs.readFileSync(appShellFile, "utf-8");
+  assert.doesNotMatch(
+    appShellSource,
+    /ParticleOceanAmbient/,
+    "AppShellClient must not import or render ParticleOceanAmbient"
   );
-
-  // Must use MutationObserver for runtime DOM class synchronization
-  assert.match(
-    canvasSource,
-    /MutationObserver/,
-    "ParticleOceanAmbient must use MutationObserver to detect theme attribute changes"
-  );
-
-  // Must adapt wave/particle stroke and fill colors for light mode
-  assert.match(
-    canvasSource,
-    /rgba\(16,\s*185,\s*129/,
-    "ParticleOceanAmbient must support light mode emerald palette rgba(16, 185, 129, ...)"
-  );
-
-  // Must reduce canvas opacity on light mode
-  assert.match(
-    canvasSource,
-    /opacity-20/,
-    "ParticleOceanAmbient must reduce opacity to opacity-20 in light mode"
+  assert.doesNotMatch(
+    appShellSource,
+    /<canvas/i,
+    "AppShellClient must not render canvas background"
   );
 });
 

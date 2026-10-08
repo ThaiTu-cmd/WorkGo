@@ -5,12 +5,16 @@ import { cn } from "@/lib/utils";
 import { Spinner } from "./spinner";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 font-medium text-sm transition-all duration-200 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer",
+  "inline-flex items-center justify-center gap-2 font-medium text-sm select-none cursor-pointer " +
+  "transition-[transform,box-shadow,filter,background-color,border-color] duration-150 ease-[cubic-bezier(0.34,1.56,0.64,1)] " +
+  "active:scale-[0.94] active:brightness-90 active:shadow-none " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 " +
+  "disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100",
   {
     variants: {
       variant: {
         primary:
-          "bg-gradient-to-b from-primary to-primary-hover hover:from-primary-hover hover:to-primary-active active:bg-primary-active text-slate-950 font-semibold focus-visible:ring-primary shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/30",
+          "bg-gradient-to-b from-[#1677FF] to-[#0B4DBB] hover:brightness-110 text-white font-semibold focus-visible:ring-[#1677FF] shadow-md shadow-[#1677FF]/25 hover:shadow-lg hover:shadow-[#1677FF]/35",
         secondary:
           "bg-surface/80 border border-border text-fg hover:bg-muted/80 hover:border-border-strong active:bg-muted focus-visible:ring-primary shadow-xs backdrop-blur-sm",
         outline:

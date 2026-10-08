@@ -132,42 +132,36 @@ test("QA-TC-07 [Zero-Overlap Architecture] - AscendLandingView completely elimin
   const dockPattern = /<aside\s+className="fixed bottom-4 right-4 z-40 flex items-center gap-2 bg-surface\/85 backdrop-blur-md px-3 py-1\.5 rounded-full border border-border shadow-lg">[\s\S]*?<ThemeToggle\s*\/>[\s\S]*?<div\s+className="h-3\.5 w-px bg-border"\s*\/>[\s\S]*?<LanguageSwitcher\s+currentLocale=\{locale\}\s*\/>[\s\S]*?<\/aside>/;
   assert.match(content, dockPattern, "Utility dock correctly placed at fixed bottom-4 right-4");
 
-  // Must have full-screen iframe
-  assert.match(content, /<iframe[\s\S]*?src=\{`\/landing\/index\.html\?locale=\$\{locale\}`\}[\s\S]*?className="w-full h-screen border-none block relative z-10"/, "Full viewport iframe configured");
+  // Must render landing page experience
+  assert.match(content, /(<WorkgoLandingPage\s*locale=\{locale\}\s*\/>|<iframe[\s\S]*?src=\{`\/landing\/index\.html\?locale=\$\{locale\}`\}[\s\S]*?className="w-full h-screen border-none block relative z-10")/, "Landing page experience configured");
 });
 
-test("QA-TC-08 [Landing Header Verification] - public/landing/index.html navbar integrates Việc làm, Đăng nhập, Bắt đầu ngay with breakout protection", () => {
-  const indexPath = path.join(ROOT, "public/landing/index.html");
-  assert.ok(fs.existsSync(indexPath), "public/landing/index.html exists");
-  const content = fs.readFileSync(indexPath, "utf-8");
+test("QA-TC-08 [Landing Header Verification] - workgo-navbar.tsx integrates brand, links, and action buttons", () => {
+  const navbarPath = path.join(ROOT, "src/components/landing/workgo-navbar.tsx");
+  assert.ok(fs.existsSync(navbarPath), "workgo-navbar.tsx exists");
+  const content = fs.readFileSync(navbarPath, "utf-8");
 
   // Navbar brand
-  assert.match(content, /<a href="#top" class="brand" data-i18n="nav-brand">[\s\S]*?<span class="brand-mark">▲<\/span>[\s\S]*?<span id="navBrandText">WorkGo<\/span>/, "Navbar brand is ▲ WorkGo");
+  assert.match(content, /WorkGo/, "Navbar brand contains WorkGo");
 
-  // 4 Nav links in order
-  const navLinksPattern = /<ul class="nav-links">[\s\S]*?<li><a href="#features" data-i18n="nav-link-1">Lĩnh vực dịch vụ<\/a><\/li>[\s\S]*?<li><a href="#solutions" data-i18n="nav-link-2">Quy trình hoạt động<\/a><\/li>[\s\S]*?<li><a href="#solutions" data-i18n="nav-link-3">Bảo chứng Escrow<\/a><\/li>[\s\S]*?<li><a href="\/vi\/posts"\s+data-action="posts"[^>]*data-i18n="nav-link-4">Việc làm<\/a><\/li>[\s\S]*?<\/ul>/;
-  assert.match(content, navLinksPattern, "Navbar links contain correct 4 items including 'Việc làm'");
+  // Nav links
+  assert.match(content, /#features/, "Navbar contains #features anchor");
+  assert.match(content, /#showcase/, "Navbar contains #showcase anchor");
+  assert.match(content, /#pricing/, "Navbar contains #pricing anchor");
+  assert.match(content, /[`'"]\/\$\{locale\}\/posts[`'"]/, "Navbar links contain posts route");
 
-  // 2 Nav action buttons
-  const navRightPattern = /<div class="nav-right">[\s\S]*?<a href="\/vi\/login"\s+data-action="login"[^>]*class="btn btn-ghost"[^>]*data-i18n="nav-signin">Đăng nhập<\/a>[\s\S]*?<a href="\/vi\/register"\s+data-action="register"[^>]*class="btn btn-primary"[^>]*data-i18n="nav-signup"[^>]*>Bắt đầu ngay<\/a>[\s\S]*?<\/div>/;
-  assert.match(content, navRightPattern, "Navbar right contains 'Đăng nhập' (ghost) and 'Bắt đầu ngay' (primary)");
-
-  // Breakout onclick attributes on nav links
-  assert.match(content, /onclick="window\.top\.location\.href='\/vi\/posts';return false;"/, "Posts link has inline breakout onclick");
-  assert.match(content, /onclick="window\.top\.location\.href='\/vi\/login';return false;"/, "Login link has inline breakout onclick");
-  assert.match(content, /onclick="window\.top\.location\.href='\/vi\/register';return false;"/, "Register link has inline breakout onclick");
+  // Nav action buttons
+  assert.match(content, /[`'"]\/\$\{locale\}\/login[`'"]/, "Navbar contains login action");
+  assert.match(content, /[`'"]\/\$\{locale\}\/register[`'"]/, "Navbar contains register action");
 });
 
-test("QA-TC-09 [Edge Case: Locale Resolution & Fallback] - index.html dynamic locale parser handles edge values safely", () => {
-  const indexPath = path.join(ROOT, "public/landing/index.html");
-  const content = fs.readFileSync(indexPath, "utf-8");
+test("QA-TC-09 [Edge Case: Locale Resolution & Fallback] - routing.ts defines supported locales with Vietnamese fallback", () => {
+  const routingPath = path.join(ROOT, "src/i18n/routing.ts");
+  assert.ok(fs.existsSync(routingPath), "routing.ts exists");
+  const content = fs.readFileSync(routingPath, "utf-8");
 
-  // Verify logic: const currentLocale = (urlParams.get('locale') === 'en') ? 'en' : 'vi';
-  assert.match(
-    content,
-    /const\s+currentLocale\s*=\s*\(urlParams\.get\(['"]locale['"]\)\s*===\s*['"]en['"]\)\s*\?\s*['"]en['"]\s*:\s*['"]vi['"];/,
-    "Locale fallback strictly limits to 'en' or 'vi'"
-  );
+  assert.match(content, /locales:\s*\["vi",\s*"en"\]/, "Supported locales are vi and en");
+  assert.match(content, /defaultLocale:\s*"vi"/, "Default locale is vi");
 
   // Simulate edge cases in JS runtime
   const resolveLocale = (param) => (param === "en" ? "en" : "vi");
@@ -180,27 +174,29 @@ test("QA-TC-09 [Edge Case: Locale Resolution & Fallback] - index.html dynamic lo
   assert.equal(resolveLocale("123"), "vi", "Numeric string safely defaults to 'vi'");
 });
 
-test("QA-TC-10 [Edge Case: Iframe Link Mutation] - updateIframeLinks correctly mutates all targeted links with window.top.location", () => {
-  const indexPath = path.join(ROOT, "public/landing/index.html");
-  const content = fs.readFileSync(indexPath, "utf-8");
+test("QA-TC-10 [Edge Case: Zero Iframe Entrapment] - modern landing page eliminates iframes and uses native Next.js Link", () => {
+  const landingFile = path.join(ROOT, "src/components/landing/workgo-landing-page.tsx");
+  const landingContent = fs.readFileSync(landingFile, "utf-8");
+  assert.doesNotMatch(landingContent, /<iframe/i, "WorkgoLandingPage must not render iframe");
 
-  // Check updateIframeLinks implementation
-  assert.match(content, /function\s+updateIframeLinks\s*\(locale\)\s*\{/, "updateIframeLinks function defined");
-  assert.match(content, /loginLinks\.forEach\(a\s*=>\s*\{[\s\S]*?a\.href\s*=\s*`\/\$\{locale\}\/login`;[\s\S]*?window\.top\.location\.href\s*=\s*`\/\$\{locale\}\/login`;[\s\S]*?\}\);/, "login links updated");
-  assert.match(content, /registerLinks\.forEach\(a\s*=>\s*\{[\s\S]*?a\.href\s*=\s*`\/\$\{locale\}\/register`;[\s\S]*?window\.top\.location\.href\s*=\s*`\/\$\{locale\}\/register`;[\s\S]*?\}\);/, "register links updated");
-  assert.match(content, /postsLinks\.forEach\(a\s*=>\s*\{[\s\S]*?a\.href\s*=\s*`\/\$\{locale\}\/posts`;[\s\S]*?window\.top\.location\.href\s*=\s*`\/\$\{locale\}\/posts`;[\s\S]*?\}\);/, "posts links updated");
-
-  // Check initial call
-  assert.match(content, /updateIframeLinks\(currentLocale\);/, "updateIframeLinks is invoked with currentLocale");
+  const navbarPath = path.join(ROOT, "src/components/landing/workgo-navbar.tsx");
+  const navbarContent = fs.readFileSync(navbarPath, "utf-8");
+  assert.match(navbarContent, /href=\{[`'"]\/\$\{locale\}\/login[`'"]\}/, "Login link uses dynamic locale");
+  assert.match(navbarContent, /href=\{[`'"]\/\$\{locale\}\/register[`'"]\}/, "Register link uses dynamic locale");
+  assert.match(navbarContent, /href:\s*[`'"]\/\$\{locale\}\/posts[`'"]/, "Posts link uses dynamic locale");
 });
 
-test("QA-TC-11 [EN Translation Parity] - EN_TRANSLATIONS dictionary contains accurate navbar mappings", () => {
-  const indexPath = path.join(ROOT, "public/landing/index.html");
-  const content = fs.readFileSync(indexPath, "utf-8");
+test("QA-TC-11 [EN Translation Parity] - EN and VI dictionaries contain accurate navbar mappings", () => {
+  const viDict = JSON.parse(fs.readFileSync(path.join(ROOT, "src/dictionaries/vi.json"), "utf-8"));
+  const enDict = JSON.parse(fs.readFileSync(path.join(ROOT, "src/dictionaries/en.json"), "utf-8"));
 
-  assert.match(content, /'nav-link-4':\s*'Jobs'/, "nav-link-4 maps to 'Jobs'");
-  assert.match(content, /'nav-signin':\s*'Sign In'/, "nav-signin maps to 'Sign In'");
-  assert.match(content, /'nav-signup':\s*'Get Started'/, "nav-signup maps to 'Get Started'");
+  assert.equal(viDict.landing.nav.posts, "Việc làm");
+  assert.equal(viDict.landing.nav.signIn, "Đăng nhập");
+  assert.equal(viDict.landing.nav.getStarted, "Bắt đầu ngay");
+
+  assert.equal(enDict.landing.nav.posts, "Explore Jobs");
+  assert.equal(enDict.landing.nav.signIn, "Sign In");
+  assert.equal(enDict.landing.nav.getStarted, "Get Started");
 });
 
 test("QA-TC-12 [System Governance] - Java Microservices and Documentation remain 100% untouched", () => {

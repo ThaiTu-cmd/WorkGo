@@ -89,13 +89,24 @@ public class Service {
     @JoinColumn(name = "category_id")
     Category category;
 
+    @Builder.Default
     @OneToMany(mappedBy = "service")
     Set<BookingSlot> bookingSlot = new HashSet<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "service")
     Set<Package> packages = new HashSet<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "service")
     Set<ServiceMedia> serviceMedia = new HashSet<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "service")
+    Set<AvailableRule> availableRule = new HashSet<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "service")
+    Set<AddOn> addON = new HashSet<>();
 
 }

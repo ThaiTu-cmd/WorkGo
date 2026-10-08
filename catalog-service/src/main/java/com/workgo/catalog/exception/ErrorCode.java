@@ -39,6 +39,13 @@ public enum ErrorCode {
     //===============MEDIA==============================
     MEDIA_EXISTED(1015, "This media URL already exists in this service !", HttpStatus.BAD_REQUEST),
     MEDIA_NOT_EXISTED(1016, "This media does not exist !", HttpStatus.NOT_FOUND),
+    INVALID_START_END_TIME(1017, "The values of start/ end time is invalid", HttpStatus.CONFLICT),
+
+    //==============AVAILABLE RULE========================
+    RULE_NOT_EXISTED(1018, "This rule is not existed", HttpStatus.NOT_FOUND),
+
+    //=================ADD ON=====================
+    ADD_ON_NOT_EXISTED(1019, "This add-on is not existed", HttpStatus.NOT_FOUND),
 
     ;
 

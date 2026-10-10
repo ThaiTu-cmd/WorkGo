@@ -31,9 +31,10 @@ public class BookingSlot {
     @Column(name = "end_at")
     Instant endAt;
 
+    @Builder.Default
     @Enumerated(value = EnumType.STRING)
     @Column(name = "status")
-    BookingStatus status;
+    BookingStatus status = BookingStatus.AVAILABLE;
 
     @Column(name = "version")
     String version;
@@ -41,8 +42,9 @@ public class BookingSlot {
     @Column(name = "hold_expires_at")
     Instant holdExpiresAt;
 
+    @Builder.Default
     @Column(name = "created_at")
-    Instant createdAt;
+    Instant createdAt = Instant.now();
 
     @Column(name = "updated_at")
     Instant updatedAt;
@@ -54,6 +56,6 @@ public class BookingSlot {
     Service service;
 
     @Column(name = "order_id")
-    UUID orderId;
+    UUID order;
 
 }

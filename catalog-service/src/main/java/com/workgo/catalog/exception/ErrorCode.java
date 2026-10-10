@@ -47,6 +47,13 @@ public enum ErrorCode {
     //=================ADD ON=====================
     ADD_ON_NOT_EXISTED(1019, "This add-on is not existed", HttpStatus.NOT_FOUND),
 
+
+    //=============BOOKING SLOT=============
+    SLOT_NOT_EXISTED(1020, "This slot does not exist", HttpStatus.NOT_FOUND),
+    SLOT_NOT_AVAILABLE(1021, "This slot is not available", HttpStatus.CONFLICT),
+    SLOT_IN_PAST(1022, "This slot is in the past", HttpStatus.CONFLICT),
+    SLOT_NOT_HELD_BY_ORDER(1023, "This slot is not held by this order", HttpStatus.CONFLICT),
+    SLOT_CONFLICT(1024, "Slot was just taken, please retry", HttpStatus.CONFLICT),
     ;
 
     private int code;

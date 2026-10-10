@@ -108,11 +108,11 @@ export function PaymentPanel({
       </div>
 
       {errorMessage && (
-        <div className="p-3.5 rounded-control bg-danger-bg border border-red-200 text-danger text-sm flex items-start gap-2.5">
+        <div className="p-3.5 rounded-control bg-danger-bg border border-danger/30 text-danger text-sm flex items-start gap-2.5">
           <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="font-medium">{errorMessage}</p>
-            <p className="text-xs text-red-600 mt-0.5">Vui lòng thử lại hoặc chọn phương thức khác.</p>
+            <p className="text-xs text-danger/90 mt-0.5">Vui lòng thử lại hoặc chọn phương thức khác.</p>
           </div>
         </div>
       )}

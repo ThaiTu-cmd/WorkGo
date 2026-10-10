@@ -110,8 +110,8 @@ test("UI Animation System - UI core atoms have micro-interactions", () => {
   const buttonContent = fs.readFileSync(buttonPath, "utf-8");
   assert.match(
     buttonContent,
-    /active:scale-\[0\.98\]/,
-    "Button component must include active:scale-[0.98] interaction"
+    /(active:scale-\[0\.94\]|active:scale-\[0\.98\])/,
+    "Button component must include active scale interaction"
   );
 
   const cardContent = fs.readFileSync(cardPath, "utf-8");

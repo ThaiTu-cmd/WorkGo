@@ -49,8 +49,8 @@ export default function ProviderDashboardPage() {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-xl">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-semibold border border-primary/30 backdrop-blur-md">
-              <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
-              <span>{greeting}</span>
+              <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse shrink-0" />
+              <span className="leading-none">{greeting}</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-fg">
               {t("providerTitle")}
@@ -222,7 +222,7 @@ export default function ProviderDashboardPage() {
           <Link href={`/${locale}/wallet`}>
             <Card hoverable className="h-full group border-border">
               <CardContent className="p-5 flex items-start gap-4">
-                <div className="p-3 rounded-card bg-green-50 text-success shrink-0 group-hover:scale-105 transition-transform">
+                <div className="p-3 rounded-card bg-success-bg text-success shrink-0 group-hover:scale-105 transition-transform">
                   <Wallet className="h-6 w-6" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -243,7 +243,7 @@ export default function ProviderDashboardPage() {
           <Link href={`/${locale}/settings?tab=provider`}>
             <Card hoverable className="h-full group border-border">
               <CardContent className="p-5 flex items-start gap-4">
-                <div className="p-3 rounded-card bg-purple-50 text-purple-600 shrink-0 group-hover:scale-105 transition-transform">
+                <div className="p-3 rounded-card bg-primary-subtle text-primary shrink-0 group-hover:scale-105 transition-transform">
                   <Settings className="h-6 w-6" />
                 </div>
                 <div className="flex-1 min-w-0">

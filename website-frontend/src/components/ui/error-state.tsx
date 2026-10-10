@@ -21,13 +21,13 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center p-8 md:p-12 text-center rounded-card border border-red-200 bg-red-50/40 max-w-lg mx-auto my-6",
+        "flex flex-col items-center justify-center p-8 md:p-12 text-center rounded-card border border-danger/30 bg-danger-bg max-w-lg mx-auto my-6",
         className
       )}
       role="alert"
       {...props}
     >
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-100 text-danger mb-4">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/15 text-danger mb-4">
         <AlertTriangle className="h-7 w-7" />
       </div>
       <h3 className="text-base font-semibold text-fg mb-1">{title}</h3>

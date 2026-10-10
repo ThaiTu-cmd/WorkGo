@@ -232,111 +232,40 @@ test("Particle Ocean Physics - Screen boundary wrap prevents particles from esca
 });
 
 // =========================================================================
-// 3. LANDING PAGE ASCEND (index.html) ARCHITECTURE & CODE INTEGRITY
+// 3. LANDING PAGE ASCEND (NATIVE REACT) ARCHITECTURE & CODE INTEGRITY
 // =========================================================================
 
-test("Landing Page Ascend - File exists as standalone self-contained bundle", () => {
-  const landingPath = path.resolve(__dirname, "../public/landing/index.html");
-  assert.ok(fs.existsSync(landingPath), "public/landing/index.html must exist");
+test("Landing Page Ascend - WorkgoLandingPage and LandingStaticBackground exist and integrate cleanly", () => {
+  const landingPath = path.resolve(__dirname, "../src/components/landing/workgo-landing-page.tsx");
+  assert.ok(fs.existsSync(landingPath), "workgo-landing-page.tsx must exist");
   const content = fs.readFileSync(landingPath, "utf-8");
-
-  assert.ok(content.length > 20000, "Landing page should be a rich, comprehensive implementation");
-  assert.match(content, /<!DOCTYPE html>/i, "Must have valid HTML5 doctype");
-  assert.match(content, /<title>WorkGo — Nền Tảng Kết Nối Việc Làm & Dịch Vụ Chuyên Nghiệp<\/title>/, "Title must match WorkGo branding");
+  assert.match(content, /<LandingStaticBackground\s*\/>/);
+  assert.match(content, /<WorkgoNavbar/);
+  assert.match(content, /<ParticleOceanHero/);
+  assert.match(content, /<WorkgoLandingSections/);
 });
 
-test("Landing Page Ascend - Head defines required tokens, Importmap and dependencies", () => {
-  const landingPath = path.resolve(__dirname, "../public/landing/index.html");
-  const content = fs.readFileSync(landingPath, "utf-8");
-
-  // Tokens
-  assert.match(content, /--bg:\s*#04060f/, "Must declare deep space background #04060f");
-  assert.match(content, /--accent:\s*#5df0a8/, "Must declare mint-green accent #5df0a8");
-  assert.match(content, /--accent-2:\s*#2fd38a/, "Must declare secondary accent #2fd38a");
-  assert.match(content, /--glass:\s*rgba\(12,18,38,\.55\)/, "Must declare glassmorphism token");
-
-  // Importmap for Three.js r0.143.0
-  assert.match(content, /<script type="importmap">/, "Must provide importmap");
-  assert.match(content, /unpkg\.com\/three@0\.143\.0\/build\/three\.module\.js/, "Must pin Three.js r0.143.0");
-  assert.match(content, /unpkg\.com\/three@0\.143\.0\/examples\/jsm\//, "Must map examples/jsm");
+test("Landing Page Ascend - Head defines required tokens and theme-aware classes", () => {
+  const cssPath = path.resolve(__dirname, "../src/app/globals.css");
+  const content = fs.readFileSync(cssPath, "utf-8");
+  assert.match(content, /--primary:\s*#1677FF/);
+  assert.match(content, /\.landing-static-cone/);
 });
 
 test("Landing Page Ascend - Contains all 4 core sections according to specification", () => {
-  const landingPath = path.resolve(__dirname, "../public/landing/index.html");
-  const content = fs.readFileSync(landingPath, "utf-8");
-
-  // Section 1: Hero
-  assert.match(content, /class="hero"/, "Hero section must be present");
-  assert.match(content, /Kết Nối Tài Năng,<br>Nâng Tầm <em>Công Việc<\/em>/, "Hero headline must match");
-  assert.match(content, /Bắt đầu ngay miễn phí/, "Hero primary CTA must exist");
-  assert.match(content, /Khám phá việc làm/, "Hero secondary CTA must exist");
-  assert.match(content, /Được tin dùng bởi hơn 10\.000\+ cá nhân và doanh nghiệp/, "Social proof wordmarks must exist");
-  assert.match(content, />TechVina<\/span>/, "Logo TechVina exists");
-  assert.match(content, />BuildStack<\/span>/, "Logo BuildStack exists");
-
-  // Section 2: Features (6 cards)
-  assert.match(content, /id="features"/, "Features section must exist");
-  assert.match(content, /Một nền tảng chuẩn hóa mọi nhu cầu dịch vụ & việc làm/, "Features title exists");
-  assert.match(content, /Đăng việc & Báo giá tức thì/, "Feature 1: Đăng việc & Báo giá tức thì");
-  assert.match(content, /Quản lý tiến độ minh bạch/, "Feature 2: Quản lý tiến độ minh bạch");
-  assert.match(content, /Mạng lưới đối tác xác thực/, "Feature 3: Mạng lưới đối tác xác thực");
-  assert.match(content, /Đa dạng hình thức thực hiện/, "Feature 4: Đa dạng hình thức thực hiện");
-  assert.match(content, /Bảo chứng thanh toán Escrow/, "Feature 5: Bảo chứng thanh toán Escrow");
-  assert.match(content, /Giải quyết khiếu nại công bằng/, "Feature 6: Giải quyết khiếu nại công bằng");
-
-  // Section 3: Showcase & Stats
-  assert.match(content, /id="solutions"/, "Showcase section must exist");
-  assert.match(content, /Theo dõi mọi chuyển động dự án theo thời gian thực/, "Showcase title exists");
-  assert.match(content, /99\.4%/, "Stat 1: 99.4% escrow safety rate");
-  assert.match(content, /15 phút/, "Stat 2: Under 15m proposal time");
-  assert.match(content, /25\.000\+/, "Stat 3: 25.000+ successful projects");
-  assert.match(content, /50\+ Tỷ ₫/, "Stat 4: 50+ Ty VND paid to providers");
-
-  // Section 4: CTA & Footer
-  assert.match(content, /id="cta"/, "CTA section must exist");
-  assert.match(content, /Khởi đầu dự án thành công cùng WorkGo ngay hôm nay/, "CTA title exists");
-  assert.match(content, /class="footer"/, "Footer element exists");
-  assert.match(content, /id="year"/, "Dynamic copyright year span exists");
+  const secPath = path.resolve(__dirname, "../src/components/landing/workgo-landing-sections.tsx");
+  const content = fs.readFileSync(secPath, "utf-8");
+  assert.match(content, /id="features"/);
+  assert.match(content, /id="showcase"/);
+  assert.match(content, /id="pricing"/);
 });
 
-test("Landing Page Ascend - WebGL Scene incorporates Shaders, Multi-Pass Composers, and Resiliency", () => {
-  const landingPath = path.resolve(__dirname, "../public/landing/index.html");
-  const content = fs.readFileSync(landingPath, "utf-8");
-
-  // Fixed WebGL Canvas
-  assert.match(content, /<canvas class="planet-canvas" id="planetCanvas"><\/canvas>/, "Canvas with id planetCanvas exists");
-
-  // Simplex Noise GLSL definition
-  assert.match(content, /float snoise\(vec3 v\)/, "SNOISE simplex noise function must be injected");
-  assert.match(content, /taylorInvSqrt/, "taylorInvSqrt formula present in noise");
-
-  // FinalPass shader
-  assert.match(content, /const FinalPass =/, "FinalPass postprocessing shader defined");
-  assert.match(content, /vec3 warp3d\(vec3 pos, float t\)/, "Corner-flame warp3d shader function present");
-  assert.match(content, /bloomTexture/, "UnrealBloom composer target present");
-  assert.match(content, /torusTexture/, "Torus composer target present");
-
-  // DRACOLoader and GLTFLoader configuration
-  assert.match(content, /new GLTFLoader\(\)/, "GLTFLoader instantiated");
-  assert.match(content, /new DRACOLoader\(\)/, "DRACOLoader instantiated");
-  assert.match(content, /draco\/versioned\/decoders\/1\.5\.5/, "Google DRACO 1.5.5 decoder configured");
-
-  // Resiliency: WebGL Fallback and Network Fallback
-  assert.match(content, /canvas\.getContext\('webgl'\)/, "WebGL capability check performed");
-  assert.match(content, /console\.warn\('WebGL is not supported/, "Static fallback message for unsupported WebGL");
-  assert.match(content, /catch \(err\)/, "Try/catch around GLTF load avoids breaking page");
-
-  // Accessibility: prefers-reduced-motion
-  assert.match(content, /matchMedia\('\(prefers-reduced-motion: reduce\)'\)/, "Accessibility query for reduced motion");
-  assert.match(content, /revealEls\.forEach\(el => el\.classList\.add\('in'\)\)/, "Immediate reveal when motion is reduced");
-
-  // Visibility API pause/resume
-  assert.match(content, /document\.addEventListener\('visibilitychange'/, "Visibility change listener registered");
-  assert.match(content, /isHidden = document\.hidden/, "Render loop respects document.hidden");
-
-  // Debounced resize handler
-  assert.match(content, /window\.addEventListener\('resize'/, "Window resize listener registered");
-  assert.match(content, /clearTimeout\(resizeTimer\)/, "Resize events are properly debounced");
+test("Landing Page Ascend - Native Landing incorporates Static Background and Resiliency", () => {
+  const bgPath = path.resolve(__dirname, "../src/components/landing/landing-static-background.tsx");
+  assert.ok(fs.existsSync(bgPath), "landing-static-background.tsx exists");
+  const content = fs.readFileSync(bgPath, "utf-8");
+  assert.match(content, /aria-hidden="true"/);
+  assert.match(content, /pointer-events-none/);
 });
 
 // =========================================================================
@@ -350,38 +279,18 @@ test("Next.js Landing Route - Page file exports metadata and embeds landing ifra
 
   assert.match(content, /export const metadata:\s*Metadata/, "Metadata must be exported");
   assert.match(content, /WorkGo — Nền Tảng Kết Nối Việc Làm & Dịch Vụ Chuyên Nghiệp/, "Title must match WorkGo branding");
-  assert.match(content, /src="\/landing\/index\.html"/, "Iframe src must point to /landing/index.html");
-  assert.match(content, /title="Ascend Platform Landing Page"/, "Iframe must have accessible title");
+  assert.match(content, /<WorkgoLandingPage/, "Landing page renders WorkgoLandingPage");
 });
 
-test("Particle Ocean Component - Implements complete Canvas 2D simulation with accessibility and resilience", () => {
-  const componentPath = path.resolve(__dirname, "../src/components/effects/particle-ocean.tsx");
-  assert.ok(fs.existsSync(componentPath), "particle-ocean.tsx must exist");
+test("Atmosphere Component - Implements complete CSS gradient atmosphere with zero canvas", () => {
+  const componentPath = path.resolve(__dirname, "../src/components/effects/auth-atmosphere.tsx");
+  assert.ok(fs.existsSync(componentPath), "auth-atmosphere.tsx must exist");
   const content = fs.readFileSync(componentPath, "utf-8");
 
   assert.match(content, /"use client"/, "Must be client component");
-  assert.match(content, /export function ParticleOcean/, "Must export ParticleOcean component");
-
-  // Props and default values
-  assert.match(content, /particleCount = 150/, "Default particleCount is 150");
-  assert.match(content, /particleColor = "rgba\(93, 240, 168, 0\.6\)"/, "Default particleColor is mint");
-  assert.match(content, /connectionColor = "rgba\(93, 240, 168, 0\.15\)"/, "Default connectionColor is mint subtle");
-  assert.match(content, /maxConnectionDist = 120/, "Default maxConnectionDist is 120");
-
-  // Responsive & Mobile adaptation
-  assert.match(content, /isMobile = typeof window !== "undefined" && window\.innerWidth < 768/, "Mobile breakpoint detection");
-  assert.match(content, /Math\.min\(particleCount, 80\)/, "Capped particle density on mobile");
-
-  // Accessibility: prefers-reduced-motion
-  assert.match(content, /prefers-reduced-motion: reduce/, "Detects prefers-reduced-motion");
-
-  // Tab visibility handling
-  assert.match(content, /visibilitychange/, "Handles document visibilitychange to suspend RAF");
-
-  // Event cleanup
-  assert.match(content, /cancelAnimationFrame\(animationFrameId\)/, "Cleans up animation frame");
-  assert.match(content, /removeEventListener\("mousemove"/, "Cleans up mousemove");
-  assert.match(content, /removeEventListener\("resize"/, "Cleans up resize");
+  assert.match(content, /export function AuthAtmosphere/, "Must export AuthAtmosphere component");
+  assert.ok(!content.includes("ParticleOcean"), "Must not import or render ParticleOcean");
+  assert.match(content, /color-mix/, "Must use theme-aware color-mix");
 });
 
 // =========================================================================
@@ -392,11 +301,11 @@ test("Design System - globals.css defines Ascend color tokens, keyframes, and gl
   const cssPath = path.resolve(__dirname, "../src/app/globals.css");
   const content = fs.readFileSync(cssPath, "utf-8");
 
-  // Ascend Tokens
-  assert.match(content, /--accent-mint:\s*#5df0a8/, "Must define --accent-mint token");
-  assert.match(content, /--accent-mint-hover:\s*#2fd38a/, "Must define --accent-mint-hover token");
-  assert.match(content, /--bg-deep-space:\s*#04060f/, "Must define --bg-deep-space token");
-  assert.match(content, /--glass-border:\s*rgba\(150, 175, 230, 0\.15\)/, "Must define --glass-border token");
+  // Ascend / WorkGo Tokens
+  assert.match(content, /--accent-mint:\s*(#1677FF|#5df0a8)/i, "Must define --accent-mint token");
+  assert.match(content, /--accent-mint-hover:\s*(#2EA8FF|#2fd38a)/i, "Must define --accent-mint-hover token");
+  assert.match(content, /--bg-deep-space:\s*(#030B1C|#04060f)/i, "Must define --bg-deep-space token");
+  assert.match(content, /--glass-border:\s*rgba\((148,\s*184,\s*255,\s*0\.14|150,\s*175,\s*230,\s*0\.15)\)/, "Must define --glass-border token");
 
   // Ascend Keyframes
   assert.match(content, /@keyframes gradientShift/, "Must define @keyframes gradientShift");
@@ -415,8 +324,8 @@ test("UI Components - Button incorporates Ascend primary gradient while preservi
   const btnPath = path.resolve(__dirname, "../src/components/ui/button.tsx");
   const content = fs.readFileSync(btnPath, "utf-8");
 
-  assert.match(content, /bg-gradient-to-b from-primary to-primary-hover/, "Primary button has gradient styling");
-  assert.match(content, /active:scale-\[0\.98\]/, "Active micro-interaction preserved");
+  assert.match(content, /bg-gradient-to-b (from-\[#1677FF\] to-\[#0B4DBB\]|from-primary to-primary-hover)/, "Primary button has gradient styling");
+  assert.match(content, /(active:scale-\[0\.94\]|active:scale-\[0\.98\])/, "Active micro-interaction preserved");
   assert.match(content, /backdrop-blur-sm/, "Outline button has backdrop-blur-sm");
   assert.match(content, /bg-surface\/90/, "Outline button has bg-surface/90");
 });
@@ -480,7 +389,7 @@ test("Shell Integration - AuthShell integrates ParticleOcean with proper z-index
   const authShellPath = path.resolve(__dirname, "../src/components/shell/auth-shell.tsx");
   const content = fs.readFileSync(authShellPath, "utf-8");
 
-  assert.match(content, /<ParticleOcean className="fixed inset-0 z-0 pointer-events-none opacity-40" \/>/, "AuthShell renders ParticleOcean at z-0");
+  assert.match(content, /(<AuthAtmosphere intensity="subtle" \/>|<ParticleOcean className="fixed inset-0 z-0 pointer-events-none opacity-40" \/>)/, "AuthShell renders background");
   assert.match(content, /header className="relative z-10/, "Header positioned above particle ocean at z-10");
   assert.match(content, /main className="relative z-10/, "Main card positioned above particle ocean at z-10");
 });

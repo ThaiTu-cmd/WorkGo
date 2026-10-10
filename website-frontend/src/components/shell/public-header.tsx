@@ -19,10 +19,10 @@ export function PublicHeader({ locale }: { locale: string }) {
             href={`/${locale}`}
             className="flex items-center gap-2.5 font-bold text-xl text-primary tracking-tight group"
           >
-            <div className="h-8 w-8 rounded-control bg-primary flex items-center justify-center text-primary-ink font-black text-lg shadow-sm group-hover:shadow-md group-hover:shadow-primary/30 transition-all duration-200">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-[#1677FF] to-[#0B4DBB] flex items-center justify-center text-white font-black text-lg leading-none select-none shadow-sm shadow-[#1677FF]/30 group-hover:scale-105 transition-all duration-200">
               W
             </div>
-            <span className="group-hover:text-primary-hover transition-colors text-fg">WorkGo</span>
+            <span className="text-fg group-hover:text-primary transition-colors">WorkGo</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">

@@ -4,23 +4,27 @@ import { cn } from "@/lib/utils";
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   hoverable?: boolean;
   glass?: boolean;
+  tone?: "solid" | "glass";
 }
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, hoverable = false, glass = false, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn(
-        "rounded-card border border-border text-fg shadow-sm transition-all duration-300",
-        glass
-          ? "bg-surface/85 backdrop-blur-md border-border/80 shadow-md"
-          : "bg-surface",
-        hoverable && "hover:border-primary/50 hover:-translate-y-1 hover:shadow-lg cursor-pointer",
-        className
-      )}
-      {...props}
-    />
-  )
+  ({ className, hoverable = false, glass = false, tone = "solid", ...props }, ref) => {
+    const isGlass = glass || tone === "glass";
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "rounded-card border border-border text-fg shadow-sm transition-all duration-300",
+          isGlass
+            ? "bg-surface/80 backdrop-blur-md border-border/80 shadow-md"
+            : "bg-surface border-border",
+          hoverable && "hover:border-primary/50 hover:-translate-y-1 hover:shadow-lg cursor-pointer",
+          className
+        )}
+        {...props}
+      />
+    );
+  }
 );
 Card.displayName = "Card";
 

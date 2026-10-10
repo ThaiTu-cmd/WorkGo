@@ -49,7 +49,7 @@ export function StarRating({
                 key={star}
                 className={cn(
                   starSizes[size],
-                  filled ? "fill-amber-400 text-amber-400" : "fill-slate-100 text-slate-300"
+                  filled ? "fill-amber-400 text-amber-400" : "fill-transparent text-fg-tertiary/40"
                 )}
                 aria-hidden="true"
               />
@@ -66,12 +66,12 @@ export function StarRating({
               onClick={() => onChange?.(star)}
               onMouseEnter={() => setHoverValue(star)}
               onMouseLeave={() => setHoverValue(null)}
-              className="p-0.5 rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer transition-transform hover:scale-110"
+              className="p-0.5 rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer transition-transform hover:scale-110 inline-flex items-center justify-center"
             >
               <Star
                 className={cn(
                   starSizes[size],
-                  filled ? "fill-amber-400 text-amber-400" : "fill-slate-100 text-slate-300"
+                  filled ? "fill-amber-400 text-amber-400" : "fill-transparent text-fg-tertiary/40"
                 )}
               />
             </button>

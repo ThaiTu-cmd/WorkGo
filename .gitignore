@@ -153,3 +153,6 @@ mvnw.cmd
 ### Docs (local only — không push lên github) ###
 docs/
 **/docs/
+
+### Playwright MCP ###
+.playwright-mcp/

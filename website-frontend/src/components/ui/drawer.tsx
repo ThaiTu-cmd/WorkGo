@@ -78,7 +78,7 @@ const DrawerHeader = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("flex flex-col space-y-1.5 p-6 border-b border-border shrink-0", className)}
+    className={cn("flex flex-col space-y-1.5 p-6 pr-12 border-b border-border shrink-0", className)}
     {...props}
   />
 );

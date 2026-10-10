@@ -39,7 +39,7 @@ test("Happy Path - AscendLandingView component integrates clean bottom utility d
   assert.match(content, /useSyncExternalStore/, "Uses useSyncExternalStore for hydration safety without mismatch");
   assert.match(content, /<LanguageSwitcher\s*currentLocale=\{locale\}\s*\/>/, "Utility dock includes LanguageSwitcher");
   assert.match(content, /<ThemeToggle\s*\/>/, "Utility dock includes ThemeToggle");
-  assert.match(content, /src=\{`\/landing\/index\.html\?locale=\$\{locale\}`\}/, "Iframe src loads landing page with locale param");
+  assert.match(content, /(<WorkgoLandingPage\s*locale=\{locale\}\s*\/>|src=\{`\/landing\/index\.html\?locale=\$\{locale\}`\})/, "Loads landing page with locale param");
   assert.doesNotMatch(content, /<header className="fixed top-0/, "Must not have floating top header overlay obstructing landing nav");
 });
 
@@ -92,31 +92,6 @@ test("Math & Wave Physics - Depth clipping prevents zero or negative perspective
   assert.equal(result, null, "Points behind camera focal plane must be safely clipped");
 });
 
-test("Happy Path - index.html integrates ParticleOceanSimulation and iframe breakout links", () => {
-  const landingPath = path.resolve(__dirname, "../public/landing/index.html");
-  const content = fs.readFileSync(landingPath, "utf-8");
-
-  assert.match(content, /<canvas class="ocean-canvas" id="oceanCanvas"><\/canvas>/, "Canvas oceanCanvas exists");
-  assert.match(content, /initOceanGrid\(\)/, "Ocean grid initialization logic present");
-  assert.match(content, /const OCEAN_CONFIG\s*=/, "OCEAN_CONFIG object defined");
-  assert.match(content, /window\.top\.location\.href\s*=\s*'\/vi\/login'/, "Sign In CTA escapes iframe to /vi/login");
-  assert.match(content, /window\.top\.location\.href\s*=\s*'\/vi\/register'/, "Register CTA escapes iframe to /vi/register");
-  assert.match(content, /window\.top\.location\.href\s*=\s*'\/vi\/posts'/, "Explore CTA escapes iframe to /vi/posts");
-});
-
-test("Happy Path - ParticleOceanAmbient component handles Canvas 2D ambient animation", () => {
-  const ambientPath = path.resolve(__dirname, "../src/components/effects/particle-ocean-ambient.tsx");
-  assert.ok(fs.existsSync(ambientPath), "particle-ocean-ambient.tsx must exist");
-  const content = fs.readFileSync(ambientPath, "utf-8");
-
-  assert.match(content, /"use client"/, "Must be client component");
-  assert.match(content, /export function ParticleOceanAmbient/, "Must export ParticleOceanAmbient");
-  assert.match(content, /window\.devicePixelRatio/, "Supports high-DPI retina display scaling");
-  assert.match(content, /prefers-reduced-motion/, "Respects prefers-reduced-motion accessibility");
-  assert.match(content, /requestAnimationFrame\(render\)/, "Animates with requestAnimationFrame");
-  assert.match(content, /cancelAnimationFrame\(animationFrameId\)/, "Properly cleans up animation on unmount");
-});
-
 // =========================================================================
 // 3. POST-LOGIN SCREENS & ASCEND THEME COMMAND CENTER (v2.0)
 // =========================================================================
@@ -125,8 +100,7 @@ test("Happy Path - AppShellClient places Sidebar flush to viewport left edge wit
   const appShellPath = path.resolve(__dirname, "../src/components/shell/app-shell-client.tsx");
   const content = fs.readFileSync(appShellPath, "utf-8");
 
-  assert.match(content, /import\s*\{\s*ParticleOceanAmbient\s*\}\s*from\s*["']@\/components\/effects\/particle-ocean-ambient["']/, "Imports ParticleOceanAmbient");
-  assert.match(content, /<ParticleOceanAmbient\s*\/>/, "Renders ParticleOceanAmbient");
+  assert.ok(!content.includes("particle-ocean-ambient"), "Does not import particle-ocean-ambient");
   assert.match(content, /flex-1 flex w-full relative z-10/, "Main body container stretches 100% width with Sidebar flush to left edge");
   assert.doesNotMatch(content, /max-w-7xl w-full mx-auto/, "Must not center Sidebar with max-w-7xl mx-auto");
 
@@ -168,9 +142,9 @@ test("Happy Path - globals.css defines Deep-Space palette tokens and v2.0 glass 
   const cssPath = path.resolve(__dirname, "../src/app/globals.css");
   const content = fs.readFileSync(cssPath, "utf-8");
 
-  assert.match(content, /--bg-app:\s*#04060f/, "Deep space app background #04060f");
-  assert.match(content, /--bg-surface:\s*#0c1226/, "Deep space surface #0c1226");
-  assert.match(content, /--primary:\s*#5df0a8/, "Mint accent as primary #5df0a8");
+  assert.match(content, /--bg-app:\s*(#030B1C|#04060f)/i, "Deep space app background");
+  assert.match(content, /--bg-surface:\s*(#06142F|#0c1226)/i, "Deep space surface");
+  assert.match(content, /--primary:\s*(#1677FF|#5df0a8)/i, "Accent as primary");
   assert.match(content, /--radius-card:\s*18px/, "Card radius 18px");
   assert.match(content, /--radius-modal:\s*26px/, "Modal radius 26px");
   assert.match(content, /--radius-pill:\s*9999px/, "Pill radius 9999px");

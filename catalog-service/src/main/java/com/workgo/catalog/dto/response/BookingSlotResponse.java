@@ -22,8 +22,6 @@ public class BookingSlotResponse {
 
     Instant startedAt;
 
-    Instant startAt;
-
     Instant endAt;
 
     BookingStatus status;
@@ -36,8 +34,8 @@ public class BookingSlotResponse {
 
     Instant updatedAt;
 
-    UUID serviceId;
+    UUID service;
 
-    UUID orderId;
+    UUID order;
 
 }

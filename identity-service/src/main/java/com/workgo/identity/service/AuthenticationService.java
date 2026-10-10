@@ -10,6 +10,7 @@ import com.workgo.identity.Exception.ErrorCode;
 import com.workgo.identity.dto.request.AuthenticationRequest;
 import com.workgo.identity.dto.request.IntrospectRequest;
 import com.workgo.identity.dto.request.LogoutRequest;
+import com.workgo.identity.dto.request.RefreshRequest;
 import com.workgo.identity.dto.response.AuthenticationResponse;
 import com.workgo.identity.dto.response.IntrospectResponse;
 import com.workgo.identity.entity.InvalidatedToken;
@@ -106,6 +107,36 @@ public class AuthenticationService {
         } catch (JOSEException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException {
+
+        var signedJwt = verifyToken(request.getToken());
+
+        String jwtId = signedJwt.getJWTClaimsSet().getJWTID();
+        Instant expiryTime = signedJwt.getJWTClaimsSet().getExpirationTime().toInstant();
+
+        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                .id(jwtId)
+                .expiryTime(expiryTime)
+                .build();
+
+        invalidatedTokenRepository.save(invalidatedToken);
+
+        String userName = signedJwt.getJWTClaimsSet().getSubject();
+
+        User user = userRepository.findByUserName(userName);
+
+        if(user == null){
+            throw new AppException(ErrorCode.USER_NOT_EXISTED);
+        }
+
+        String token = generateToken(user);
+
+        return AuthenticationResponse.builder()
+                .token(token)
+                .authenticated(true)
+                .build();
     }
 
     private SignedJWT verifyToken(String token) throws JOSEException, ParseException {

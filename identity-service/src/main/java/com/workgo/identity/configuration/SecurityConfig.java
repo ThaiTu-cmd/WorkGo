@@ -30,7 +30,11 @@ public class SecurityConfig {
     CustomJwtDecoder customJwtDecoder;
 
     private final String[] PUBLIC_ENDPOINTS = {
-            "/users/registration" , "/auth/token", "/auth/introspect", "/auth/logout"
+            "/users/registration" ,
+            "/auth/token",
+            "/auth/introspect",
+            "/auth/logout",
+            "/auth/refresh"
     };
 
     @Bean

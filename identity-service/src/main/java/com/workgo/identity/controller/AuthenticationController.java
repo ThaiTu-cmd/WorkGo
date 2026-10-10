@@ -6,6 +6,7 @@ import com.workgo.identity.dto.ApiResponse;
 import com.workgo.identity.dto.request.AuthenticationRequest;
 import com.workgo.identity.dto.request.IntrospectRequest;
 import com.workgo.identity.dto.request.LogoutRequest;
+import com.workgo.identity.dto.request.RefreshRequest;
 import com.workgo.identity.dto.response.AuthenticationResponse;
 import com.workgo.identity.dto.response.IntrospectResponse;
 import com.workgo.identity.service.AuthenticationService;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.text.ParseException;
 
 @RestController
 @RequestMapping("/auth")
@@ -53,6 +56,17 @@ public class AuthenticationController {
         authenticationService.logout(request);
 
         return ApiResponse.<Void>builder().build();
+    }
+
+    @PostMapping("/refresh")
+    ApiResponse<AuthenticationResponse> authenticate(
+            @RequestBody RefreshRequest request
+            ) throws ParseException, JOSEException {
+        return ApiResponse.<AuthenticationResponse>builder()
+                .code(ErrorCode.SUCCESS.getCode())
+                .message(ErrorCode.SUCCESS.getMessage())
+                .result(authenticationService.refreshToken(request))
+                .build();
     }
 
 

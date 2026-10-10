@@ -71,6 +71,13 @@ public class ApplicationInitConfig {
                 Role role = roleRepository.findById(RoleName.ADMIN)
                         .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
 
+                Role role1 = roleRepository.findById(RoleName.CLIENT)
+                        .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+
+                Role role2 = roleRepository.findById(RoleName.PROVIDER)
+                        .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+
+
                 UserRole userRole = UserRole.builder()
                         .grantedAt(Instant.now())
                         .userNameHost("System")
@@ -78,8 +85,25 @@ public class ApplicationInitConfig {
                         .role(role)
                         .build();
 
+                UserRole userRole1 = UserRole.builder()
+                        .grantedAt(Instant.now())
+                        .userNameHost("System")
+                        .user(user)
+                        .role(role1)
+                        .build();
+
+                UserRole userRole2 = UserRole.builder()
+                        .grantedAt(Instant.now())
+                        .userNameHost("System")
+                        .user(user)
+                        .role(role2)
+                        .build();
+
                 HashSet<UserRole> userRoles = new HashSet<>();
                 userRoles.add(userRole);
+                userRoles.add(userRole1);
+                userRoles.add(userRole2);
+
 
                 userRoleRepository.save(userRole);
 

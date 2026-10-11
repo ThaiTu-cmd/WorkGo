@@ -17,6 +17,18 @@ export const WORKGO_PALETTE = {
   lightBg: '#F5F9FF',
   lightSurface: '#FFFFFF',
   lightSecondary: '#EDF5FF',
+  // PLAN-FIVERR-UI — measured neutrals for the Fiverr-inspired marketing shell.
+  // Light-only shell: the marketplace landing page pins its own palette, so these
+  // entries document the measured values without forking the dark/light tokens.
+  ink900: '#222325',
+  ink700: '#404145',
+  ink500: '#62646A',
+  hairline: '#DADBDD',
+  accent: '#FF7640',
+  panelGreen: '#003912',
+  panelGreenBright: '#00732E',
+  panelBrown: '#421300',
+  panelPlum: '#4D1727',
 } as const;
 
 export type WorkGoColor = keyof typeof WORKGO_PALETTE;

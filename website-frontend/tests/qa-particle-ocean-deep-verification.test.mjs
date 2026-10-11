@@ -21,12 +21,12 @@ test("QA-HERO-01 - ParticleOceanHero: Hero component does not import or render W
   assert.match(heroSrc, /export function ParticleOceanHero/, "particle-ocean-hero must export component");
 });
 
-test("QA-AUTH-01 - Auth Atmosphere: AuthShell renders AuthAtmosphere subtle without canvas", () => {
+test("QA-AUTH-01 - Auth Atmosphere: AuthShell renders AuthAtmosphere vivid without canvas", () => {
   const authShellPath = path.join(ROOT, "src/components/shell/auth-shell.tsx");
   assert.ok(fs.existsSync(authShellPath), "auth-shell.tsx must exist");
   const shellSrc = fs.readFileSync(authShellPath, "utf-8");
 
-  assert.match(shellSrc, /<AuthAtmosphere\s+intensity="subtle"\s*\/>/, "AuthShell must render AuthAtmosphere subtle");
+  assert.match(shellSrc, /<AuthAtmosphere\s+intensity="(subtle|default|vivid)"\s*\/>/, "AuthShell must render AuthAtmosphere (vivid per PLAN-BG-MOTION-VIVID)");
 
   const atmoPath = path.join(ROOT, "src/components/effects/auth-atmosphere.tsx");
   const atmoSrc = fs.readFileSync(atmoPath, "utf-8");

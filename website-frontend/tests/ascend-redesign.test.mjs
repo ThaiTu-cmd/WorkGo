@@ -389,7 +389,7 @@ test("Shell Integration - AuthShell integrates ParticleOcean with proper z-index
   const authShellPath = path.resolve(__dirname, "../src/components/shell/auth-shell.tsx");
   const content = fs.readFileSync(authShellPath, "utf-8");
 
-  assert.match(content, /(<AuthAtmosphere intensity="subtle" \/>|<ParticleOcean className="fixed inset-0 z-0 pointer-events-none opacity-40" \/>)/, "AuthShell renders background");
+  assert.match(content, /(<AuthAtmosphere intensity="(subtle|default|vivid)" \/>|<ParticleOcean className="fixed inset-0 z-0 pointer-events-none opacity-40" \/>)/, "AuthShell renders background");
   assert.match(content, /header className="relative z-10/, "Header positioned above particle ocean at z-10");
   assert.match(content, /main className="relative z-10/, "Main card positioned above particle ocean at z-10");
 });

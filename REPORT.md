@@ -1,129 +1,145 @@
-# 📋 BÁO CÁO TỔNG KẾT DỰ ÁN (PROJECT COMPLETION REPORT)
-## WORKGO — RÀ SOÁT TOÀN DIỆN THỊ GIÁC: CĂN GIỮA TEXT & ICON, BỐ CỤC, GIÃN CÁCH & TƯƠNG PHẢN MÀU SẮC
-### Kế hoạch hành động: `PLAN-VISUAL-ALIGNMENT-AUDIT-2026-10` & `PLAN-VISUAL-AUDIT-2026-10`
+# 📋 BÁO CÁO TỔNG KẾT TIẾN ĐỘ DỰ ÁN (PROJECT PROGRESS & COMPLETION REPORT)
+## WORKGO — KIỂM TOÁN CĂN CHỈNH GIAO DIỆN & NÂNG CẤP CHUYỂN ĐỘNG TOÀN DIỆN (CHU KỲ 1/3)
+### HỆ THỐNG: WORKGO MULTI-PLATFORM (`website-frontend` & `android-frontend`)
+### Kế hoạch: [`.team/PLAN.md`](file:///D:/E/WorkGo/.team/PLAN.md) | Thẩm định: [`.team/REVIEW.md`](file:///D:/E/WorkGo/.team/REVIEW.md)
 
-> **Dự án:** WorkGo Freelance & Service Platform  
-> **Phạm vi tác động:** `website-frontend/` (Next.js 16 Turbopack + React 19 + Tailwind CSS v4 + Radix UI)  
-> **Thời gian thực hiện:** 08/10/2026  
-> **Trạng thái tổng thể:** 🟢 **HOÀN THÀNH TOÀN DIỆN — 100% SẴN SÀNG TRIỂN KHAI SẢN XUẤT**  
-
----
-
-## 1. TỔNG QUAN KẾ HOẠCH & MỤC TIÊU (PLAN OVERVIEW)
-
-Chiến dịch rà soát thị giác toàn diện được thực hiện qua hai giai đoạn liên hoàn nhằm đưa chất lượng giao diện người dùng (UI/UX) của WorkGo đạt chuẩn mực cao cấp nhất:
-
-### 1.1 Giai đoạn 1: Chuẩn hóa Tương phản Màu sắc & Khoảng đệm An toàn (`PLAN-VISUAL-AUDIT-2026-10`)
-- **Triệt tiêu lỗi chữ tàng hình:** Logo "WorkGo" tại `public-header` chuyển từ `text-white` sang `text-fg`, đạt tương phản 15.9:1 (chuẩn WCAG AAA) trên nền sáng.
-- **Thích ứng đa Theme cho Mobile Drawer:** Gỡ bỏ mã màu navy cố định `bg-[#06142F]/95`, chuyển sang `bg-surface/95 border-r border-border`.
-- **Hài hòa thẻ số dư ví (Wallet Summary):** Thay thế dải gradient đen tối bằng `from-primary/15 via-surface to-surface`.
-- **Xóa bỏ các khối màu pastel chói:** Loại bỏ 100% các class `bg-green-50`, `bg-amber-50`, `bg-purple-50`, `border-*-200` gây chói lóa trong Dark Mode; chuyển sang semantic tokens (`bg-success-bg`, `bg-warning-bg`, `bg-danger-bg`, `border-*/30`).
-- **Khoảng đệm an toàn chống đè chữ:** Bổ sung `pr-12` cho `DrawerHeader`, `pr-10` cho `DialogHeader`, và `pr-10` cho ô tìm kiếm `/posts` để văn bản không bao giờ bị đè xuống dưới nút đóng/xóa `X`.
-- **Quy tắc Dropdown Native:** Thêm CSS toàn cục cho thẻ `select option` trên Windows/Chromium và nâng cao độ tương phản CTA ở Light Mode.
-
-### 1.2 Giai đoạn 2: Căn giữa Trục dọc & Cân đối Khung hình (`PLAN-VISUAL-ALIGNMENT-AUDIT-2026-10`)
-- **Khắc phục lỗi lệch tâm cấu trúc trong `Badge`:** Tái cấu trúc lồng thẻ trong `badge.tsx`, chuyển wrapper con sang `inline-flex items-center justify-center leading-none`, chấm dứt hiện tượng inline-baseline kéo lệch icon 1.5–2px so với tâm chữ.
-- **Định vị tuyệt đối trục dọc cho `Input` Affixes:** Container chứa `prefixIcon` (kính lúp) và `suffix` được bổ sung `top-1/2 -translate-y-1/2 flex items-center justify-center`, giải quyết dứt điểm lỗi icon bị kẹt ở mép trên ô input cao 40–44px.
-- **Loại bỏ sụt lún dòng trong `Button` & `Avatar`:** Bổ sung `leading-none [&>svg]:shrink-0` vào `buttonVariants` để text không bị sụt dưới chân icon SVG và bảo vệ icon khỏi bị co bóp khi text dài; avatar initials có `leading-none flex items-center justify-center` nằm chính tâm vòng tròn.
-- **Khóa tâm hình học cho Logo "W":** Áp dụng `leading-none select-none` cho ký tự "W" trên toàn bộ 5 headers và shells (`public-header`, `workgo-navbar`, `app-shell-client`, `auth-shell`, `app-header`).
-- **Căn giữa Composed Components:** Chuyển khung ngân sách trong `post-card` từ `inline-block` sang `inline-flex items-center justify-center ... leading-none`; căn giữa icon xóa `X` trong active filter chips; khóa trục icon tròn trong `wallet-summary` và greeting badges (`Sparkles`).
+> **Dự án:** Nền tảng Kết nối Freelancer & Dịch vụ Chuyên nghiệp WorkGo  
+> **Kiến trúc công nghệ:** Next.js 16.3.8 (App Router & Turbopack) + React 19 + TypeScript 5 + Tailwind CSS v4 (Web) | Expo SDK 57 + React Native 0.86 + Reanimated 4.5.1 (Mobile)  
+> **Đơn vị thực hiện:** Senior Software Engineer (CODER) & QA Testing Engineer (TESTER)  
+> **Đơn vị thẩm định:** Principal Code Reviewer (REVIEWER)  
+> **Thời điểm cập nhật:** 11/10/2026  
+> **Trạng thái nghiệm thu:** 🟢 **DECISION: APPROVED — 100% QUALITY GATES VERIFIED — ALL GOALS COMPLETED**  
 
 ---
 
-## 2. TỔNG HỢP CÁC THAY ĐỔI MÃ NGUỒN (CODE CHANGES SUMMARY)
+## 1. TỔNG QUAN TIẾN ĐỘ & MỤC TIÊU ĐẠT ĐƯỢC (EXECUTIVE SUMMARY)
 
-Toàn bộ các can thiệp được thực hiện theo nguyên tắc **Surgical Precision** với mã nguồn sạch, tinh gọn và tối ưu hiệu năng:
+Đội ngũ kỹ thuật đã hoàn thành kiểm toán toàn diện hệ thống giao diện, căn chỉnh chuẩn xác mọi khung, nút bấm, khối chữ, và nâng cấp hệ thống chuyển động (Motion System) mượt mà 60fps trên cả hai nền tảng Web và Di động:
 
-### 2.1 Các thành phần UI cốt lõi (Core UI Atoms)
-1. [`src/components/ui/badge.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/ui/badge.tsx): Wrapper con chuyển sang `inline-flex items-center justify-center leading-none select-none`; icon wrapper có `shrink-0`. Căn giữa tuyệt đối mọi icon & text.
-2. [`src/components/ui/button.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/ui/button.tsx): Bổ sung `leading-none [&>svg]:shrink-0` vào `buttonVariants`.
-3. [`src/components/ui/input.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/ui/input.tsx): Bổ sung `top-1/2 -translate-y-1/2 flex items-center justify-center` cho cả tiền tố `prefixIcon` và hậu tố `suffix`.
-4. [`src/components/ui/avatar.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/ui/avatar.tsx): Initials `<span>` thêm `leading-none flex items-center justify-center`.
-5. [`src/components/ui/star-rating.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/ui/star-rating.tsx): Nút sao `<button>` thêm `inline-flex items-center justify-center`; sao rỗng dùng `fill-transparent text-fg-tertiary/40`.
-6. [`src/components/ui/switch.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/ui/switch.tsx): Trạng thái tắt đổi sang `data-[state=unchecked]:bg-muted border-border-strong`.
-7. [`src/components/ui/drawer.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/ui/drawer.tsx): Thêm khoảng đệm an toàn `pr-12` vào `DrawerHeader`.
-8. [`src/components/ui/dialog.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/ui/dialog.tsx): Thêm `pr-10` vào `DialogHeader`; loại bỏ `sm:space-x-2` tại `DialogFooter` giữ `gap-2` sạch.
-9. [`src/components/ui/toast.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/ui/toast.tsx): Chuẩn hóa đường viền Toast sang token ngữ nghĩa `/30`.
+1. **Khắc phục triệt để sai lệch căn chỉnh (UI Alignment):**
+   - **100% điểm lệch đã xử lý (21/21 điểm):** Khắc phục toàn bộ 9 điểm lệch trên Android (`A1–A9`) và 12 điểm lệch trên Website (`W1–W12`).
+   - Khử hoàn toàn hiện tượng tràn ngang trên màn hình hẹp 320px (iPhone SE thế hệ cũ).
+   - Chuẩn hóa khoảng cách, nhịp điệu typography, và kích thước vùng bấm (Hit-Area) tối thiểu 42–48px đạt chuẩn WCAG AA.
+   - Xử lý tương phản màu sắc trong chế độ Dark Mode trên thiết bị di động, loại bỏ các mã màu sáng hardcode gây chói mắt.
+   - Bản địa hóa 100% tiếng Việt cho màn hình Khám phá trên Android, thay thế toàn bộ mẫu template mặc định của Expo.
 
-### 2.2 Shells, Headers & Landing Pages
-10. [`src/components/shell/public-header.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/shell/public-header.tsx): Logo chữ "WorkGo" dùng `text-fg`; hộp logo "W" thêm `leading-none select-none`.
-11. [`src/components/landing/workgo-navbar.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/landing/workgo-navbar.tsx): Hộp logo "W" thêm `leading-none select-none`; icon `ArrowRight` CTA thêm `shrink-0`.
-12. [`src/components/shell/app-shell-client.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/shell/app-shell-client.tsx): Drawer di động dùng `bg-surface/95 border-r border-border`; logo "W" thêm `leading-none select-none`.
-13. [`src/components/shell/auth-shell.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/shell/auth-shell.tsx): Hộp logo "W" thêm `leading-none select-none`.
-14. [`src/components/shell/app-header.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/shell/app-header.tsx): Hộp logo "W" thêm `leading-none select-none`.
-15. [`src/components/shell/sidebar.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/shell/sidebar.tsx): Badge số lượng thêm `inline-flex items-center justify-center leading-none`.
-16. [`src/components/landing/particle-ocean-hero.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/landing/particle-ocean-hero.tsx): Hero badge pill: dot pulse `shrink-0`, text `leading-none`.
-17. [`src/components/landing/workgo-landing-sections.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/landing/workgo-landing-sections.tsx): Section badges thêm `justify-center leading-none`; Escrow badge thêm `inline-flex items-center gap-1 leading-none [&>svg]:shrink-0`.
-18. [`src/app/globals.css`](file:///D:/E/WorkGo/website-frontend/src/app/globals.css): CSS cho native `select option` và contrast CTA Light Mode.
+2. **Nâng cấp hệ sinh thái chuyển động (Additive Motion System):**
+   - **Điểm nhấn không gian 3D WebGL (Three.js skill):** Tích hợp trường 300 hạt không gian (Point-Cloud Perspective) với hiệu ứng nghiêng đa chiều theo con trỏ chuột (`pointer parallax`), tối ưu hiệu năng với dynamic client-only (`ssr: false`), tự động tạm dừng khi tab ẩn và giải phóng 100% tài nguyên GPU khi unmount. Không kéo dependency cồng kềnh làm phình bundle.
+   - **Khung & Khối nội dung (Entrance Reveal):** Hiệu ứng trượt xuất hiện so le (staggered delay 0→240ms) khi cuộn trang bằng `IntersectionObserver` và CSS keyframes trên Web, cùng `FadeInDown.springify()` của Reanimated trên Mobile.
+   - **Nút bấm & Tương tác xúc giác (Press Physics):** Hiệu ứng nhún đàn hồi lò xo `fiverr-press` trên Web và `withSpring(0.97)` trên Mobile qua component `PressableScale`.
+   - **Bảo vệ chế độ giảm chuyển động (Reduced Motion Compliance):** Khóa triệt để toàn bộ animation, transform và chuyển video thành ảnh tĩnh khi người dùng kích hoạt `prefers-reduced-motion: reduce`.
 
-### 2.3 Composed Components & Dashboards
-19. [`src/components/composed/post-card.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/composed/post-card.tsx): Khung ngân sách đổi sang `inline-flex items-center justify-center px-3 py-1.5 ... leading-none`; các dòng meta thêm `[&>svg]:shrink-0`; nhãn DIGITAL/ONSITE dùng bộ màu kép thích ứng 2 theme.
-20. [`src/app/[locale]/(public)/posts/page.tsx`](file:///D:/E/WorkGo/website-frontend/src/app/[locale]/(public)/posts/page.tsx): Input tìm kiếm thêm `pr-10`; live counter dot `shrink-0`, text `leading-none`; nút `X` filter chip thêm `inline-flex items-center justify-center rounded-full p-0.5 hover:bg-muted/80`.
-21. [`src/components/domain/wallet-summary.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/domain/wallet-summary.tsx): Thẻ Available Balance đổi gradient theme-aware; các hộp icon tròn có `flex items-center justify-center shrink-0`.
-22. [`src/app/[locale]/(app)/client/page.tsx`](file:///D:/E/WorkGo/website-frontend/src/app/[locale]/(app)/client/page.tsx): Greeting badge: `Sparkles` icon `shrink-0`, text `leading-none`.
-23. [`src/app/[locale]/(app)/provider/page.tsx`](file:///D:/E/WorkGo/website-frontend/src/app/[locale]/(app)/provider/page.tsx): Greeting badge: `Sparkles` icon `shrink-0`, text `leading-none`; quick links dùng `bg-success-bg` và `bg-primary-subtle`.
-24. [`src/app/[locale]/(public)/posts/[id]/page.tsx`](file:///D:/E/WorkGo/website-frontend/src/app/[locale]/(public)/posts/[id]/page.tsx): Box thông báo nộp hồ sơ dùng `bg-success-bg border-success/30`.
-25. [`src/components/domain/accept-confirm-modal.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/domain/accept-confirm-modal.tsx): Box cảnh báo phí dùng `bg-warning-bg border-warning/30`.
-26. [`src/components/domain/review-modal.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/domain/review-modal.tsx): Box lưu ý đơn hàng dùng `bg-warning-bg border-warning/30`.
-27. [`src/app/[locale]/(app)/disputes/[id]/page.tsx`](file:///D:/E/WorkGo/website-frontend/src/app/[locale]/(app)/disputes/[id]/page.tsx): Nút báo cáo dùng `border-danger/30 hover:bg-danger-bg`.
-28. [`src/components/domain/payment-panel.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/domain/payment-panel.tsx): Box lỗi dùng `border-danger/30 text-danger text-danger/90`.
-29. [`src/components/composed/application-table.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/composed/application-table.tsx): Nút từ chối dùng `hover:border-danger/40 hover:bg-danger-bg`.
-
-### 2.4 Bộ Test Tự Động Hóa (3 files)
-30. [`tests/qa-visual-layout-contrast-audit.test.mjs`](file:///D:/E/WorkGo/website-frontend/tests/qa-visual-layout-contrast-audit.test.mjs): 20 tests kiểm định tĩnh và tương phản toán học WCAG 2.1 AA/AAA.
-31. [`tests/qa-visual-layout-edge-cases.test.mjs`](file:///D:/E/WorkGo/website-frontend/tests/qa-visual-layout-edge-cases.test.mjs): 18 tests kiểm định ca biên, tính toán vùng đệm an toàn và quét đệ quy codebase.
-32. [`tests/theme-settings-darkmode.test.mjs`](file:///D:/E/WorkGo/website-frontend/tests/theme-settings-darkmode.test.mjs): Cập nhật kiểm tra Switch phù hợp với token `bg-muted` mới.
+3. **Chỉ số kiểm thử & Đảm bảo an toàn hệ thống (Zero Regression & Governance):**
+   - **369 / 369 Automated Tests PASS (100% thành công trên 10 test suites)**, bổ sung 25 bài test tự động mới.
+   - **0 lỗi TypeScript, 0 lỗi ESLint, 0 cảnh báo** trên cả hai nền tảng Web và Android.
+   - **Turbopack Build thành công 100%** toàn bộ 37 routes tĩnh và động.
+   - **445 keys từ điển song ngữ VI/EN đối chiếu 1:1 hoàn hảo**.
+   - **100% tuân thủ Governance:** 0 file backend, docs hay scripts ngoài phạm vi bị tác động.
 
 ---
 
-## 3. KẾT QUẢ KIỂM THỬ TOÀN DIỆN (TEST RESULTS & QA MATRIX)
+## 2. BẢNG TỔNG HỢP CÁC TỆP TIN THAY ĐỔI (CODE ARTIFACTS)
 
-### 3.1 Ma trận kiểm thử ca biên & độ phủ (Edge Cases & Safety Buffer)
-- **Độ chính xác căn giữa hình học (Geometric Centering):**
-  - Icon và Text trong tất cả các biến thể `Badge`: độ lệch trục bằng **0px**.
-  - Prefix/Suffix trong `Input`: tọa độ $Y = \frac{H - H_{icon}}{2}$ cố định tuyệt đối ở mọi chiều cao `h-10`, `h-11`.
-  - Button text và SVG icon: loại bỏ hoàn toàn line-height sag, icon không bị thu nhỏ khi text dài.
-  - Avatar Initials: chữ cái nằm ngay tại tâm đối xứng của vòng tròn.
-- **Vùng đệm an toàn hình học nút đóng (Geometry Buffer):**
-  - `DrawerHeader` có `pr-12` (48px) tạo khoảng đệm an toàn **16px** trước nút đóng `X` (`absolute right-4`).
-  - `DialogHeader` có `pr-10` (40px) tạo khoảng đệm an toàn **8px** trước nút đóng `X`.
-  - Ô tìm kiếm `/posts` có `pr-10` (40px) ngăn từ khóa dài chạm nút xóa `X`.
-- **Độ tương phản toán học WCAG 2.1 AA/AAA:**
-  - `text-fg` trên nền trắng Light Mode: **15.9:1** (vượt chuẩn AAA 7.0:1).
-  - Menu text trên Drawer Light Mode: **4.8:1** (vượt chuẩn AA 4.5:1).
-  - Status alert texts (success, warning, danger): **3.2:1 – 4.7:1** (đạt và vượt chuẩn AA).
-- **Quét sạch pastel trong toàn bộ mã nguồn:**
-  - Quét đệ quy hơn 60 files trong `src/`: Xác nhận **0 lỗi tàn dư** các class `bg-*-50` hoặc `border-*-200`.
+### 2.1 Danh mục tệp tạo mới (12 Files)
+| STT | Tệp tin | Nền tảng | Trách nhiệm kiến trúc |
+|:---:|---|:---:|---|
+| 1 | [`website-frontend/src/lib/motion.ts`](file:///D:/E/WorkGo/website-frontend/src/lib/motion.ts) | Web | Thư viện hằng số easing, thời lượng, hook `useMounted()` và `useReveal()`. |
+| 2 | [`website-frontend/src/components/landing/fiverr/fiverr-reveal.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/landing/fiverr/fiverr-reveal.tsx) | Web | Wrapper xuất hiện mượt mà theo cuộn trang với delay so le. |
+| 3 | [`website-frontend/src/components/landing/fiverr/fiverr-3d-canvas.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/landing/fiverr/fiverr-3d-canvas.tsx) | Web | Canvas WebGL 3D 300 điểm hạt perspective tương tác chuột, tự dọn dẹp GPU. |
+| 4 | [`website-frontend/src/components/landing/fiverr/fiverr-3d-accent.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/landing/fiverr/fiverr-3d-accent.tsx) | Web | Component lazy loading client-only tích hợp kiểm tra WebGL, `saveData`, reduced motion. |
+| 5 | [`website-frontend/src/components/landing/fiverr/fiverr-button.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/landing/fiverr/fiverr-button.tsx) | Web | Nút bấm Marketplace hỗ trợ hiệu ứng `fiverr-press`, Radix Slot và đa kích cỡ. |
+| 6 | [`website-frontend/src/components/ui/reveal.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/ui/reveal.tsx) | Web | Wrapper reveal dùng chung cho các trang ngoài landing page. |
+| 7 | [`website-frontend/tests/ui-alignment-audit.test.mjs`](file:///D:/E/WorkGo/website-frontend/tests/ui-alignment-audit.test.mjs) | Web | Cổng kiểm thử tự động 8 bài test khóa bất biến alignment. |
+| 8 | [`website-frontend/tests/ui-motion.test.mjs`](file:///D:/E/WorkGo/website-frontend/tests/ui-motion.test.mjs) | Web | Cổng kiểm thử tự động 5 bài test khóa bất biến hệ thống motion. |
+| 9 | [`website-frontend/tests/qa-ui-alignment-motion-deep.test.mjs`](file:///D:/E/WorkGo/website-frontend/tests/qa-ui-alignment-motion-deep.test.mjs) | Web/Mobile | Bộ kiểm thử sâu 12 bài test đào sâu ca biên và tính năng đa nền tảng. |
+| 10 | [`android-frontend/src/components/pressable-scale.tsx`](file:///D:/E/WorkGo/android-frontend/src/components/pressable-scale.tsx) | Mobile | Nút bấm nhún lò xo Reanimated scale 0.97 với `ReduceMotion.System`. |
+| 11 | [`android-frontend/src/components/entrance-view.tsx`](file:///D:/E/WorkGo/android-frontend/src/components/entrance-view.tsx) | Mobile | Khung xuất hiện so le bằng `FadeInDown` khi mở ứng dụng di động. |
+| 12 | [`android-frontend/src/components/home-categories.tsx`](file:///D:/E/WorkGo/android-frontend/src/components/home-categories.tsx) | Mobile | Lưới 2 cột co giãn chuẩn `maxWidth: (MaxContentWidth - 56) / 2`. |
+| 13 | [`android-frontend/src/components/home-explore-card.tsx`](file:///D:/E/WorkGo/android-frontend/src/components/home-explore-card.tsx) | Mobile | Card Escrow động theo theme và nút CTA hit-area 48px radius 12px. |
 
-### 3.2 Kết quả 4 Cổng Kiểm Định Chất Lượng (Quality Gates)
-| Cổng kiểm định | Lệnh thực thi | Tiêu chí yêu cầu | Kết quả thực tế | Trạng thái |
+### 2.2 Danh mục tệp sửa đổi cốt lõi (17 Files)
+- **Website Frontend:**
+  - `src/components/landing/fiverr/fiverr-header.tsx`: Khắc phục cấn logo (**W1**) và co giãn ô tìm kiếm chống tràn ở 320px (**W2**).
+  - `src/components/landing/fiverr/fiverr-hero.tsx`: Khắc phục giật bố cục khi resize (**W3**), tích hợp reveal và 3D accent.
+  - `src/components/landing/fiverr/fiverr-category-grid.tsx`: Khắc phục ô danh mục tràn viền ở màn hình hẹp (**W4**).
+  - `src/components/landing/fiverr/fiverr-popular-services.tsx`: Loại bỏ double gutter lệch 24px (**W5**), thêm hover nhấc thẻ.
+  - `src/components/landing/fiverr/fiverr-value-props.tsx`, `fiverr-feature-panels.tsx`, `fiverr-guides.tsx`, `fiverr-cta-banner.tsx`: Bọc reveal, chuẩn hóa nút bấm, nâng tương phản artwork đạt chuẩn WCAG AA (**W6**, **W7**, **W9**).
+  - `src/components/landing/fiverr/fiverr-carousel.tsx`: Dịch chuyển mũi tên vào trong an toàn, bổ sung dãy chấm phân trang mobile (**W8**).
+  - `src/components/landing/fiverr/fiverr-footer.tsx`: Khử viền đôi và cân đối cột responsive (**W10**).
+  - `src/app/globals.css`: Append-only keyframes motion và killswitch reduced-motion (**W12**).
+  - `src/lib/landing/fiverr-tokens.ts`: Mở rộng token đo lường motion và hit-area.
+  - `src/components/ui/button.tsx`: Bổ sung variant `marketplace` và size `pill-lg` (**W11**).
+- **Android Frontend:**
+  - `src/app/index.tsx`: Chuẩn hóa scale tiêu đề, mở rộng `flexGrow`, tích hợp danh mục và card Escrow mới (**A1**, **A2**, **A3**, **A9**).
+  - `src/app/explore.tsx`: Bản địa hóa 100% tiếng Việt, xóa bỏ hoàn toàn mẫu Expo template (**A6**).
+  - `src/constants/theme.ts`: Bổ sung khoảng cách 48px, token bán kính Radius và vùng bấm HitSlop (**A7**).
+  - `src/components/themed-text.tsx`: Bổ sung kiểu chữ `hero: 26px`, liên kết dùng màu theme (**A4**).
+  - `src/components/app-tabs.tsx`: Bổ sung màu nhãn tab unselected và icon tint (**A5**).
+  - `src/components/animated-icon.tsx`: Giới hạn kích thước splash và ngắt animation khi bật giảm chuyển động (**A8**).
+  - `src/global.css`: Bổ sung animation và reduced-motion cho Expo web (**A9**).
+
+---
+
+## 3. CHI TIẾT KHẮC PHỤC 21 ĐIỂM LỆCH CĂN CHỈNH (ALIGNMENT AUDIT MATRIX)
+
+### 3.1 Android Frontend (A1 – A9: 9/9 Điểm Hoàn Tất)
+| Mã | Thành phần | Hiện trạng ban đầu (Baseline) | Giải pháp đã thi hành | Kết quả nghiệm thu |
+|:---:|---|---|---|:---:|
+| **A1** | Tiêu đề Header | Dùng `type="title"` 48px bị override cứng 26px; thiếu `flexGrow: 1`. | Thêm `type="hero"` 26px/32lh chuẩn scale; thêm `flexGrow: 1` cho nội dung cuộn. | 🟢 **PASS** |
+| **A2** | Lưới Danh mục | Dùng `width: 48%` cộng gap 8px tràn 16px ở máy 320px; icon lệch dọc. | Tách `HomeCategories` với `maxWidth: (MaxContentWidth - 56) / 2`, icon căn giữa. | 🟢 **PASS** |
+| **A3** | Card Escrow | Hardcode màu sáng `#EFF6FF`, `#1E40AF` làm dark mode bị lóa mắt, radius 4px lệch. | Tách `HomeExploreCard` tự đảo màu surface/border theo theme, radius chuẩn 18px. | 🟢 **PASS** |
+| **A4** | Typography Scale | Thiếu scale chữ 26px; `linkPrimary` cố định `#3c87f7` lệch thương hiệu. | Bổ sung `hero: 26px/32lh w700`; `linkPrimary` tự động nhận biến `theme.primary`. | 🟢 **PASS** |
+| **A5** | Thanh Tabs đáy | Nhãn thiếu style unselected; icon không nhận tint theo theme. | Bổ sung `labelStyle.default: textSecondary` và tint theo bảng màu active. | 🟢 **PASS** |
+| **A6** | Màn hình Explore | Còn nguyên template mẫu Expo với link ngoài và ảnh sample. | Viết lại 100% tiếng Việt WorkGo với 3 Accordion Reanimated và nút CTA đạt chuẩn. | 🟢 **PASS** |
+| **A7** | Spacing & Tokens | Nhịp spacing nhảy cóc thiếu 48px; thiếu chuẩn bán kính và hit-area. | Thêm `Spacing.seven: 48`, khai báo `Radius` và `HitSlop` chuẩn mực. | 🟢 **PASS** |
+| **A8** | Biểu tượng Splash | Icon xoay vô tận 240s không tắt được; phóng to splash quá đà chớp trắng. | Kiểm tra `AccessibilityInfo.isReduceMotionEnabled()`; giới hạn scale tối đa 4x. | 🟢 **PASS** |
+| **A9** | Hệ thống Chuyển động | Nút chỉ có `activeOpacity: 0.8` thô cứng; các khối vào màn hình đột ngột. | Tạo `PressableScale` nhún lò xo 0.97 và `EntranceView` xuất hiện so le mượt mà. | 🟢 **PASS** |
+
+### 3.2 Website Frontend (W1 – W12: 12/12 Điểm Hoàn Tất)
+| Mã | Thành phần | Hiện trạng ban đầu (Baseline) | Giải pháp đã thi hành | Kết quả nghiệm thu |
+|:---:|---|---|---|:---:|
+| **W1** | Header Logo | `h-[53px] + py-4` làm ruột còn 21px khiến logo cao 28px cấn đáy viền. | Cấu hình `min-h-[64px] md:h-[53px] py-2 md:py-4`, căn giữa tuyệt đối. | 🟢 **PASS** |
+| **W2** | Header Search Mobile | Ô tìm kiếm `w-[120px]` quá hẹp cắt cụt chữ; cụm nút tràn viền ở 320px. | Cụm mobile dùng `min-w-0 flex-1 justify-end`; ô search `min-w-0 flex-1 max-w-[200px]`. | 🟢 **PASS** |
+| **W3** | Hero Section | Breakpoint 768px giật bố cục khi resize; chữ vào trang đột ngột. | Bọc h1, form, chips trong `<FiverrReveal delay>`; chèn điểm nhấn 3D WebGL Accent. | 🟢 **PASS** |
+| **W4** | Category Grid Mobile | Ô cố định `88×88px` khiến hàng 3 ô có tổng 288px tràn 16px ở iPhone SE 320px. | Chuyển sang `w-full aspect-square min-h-[88px]` tự co giãn tỉ lệ 1:1. | 🟢 **PASS** |
+| **W5** | Popular Services | Double gutter: section và carousel lặp padding làm lệch thẻ và tiêu đề 24px. | Xóa padding thừa trên carousel; thẻ card có hiệu ứng hover nhấc nhẹ. | 🟢 **PASS** |
+| **W6** | Đồng bộ Button | Dùng lẫn lộn giữa `pressable` (-2px) và `fiverr-press` (scale 1.02). | Chuẩn hóa toàn bộ nút CTA sang `<FiverrButton>` và hiệu ứng nhún `fiverr-press`. | 🟢 **PASS** |
+| **W7** | Section Entrance | Class `.animate-fiverr-fade-up` không dùng, section xuất hiện thô ráp. | Bọc nội dung trong `<FiverrReveal>` với IntersectionObserver và CSS variables. | 🟢 **PASS** |
+| **W8** | Carousel Navigation | Mũi tên đặt tại `-left-3 / -right-3` bị xén viền; mobile thiếu affordance cuộn. | Đổi mũi tên thành `left-2 / right-2 z-10`; thêm dãy chấm phân trang mobile. | 🟢 **PASS** |
+| **W9** | Artwork Contrast | Icon minh họa dùng `text-white/25` và `text-white/35` gây mờ đục và bẩn. | Nâng tương phản lên `text-white/60 drop-shadow` đạt chuẩn WCAG AA (>4.5:1). | 🟢 **PASS** |
+| **W10** | Footer Layout | Trùng lặp class border làm viền dày gấp đôi; mobile 2 cột để lẻ cột thứ 5. | Bỏ class trùng, dùng viền mảnh 0.8px; mở rộng lưới responsive `sm:grid-cols-3 lg:grid-cols-5`. | 🟢 **PASS** |
+| **W11** | App Button Variant | Nút chỉ có bo tròn viên thuốc, thiếu variant `marketplace` hình khối. | Bổ sung variant `marketplace` (`bg-[#222325]` bo góc 8px) và size `pill-lg`. | 🟢 **PASS** |
+| **W12** | Reduced-Motion Killswitch | Rủi ro chồng chéo animation làm quá tải GPU khi bật giảm chuyển động. | Bổ sung `@media (prefers-reduced-motion: reduce)` khóa toàn bộ motion trong CSS. | 🟢 **PASS** |
+
+---
+
+## 4. KẾT QUẢ KIỂM SOÁT CHẤT LƯỢNG (QUALITY GATES VALIDATION)
+
+| Cổng kiểm định | Công cụ & Lệnh thực thi | Tiêu chuẩn đánh giá | Kết quả thực tế | Trạng thái |
 |---|---|---|---|:---:|
-| **Gate 1: Unit & Integration Tests** | `npm test` | 100% tests pass, 0 fail | **256 / 256 tests pass** (~1.4s) | 🟢 **PASS** |
-| **Gate 2: TypeScript Typecheck** | `npm run typecheck` | 0 errors | **0 errors** (tsc hoàn toàn sạch) | 🟢 **PASS** |
-| **Gate 3: Linter Cú Pháp** | `npm run lint` | 0 errors, 0 warnings | **0 errors, 0 warnings** | 🟢 **PASS** |
-| **Gate 4: Production Build** | `npm run build` | Render 37/37 routes | **Biên dịch Turbopack thành công 37/37 routes** | 🟢 **PASS** |
+| **Gate 1: Kiểm thử tự động Web** | `npm test` (`website-frontend`) | 100% tests pass | **369 / 369 tests PASS (10 suites)** | 🟢 **ĐẠT** |
+| **Gate 2: Kiểm tra kiểu dữ liệu Web** | `npm run typecheck` (`website-frontend`) | 0 type errors | **0 lỗi cú pháp & kiểu dữ liệu** | 🟢 **ĐẠT** |
+| **Gate 3: Linter Web** | `npm run lint` (`website-frontend`) | 0 warnings, 0 errors | **0 cảnh báo, 0 vi phạm quy tắc** | 🟢 **ĐẠT** |
+| **Gate 4: Production Build** | `npm run build` (Turbopack) | Đóng gói thành công | **37/37 routes tĩnh & động hoàn tất** | 🟢 **ĐẠT** |
+| **Gate 5: Tính đối chiếu từ điển** | `node scripts/check-dict-parity.mjs` | Song ngữ khớp 1:1 | **445 keys đối chiếu 1:1 hoàn hảo** | 🟢 **ĐẠT** |
+| **Gate 6: Quản trị mã nguồn (Governance)** | `node --test tests/project-governance.test.mjs` | Phạm vi cấm không bị chạm | **4/4 PASS, 100% tuân thủ quy chuẩn** | 🟢 **ĐẠT** |
+| **Gate 7: Kiểm tra kiểu dữ liệu Mobile** | `npx tsc --noEmit` (`android-frontend`) | 0 type errors | **0 lỗi TypeScript Mobile** | 🟢 **ĐẠT** |
+| **Gate 8: Linter Mobile** | `npm run lint` (`android-frontend`) | 0 warnings, 0 errors | **0 lỗi Expo Lint** | 🟢 **ĐẠT** |
 
 ---
 
-## 4. ĐÁNH GIÁ CỦA PRINCIPAL CODE REVIEWER
+## 5. PHÁN QUYẾT REVIEW & KẾT LUẬN NGHIỆM THU (FINAL VERDICT)
 
-Bản thẩm định độc lập của Principal Code Reviewer tại [`.team/REVIEW.md`](file:///D:/E/WorkGo/.team/REVIEW.md) xác nhận:
+Căn cứ trên kết quả thẩm định kỹ thuật chi tiết của Principal Code Reviewer tại [`.team/REVIEW.md`](file:///D:/E/WorkGo/.team/REVIEW.md):
 
 ```
 ================================================================================
                            DECISION: APPROVED
 ================================================================================
+                   CYCLE_STATUS: ALL_GOALS_COMPLETED
+================================================================================
 ```
 
-1. **Đúng yêu cầu & kế hoạch:** 100% checklist kỹ thuật từ cả hai đợt rà soát đã được hiện thực hóa đầy đủ, chính xác.
-2. **Không Over-Engineering:** Mã nguồn được chỉnh sửa tinh gọn theo chuẩn Karpathy, tận dụng tối đa hệ thống utility classes của Tailwind CSS v4 mà không sinh thêm bất kỳ thư viện hay wrapper dư thừa nào.
-3. **An toàn hệ thống:** Danh mục cấm chạm (Backend Java Spring Boot, Proxy Handlers, JWT Logic, Config Files, i18n Dictionaries) được bảo vệ nguyên vẹn 100%.
-
----
-
-## 5. KẾT LUẬN
-
-Hệ thống giao diện WorkGo đã đạt chuẩn mực hoàn thiện cao nhất về mặt hiển thị:
-- Mọi khung chữ, badge, nút bấm, ô input, avatar và biểu trưng đều được căn giữa chính xác theo cả trục ngang và trục dọc.
-- Không còn bất kỳ điểm nghẽn tương phản, chữ tàng hình, mảng sáng chói, hay lệch khung đè chữ ở cả hai chế độ Sáng và Tối.
-- Sẵn sàng 100% để merge và triển khai sản xuất!
+- **Chất lượng kiến trúc:** Giải pháp kỹ thuật Additive Motion Layer và Native WebGL Canvas đạt độ chín muồi cao, không phát sinh over-engineering, không tạo dependency dư thừa, đảm bảo tính thanh thoát và hiệu năng vận hành vượt trội.
+- **Tính toàn vẹn hệ thống:** Bảo toàn 100% các chức năng ứng dụng cũ, toàn bộ 369 bài test tự động đều vượt qua, không gây xung đột giao diện hay rò rỉ dữ liệu.
+- **Sẵn sàng bàn giao:** Hệ thống đã hoàn tất 100% mục tiêu của Chu kỳ 1 và sẵn sàng đưa vào vận hành sản xuất.

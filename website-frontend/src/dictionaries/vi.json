@@ -1,7 +1,6 @@
 {
   "common": {
     "appName": "WorkGo",
-    "mockData": "Dữ liệu mẫu",
     "save": "Lưu thay đổi",
     "cancel": "Hủy bỏ",
     "delete": "Xóa",
@@ -260,8 +259,8 @@
     "attachments": "Tệp đính kèm (Tối đa 10MB)",
     "saveDraft": "Lưu nháp",
     "publish": "Đăng bài ngay",
-    "createSuccess": "Đăng việc làm thành công! (Mock)",
-    "updateSuccess": "Cập nhật bài đăng thành công! (Mock)"
+    "createSuccess": "Đăng việc làm thành công!",
+    "updateSuccess": "Cập nhật bài đăng thành công!"
   },
   "proposal": {
     "drawerTitle": "Gửi đề xuất thực hiện",
@@ -324,7 +323,7 @@
     "amountPlaceholder": "Tối thiểu 1.000 ₫",
     "payNow": "Thanh toán ngay",
     "processing": "Đang xử lý giao dịch...",
-    "success": "Giao dịch nạp tiền thành công! (Mock)",
+    "success": "Giao dịch nạp tiền thành công!",
     "failed": "Thanh toán thất bại. Vui lòng thử lại."
   },
   "payout": {
@@ -337,7 +336,7 @@
     "defaultAccount": "Đặt làm tài khoản mặc định",
     "addBtn": "Thêm tài khoản nhận tiền",
     "savedAccounts": "Danh sách tài khoản đã liên kết",
-    "addSuccess": "Đã thêm tài khoản nhận tiền thành công! (Mock)"
+    "addSuccess": "Đã thêm tài khoản nhận tiền thành công!"
   },
   "review": {
     "modalTitle": "Đánh giá chất lượng dịch vụ",
@@ -472,6 +471,61 @@
       "solutions": "Giải pháp",
       "company": "Công ty",
       "legal": "Pháp lý"
+    },
+    "fiverr": {
+      "header": {
+        "skipToContent": "Chuyển tới nội dung chính",
+        "brandLabel": "WorkGo — về trang chủ",
+        "searchLabel": "Tìm kiếm dịch vụ",
+        "searchSubmitLabel": "Tìm kiếm",
+        "openMenuLabel": "Mở menu",
+        "closeMenuLabel": "Đóng menu",
+        "drawerLabel": "Menu điều hướng chính",
+        "languageLabel": "Chọn ngôn ngữ"
+      },
+      "trending": {
+        "regionLabel": "Danh mục thịnh hành"
+      },
+      "hero": {
+        "searchLabel": "Bạn đang tìm dịch vụ gì?",
+        "searchSubmitLabel": "Tìm kiếm",
+        "pauseLabel": "Tạm dừng video nền",
+        "playLabel": "Phát video nền",
+        "backgroundAlt": "Nền động đại dương hạt",
+        "chipsLabel": "Dịch vụ gợi ý"
+      },
+      "categories": {
+        "regionLabel": "Danh mục dịch vụ",
+        "toggleMoreLabel": "Hiện thêm danh mục"
+      },
+      "popular": {
+        "regionLabel": "Dịch vụ phổ biến"
+      },
+      "valueProps": {
+        "regionLabel": "Cam kết của WorkGo"
+      },
+      "panels": {
+        "regionLabel": "Giải pháp nổi bật",
+        "imageAlt": "Minh hoạ dịch vụ"
+      },
+      "guides": {
+        "regionLabel": "Hướng dẫn",
+        "imageAlt": "Minh hoạ hướng dẫn"
+      },
+      "cta": {
+        "regionLabel": "Kêu gọi hành động"
+      },
+      "footer": {
+        "regionLabel": "Chân trang",
+        "socialLabel": "Mạng xã hội của WorkGo",
+        "languageLabel": "Ngôn ngữ",
+        "currencyLabel": "Tiền tệ",
+        "builtWith": "Nền tảng kết nối độc lập"
+      },
+      "carousel": {
+        "prevLabel": "Xem mục trước",
+        "nextLabel": "Xem mục tiếp theo"
+      }
     }
   }
 }

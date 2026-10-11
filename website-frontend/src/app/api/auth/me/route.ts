@@ -14,23 +14,6 @@ export async function GET() {
     );
   }
 
-  if (token.startsWith("demo-")) {
-    const isProvider = token.includes("provider");
-    return NextResponse.json({
-      code: 1000,
-      message: "Thành công (Chế độ Local Demo)",
-      result: {
-        userId: isProvider ? "usr-demo-provider" : "usr-demo-client",
-        firstName: isProvider ? "Nguyễn" : "Trần",
-        lastName: isProvider ? "Thợ Giỏi" : "Khách Hàng",
-        userName: isProvider ? "provider1" : "demouser1",
-        phone: "0901234567",
-        email: isProvider ? "provider1@workgo.vn" : "demouser1@workgo.vn",
-        roles: isProvider ? ["PROVIDER", "USER"] : ["CLIENT", "USER"],
-      },
-    });
-  }
-
   try {
     const res = await fetch(`${API_BASE_URL}/api/v1/identity/users/myInfo`, {
       headers: {

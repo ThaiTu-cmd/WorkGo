@@ -2,17 +2,6 @@ import { NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/env";
 import { COOKIE_ACCESS_TOKEN, COOKIE_USER_ROLE } from "@/lib/session";
 
-const DEMO_ACCOUNTS: Record<string, { role: string; token: string }> = {
-  demouser1: {
-    role: "CLIENT",
-    token: "demo-jwt-token-client-demouser1",
-  },
-  provider1: {
-    role: "PROVIDER",
-    token: "demo-jwt-token-provider-provider1",
-  },
-};
-
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -24,10 +13,6 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
-    const isDemo =
-      Boolean(DEMO_ACCOUNTS[userName]) &&
-      (password === "Demo@12345" || password === "demo" || password === "Demo@123");
 
     // Attempt real backend authentication first
     let backendSuccess = false;
@@ -68,28 +53,20 @@ export async function POST(request: Request) {
       // Backend offline or unreachable
     }
 
-    // If backend was not successful or is offline, check for Demo Account fallback
+    // Backend must authenticate successfully; no demo fallback.
     if (!backendSuccess) {
-      if (isDemo) {
-        const demoInfo = DEMO_ACCOUNTS[userName];
-        role = demoInfo.role;
-        token = demoInfo.token;
-      } else {
-        return NextResponse.json(
-          {
-            code: 1006,
-            message: "Sai email hoặc mật khẩu hoặc máy chủ backend chưa sẵn sàng.",
-          },
-          { status: 401 }
-        );
-      }
+      return NextResponse.json(
+        {
+          code: 1006,
+          message: "Sai email hoặc mật khẩu hoặc máy chủ backend chưa sẵn sàng.",
+        },
+        { status: 401 }
+      );
     }
 
     const response = NextResponse.json({
       code: 1000,
-      message: isDemo && !backendSuccess
-        ? "Đăng nhập thành công (Chế độ Local Demo)"
-        : "Đăng nhập thành công",
+      message: "Đăng nhập thành công",
       result: { role },
     });
 

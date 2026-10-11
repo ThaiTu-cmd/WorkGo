@@ -4,6 +4,8 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+export type BackgroundIntensity = "subtle" | "default" | "vivid";
+
 export interface AnimatedBackgroundProps {
   className?: string;
   overlayClassName?: string;
@@ -12,6 +14,9 @@ export interface AnimatedBackgroundProps {
   videoWebmSrc?: string;
   videoMp4Src?: string;
   fallbackImageSrc?: string;
+  intensity?: BackgroundIntensity;
+  playbackRate?: number;
+  enableZoomPan?: boolean;
 }
 
 function subscribeReducedMotion(callback: () => void): () => void {
@@ -51,6 +56,9 @@ export function AnimatedBackground({
   videoWebmSrc = "/assets/particle-ocean.webm",
   videoMp4Src = "/assets/particle-ocean.mp4",
   fallbackImageSrc = "/assets/particle-ocean-fallback.webp",
+  intensity,
+  playbackRate,
+  enableZoomPan,
 }: AnimatedBackgroundProps): React.JSX.Element {
   const isReducedMotion = React.useSyncExternalStore(
     subscribeReducedMotion,
@@ -60,14 +68,26 @@ export function AnimatedBackground({
 
   const videoRef = React.useRef<HTMLVideoElement>(null);
 
+  const resolvedIntensity: BackgroundIntensity =
+    intensity ?? (variant === "auth" ? "default" : "vivid");
+  const resolvedRate =
+    playbackRate ??
+    (resolvedIntensity === "vivid" ? 1.25 : resolvedIntensity === "default" ? 1.15 : 1.0);
+  const resolvedZoomPan = enableZoomPan ?? resolvedIntensity === "vivid";
+
   // Attempt autoplay safely in case of browser power-save policies
   React.useEffect(() => {
     if (!isReducedMotion && videoRef.current) {
+      try {
+        videoRef.current.playbackRate = resolvedRate;
+      } catch {
+        // playbackRate unsupported; ignore
+      }
       videoRef.current.play().catch(() => {
         // Autoplay policy prevented playback; poster/fallback image is visible
       });
     }
-  }, [isReducedMotion]);
+  }, [isReducedMotion, resolvedRate]);
 
   return (
     <div
@@ -93,7 +113,10 @@ export function AnimatedBackground({
           loop
           playsInline
           poster={fallbackImageSrc}
-          className="absolute inset-0 w-full h-full object-cover select-none"
+          className={cn(
+            "absolute inset-0 w-full h-full object-cover select-none",
+            resolvedZoomPan && !isReducedMotion && "bg-motion-vivid"
+          )}
           aria-hidden="true"
         >
           <source src={videoWebmSrc} type="video/webm" />

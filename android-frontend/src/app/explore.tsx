@@ -1,17 +1,17 @@
-import { Image } from 'expo-image';
-import { SymbolView } from 'expo-symbols';
-import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
+import * as React from 'react';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ExternalLink } from '@/components/external-link';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Collapsible } from '@/components/ui/collapsible';
+import { PressableScale } from '@/components/pressable-scale';
+import { EntranceView } from '@/components/entrance-view';
 import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, MaxContentWidth, Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-export default function TabTwoScreen() {
+export default function ExploreScreen() {
   const safeAreaInsets = useSafeAreaInsets();
   const insets = {
     ...safeAreaInsets,
@@ -27,8 +27,14 @@ export default function TabTwoScreen() {
       paddingBottom: insets.bottom,
     },
     web: {
-      paddingTop: Spacing.six,
+      paddingTop: Spacing.seven,
       paddingBottom: Spacing.four,
+    },
+    default: {
+      paddingTop: insets.top,
+      paddingLeft: insets.left,
+      paddingRight: insets.right,
+      paddingBottom: insets.bottom,
     },
   });
 
@@ -36,89 +42,82 @@ export default function TabTwoScreen() {
     <ScrollView
       style={[styles.scrollView, { backgroundColor: theme.background }]}
       contentInset={insets}
-      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
+      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}
+    >
       <ThemedView style={styles.container}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Explore</ThemedText>
-          <ThemedText style={styles.centerText} themeColor="textSecondary">
-            This starter app includes example{'\n'}code to help you get started.
-          </ThemedText>
-
-          <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundElement" style={styles.linkButton}>
-                <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{ ios: 'arrow.up.right.square', android: 'link', web: 'link' }}
-                  size={12}
-                />
-              </ThemedView>
-            </Pressable>
-          </ExternalLink>
-        </ThemedView>
-
-        <ThemedView style={styles.sectionsWrapper}>
-          <Collapsible title="File-based routing">
-            <ThemedText type="small">
-              This app has two screens: <ThemedText type="code">src/app/index.tsx</ThemedText> and{' '}
-              <ThemedText type="code">src/app/explore.tsx</ThemedText>
+        <EntranceView delay={0}>
+          <ThemedView style={styles.titleContainer}>
+            <View style={styles.badge}>
+              <ThemedText style={styles.badgeText}>WorkGo Ecosystem</ThemedText>
+            </View>
+            <ThemedText type="hero" style={styles.centerTitle}>
+              Khám phá WorkGo
             </ThemedText>
-            <ThemedText type="small">
-              The layout file in <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
+            <ThemedText style={styles.centerText} themeColor="textSecondary">
+              Nền tảng kết nối chuyên gia, việc làm freelance và thanh toán Escrow bảo chứng an toàn.
             </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+          </ThemedView>
+        </EntranceView>
 
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedView type="backgroundElement" style={styles.collapsibleContent}>
+        <EntranceView delay={100}>
+          <ThemedView style={styles.sectionsWrapper}>
+            <Collapsible title="Tìm việc & Thuê chuyên gia">
               <ThemedText type="small">
-                You can open this project on Android, iOS, and the web. To open the web version,
-                press <ThemedText type="smallBold">w</ThemedText> in the terminal running this
-                project.
+                WorkGo cung cấp hàng nghìn cơ hội việc làm freelance và kết nối với các chuyên gia
+                hàng đầu trong các lĩnh vực Thiết kế, Lập trình, Viết lách và Kỹ thuật số.
               </ThemedText>
-              <Image
-                source={require('@/assets/images/tutorial-web.png')}
-                style={styles.imageTutorial}
-              />
-            </ThemedView>
-          </Collapsible>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.tipText}>
+                Hệ thống đề xuất thông minh giúp khớp lệnh nhanh chóng giữa nhà tuyển dụng và ứng viên.
+              </ThemedText>
+            </Collapsible>
 
-          <Collapsible title="Images">
-            <ThemedText type="small">
-              For static images, you can use the <ThemedText type="code">@2x</ThemedText> and{' '}
-              <ThemedText type="code">@3x</ThemedText> suffixes to provide files for different
-              screen densities.
-            </ThemedText>
-            <Image source={require('@/assets/images/react-logo.png')} style={styles.imageReact} />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+            <Collapsible title="Bảo chứng thanh toán Escrow">
+              <ThemedText type="small">
+                Mọi giao dịch trên WorkGo đều được bảo vệ bởi cơ chế Ký quỹ Escrow. Tiền thù lao
+                được giữ an toàn tại tài khoản trung gian và chỉ giải ngân khi công việc được nghiệm thu
+                hài lòng 100%.
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.tipText}>
+                Chính sách minh bạch, bảo vệ tối đa quyền lợi của cả người thuê và người làm việc.
+              </ThemedText>
+            </Collapsible>
 
-          <Collapsible title="Light and dark mode components">
-            <ThemedText type="small">
-              This template has light and dark mode support. The{' '}
-              <ThemedText type="code">useColorScheme()</ThemedText> hook lets you inspect what the
-              user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+            <Collapsible title="Bắt đầu trong 3 bước">
+              <ThemedText type="small">
+                1. Đăng tin tuyển dụng hoặc tạo hồ sơ chuyên gia miễn phí.
+              </ThemedText>
+              <ThemedText type="small">
+                2. Trao đổi, thương lượng phạm vi công việc và nạp tiền ký quỹ Escrow an toàn.
+              </ThemedText>
+              <ThemedText type="small">
+                3. Nghiệm thu sản phẩm, giải ngân thanh toán và đánh giá uy tín đôi bên.
+              </ThemedText>
+            </Collapsible>
+          </ThemedView>
+        </EntranceView>
 
-          <Collapsible title="Animations">
-            <ThemedText type="small">
-              This template includes an example of an animated component. The{' '}
-              <ThemedText type="code">src/components/ui/collapsible.tsx</ThemedText> component uses
-              the powerful <ThemedText type="code">react-native-reanimated</ThemedText> library to
-              animate opening this hint.
+        <EntranceView delay={200}>
+          <ThemedView
+            style={[
+              styles.ctaCard,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+              },
+            ]}
+          >
+            <ThemedText style={styles.ctaTitle}>Sẵn sàng bắt đầu dự án?</ThemedText>
+            <ThemedText style={styles.ctaDesc} themeColor="textSecondary">
+              Đăng tin công việc ngay hôm nay để nhận báo giá từ các chuyên gia phù hợp nhất.
             </ThemedText>
-          </Collapsible>
-        </ThemedView>
+            <PressableScale
+              style={[styles.ctaButton, { backgroundColor: theme.primary }]}
+            >
+              <ThemedText style={styles.ctaButtonText}>Đăng việc ngay</ThemedText>
+            </PressableScale>
+          </ThemedView>
+        </EntranceView>
+
         {Platform.OS === 'web' && <WebBadge />}
       </ThemedView>
     </ScrollView>
@@ -130,51 +129,80 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  container: {
-    maxWidth: MaxContentWidth,
-    flexGrow: 1,
-  },
-  titleContainer: {
-    gap: Spacing.three,
     alignItems: 'center',
     paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
+    gap: Spacing.four,
+  },
+  container: {
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    gap: Spacing.four,
+  },
+  titleContainer: {
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.two,
+  },
+  badge: {
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.half,
+    borderRadius: Radius.control ?? 10,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  badgeText: {
+    color: '#2563EB',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  centerTitle: {
+    textAlign: 'center',
   },
   centerText: {
     textAlign: 'center',
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  linkButton: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
-    justifyContent: 'center',
-    gap: Spacing.one,
-    alignItems: 'center',
+    maxWidth: 480,
+    fontSize: 14,
+    lineHeight: 20,
   },
   sectionsWrapper: {
-    gap: Spacing.five,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
+    gap: Spacing.three,
   },
-  collapsibleContent: {
+  tipText: {
+    marginTop: Spacing.one,
+    fontStyle: 'italic',
+  },
+  ctaCard: {
+    marginTop: Spacing.two,
+    padding: Spacing.four,
+    borderRadius: Radius.card ?? 18,
+    borderWidth: 1,
+    gap: Spacing.two,
     alignItems: 'center',
   },
-  imageTutorial: {
-    width: '100%',
-    aspectRatio: 296 / 171,
-    borderRadius: Spacing.three,
-    marginTop: Spacing.two,
+  ctaTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
   },
-  imageReact: {
-    width: 100,
-    height: 100,
-    alignSelf: 'center',
+  ctaDesc: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    maxWidth: 420,
+  },
+  ctaButton: {
+    marginTop: Spacing.one,
+    height: 48,
+    width: '100%',
+    maxWidth: 280,
+    borderRadius: Radius.control ?? 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

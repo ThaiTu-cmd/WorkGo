@@ -348,7 +348,11 @@ test("QA-EDGE-11 - Live HTTP Dev Server Validation: Public pages serve text-fg W
     );
   } catch (err) {
     // If dev server was stopped, test notes this gracefully but in our environment it's running
-    if (err.code === "ECONNREFUSED") {
+    const isConnRefused =
+      err.code === "ECONNREFUSED" ||
+      err.cause?.code === "ECONNREFUSED" ||
+      (err.cause?.errors && err.cause.errors.some((e) => e.code === "ECONNREFUSED"));
+    if (isConnRefused) {
       console.warn("Dev server not reachable on localhost:3000; skipping network assertion.");
     } else {
       throw err;

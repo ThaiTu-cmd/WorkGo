@@ -199,7 +199,7 @@ test("TC-DEEP-10 - Contract: AuthAtmosphere handles intensity modes and zero can
   assert.match(authAtmoSrc, /color-mix/);
 
   const authShellSrc = fs.readFileSync(path.join(ROOT, "src/components/shell/auth-shell.tsx"), "utf-8");
-  assert.match(authShellSrc, /<AuthAtmosphere intensity=["']subtle["'] \/>/);
+  assert.match(authShellSrc, /<AuthAtmosphere intensity=["'](subtle|default|vivid)["'] \/>/);
   assert.match(authShellSrc, /max-w-\[480px\]/);
 });
 

@@ -1,4 +1,6 @@
+import { apiFetch, type Envelope } from "../api-client";
 import type { PayoutFormData } from "../schemas/payout";
+import { backendRoutes } from "./backend-routes";
 
 export interface WalletTransaction {
   id: string;
@@ -38,122 +40,35 @@ export interface BankInfo {
   name: string;
 }
 
-export const SUPPORTED_BANKS: BankInfo[] = [
-  { code: "VCB", name: "Vietcombank (Ngoại thương)" },
-  { code: "TCB", name: "Techcombank (Kỹ thương)" },
-  { code: "MB", name: "MBBank (Quân đội)" },
-  { code: "ACB", name: "ACB (Á Châu)" },
-  { code: "BIDV", name: "BIDV (Đầu tư và Phát triển)" },
-  { code: "CTG", name: "VietinBank (Công thương)" },
-  { code: "VPB", name: "VPBank (Việt Nam Thịnh Vượng)" },
-  { code: "TPB", name: "TPBank (Tiên Phong)" },
-];
-
-const liveWallet: WalletSummary = {
-  availableBalance: 12500000,
-  escrowBalance: 7500000,
-  earnedBalance: 48000000,
-  transactions: [
-    {
-      id: "tx-1",
-      date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      type: "DEPOSIT",
-      amount: 5000000,
-      balanceAfter: 12500000,
-      reference: "DEP-928172",
-      description: "Nạp tiền qua Chuyển khoản QR ngân hàng",
-    },
-    {
-      id: "tx-2",
-      date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-      type: "ORDER_PAYMENT",
-      amount: -7500000,
-      balanceAfter: 7500000,
-      reference: "ORD-55102",
-      description: "Thanh toán tạm giữ Escrow cho đơn hàng ORD-55102",
-    },
-    {
-      id: "tx-3",
-      date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-      type: "ORDER_RELEASE",
-      amount: 15000000,
-      balanceAfter: 15000000,
-      reference: "ORD-44910",
-      description: "Giải ngân tiền dịch vụ hoàn thành đơn hàng ORD-44910",
-    },
-  ],
-};
-
-const liveAccounts: PayoutAccount[] = [
-  {
-    id: "payout-1",
-    accountType: "BANK",
-    bankCode: "VCB",
-    bankName: "Ngân hàng Ngoại thương Việt Nam (Vietcombank)",
-    accountNumber: "0071001234567",
-    accountHolderName: "TRAN HUU TRUNG",
-    isDefault: true,
-    status: "ACTIVE",
-  },
-];
+function unwrap<T>(res: Envelope<T> | T): T {
+  return (res && typeof res === "object" && "result" in (res as object) ? (res as Envelope<T>).result as T : res as T);
+}
 
 export const walletApi = {
-  async getSummary(): Promise<WalletSummary> {
-    await new Promise((resolve) => setTimeout(resolve, 80));
-    return liveWallet;
-  },
-
-  async getBanks(): Promise<BankInfo[]> {
-    return SUPPORTED_BANKS;
-  },
-
-  async getPayoutAccounts(): Promise<PayoutAccount[]> {
-    await new Promise((resolve) => setTimeout(resolve, 80));
-    return liveAccounts;
-  },
-
-  async addPayoutAccount(data: PayoutFormData): Promise<PayoutAccount> {
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    const bank = SUPPORTED_BANKS.find((b) => b.code === data.bankCode);
-
-    if (data.isDefault) {
-      liveAccounts.forEach((acc) => {
-        acc.isDefault = false;
-      });
-    }
-
-    const newAcc: PayoutAccount = {
-      id: `payout-${Date.now()}`,
-      accountType: data.accountType,
-      bankCode: data.bankCode,
-      bankName: bank ? bank.name : "Ngân hàng liên kết",
-      accountNumber: data.accountNumber,
-      accountHolderName: data.accountHolderName.toUpperCase(),
-      isDefault: Boolean(data.isDefault) || liveAccounts.length === 0,
-      status: "ACTIVE",
+  // Tài khoản mới → server trả { availableBalance:0, escrowBalance:0, earnedBalance:0, transactions:[] }.
+  async getSummary(token?: string): Promise<WalletSummary> {
+    const res = await apiFetch<Envelope<WalletSummary> | WalletSummary>(backendRoutes.wallet.summary, { token });
+    const v = unwrap(res);
+    return {
+      availableBalance: v?.availableBalance ?? 0,
+      escrowBalance: v?.escrowBalance ?? 0,
+      earnedBalance: v?.earnedBalance ?? 0,
+      transactions: v?.transactions ?? [],
     };
-
-    liveAccounts.unshift(newAcc);
-    return newAcc;
   },
-
-  async setDefaultPayoutAccount(id: string): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, 80));
-    liveAccounts.forEach((acc) => {
-      acc.isDefault = acc.id === id;
-    });
+  async getBanks(token?: string): Promise<BankInfo[]> {
+    const res = await apiFetch<Envelope<BankInfo[]> | BankInfo[]>(backendRoutes.wallet.banks, { token });
+    return unwrap(res) ?? [];
   },
-
-  creditDeposit(amount: number, method: string, reference: string) {
-    liveWallet.availableBalance += amount;
-    liveWallet.transactions.unshift({
-      id: `tx-${Date.now()}`,
-      date: new Date().toISOString(),
-      type: "DEPOSIT",
-      amount,
-      balanceAfter: liveWallet.availableBalance,
-      reference,
-      description: `Nạp tiền qua phương thức ${method}`,
-    });
+  async getPayoutAccounts(token?: string): Promise<PayoutAccount[]> {
+    const res = await apiFetch<Envelope<PayoutAccount[]> | PayoutAccount[]>(backendRoutes.wallet.payoutAccounts, { token });
+    return unwrap(res) ?? [];
+  },
+  async addPayoutAccount(data: PayoutFormData, token?: string): Promise<PayoutAccount> {
+    const res = await apiFetch<Envelope<PayoutAccount> | PayoutAccount>(backendRoutes.wallet.payoutAccounts, { method: "POST", body: data, token });
+    return unwrap(res);
+  },
+  async setDefaultPayoutAccount(id: string, token?: string): Promise<void> {
+    await apiFetch<void>(backendRoutes.wallet.payoutDefault(id), { method: "POST", token });
   },
 };

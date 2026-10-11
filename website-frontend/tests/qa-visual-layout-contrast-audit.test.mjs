@@ -344,7 +344,7 @@ test("TC-ALIGN-07 - filter X buttons + live counter + hero pill + greetings cent
   );
   const hero = read("components/landing/particle-ocean-hero.tsx");
   assert.ok(
-    hero.includes("animate-pulse shrink-0") && hero.includes('<span className="leading-none">'),
+    (hero.includes("animate-pulse shrink-0") || hero.includes("animate-pulse-glow-strong")) && hero.includes('<span className="leading-none">'),
     "Hero pill dot must be shrink-0 and label leading-none",
   );
   for (const f of [

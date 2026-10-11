@@ -8,7 +8,9 @@ export interface CategoryItem {
   parentId?: string | null;
 }
 
-export const DEFAULT_CATEGORIES: CategoryItem[] = [
+// Fallback minh bạch, CHỈ dùng khi catalog-service offline (catch bên dưới).
+// Không phải mock data nghiệp vụ: đây là danh mục tĩnh dự phòng để pills filter không crash.
+export const CATALOG_OFFLINE_FALLBACK: CategoryItem[] = [
   { categoryId: "cat-1", categoryName: "Thiết kế & Đồ họa", description: "UI/UX, Logo, Banner" },
   { categoryId: "cat-2", categoryName: "Lập trình & Công nghệ", description: "Web, Mobile, Backend" },
   { categoryId: "cat-3", categoryName: "Viết lách & Dịch thuật", description: "Content, Copywriting, Biên dịch" },
@@ -64,10 +66,10 @@ export const catalogApi = {
       if (items.length > 0) {
         return items.map(mapBackendCategory);
       }
-      return DEFAULT_CATEGORIES;
+      return CATALOG_OFFLINE_FALLBACK;
     } catch {
       // Fallback gracefully when catalog service is offline or not reachable
-      return DEFAULT_CATEGORIES;
+      return CATALOG_OFFLINE_FALLBACK;
     }
   },
 };

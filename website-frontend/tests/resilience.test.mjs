@@ -7,15 +7,15 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-test("Resilience - Login route includes Local Demo accounts for offline dev bypass", () => {
+test("Resilience - Login route has zero demo accounts and fails truthfully with HTTP 401", () => {
   const loginRoutePath = path.resolve(__dirname, "../src/app/api/auth/login/route.ts");
   assert.ok(fs.existsSync(loginRoutePath), "login/route.ts must exist");
 
   const content = fs.readFileSync(loginRoutePath, "utf-8");
-  assert.match(content, /demouser1/, "Must support demouser1 account");
-  assert.match(content, /provider1/, "Must support provider1 account");
-  assert.match(content, /Demo@12345/, "Must support demo password");
-  assert.match(content, /Local Demo/, "Must provide Local Demo fallback message");
+  assert.doesNotMatch(content, /DEMO_ACCOUNTS/, "Must not contain demo accounts map");
+  assert.doesNotMatch(content, /demo-jwt/, "Must not issue demo tokens");
+  assert.doesNotMatch(content, /Local Demo/, "Must not provide Local Demo fallback message");
+  assert.match(content, /status:\s*401/, "Must return HTTP 401 when backend rejects or is offline");
 });
 
 test("Resilience - Refresh route returns HTTP 401 and does not delete cookies on unsupported refresh", () => {

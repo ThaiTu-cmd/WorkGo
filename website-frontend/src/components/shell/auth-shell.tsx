@@ -13,7 +13,7 @@ export function AuthShell({ children, locale }: AuthShellProps) {
   return (
     <div className="relative min-h-screen bg-transparent flex flex-col justify-between overflow-hidden">
       {/* Subtle Atmospheric Auth Background */}
-      <AuthAtmosphere intensity="subtle" />
+      <AuthAtmosphere intensity="vivid" />
 
       {/* Top bar with logo & language */}
       <header className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">

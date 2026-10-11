@@ -3,10 +3,11 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { AnimatedBackground } from "./animated-background";
+import { BackgroundMotionLayer } from "./background-motion-layer";
 
 export interface AuthAtmosphereProps {
   className?: string;
-  intensity?: "subtle" | "none" | "default";
+  intensity?: "vivid" | "default" | "subtle" | "none";
   showVideo?: boolean;
 }
 
@@ -16,7 +17,7 @@ export interface AuthAtmosphereProps {
  */
 export function AuthAtmosphere({
   className,
-  intensity = "subtle",
+  intensity = "vivid",
   showVideo = true,
 }: AuthAtmosphereProps): React.JSX.Element {
   if (intensity === "none") {
@@ -28,7 +29,13 @@ export function AuthAtmosphere({
     );
   }
 
-  const opacityClass = intensity === "subtle" ? "opacity-75" : "opacity-100";
+  const vivid = intensity === "vivid";
+  const isDefault = intensity === "default";
+  const opacityClass = vivid ? "opacity-100" : isDefault ? "opacity-90" : "opacity-75";
+  const rate = vivid ? 1.35 : isDefault ? 1.15 : 1.0;
+  const dots = vivid ? 10 : isDefault ? 8 : 6;
+  const coneClass = vivid || isDefault ? "auth-cone-animated" : "";
+  const level: "vivid" | "default" | "subtle" = vivid ? "vivid" : isDefault ? "default" : "subtle";
 
   return (
     <div
@@ -43,19 +50,30 @@ export function AuthAtmosphere({
         <AnimatedBackground
           variant="none"
           showOverlay={false}
+          intensity={level}
+          playbackRate={rate}
+          enableZoomPan={vivid}
           className="absolute inset-0 z-0 pointer-events-none"
         />
       )}
+
+      <BackgroundMotionLayer
+        variant="auth"
+        intensity={level}
+        dotCount={dots}
+      />
 
       {/* Subtle atmospheric contrast scrim for form legibility without murkiness or blur */}
       <div className="absolute inset-0 bg-black/10 dark:bg-black/20 pointer-events-none" />
 
       {/* Subtle theme-aware radial light cones */}
       <div
-        className={cn("absolute inset-0 transition-opacity duration-300 pointer-events-none", opacityClass)}
+        className={cn("absolute inset-0 transition-opacity duration-300 pointer-events-none", opacityClass, coneClass)}
         style={{
           background:
-            "radial-gradient(55% 40% at 50% 0%, color-mix(in srgb, var(--primary) 20%, transparent), transparent 70%), radial-gradient(40% 30% at 50% 100%, color-mix(in srgb, var(--color-brand-700) 15%, transparent), transparent 70%)",
+            vivid
+              ? "radial-gradient(55% 40% at 50% 0%, color-mix(in srgb, var(--primary) 26%, transparent), transparent 70%), radial-gradient(40% 30% at 50% 100%, color-mix(in srgb, var(--color-brand-700) 22%, transparent), transparent 70%)"
+              : "radial-gradient(55% 40% at 50% 0%, color-mix(in srgb, var(--primary) 20%, transparent), transparent 70%), radial-gradient(40% 30% at 50% 100%, color-mix(in srgb, var(--color-brand-700) 15%, transparent), transparent 70%)",
         }}
       />
     </div>

@@ -65,7 +65,7 @@ export function WalletSummary({
             <span className="text-xs font-semibold uppercase tracking-wider text-fg-secondary">
               Đang giữ Escrow
             </span>
-            <div className="flex items-center justify-center shrink-0 p-2.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
+            <div className="flex items-center justify-center shrink-0 p-2.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
               <ShieldAlert className="h-4 w-4" />
             </div>
           </div>
@@ -87,7 +87,7 @@ export function WalletSummary({
             <span className="text-xs font-semibold uppercase tracking-wider text-fg-secondary">
               Tổng thu nhập đã nhận
             </span>
-            <div className="flex items-center justify-center shrink-0 p-2.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+            <div className="flex items-center justify-center shrink-0 p-2.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
               <ArrowDownLeft className="h-4 w-4" />
             </div>
           </div>

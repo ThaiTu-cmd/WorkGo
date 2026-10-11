@@ -65,12 +65,12 @@ export function ParticleOceanHero({
       {/* Hero Content */}
       <div
         className={cn(
-          "relative z-10 mx-auto max-w-5xl px-6 pt-[10vh] pb-16 flex flex-col pointer-events-auto",
+          "relative z-10 mx-auto max-w-5xl px-6 pt-[10vh] pb-16 flex flex-col pointer-events-auto animate-fade-up",
           align === "center" ? "items-center text-center" : "items-start text-left"
         )}
       >
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium mb-6 border border-[#38BDF8]/30 bg-[#1677FF]/10 text-primary backdrop-blur-md">
-          <span className="w-2 h-2 rounded-full bg-[#38BDF8] animate-pulse shrink-0" />
+          <span className="w-2 h-2 rounded-full bg-[#38BDF8] animate-pulse-glow-strong shrink-0" />
           <span className="leading-none">
             {locale === "en"
               ? "Digital Talent & Escrow-Backed Marketplace WorkGo"
@@ -109,7 +109,7 @@ export function ParticleOceanHero({
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <Link
             href={ctaPrimary?.href || `/${locale}/posts`}
-            className="pressable inline-flex items-center justify-center px-8 py-3.5 rounded-full text-base font-semibold text-white bg-gradient-to-b from-[#1677FF] to-[#0B4DBB] hover:brightness-110 shadow-lg shadow-[#1677FF]/30 cursor-pointer pointer-events-auto"
+            className="pressable animate-subtle-glow-strong inline-flex items-center justify-center px-8 py-3.5 rounded-full text-base font-semibold text-white bg-gradient-to-b from-[#1677FF] to-[#0B4DBB] hover:brightness-110 shadow-lg shadow-[#1677FF]/30 cursor-pointer pointer-events-auto"
           >
             {ctaPrimary?.label || (locale === "en" ? "Explore Jobs" : "Khám phá việc làm")}
           </Link>

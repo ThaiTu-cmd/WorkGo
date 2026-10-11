@@ -1,10 +1,14 @@
 import * as React from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing, Colors } from '@/constants/theme';
+import { EntranceView } from '@/components/entrance-view';
+import { HomeCategories } from '@/components/home-categories';
+import { HomeExploreCard } from '@/components/home-explore-card';
+import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 const CATEGORIES = [
   { id: '1', title: 'Thiết kế & Đồ họa', icon: '🎨', count: '124 việc' },
@@ -14,6 +18,8 @@ const CATEGORIES = [
 ];
 
 export default function HomeScreen() {
+  const theme = useTheme();
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -22,58 +28,50 @@ export default function HomeScreen() {
           contentContainerStyle={styles.scrollContent}
         >
           {/* Header Brand */}
-          <View style={styles.header}>
-            <View style={styles.brandBadge}>
-              <ThemedText style={styles.brandBadgeText}>WorkGo Mobile</ThemedText>
-            </View>
-            <ThemedText type="title" style={styles.title}>
-              Tìm việc & Thuê chuyên gia
-            </ThemedText>
-            <ThemedText style={styles.subtitle}>
-              Nền tảng kết nối dịch vụ chuyên nghiệp, an toàn với ký quỹ Escrow
-            </ThemedText>
-          </View>
-
-          {/* System Status Card */}
-          <ThemedView type="backgroundElement" style={styles.statusCard}>
-            <View style={styles.statusDot} />
-            <View style={styles.statusContent}>
-              <ThemedText style={styles.statusTitle}>Hệ sinh thái WorkGo</ThemedText>
-              <ThemedText style={styles.statusDesc}>
-                BFF Unified Proxy & Microservices sẵn sàng
+          <EntranceView delay={0}>
+            <View style={styles.header}>
+              <View style={styles.brandBadge}>
+                <ThemedText style={styles.brandBadgeText}>WorkGo Mobile</ThemedText>
+              </View>
+              <ThemedText type="hero" style={styles.title}>
+                Tìm việc & Thuê chuyên gia
+              </ThemedText>
+              <ThemedText style={styles.subtitle} themeColor="textSecondary">
+                Nền tảng kết nối dịch vụ chuyên nghiệp, an toàn với ký quỹ Escrow
               </ThemedText>
             </View>
-          </ThemedView>
+          </EntranceView>
+
+          {/* System Status Card */}
+          <EntranceView delay={80}>
+            <ThemedView
+              type="backgroundElement"
+              style={[styles.statusCard, { borderColor: theme.border }]}
+            >
+              <View style={styles.statusDot} />
+              <View style={styles.statusContent}>
+                <ThemedText style={styles.statusTitle}>Hệ sinh thái WorkGo</ThemedText>
+                <ThemedText style={styles.statusDesc} themeColor="textSecondary">
+                  BFF Unified Proxy & Microservices sẵn sàng
+                </ThemedText>
+              </View>
+            </ThemedView>
+          </EntranceView>
 
           {/* Quick Categories */}
-          <View style={styles.sectionHeader}>
-            <ThemedText type="subtitle" style={styles.sectionTitle}>
-              Danh mục nổi bật
-            </ThemedText>
-          </View>
-
-          <View style={styles.categoryGrid}>
-            {CATEGORIES.map((cat) => (
-              <ThemedView key={cat.id} type="backgroundElement" style={styles.categoryCard}>
-                <ThemedText style={styles.categoryIcon}>{cat.icon}</ThemedText>
-                <ThemedText style={styles.categoryName}>{cat.title}</ThemedText>
-                <ThemedText style={styles.categoryCount}>{cat.count}</ThemedText>
-              </ThemedView>
-            ))}
-          </View>
+          <EntranceView delay={160}>
+            <View style={styles.sectionHeader}>
+              <ThemedText type="subtitle" style={styles.sectionTitle}>
+                Danh mục nổi bật
+              </ThemedText>
+            </View>
+            <HomeCategories items={CATEGORIES} />
+          </EntranceView>
 
           {/* Featured Action Card */}
-          <ThemedView type="backgroundElement" style={styles.featureCard}>
-            <ThemedText type="subtitle" style={styles.featureTitle}>
-              Bảo chứng thanh toán Escrow
-            </ThemedText>
-            <ThemedText style={styles.featureDesc}>
-              Tiền của bạn được giữ an toàn trong ví đảm bảo cho tới khi công việc hoàn tất và được nghiệm thu hài lòng 100%.
-            </ThemedText>
-            <TouchableOpacity style={styles.ctaButton} activeOpacity={0.8}>
-              <ThemedText style={styles.ctaButtonText}>Khám phá việc làm</ThemedText>
-            </TouchableOpacity>
-          </ThemedView>
+          <EntranceView delay={240}>
+            <HomeExploreCard />
+          </EntranceView>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -91,6 +89,7 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.five,
@@ -117,11 +116,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: '700',
-    color: Colors.light.text,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.light.textSecondary,
     lineHeight: 20,
   },
   statusCard: {
@@ -131,7 +128,6 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     borderRadius: Spacing.two,
     borderWidth: 1,
-    borderColor: Colors.light.border,
   },
   statusDot: {
     width: 10,
@@ -145,76 +141,16 @@ const styles = StyleSheet.create({
   statusTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.light.text,
   },
   statusDesc: {
     fontSize: 12,
-    color: Colors.light.textSecondary,
     marginTop: 2,
   },
   sectionHeader: {
-    marginTop: Spacing.two,
+    marginBottom: Spacing.two,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-  },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-  categoryCard: {
-    width: '48%',
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
-    gap: Spacing.half,
-  },
-  categoryIcon: {
-    fontSize: 24,
-    marginBottom: Spacing.half,
-  },
-  categoryName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.light.text,
-  },
-  categoryCount: {
-    fontSize: 12,
-    color: Colors.light.textSecondary,
-  },
-  featureCard: {
-    marginTop: Spacing.two,
-    padding: Spacing.four,
-    borderRadius: Spacing.three,
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-    backgroundColor: '#EFF6FF',
-    gap: Spacing.two,
-  },
-  featureTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1E40AF',
-  },
-  featureDesc: {
-    fontSize: 13,
-    color: '#1E3A8A',
-    lineHeight: 18,
-  },
-  ctaButton: {
-    marginTop: Spacing.two,
-    backgroundColor: '#2563EB',
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.four,
-    borderRadius: Spacing.one,
-    alignItems: 'center',
-  },
-  ctaButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
     fontWeight: '600',
   },
 });

@@ -25,11 +25,14 @@ const buttonVariants = cva(
           "bg-danger text-white hover:bg-danger-hover active:bg-red-800 focus-visible:ring-danger shadow-xs",
         link:
           "text-primary underline-offset-4 hover:underline p-0 h-auto font-normal focus-visible:ring-primary",
+        marketplace:
+          "bg-[#222325] text-white hover:bg-black rounded-lg shadow-none",
       },
       size: {
         sm: "h-8 px-3.5 text-xs rounded-full min-w-[32px]",
         md: "h-10 px-5 text-sm rounded-full min-w-[40px]",
         lg: "h-12 px-7 text-base rounded-full min-w-[48px]",
+        "pill-lg": "h-12 px-7 text-base rounded-full min-w-[48px]",
         icon: "h-10 w-10 p-0 rounded-full",
         "icon-sm": "h-8 w-8 p-0 rounded-full",
       },

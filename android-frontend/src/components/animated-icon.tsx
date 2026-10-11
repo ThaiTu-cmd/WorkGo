@@ -1,11 +1,11 @@
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
-import { useState } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { AccessibilityInfo, Dimensions, StyleSheet, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
+const INITIAL_SCALE_FACTOR = Math.min(Dimensions.get('screen').height / 90, 4);
 const DURATION = 600;
 
 export function AnimatedSplashOverlay() {
@@ -96,6 +96,25 @@ const glowKeyframe = new Keyframe({
 });
 
 export function AnimatedIcon() {
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then(setReduceMotion)
+      .catch(() => {});
+  }, []);
+
+  if (reduceMotion) {
+    return (
+      <View style={styles.iconContainer}>
+        <View style={styles.background} />
+        <View style={styles.imageContainer}>
+          <Image style={styles.image} source={require('@/assets/images/expo-logo.png')} />
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.iconContainer}>
       <Animated.View entering={glowKeyframe.duration(60 * 1000 * 4)} style={styles.glow}>

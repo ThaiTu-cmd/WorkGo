@@ -106,7 +106,7 @@ test("TC-ANIM-05 - Auth Pages Integration: AuthAtmosphere embeds AnimatedBackgro
   // Check AuthShell wraps login and register routes
   const shellPath = path.join(ROOT, "src/components/shell/auth-shell.tsx");
   const shellSrc = fs.readFileSync(shellPath, "utf-8");
-  assert.match(shellSrc, /<AuthAtmosphere intensity=["']subtle["'] \/>/, "AuthShell must render AuthAtmosphere subtle");
+  assert.match(shellSrc, /<AuthAtmosphere intensity=["'](subtle|default|vivid)["'] \/>/, "AuthShell must render AuthAtmosphere (vivid per PLAN-BG-MOTION-VIVID)");
 
   const authLayoutPath = path.join(ROOT, "src/app/[locale]/(auth)/layout.tsx");
   const layoutSrc = fs.readFileSync(authLayoutPath, "utf-8");

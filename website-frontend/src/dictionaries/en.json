@@ -1,7 +1,6 @@
 {
   "common": {
     "appName": "WorkGo",
-    "mockData": "Mock data",
     "save": "Save changes",
     "cancel": "Cancel",
     "delete": "Delete",
@@ -260,8 +259,8 @@
     "attachments": "Attachments (Max 10MB)",
     "saveDraft": "Save Draft",
     "publish": "Publish Job",
-    "createSuccess": "Job posted successfully! (Mock)",
-    "updateSuccess": "Job post updated successfully! (Mock)"
+    "createSuccess": "Job posted successfully!",
+    "updateSuccess": "Job post updated successfully!"
   },
   "proposal": {
     "drawerTitle": "Submit Proposal",
@@ -324,7 +323,7 @@
     "amountPlaceholder": "Minimum 1,000 ₫",
     "payNow": "Pay Now",
     "processing": "Processing transaction...",
-    "success": "Deposit transaction successful! (Mock)",
+    "success": "Deposit transaction successful!",
     "failed": "Payment failed. Please try again."
   },
   "payout": {
@@ -337,7 +336,7 @@
     "defaultAccount": "Set as default account",
     "addBtn": "Add Payout Account",
     "savedAccounts": "Linked Payout Accounts",
-    "addSuccess": "Payout account added successfully! (Mock)"
+    "addSuccess": "Payout account added successfully!"
   },
   "review": {
     "modalTitle": "Review Service Quality",
@@ -472,6 +471,61 @@
       "solutions": "Solutions",
       "company": "Company",
       "legal": "Legal"
+    },
+    "fiverr": {
+      "header": {
+        "skipToContent": "Skip to main content",
+        "brandLabel": "WorkGo — back to home",
+        "searchLabel": "Search for a service",
+        "searchSubmitLabel": "Search",
+        "openMenuLabel": "Open menu",
+        "closeMenuLabel": "Close menu",
+        "drawerLabel": "Main navigation menu",
+        "languageLabel": "Choose language"
+      },
+      "trending": {
+        "regionLabel": "Trending categories"
+      },
+      "hero": {
+        "searchLabel": "What service are you looking for?",
+        "searchSubmitLabel": "Search",
+        "pauseLabel": "Pause background video",
+        "playLabel": "Play background video",
+        "backgroundAlt": "Particle ocean background",
+        "chipsLabel": "Suggested services"
+      },
+      "categories": {
+        "regionLabel": "Service categories",
+        "toggleMoreLabel": "Show more categories"
+      },
+      "popular": {
+        "regionLabel": "Popular services"
+      },
+      "valueProps": {
+        "regionLabel": "Why WorkGo"
+      },
+      "panels": {
+        "regionLabel": "Featured solutions",
+        "imageAlt": "Service illustration"
+      },
+      "guides": {
+        "regionLabel": "Guides",
+        "imageAlt": "Guide illustration"
+      },
+      "cta": {
+        "regionLabel": "Call to action"
+      },
+      "footer": {
+        "regionLabel": "Footer",
+        "socialLabel": "WorkGo social channels",
+        "languageLabel": "Language",
+        "currencyLabel": "Currency",
+        "builtWith": "Independent talent marketplace"
+      },
+      "carousel": {
+        "prevLabel": "Show previous items",
+        "nextLabel": "Show next items"
+      }
     }
   }
 }

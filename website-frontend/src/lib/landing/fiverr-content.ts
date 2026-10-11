@@ -1,0 +1,598 @@
+/**
+ * FIVERR-INSPIRED MARKETPLACE LANDING — single source of truth for page copy.
+ *
+ * Deliberately free of React / JSX / icon imports so it can be imported by the
+ * static test suite (`tests/fiverr-ui-replication.test.mjs`) under plain Node.
+ * Icons are referenced by lucide icon *name* and resolved in the components.
+ *
+ * Governance: this file must stay locale-complete. `getFiverrContent` falls
+ * back to Vietnamese for any unsupported locale (edge case E1).
+ */
+
+export type Locale2 = 'vi' | 'en';
+
+/** Union of lucide-react icon names used by the landing shell. */
+export type LucideIconName =
+  | 'Code2'
+  | 'Palette'
+  | 'Megaphone'
+  | 'Languages'
+  | 'Clapperboard'
+  | 'Bot'
+  | 'Music2'
+  | 'Briefcase'
+  | 'LifeBuoy'
+  | 'Users'
+  | 'Zap'
+  | 'ShieldCheck'
+  | 'Wallet'
+  | 'Sparkles';
+
+export interface FiverrCategory {
+  key: string;
+  label: string;
+  icon: LucideIconName;
+  href: string;
+}
+
+export interface FiverrPopularService {
+  id: string;
+  title: string;
+  blurb: string;
+  accent: [string, string];
+  icon: LucideIconName;
+}
+
+export interface FiverrGuide {
+  id: string;
+  title: string;
+  from: [string, string];
+  icon: LucideIconName;
+}
+
+export interface FiverrValueProp {
+  icon: LucideIconName;
+  text: string;
+}
+
+export interface FiverrPanel {
+  id: string;
+  title: string;
+  bullets: string[];
+  ctaLabel: string;
+  ctaHref: string;
+  footnote?: string;
+  gradient: [string, string];
+  icon: LucideIconName;
+}
+
+export interface FiverrFooterColumn {
+  heading: string;
+  links: string[];
+}
+
+export interface FiverrLandingContent {
+  nav: {
+    pro: string;
+    explore: string;
+    becomeSeller: string;
+    signIn: string;
+    join: string;
+    searchPlaceholder: string;
+    mobileSearchPlaceholder: string;
+  };
+  trending: { label: string; items: string[] };
+  hero: {
+    headline: string;
+    searchPlaceholder: string;
+    chips: string[];
+    trustedBy: string;
+    trustedLogos: string[];
+  };
+  categories: { title: string; viewMore: (n: number) => string; viewLess: string; items: FiverrCategory[] };
+  popular: { title: string; services: FiverrPopularService[] };
+  valueProps: { title: string; cta: string; items: FiverrValueProp[] };
+  panels: FiverrPanel[];
+  guides: { title: string; seeMore: string; items: FiverrGuide[] };
+  cta: { titleLead: string; titleAccent: string; button: string };
+  footer: { columns: FiverrFooterColumn[]; copyright: string; tagline: string };
+}
+
+const CATEGORY_SEED: { key: string; icon: LucideIconName }[] = [
+  { key: 'tech', icon: 'Code2' },
+  { key: 'design', icon: 'Palette' },
+  { key: 'marketing', icon: 'Megaphone' },
+  { key: 'writing', icon: 'Languages' },
+  { key: 'video', icon: 'Clapperboard' },
+  { key: 'ai', icon: 'Bot' },
+  { key: 'music', icon: 'Music2' },
+  { key: 'business', icon: 'Briefcase' },
+  { key: 'consulting', icon: 'LifeBuoy' },
+];
+
+function buildCategories(
+  labels: Record<string, string>,
+  title: string,
+  viewMore: (n: number) => string,
+  viewLess: string
+): { title: string; viewMore: (n: number) => string; viewLess: string; items: FiverrCategory[] } {
+  return {
+    title,
+    viewMore,
+    viewLess,
+    items: CATEGORY_SEED.map((c) => ({
+      key: c.key,
+      label: labels[c.key],
+      icon: c.icon,
+      // Category ids are served by the catalog API at runtime, so tiles route to
+      // the marketplace index rather than hard-coding ids that may not exist.
+      href: '/posts',
+    })),
+  };
+}
+
+export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
+  vi: {
+    nav: {
+      pro: 'WorkGo Pro',
+      explore: 'Khám phá',
+      becomeSeller: 'Trở thành đối tác',
+      signIn: 'Đăng nhập',
+      join: 'Đăng ký',
+      searchPlaceholder: 'Bạn đang tìm kiếm dịch vụ gì?',
+      mobileSearchPlaceholder: 'Tìm dịch vụ…',
+    },
+    trending: {
+      label: 'Thịnh hành',
+      items: [
+        'Lập trình AI',
+        'Thiết kế thương hiệu',
+        'TikTok Shop',
+        'Dịch thuật',
+        'Dựng video',
+        'Chatbot',
+        'SEO tổng thể',
+        'Nhân bản giọng nói',
+      ],
+    },
+    hero: {
+      headline: 'Đối tác tự do của bạn sẽ lo phần còn lại',
+      searchPlaceholder: 'Thử "thiết kế logo"',
+      chips: [
+        'Xây dựng website',
+        'Thiết kế logo',
+        'Dịch vụ AI',
+        'Tiếp thị số',
+        'Viết nội dung',
+      ],
+      trustedBy: 'Được tin cậy bởi',
+      trustedLogos: ['VNG', 'FPT', 'Viettel', 'Shopee', 'VinFast', 'MoMo'],
+    },
+    categories: buildCategories(
+      {
+        tech: 'Lập trình & Công nghệ',
+        design: 'Thiết kế đồ hoạ',
+        marketing: 'Tiếp thị số',
+        writing: 'Viết & Dịch thuật',
+        video: 'Video & Hoạt ảnh',
+        ai: 'Dịch vụ AI',
+        music: 'Âm nhạc & Thanh âm',
+        business: 'Kinh doanh',
+        consulting: 'Tư vấn',
+      },
+      'Khám phá danh mục',
+      (n: number) => `Xem thêm ${n} danh mục`,
+      'Thu gọn danh mục'
+    ),
+    popular: {
+      title: 'Dịch vụ phổ biến',
+      services: [
+        {
+          id: 'tiktok-shop',
+          title: 'Thiết lập TikTok Shop',
+          blurb: 'Từ kho sản phẩm đến đơn hàng đầu tiên trong 7 ngày.',
+          accent: ['#FF7640', '#4D1727'],
+          icon: 'Sparkles',
+        },
+        {
+          id: 'ai-programming',
+          title: 'Lập trình AI',
+          blurb: 'Tích hợp mô hình ngôn ngữ vào sản phẩm của bạn.',
+          accent: ['#1DBF73', '#003912'],
+          icon: 'Bot',
+        },
+        {
+          id: 'web-development',
+          title: 'Phát triển Website',
+          blurb: 'Website tốc độ cao, sẵn sàng mở rộng và tối ưu SEO.',
+          accent: ['#2EA8FF', '#06142F'],
+          icon: 'Code2',
+        },
+        {
+          id: 'video-editing',
+          title: 'Chỉnh sửa Video',
+          blurb: 'Cắt ghép nhanh, thêm phụ đề và hiệu ứng chuyên nghiệp.',
+          accent: ['#8B5CF6', '#2E1065'],
+          icon: 'Clapperboard',
+        },
+        {
+          id: 'software-development',
+          title: 'Phát triển Phần mềm',
+          blurb: 'Ứng dụng web và di động theo yêu cầu riêng của bạn.',
+          accent: ['#38BDF8', '#0C4A6E'],
+          icon: 'Zap',
+        },
+        {
+          id: 'book-publishing',
+          title: 'Xuất bản Sách',
+          blurb: 'Biên tập, bìa sách và đăng ký ISBN trọn gói.',
+          accent: ['#F59E0B', '#421300'],
+          icon: 'Briefcase',
+        },
+      ],
+    },
+    valueProps: {
+      title: 'Mọi việc trở nên dễ dàng với đối tác tự do',
+      cta: 'Tham gia ngay',
+      items: [
+        {
+          icon: 'Users',
+          text: 'Tiếp cận kho nhân lực đỉnh cao trên 700 danh mục',
+        },
+        {
+          icon: 'Zap',
+          text: 'Trải nghiệm ghép nối đơn giản, dễ dùng',
+        },
+        {
+          icon: 'Sparkles',
+          text: 'Nhận công việc chất lượng, nhanh chóng và đúng ngân sách',
+        },
+        {
+          icon: 'Wallet',
+          text: 'Chỉ thanh toán khi bạn hài lòng',
+        },
+      ],
+    },
+    panels: [
+      {
+        id: 'find-experts',
+        title: 'Để chuyên gia tìm đúng người freelance cho bạn',
+        bullets: [
+          'Gửi yêu cầu trong 30 giây, không cần viết hồ sơ phức tạp',
+          'Nhận đề xuất đối tác phù hợp trong vài giờ',
+          'Duyệt báo giá minh bạch trước khi cam kết',
+        ],
+        ctaLabel: 'Bắt đầu ngay',
+        ctaHref: '/register',
+        footnote: '100% hoàn tiền',
+        gradient: ['#00732E', '#003912'],
+        icon: 'Users',
+      },
+      {
+        id: 'automate-with-ai',
+        title: 'Tự động hoá doanh nghiệp cùng chuyên gia AI WorkGo',
+        bullets: [
+          'Trợ lý ảo trả lời khách hàng 24/7 bằng tiếng Việt',
+          'Tự động hoá quy trình báo cáo và phê duyệt nội bộ',
+          'Phân tích dữ liệu và sinh báo cáo tức thì',
+        ],
+        ctaLabel: 'Khám phá WorkGo AI',
+        ctaHref: '/posts',
+        gradient: ['#6B2A0C', '#421300'],
+        icon: 'Bot',
+      },
+    ],
+    guides: {
+      title: 'Hướng dẫn giúp bạn phát triển',
+      seeMore: 'Xem thêm hướng dẫn',
+      items: [
+        {
+          id: 'guide-brief',
+          title: 'Cách viết yêu cầu dự án để nhận báo giá chính xác',
+          from: ['#1677FF', '#06142F'],
+          icon: 'Briefcase',
+        },
+        {
+          id: 'guide-portfolio',
+          title: 'Xây dựng hồ sơ đối tác tự do thu hút khách hàng',
+          from: ['#1DBF73', '#003912'],
+          icon: 'Users',
+        },
+        {
+          id: 'guide-budget',
+          title: 'Ngân sách hợp lý cho từng hạng mục dịch vụ',
+          from: ['#FF7640', '#4D1727'],
+          icon: 'Wallet',
+        },
+      ],
+    },
+    cta: {
+      titleLead: 'Dịch vụ freelance ngay trong',
+      titleAccent: 'tầm tay',
+      button: 'Tìm đối tác ngay',
+    },
+    footer: {
+      columns: [
+        {
+          heading: 'Danh mục',
+          links: [
+            'Lập trình & Công nghệ',
+            'Thiết kế đồ hoạ',
+            'Tiếp thị số',
+            'Viết & Dịch thuật',
+            'Video & Hoạt ảnh',
+            'Dịch vụ AI',
+          ],
+        },
+        {
+          heading: 'Dành cho Khách hàng',
+          links: [
+            'Tìm đối tác',
+            'Đăng yêu cầu',
+            'Tra cứu đơn hàng',
+            'Thanh toán',
+            'Hoàn tiền',
+            'Câu hỏi thường gặp',
+          ],
+        },
+        {
+          heading: 'Dành cho Đối tác',
+          links: [
+            'Đăng ký đối tác',
+            'Xây hồ sơ',
+            'Giá dịch vụ',
+            'Chính sách đối tác',
+            'Cộng đồng',
+            'Trung tâm hỗ trợ',
+          ],
+        },
+        {
+          heading: 'Giải pháp Doanh nghiệp',
+          links: [
+            'WorkGo Pro',
+            'Giải pháp AI',
+            'Quản lý đội ngũ',
+            'Báo giá doanh nghiệp',
+            'Tích hợp API',
+          ],
+        },
+        {
+          heading: 'Về WorkGo',
+          links: [
+            'Về chúng tôi',
+            'Sự nghiệp',
+            'Báo chí',
+            'Đối tác truyền thông',
+            'Nhà đầu tư',
+          ],
+        },
+      ],
+      copyright: 'WorkGo Platform',
+      tagline: 'Nền tảng kết nối khách hàng và đối tác tự do.',
+    },
+  },
+
+  en: {
+    nav: {
+      pro: 'WorkGo Pro',
+      explore: 'Explore',
+      becomeSeller: 'Become a seller',
+      signIn: 'Sign in',
+      join: 'Join',
+      searchPlaceholder: 'What service are you looking for today?',
+      mobileSearchPlaceholder: 'Search services…',
+    },
+    trending: {
+      label: 'Trending',
+      items: [
+        'AI engineering',
+        'Brand design',
+        'TikTok Shop',
+        'Translation',
+        'Video editing',
+        'Chatbots',
+        'Full SEO',
+        'Voice cloning',
+      ],
+    },
+    hero: {
+      headline: 'Our freelancers will take it from here',
+      searchPlaceholder: 'Try "logo design"',
+      chips: [
+        'Build a website',
+        'Design a logo',
+        'AI services',
+        'Digital marketing',
+        'Content writing',
+      ],
+      trustedBy: 'Trusted by',
+      trustedLogos: ['VNG', 'FPT', 'Viettel', 'Shopee', 'VinFast', 'MoMo'],
+    },
+    categories: buildCategories(
+      {
+        tech: 'Programming & Tech',
+        design: 'Graphics & Design',
+        marketing: 'Digital Marketing',
+        writing: 'Writing & Translation',
+        video: 'Video & Animation',
+        ai: 'AI Services',
+        music: 'Music & Audio',
+        business: 'Business',
+        consulting: 'Consulting',
+      },
+      'Browse categories',
+      (n: number) => `View ${n} more categories`,
+      'Show fewer categories'
+    ),
+    popular: {
+      title: 'Popular services',
+      services: [
+        {
+          id: 'tiktok-shop',
+          title: 'TikTok Shop setup',
+          blurb: 'From product listing to first order in seven days.',
+          accent: ['#FF7640', '#4D1727'],
+          icon: 'Sparkles',
+        },
+        {
+          id: 'ai-programming',
+          title: 'AI programming',
+          blurb: 'Ship large language models inside your product.',
+          accent: ['#1DBF73', '#003912'],
+          icon: 'Bot',
+        },
+        {
+          id: 'web-development',
+          title: 'Web development',
+          blurb: 'Fast, scalable, SEO-ready websites that convert.',
+          accent: ['#2EA8FF', '#06142F'],
+          icon: 'Code2',
+        },
+        {
+          id: 'video-editing',
+          title: 'Video editing',
+          blurb: 'Tight cuts, subtitles and motion that hold attention.',
+          accent: ['#8B5CF6', '#2E1065'],
+          icon: 'Clapperboard',
+        },
+        {
+          id: 'software-development',
+          title: 'Software development',
+          blurb: 'Custom web and mobile apps built to your spec.',
+          accent: ['#38BDF8', '#0C4A6E'],
+          icon: 'Zap',
+        },
+        {
+          id: 'book-publishing',
+          title: 'Book publishing',
+          blurb: 'Editing, cover design and ISBN registration handled.',
+          accent: ['#F59E0B', '#421300'],
+          icon: 'Briefcase',
+        },
+      ],
+    },
+    valueProps: {
+      title: 'Make it all happen with freelancers',
+      cta: 'Join now',
+      items: [
+        { icon: 'Users', text: 'Access a premium talent pool across 700+ categories' },
+        { icon: 'Zap', text: 'A frictionless matching experience that is easy to use' },
+        { icon: 'Sparkles', text: 'Get quality work delivered fast and on budget' },
+        { icon: 'Wallet', text: 'Only pay once you are satisfied' },
+      ],
+    },
+    panels: [
+      {
+        id: 'find-experts',
+        title: 'Let experts find the right freelancer for you',
+        bullets: [
+          'Post your brief in 30 seconds — no long onboarding forms',
+          'Receive matched freelancer proposals within hours',
+          'Approve transparent quotes before you commit',
+        ],
+        ctaLabel: 'Start now',
+        ctaHref: '/register',
+        footnote: '100% money-back guarantee',
+        gradient: ['#00732E', '#003912'],
+        icon: 'Users',
+      },
+      {
+        id: 'automate-with-ai',
+        title: 'Automate your business with WorkGo AI experts',
+        bullets: [
+          'Virtual agents that answer customers 24/7 in Vietnamese',
+          'Automate internal reporting and approval workflows',
+          'Instant data analysis and report generation',
+        ],
+        ctaLabel: 'Explore WorkGo AI',
+        ctaHref: '/posts',
+        gradient: ['#6B2A0C', '#421300'],
+        icon: 'Bot',
+      },
+    ],
+    guides: {
+      title: 'Guides to help you grow',
+      seeMore: 'See more guides',
+      items: [
+        {
+          id: 'guide-brief',
+          title: 'How to write a project brief that gets accurate quotes',
+          from: ['#1677FF', '#06142F'],
+          icon: 'Briefcase',
+        },
+        {
+          id: 'guide-portfolio',
+          title: 'Build a freelancer portfolio that wins clients',
+          from: ['#1DBF73', '#003912'],
+          icon: 'Users',
+        },
+        {
+          id: 'guide-budget',
+          title: 'A realistic budget for every service category',
+          from: ['#FF7640', '#4D1727'],
+          icon: 'Wallet',
+        },
+      ],
+    },
+    cta: {
+      titleLead: 'Freelance services at your',
+      titleAccent: 'fingertips',
+      button: 'Find a freelancer',
+    },
+    footer: {
+      columns: [
+        {
+          heading: 'Categories',
+          links: [
+            'Programming & Tech',
+            'Graphics & Design',
+            'Digital Marketing',
+            'Writing & Translation',
+            'Video & Animation',
+            'AI Services',
+          ],
+        },
+        {
+          heading: 'For Clients',
+          links: [
+            'Find a freelancer',
+            'Post a brief',
+            'Track orders',
+            'Payments',
+            'Refunds',
+            'Help center',
+          ],
+        },
+        {
+          heading: 'For Sellers',
+          links: [
+            'Become a seller',
+            'Build your profile',
+            'Service pricing',
+            'Seller policy',
+            'Community',
+            'Support',
+          ],
+        },
+        {
+          heading: 'Business Solutions',
+          links: ['WorkGo Pro', 'AI Solutions', 'Team management', 'Enterprise quotes', 'API integration'],
+        },
+        {
+          heading: 'About WorkGo',
+          links: ['About us', 'Careers', 'Press', 'Media partners', 'Investors'],
+        },
+      ],
+      copyright: 'WorkGo Platform',
+      tagline: 'The marketplace connecting clients with independent professionals.',
+    },
+  },
+};
+
+/**
+ * Resolve landing copy for a locale.
+ * Unknown / missing locales (E1: "fr", "", undefined) fall back to Vietnamese.
+ */
+export function getFiverrContent(locale: string | undefined | null): FiverrLandingContent {
+  return FIVERR_CONTENT[(locale as Locale2) === 'en' ? 'en' : 'vi'];
+}

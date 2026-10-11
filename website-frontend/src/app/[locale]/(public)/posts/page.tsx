@@ -236,7 +236,7 @@ function PostsMarketplaceContent() {
               className={cn(
                 "px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-150 cursor-pointer active:scale-95",
                 !catParam
-                  ? "bg-primary text-white shadow-xs font-semibold"
+                  ? "bg-primary text-primary-ink shadow-xs font-semibold"
                   : "bg-surface border border-border text-fg-secondary hover:text-fg hover:border-border-strong hover:bg-muted"
               )}
             >
@@ -257,7 +257,7 @@ function PostsMarketplaceContent() {
                   className={cn(
                     "px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-150 cursor-pointer active:scale-95",
                     isSelected
-                      ? "bg-primary text-white shadow-xs font-semibold"
+                      ? "bg-primary text-primary-ink shadow-xs font-semibold"
                       : "bg-surface border border-border text-fg-secondary hover:text-fg hover:border-border-strong hover:bg-muted"
                   )}
                 >

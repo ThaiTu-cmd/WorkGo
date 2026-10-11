@@ -1,0 +1,137 @@
+.searchBarContainer {
+  display: flex;
+  align-items: center;
+  background-color: var(--wg-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-search);
+  width: 100%;
+  max-width: 820px;
+  overflow: hidden;
+  transition: all var(--transition-base);
+  border: 2px solid transparent;
+}
+
+.searchBarContainer:focus-within {
+  border-color: var(--wg-primary);
+  box-shadow: 0 10px 35px rgba(29, 191, 115, 0.25);
+}
+
+.filterWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  min-width: 180px;
+  cursor: pointer;
+}
+
+.filterSelect {
+  width: 100%;
+  appearance: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--wg-text);
+  padding: 16px 24px 16px 0;
+  cursor: pointer;
+}
+
+.chevronIcon {
+  position: absolute;
+  right: 14px;
+  pointer-events: none;
+  color: var(--wg-text-muted);
+}
+
+.divider {
+  width: 1px;
+  height: 32px;
+  background-color: var(--wg-border);
+  flex-shrink: 0;
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  padding: 0 18px;
+  gap: 12px;
+}
+
+.searchIcon {
+  color: var(--wg-text-muted);
+  flex-shrink: 0;
+}
+
+.searchInput {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--wg-text);
+  padding: 16px 0;
+}
+
+.searchInput::placeholder {
+  color: var(--wg-text-muted);
+  font-size: 0.95rem;
+}
+
+.submitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--wg-primary);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 16px 28px;
+  height: 100%;
+  transition: background-color var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.submitBtn:hover {
+  background-color: var(--wg-primary-hover);
+}
+
+.btnIcon {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .searchBarContainer {
+    flex-direction: column;
+    border-radius: var(--radius-md);
+  }
+
+  .filterWrapper {
+    width: 100%;
+    border-bottom: 1px solid var(--wg-border-light);
+    padding: 4px 16px;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  .inputWrapper {
+    width: 100%;
+    padding: 6px 16px;
+  }
+
+  .submitBtn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 0;
+  }
+
+  .btnIcon {
+    display: block;
+  }
+}

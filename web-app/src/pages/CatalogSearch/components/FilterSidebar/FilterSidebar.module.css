@@ -1,0 +1,327 @@
+.sidebar {
+  background-color: var(--wg-surface);
+  border: 1px solid var(--wg-border);
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: calc(var(--header-height) + 20px);
+  max-height: calc(100vh - var(--header-height) - 40px);
+  overflow-y: auto;
+}
+
+/* Custom scrollbar */
+.sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: #e2e8f0;
+  border-radius: var(--radius-full);
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--wg-border-light);
+}
+
+.headerTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filterIcon {
+  color: var(--wg-primary);
+}
+
+.sidebarTitle {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--wg-text);
+}
+
+.resetBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ef4444;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background-color: #fef2f2;
+  transition: all var(--transition-fast);
+}
+
+.resetBtn:hover {
+  background-color: #fee2e2;
+  transform: scale(1.02);
+}
+
+/* Filter Group Accordion */
+.filterGroup {
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--wg-border-light);
+}
+
+.filterGroup:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.groupHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--wg-text);
+  padding: 6px 0;
+  transition: color var(--transition-fast);
+}
+
+.groupHeader:hover {
+  color: var(--wg-primary);
+}
+
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sectionIcon {
+  color: var(--wg-text-secondary);
+}
+
+.groupBody {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Category List */
+.catItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  color: var(--wg-text-secondary);
+  font-weight: 500;
+  text-align: left;
+  transition: all var(--transition-fast);
+}
+
+.catItem:hover {
+  background-color: var(--wg-surface-alt);
+  color: var(--wg-primary);
+}
+
+.catItemActive {
+  background-color: var(--wg-primary-light) !important;
+  color: var(--wg-primary) !important;
+  font-weight: 700 !important;
+}
+
+.catCount {
+  font-size: 0.75rem;
+  color: var(--wg-text-muted);
+  background-color: var(--wg-surface-alt);
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+}
+
+.catItemActive .catCount {
+  background-color: rgba(29, 191, 115, 0.2);
+  color: var(--wg-primary);
+}
+
+/* Radio Labels */
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: var(--wg-text);
+  cursor: pointer;
+  padding: 4px 2px;
+}
+
+.radioInput {
+  display: none;
+}
+
+.radioCustom {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--wg-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.radioInput:checked + .radioCustom {
+  border-color: var(--wg-primary);
+}
+
+.radioDot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--wg-primary);
+  border-radius: var(--radius-full);
+}
+
+.radioText {
+  font-weight: 500;
+}
+
+/* Checkbox Labels */
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  padding: 4px 2px;
+}
+
+.checkboxInput {
+  display: none;
+}
+
+.checkboxCustom {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-xs);
+  border: 2px solid var(--wg-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+  color: #ffffff;
+  background-color: #ffffff;
+}
+
+.checkboxInput:checked + .checkboxCustom {
+  border-color: var(--wg-primary);
+  background-color: var(--wg-primary);
+}
+
+.verifiedTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--wg-text);
+}
+
+.shieldIcon {
+  color: var(--wg-primary);
+}
+
+/* Price presets & form */
+.presetWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.presetBtn {
+  font-size: 0.78rem;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background-color: var(--wg-surface-alt);
+  border: 1px solid var(--wg-border);
+  color: var(--wg-text-secondary);
+  font-weight: 600;
+  transition: all var(--transition-fast);
+}
+
+.presetBtn:hover {
+  border-color: var(--wg-primary);
+  color: var(--wg-primary);
+}
+
+.priceForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.priceInputsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.priceInput {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--wg-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  outline: none;
+  background-color: var(--wg-surface);
+  transition: border-color var(--transition-fast);
+}
+
+.priceInput:focus {
+  border-color: var(--wg-primary);
+}
+
+.dash {
+  color: var(--wg-text-muted);
+  font-weight: 700;
+}
+
+.applyPriceBtn {
+  background-color: var(--wg-text);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast);
+}
+
+.applyPriceBtn:hover {
+  background-color: var(--wg-primary);
+}
+
+/* Rating List */
+.ratingList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.ratingText {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 500;
+}

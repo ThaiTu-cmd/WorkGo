@@ -1,0 +1,245 @@
+.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(5px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalBox {
+  background-color: var(--wg-surface);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 480px;
+  padding: 36px 32px;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--wg-border);
+  animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.closeBtn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wg-text-secondary);
+  background-color: var(--wg-bg);
+  transition: all var(--transition-fast);
+}
+
+.closeBtn:hover {
+  background-color: #e5e7eb;
+  color: var(--wg-text);
+}
+
+.modalHeader {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.logoPill {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  background-color: var(--wg-primary);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1.4rem;
+  margin-bottom: 14px;
+}
+
+.modalTitle {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--wg-text);
+  margin-bottom: 8px;
+}
+
+.modalSubtitle {
+  font-size: 0.92rem;
+  color: var(--wg-text-secondary);
+  line-height: 1.5;
+}
+
+.tabToggle {
+  display: flex;
+  background-color: var(--wg-bg);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 24px;
+  border: 1px solid var(--wg-border);
+}
+
+.tabBtn {
+  flex: 1;
+  padding: 9px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  border-radius: var(--radius-sm);
+  color: var(--wg-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.tabActive {
+  background-color: var(--wg-surface);
+  color: var(--wg-text);
+  box-shadow: var(--shadow-sm);
+}
+
+.feedbackBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.feedbackSuccess {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.feedbackError {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.authForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nameRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inputLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--wg-text);
+}
+
+.fieldWithIcon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.fieldIcon {
+  position: absolute;
+  left: 12px;
+  color: var(--wg-text-muted);
+  pointer-events: none;
+}
+
+.inputField {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--wg-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+  outline: none;
+  transition: border-color var(--transition-fast);
+  background-color: var(--wg-surface);
+}
+
+.fieldWithIcon .inputField {
+  padding-left: 38px;
+}
+
+.inputField:focus {
+  border-color: var(--wg-primary);
+  box-shadow: 0 0 0 3px rgba(29, 191, 115, 0.15);
+}
+
+.submitBtn {
+  background-color: var(--wg-primary);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  margin-top: 8px;
+  transition: background-color var(--transition-fast);
+}
+
+.submitBtn:hover:not(:disabled) {
+  background-color: var(--wg-primary-hover);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modalFooter {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--wg-border-light);
+}
+
+.helperText {
+  font-size: 0.88rem;
+  color: var(--wg-text-secondary);
+}
+
+.switchModeBtn {
+  color: var(--wg-primary);
+  font-weight: 700;
+  margin-left: 6px;
+  text-decoration: underline;
+}

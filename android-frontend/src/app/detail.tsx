@@ -12,7 +12,9 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { PressableScale } from '@/components/pressable-scale';
 import { SkeletonItem, EmptyState } from '@/components/states';
+import { ProposalSheet } from '@/components/proposal-sheet';
 import { postsApi, type MobilePostItem, type ExecutionType } from '@/api/posts';
+import { proposalsApi, type MobileProposalInput } from '@/api/proposals';
 import { useAuth } from '@/store/auth';
 import { Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -45,6 +47,10 @@ export default function DetailScreen() {
   const [post, setPost] = React.useState<MobilePostItem | null>(null);
   const [loading, setLoading] = React.useState(Boolean(id));
   const [applied, setApplied] = React.useState(false);
+  const [hasApplied, setHasApplied] = React.useState(false);
+  const [sheetVisible, setSheetVisible] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
+  const [proposalError, setProposalError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!id) {
@@ -64,18 +70,54 @@ export default function DetailScreen() {
           setLoading(false);
         }
       });
+
+    // Check application status if user is authenticated
+    if (session) {
+      proposalsApi.hasApplied(id).then((already) => {
+        if (active) {
+          setHasApplied(already);
+          if (already) setApplied(true);
+        }
+      });
+    }
+
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, session]);
 
   const handleApply = () => {
     if (!session) {
       router.push('/(auth)/login');
       return;
     }
-    // Set applied feedback state
-    setApplied(true);
+    if (hasApplied || applied) {
+      return;
+    }
+    setProposalError(null);
+    setSheetVisible(true);
+  };
+
+  const handleProposalSubmit = async (input: MobileProposalInput) => {
+    if (!id) return;
+    try {
+      setSubmitting(true);
+      setProposalError(null);
+      await proposalsApi.submit(id, input);
+      setApplied(true);
+      setHasApplied(true);
+      setSheetVisible(false);
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'messageVi' in err) {
+        setProposalError((err as { messageVi: string }).messageVi);
+      } else if (err instanceof Error) {
+        setProposalError(err.message);
+      } else {
+        setProposalError('Không thể gửi đề xuất. Vui lòng thử lại sau.');
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const execStyle = post ? EXEC_CONFIG[post.executionType] ?? EXEC_CONFIG.DIGITAL : EXEC_CONFIG.DIGITAL;
@@ -296,17 +338,32 @@ export default function DetailScreen() {
               style={[
                 styles.applyBtn,
                 {
-                  backgroundColor: applied ? '#15803D' : theme.primary,
+                  backgroundColor: (hasApplied || applied) ? '#15803D' : theme.primary,
                 },
               ]}
               onPress={handleApply}
-              disabled={applied}
+              disabled={hasApplied || applied}
             >
               <ThemedText style={styles.applyBtnText}>
-                {applied ? '✓ Đã gửi đề xuất' : 'Gửi báo giá'}
+                {(hasApplied || applied) ? '✓ Đã gửi đề xuất' : 'Gửi báo giá'}
               </ThemedText>
             </PressableScale>
           </View>
+        )}
+
+        {/* Proposal Bottom Sheet */}
+        {post && (
+          <ProposalSheet
+            visible={sheetVisible}
+            postId={post.postId}
+            budgetMax={post.budgetMax}
+            hasApplied={hasApplied || applied}
+            isProvider={session?.role === 'PROVIDER'}
+            submitting={submitting}
+            error={proposalError}
+            onClose={() => setSheetVisible(false)}
+            onSubmit={handleProposalSubmit}
+          />
         )}
       </SafeAreaView>
     </ThemedView>

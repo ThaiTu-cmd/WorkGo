@@ -1,0 +1,79 @@
+:root {
+  /* Brand Identity - Fiverr Inspired with WorkGo Palette */
+  --wg-primary: #1dbf73;
+  --wg-primary-hover: #19a463;
+  --wg-primary-active: #158852;
+  --wg-primary-light: #f0fbf5;
+  --wg-primary-glow: rgba(29, 191, 115, 0.25);
+
+  --wg-secondary: #0d1117;
+  --wg-hero-bg: #012b1d;
+  --wg-hero-gradient: linear-gradient(
+    135deg,
+    #032115 0%,
+    #063923 55%,
+    #0b4e33 100%
+  );
+  --wg-hero-banner-accent: #0f6844;
+
+  --wg-accent: #ff7640;
+  --wg-accent-hover: #e86330;
+  --wg-star: #ffb33e;
+
+  /* Neutrals */
+  --wg-bg: #fafafa;
+  --wg-surface: #ffffff;
+  --wg-surface-alt: #f5f5f5;
+  --wg-text: #222325;
+  --wg-text-secondary: #62646a;
+  --wg-text-muted: #95979d;
+  --wg-border: #e4e5e7;
+  --wg-border-light: #efeff0;
+
+  /* Badges - Execution Type (from Architecture Ver 2) */
+  --badge-digital-bg: #e0f2fe;
+  --badge-digital-text: #0369a1;
+  --badge-digital-border: #bae6fd;
+
+  --badge-onsite-bg: #fef3c7;
+  --badge-onsite-text: #b45309;
+  --badge-onsite-border: #fde68a;
+
+  --badge-delivery-bg: #dcfce7;
+  --badge-delivery-text: #15803d;
+  --badge-delivery-border: #bbf7d0;
+
+  --badge-appointment-bg: #f3e8ff;
+  --badge-appointment-text: #7c3aed;
+  --badge-appointment-border: #e9d5ff;
+
+  /* Typography */
+  --font-sans:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: "Plus Jakarta Sans", var(--font-sans);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.07);
+  --shadow-card-hover: 0 12px 28px rgba(0, 0, 0, 0.12);
+  --shadow-header: 0 2px 10px rgba(0, 0, 0, 0.06);
+  --shadow-search: 0 8px 30px rgba(0, 0, 0, 0.22);
+  --shadow-dropdown: 0 10px 30px rgba(0, 0, 0, 0.12);
+
+  /* Radius */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Layout */
+  --container-max: 1320px;
+  --header-height: 76px;
+}

@@ -139,7 +139,7 @@ export function FiverrHero({ locale }: FiverrHeroProps): React.JSX.Element {
       )}
 
       {/* Contrast scrim */}
-      <div className="absolute inset-0 bg-black/45" aria-hidden="true" />
+      <div className="absolute inset-0 bg-black/45 pointer-events-none" aria-hidden="true" />
 
       {/* 3D WebGL particle accent behind content with subtle pointer parallax */}
       <div

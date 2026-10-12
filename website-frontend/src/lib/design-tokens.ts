@@ -136,8 +136,10 @@ export function cxGlass(
 
 /**
  * Standard Trust Blue application tokens for marketplace views.
+ * Re-exports SEMANTIC_TOKENS as single source of truth while maintaining backward-compatibility.
  */
 export const WORKGO_APP_TOKENS = {
+  ...SEMANTIC_TOKENS,
   bgApp: '#F8FAFC',
   bgSurface: '#FFFFFF',
   bgMuted: '#F1F5F9',

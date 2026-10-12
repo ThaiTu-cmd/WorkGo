@@ -10,7 +10,20 @@ export interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ className, showLabel = false }: ThemeToggleProps) {
-  const [theme, setTheme] = React.useState<"dark" | "light">("dark");
+  const [theme, setTheme] = React.useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    try {
+      // Default: localStorage.getItem("workgo_theme") || "dark"
+      const saved = localStorage.getItem("workgo_theme") as "dark" | "light" | null;
+      if (saved === "light" || saved === "dark") return saved;
+      const domTheme = document.documentElement.getAttribute("data-theme") as "dark" | "light" | null;
+      if (domTheme === "light" || domTheme === "dark") return domTheme;
+      if (typeof window.matchMedia !== "undefined" && window.matchMedia("(prefers-color-scheme: light)").matches) {
+        return "light";
+      }
+    } catch {}
+    return "dark";
+  });
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -36,9 +49,22 @@ export function ThemeToggle({ className, showLabel = false }: ThemeToggleProps) 
     };
 
     const sync = () => {
-      const saved = (localStorage.getItem("workgo_theme") as "dark" | "light") || "dark";
-      setTheme((prev) => (prev === saved ? prev : saved));
-      applyThemeToDom(saved);
+      let activeTheme: "dark" | "light" = "dark";
+      try {
+        const saved = localStorage.getItem("workgo_theme") as "dark" | "light" | null;
+        if (saved === "light" || saved === "dark") {
+          activeTheme = saved;
+        } else {
+          const domTheme = document.documentElement.getAttribute("data-theme") as "dark" | "light" | null;
+          if (domTheme === "light" || domTheme === "dark") {
+            activeTheme = domTheme;
+          } else if (typeof window.matchMedia !== "undefined" && window.matchMedia("(prefers-color-scheme: light)").matches) {
+            activeTheme = "light";
+          }
+        }
+      } catch {}
+      setTheme((prev) => (prev === activeTheme ? prev : activeTheme));
+      applyThemeToDom(activeTheme);
     };
 
     sync();

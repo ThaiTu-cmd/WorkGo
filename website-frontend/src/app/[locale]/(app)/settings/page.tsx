@@ -82,20 +82,33 @@ function SettingsContent() {
   const [addressToDelete, setAddressToDelete] = React.useState<string | null>(null);
 
   // Theme state
-  const [currentTheme, setCurrentTheme] = React.useState<"dark" | "light">("dark");
-
-  React.useEffect(() => {
-    const saved = (localStorage.getItem("workgo_theme") as "dark" | "light") || "dark";
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCurrentTheme(saved);
-  }, []);
+  const [currentTheme, setCurrentTheme] = React.useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    try {
+      const saved = localStorage.getItem("workgo_theme") as "dark" | "light" | null;
+      if (saved === "light" || saved === "dark") return saved;
+      const domTheme = document.documentElement.getAttribute("data-theme") as "dark" | "light" | null;
+      if (domTheme === "light" || domTheme === "dark") return domTheme;
+      if (typeof window.matchMedia !== "undefined" && window.matchMedia("(prefers-color-scheme: light)").matches) {
+        return "light";
+      }
+    } catch {}
+    return "dark";
+  });
 
   const handleThemeChange = (newTheme: "dark" | "light") => {
     setCurrentTheme(newTheme);
-    localStorage.setItem("workgo_theme", newTheme);
+    try {
+      localStorage.setItem("workgo_theme", newTheme);
+    } catch {}
     document.documentElement.classList.remove("light", "dark");
     document.documentElement.classList.add(newTheme);
     document.documentElement.setAttribute("data-theme", newTheme);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("workgo-theme-change", { detail: { theme: newTheme } })
+      );
+    }
   };
 
   // Provider onboarding state

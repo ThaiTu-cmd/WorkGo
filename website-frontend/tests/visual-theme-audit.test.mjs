@@ -52,3 +52,39 @@ test("VIS-W03 (Noscript reveal fallback): layout.tsx must include noscript style
     "layout.tsx must contain noscript fallback ensuring .reveal elements are visible without JS"
   );
 });
+
+
+test("VIS-W04 (System-aware theme script): layout.tsx inline script checks prefers-color-scheme if no saved preference", () => {
+  const layoutPath = path.join(ROOT, "src/app/layout.tsx");
+  const content = fs.readFileSync(layoutPath, "utf-8");
+  assert.match(
+    content,
+    /prefers-color-scheme:\s*light/,
+    "Inline script in layout.tsx must check prefers-color-scheme: light before falling back to dark"
+  );
+  assert.match(
+    content,
+    /matchMedia/,
+    "Inline script in layout.tsx must use matchMedia with typeof guard"
+  );
+});
+
+test("VIS-W05 (Settings theme synchronization): handleThemeChange in settings dispatches workgo-theme-change", () => {
+  const settingsPath = path.join(ROOT, "src/app/[locale]/(app)/settings/page.tsx");
+  const content = fs.readFileSync(settingsPath, "utf-8");
+  assert.match(
+    content,
+    /workgo-theme-change/,
+    "handleThemeChange in settings must dispatch workgo-theme-change event for cross-component sync"
+  );
+});
+
+test("VIS-W06 (Design tokens single-source): WORKGO_APP_TOKENS incorporates or re-exports SEMANTIC_TOKENS", () => {
+  const tokensPath = path.join(ROOT, "src/lib/design-tokens.ts");
+  const content = fs.readFileSync(tokensPath, "utf-8");
+  assert.match(
+    content,
+    /SEMANTIC_TOKENS/,
+    "design-tokens.ts must reference SEMANTIC_TOKENS to maintain a single source of truth"
+  );
+});

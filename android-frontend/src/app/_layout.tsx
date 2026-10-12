@@ -6,6 +6,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
 import { AuthProvider } from '@/store/auth';
 import { ToastProvider } from '@/components/toast';
+import { SavedJobsProvider } from '@/store/saved';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -14,10 +15,12 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
-        <ToastProvider>
-          <AnimatedSplashOverlay />
-          <AppTabs />
-        </ToastProvider>
+        <SavedJobsProvider>
+          <ToastProvider>
+            <AnimatedSplashOverlay />
+            <AppTabs />
+          </ToastProvider>
+        </SavedJobsProvider>
       </AuthProvider>
     </ThemeProvider>
   );

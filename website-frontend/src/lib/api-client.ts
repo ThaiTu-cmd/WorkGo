@@ -60,6 +60,40 @@ export type ApiFetchOptions = {
   signal?: AbortSignal;
 };
 
+let webRefreshPromise: Promise<boolean> | null = null;
+
+async function executeTokenRefresh(): Promise<boolean> {
+  if (webRefreshPromise) {
+    return webRefreshPromise;
+  }
+
+  webRefreshPromise = (async () => {
+    try {
+      const refreshRes = await fetch("/api/auth/refresh", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+      if (refreshRes.ok) {
+        const refreshData = await refreshRes.json().catch(() => null);
+        if (
+          refreshData &&
+          refreshData.code !== "REFRESH_UNSUPPORTED" &&
+          refreshData.code !== 1006
+        ) {
+          return true;
+        }
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      webRefreshPromise = null;
+    }
+  })();
+
+  return webRefreshPromise;
+}
+
 export async function apiFetch<T>(
   path: string,
   options: ApiFetchOptions = {}
@@ -152,20 +186,10 @@ export async function apiFetch<T>(
   // Handle 401 Unauthorized with automatic token refresh
   if (response.status === 401) {
     if (isBrowser && !_isRetry && !path.includes("/api/auth/")) {
-      try {
-        const refreshRes = await fetch("/api/auth/refresh", {
-          method: "POST",
-          credentials: "same-origin",
-        });
-        if (refreshRes.ok) {
-          const refreshData = await refreshRes.json().catch(() => null);
-          if (refreshData && refreshData.code !== "REFRESH_UNSUPPORTED" && refreshData.code !== 1006) {
-            // Retry request once with new session cookie
-            return await apiFetch<T>(path, { ...options, _isRetry: true });
-          }
-        }
-      } catch {
-        // Refresh failed, fall through to redirect
+      const refreshed = await executeTokenRefresh();
+      if (refreshed) {
+        // Retry request once with new session cookie
+        return await apiFetch<T>(path, { ...options, _isRetry: true });
       }
 
       const currentPath = window.location.pathname;

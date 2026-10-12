@@ -16,11 +16,13 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { formatVND } from "@/lib/format";
 import type { PostItem } from "@/lib/adapters/posts";
+import { isSaved as checkSaved, toggleSaved } from "@/lib/saved-store";
 import { cn } from "@/lib/utils";
 
 export interface PostCardProps {
   post: PostItem;
   locale?: string;
+  userId?: string;
 }
 
 const EXECUTION_BADGE_VARIANTS: Record<
@@ -49,13 +51,43 @@ const EXECUTION_LABELS: Record<string, string> = {
   PROJECT: "Dự án",
 };
 
-export function PostCard({ post, locale = "vi" }: PostCardProps) {
-  const [isSaved, setIsSaved] = React.useState(false);
+export function PostCard({ post, locale = "vi", userId = "guest" }: PostCardProps) {
+  const subscribe = React.useCallback(
+    (callback: () => void) => {
+      const handler = (e: Event) => {
+        const detail = (e as CustomEvent<{ userId?: string }>).detail;
+        if (!detail || detail.userId === userId) {
+          callback();
+        }
+      };
+      if (typeof window !== "undefined") {
+        window.addEventListener("workgo:saved_changed", handler);
+      }
+      return () => {
+        if (typeof window !== "undefined") {
+          window.removeEventListener("workgo:saved_changed", handler);
+        }
+      };
+    },
+    [userId]
+  );
+
+  const getSnapshot = React.useCallback(() => {
+    return checkSaved(userId, post.postId);
+  }, [userId, post.postId]);
+
+  const getServerSnapshot = React.useCallback(() => false, []);
+
+  const isSaved = React.useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot
+  );
 
   const handleBookmark = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsSaved((prev) => !prev);
+    toggleSaved(userId, post.postId);
   };
 
   const badgeVariant =

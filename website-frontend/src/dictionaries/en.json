@@ -277,7 +277,12 @@
     "terms": "Additional Terms (optional)",
     "submit": "Confirm & Submit Proposal",
     "submitSuccess": "Proposal submitted successfully!",
-    "alreadySubmitted": "You have already submitted a proposal for this post."
+    "alreadySubmitted": "You have already submitted a proposal for this post.",
+    "bidAmount": "Proposed Bid Amount",
+    "coverLetter": "Cover Letter & Solution",
+    "clientOnly": "Only Provider accounts can submit proposals",
+    "duplicate": "You have already submitted a proposal for this post",
+    "priceExceeds": "Bid amount cannot exceed maximum budget"
   },
   "applications": {
     "title": "Manage Job Proposals",
@@ -585,5 +590,30 @@
       "title": "Trust & Safety",
       "desc": "Dual-sided escrow protection, transparent milestone agreements, and fair dispute mediation"
     }
+  },
+  "saved": {
+    "title": "Saved Jobs",
+    "empty": "No saved jobs yet",
+    "save": "Save Job",
+    "unsave": "Unsave Job"
+  },
+  "toast": {
+    "saved": "Job saved",
+    "unsaved": "Job unsaved",
+    "copied": "Link copied",
+    "submitted": "Proposal submitted successfully",
+    "offline": "You are offline",
+    "online": "Back online"
+  },
+  "offline": {
+    "banner": "You are offline. Please check your internet connection.",
+    "retry": "Retry"
+  },
+  "myPosts": {
+    "title": "Manage My Posts",
+    "empty": "No posts yet",
+    "close": "Close Post",
+    "closeConfirm": "Are you sure you want to close this job post?",
+    "stats": "Post Statistics"
   }
 }

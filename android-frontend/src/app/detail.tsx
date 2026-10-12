@@ -19,6 +19,7 @@ import { useAuth } from '@/store/auth';
 import { useToast } from '@/components/toast';
 import { Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { formatVND } from '@/utils/format';
 
 const EXEC_CONFIG: Record<
   ExecutionType,
@@ -31,14 +32,6 @@ const EXEC_CONFIG: Record<
   HOURLY: { label: 'Theo giờ', bg: '#EFF6FF', fg: '#1D4ED8', border: '#BFDBFE' },
   PROJECT: { label: 'Dự án', bg: '#EFF6FF', fg: '#1D4ED8', border: '#BFDBFE' },
 };
-
-function formatVND(amount: number): string {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 export default function DetailScreen() {
   const theme = useTheme();

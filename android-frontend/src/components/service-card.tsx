@@ -8,6 +8,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { type MobilePostItem, type ExecutionType } from '@/api/posts';
 import { Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { formatVND } from '@/utils/format';
 
 export interface ServiceCardProps {
   post: MobilePostItem;
@@ -55,14 +56,6 @@ const EXEC_CONFIG: Record<
     border: '#BFDBFE',
   },
 };
-
-function formatVND(amount: number): string {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 function ServiceCardInner({ post, onPress }: ServiceCardProps) {
   const theme = useTheme();

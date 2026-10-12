@@ -15,6 +15,7 @@ import { type MobileProposalInput } from '@/api/proposals';
 import { Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticFeedback } from '@/utils/haptics';
+import { formatVND } from '@/utils/format';
 
 export interface ProposalSheetProps {
   visible: boolean;
@@ -26,14 +27,6 @@ export interface ProposalSheetProps {
   error?: string | null;
   onClose: () => void;
   onSubmit: (input: MobileProposalInput) => void;
-}
-
-function formatVND(amount: number): string {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(amount);
 }
 
 function ProposalSheetModalContent({

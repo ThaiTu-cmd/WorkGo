@@ -1,10 +1,12 @@
 import * as React from 'react';
 import {
   Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { PressableScale } from '@/components/pressable-scale';
@@ -45,6 +47,7 @@ function FilterSheetModalContent({
   onReset,
 }: FilterSheetProps) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   const [category, setCategory] = React.useState<string | undefined>(
     currentFilters.category
@@ -90,6 +93,12 @@ function FilterSheetModalContent({
 
   return (
     <View style={styles.backdrop}>
+      <Pressable
+        style={StyleSheet.absoluteFill}
+        onPress={onClose}
+        accessibilityRole="button"
+        accessibilityLabel="Đóng bộ lọc"
+      />
       <View
         style={[
           styles.sheetContainer,
@@ -149,7 +158,15 @@ function FilterSheetModalContent({
         </ScrollView>
 
         {/* Action Footer */}
-        <View style={[styles.footer, { borderTopColor: theme.border }]}>
+        <View
+          style={[
+            styles.footer,
+            {
+              borderTopColor: theme.border,
+              paddingBottom: Math.max(Spacing.four, insets.bottom),
+            },
+          ]}
+        >
           <PressableScale
             accessibilityRole="button"
             accessibilityLabel="Xóa bộ lọc"
@@ -185,6 +202,7 @@ export function FilterSheet(props: FilterSheetProps) {
       visible={props.visible}
       animationType="slide"
       transparent={true}
+      statusBarTranslucent={true}
       onRequestClose={props.onClose}
     >
       {props.visible && <FilterSheetModalContent {...props} />}

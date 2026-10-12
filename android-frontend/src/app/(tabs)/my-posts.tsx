@@ -5,6 +5,7 @@ import {
   RefreshControl,
   StyleSheet,
   View,
+  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -21,6 +22,8 @@ import { useMyPosts } from '@/hooks/use-my-posts';
 
 export default function MyPostsScreen() {
   const theme = useTheme();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const { session, loading: authLoading } = useAuth();
   const {
     posts: allPosts,
@@ -170,15 +173,23 @@ export default function MyPostsScreen() {
                         style={[
                           styles.statusBadge,
                           {
-                            backgroundColor: isClosed ? '#F3F4F6' : '#ECFDF5',
-                            borderColor: isClosed ? '#E5E7EB' : '#A7F3D0',
+                            backgroundColor: isClosed
+                              ? (isDark ? theme.backgroundElement : '#F3F4F6')
+                              : (isDark ? 'rgba(34, 197, 94, 0.15)' : '#ECFDF5'),
+                            borderColor: isClosed
+                              ? (isDark ? theme.border : '#E5E7EB')
+                              : (isDark ? 'rgba(34, 197, 94, 0.3)' : '#A7F3D0'),
                           },
                         ]}
                       >
                         <ThemedText
                           style={[
                             styles.statusBadgeText,
-                            { color: isClosed ? '#6B7280' : '#047857' },
+                            {
+                              color: isClosed
+                                ? (isDark ? theme.textSecondary : '#6B7280')
+                                : (isDark ? theme.success : '#047857'),
+                            },
                           ]}
                         >
                           {isClosed ? 'Đã đóng' : 'Đang mở'}

@@ -51,10 +51,17 @@ export function SkeletonItem({ height = 120, style }: { height?: number; style?:
 }
 
 export function LoadingSkeleton({ count = 6 }: { count?: number }) {
+  const theme = useTheme();
   return (
     <View style={styles.skeletonList}>
       {Array.from({ length: count }).map((_, i) => (
-        <View key={i} style={styles.cardSkeletonWrapper}>
+        <View
+          key={i}
+          style={[
+            styles.cardSkeletonWrapper,
+            { backgroundColor: theme.surface, borderColor: theme.border },
+          ]}
+        >
           <SkeletonItem height={140} style={styles.cardCoverSkeleton} />
           <View style={styles.cardBodySkeleton}>
             <SkeletonItem height={16} style={{ width: '40%', marginBottom: Spacing.one }} />
@@ -153,7 +160,10 @@ export function ErrorState({
       <View
         style={[
           styles.emptyIconCircle,
-          { backgroundColor: '#FEE2E2', borderColor: '#FECACA' },
+          {
+            backgroundColor: theme.backgroundElement,
+            borderColor: theme.danger,
+          },
         ]}
       >
         <ThemedText style={styles.emptyIcon}>⚠️</ThemedText>

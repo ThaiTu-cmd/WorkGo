@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   },
   code: {
     fontSize: 36,
-    fontWeight: '800',
+    fontWeight: (Platform.select({ android: '700', default: '800' }) ?? '800') as '700' | '800',
     marginBottom: Spacing.one,
   },
   title: {

@@ -3,11 +3,13 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { PressableScale } from '@/components/pressable-scale';
@@ -45,6 +47,7 @@ function ProposalSheetModalContent({
   onSubmit,
 }: ProposalSheetProps) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   const submittingRef = React.useRef(false);
   const idempotencyKeyRef = React.useRef<string | null>(null);
@@ -177,8 +180,14 @@ function ProposalSheetModalContent({
 
   return (
     <View style={styles.backdrop}>
+      <Pressable
+        style={StyleSheet.absoluteFill}
+        onPress={onClose}
+        accessibilityRole="button"
+        accessibilityLabel="Đóng biểu mẫu đề xuất"
+      />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
       >
         <View
@@ -372,7 +381,15 @@ function ProposalSheetModalContent({
           </ScrollView>
 
           {/* Action Footer */}
-          <View style={[styles.footer, { borderTopColor: theme.border }]}>
+          <View
+            style={[
+              styles.footer,
+              {
+                borderTopColor: theme.border,
+                paddingBottom: Math.max(Spacing.four, insets.bottom),
+              },
+            ]}
+          >
             <PressableScale
               accessibilityRole="button"
               accessibilityLabel="Hủy bỏ"
@@ -425,6 +442,7 @@ export function ProposalSheet(props: ProposalSheetProps) {
       visible={props.visible}
       animationType="slide"
       transparent={true}
+      statusBarTranslucent={true}
       onRequestClose={props.onClose}
     >
       {props.visible && <ProposalSheetModalContent {...props} />}

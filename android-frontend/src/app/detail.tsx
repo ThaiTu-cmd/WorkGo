@@ -3,8 +3,9 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  useColorScheme,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 
@@ -13,28 +14,20 @@ import { ThemedView } from '@/components/themed-view';
 import { PressableScale } from '@/components/pressable-scale';
 import { SkeletonItem, EmptyState } from '@/components/states';
 import { ProposalSheet } from '@/components/proposal-sheet';
-import { postsApi, type MobilePostItem, type ExecutionType } from '@/api/posts';
+import { postsApi, type MobilePostItem } from '@/api/posts';
 import { proposalsApi, type MobileProposalInput } from '@/api/proposals';
 import { useAuth } from '@/store/auth';
 import { useToast } from '@/components/toast';
 import { Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatVND } from '@/utils/format';
-
-const EXEC_CONFIG: Record<
-  ExecutionType,
-  { label: string; bg: string; fg: string; border: string }
-> = {
-  DIGITAL: { label: 'Kỹ thuật số', bg: '#EFF6FF', fg: '#1D4ED8', border: '#BFDBFE' },
-  ONSITE: { label: 'Tại chỗ', bg: '#FEF3C7', fg: '#B45309', border: '#FDE68A' },
-  DELIVERY: { label: 'Giao hàng', bg: '#ECFDF5', fg: '#047857', border: '#A7F3D0' },
-  APPOINTMENT: { label: 'Đặt hẹn', bg: '#F3E8FF', fg: '#6D28D9', border: '#DDD6FE' },
-  HOURLY: { label: 'Theo giờ', bg: '#EFF6FF', fg: '#1D4ED8', border: '#BFDBFE' },
-  PROJECT: { label: 'Dự án', bg: '#EFF6FF', fg: '#1D4ED8', border: '#BFDBFE' },
-};
+import { EXEC_CONFIG, getExecStyle } from '@/constants/exec-config';
 
 export default function DetailScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const { session } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
 
@@ -105,7 +98,9 @@ export default function DetailScreen() {
       setApplied(true);
       setHasApplied(true);
       setSheetVisible(false);
-      toast.show('Đã gửi đề xuất thành công!', 'success');
+      setTimeout(() => {
+        toast.show('Đã gửi đề xuất thành công!', 'success');
+      }, 150);
     } catch (err: unknown) {
       let errMsg = 'Không thể gửi đề xuất. Vui lòng thử lại sau.';
       if (err && typeof err === 'object' && 'messageVi' in err) {
@@ -121,7 +116,9 @@ export default function DetailScreen() {
     }
   };
 
-  const execStyle = post ? EXEC_CONFIG[post.executionType] ?? EXEC_CONFIG.DIGITAL : EXEC_CONFIG.DIGITAL;
+  const execStyle = post && post.executionType in EXEC_CONFIG
+    ? getExecStyle(post.executionType, isDark)
+    : getExecStyle('DIGITAL', isDark);
   const coverImage = post?.attachments?.[0] ?? null;
 
   return (
@@ -167,7 +164,12 @@ export default function DetailScreen() {
             contentContainerStyle={styles.scrollContent}
           >
             {/* 16:10 Cover image */}
-            <View style={styles.coverWrapper}>
+            <View
+              style={[
+                styles.coverWrapper,
+                { backgroundColor: theme.backgroundElement },
+              ]}
+            >
               {coverImage ? (
                 <Image
                   source={{ uri: coverImage }}
@@ -250,11 +252,16 @@ export default function DetailScreen() {
             <ThemedView
               style={[
                 styles.escrowCard,
-                { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' },
+                {
+                  backgroundColor: isDark ? theme.surface : '#EFF6FF',
+                  borderColor: isDark ? theme.border : '#BFDBFE',
+                },
               ]}
             >
-              <ThemedText style={styles.escrowTitle}>🛡️ Bảo chứng thanh toán Escrow</ThemedText>
-              <ThemedText style={styles.escrowDesc}>
+              <ThemedText style={[styles.escrowTitle, { color: isDark ? theme.primary : '#1E40AF' }]}>
+                🛡️ Bảo chứng thanh toán Escrow
+              </ThemedText>
+              <ThemedText style={[styles.escrowDesc, { color: isDark ? theme.textSecondary : '#1E3A8A' }]}>
                 Ngân sách công việc được ký quỹ an toàn tại WorkGo. Bạn sẽ nhận thanh toán ngay sau
                 khi đối tác nghiệm thu hoàn tất sản phẩm.
               </ThemedText>
@@ -278,7 +285,7 @@ export default function DetailScreen() {
               >
                 {post.deadlineAt && (
                   <View style={styles.metaRow}>
-                    <ThemedText style={styles.metaLabel}>Hạn hoàn thành:</ThemedText>
+                    <ThemedText style={[styles.metaLabel, { color: theme.textSecondary }]}>Hạn hoàn thành:</ThemedText>
                     <ThemedText style={styles.metaVal}>
                       {new Date(post.deadlineAt).toLocaleDateString('vi-VN')}
                     </ThemedText>
@@ -286,7 +293,7 @@ export default function DetailScreen() {
                 )}
                 {post.locationSnapshot && (
                   <View style={styles.metaRow}>
-                    <ThemedText style={styles.metaLabel}>Địa điểm:</ThemedText>
+                    <ThemedText style={[styles.metaLabel, { color: theme.textSecondary }]}>Địa điểm:</ThemedText>
                     <ThemedText style={styles.metaVal}>{post.locationSnapshot}</ThemedText>
                   </View>
                 )}
@@ -326,7 +333,11 @@ export default function DetailScreen() {
           <View
             style={[
               styles.bottomBar,
-              { backgroundColor: theme.surface, borderTopColor: theme.border },
+              {
+                backgroundColor: theme.surface,
+                borderTopColor: theme.border,
+                paddingBottom: Math.max(Spacing.three, insets.bottom),
+              },
             ]}
           >
             <View style={styles.budgetCol}>
@@ -345,7 +356,9 @@ export default function DetailScreen() {
               style={[
                 styles.applyBtn,
                 {
-                  backgroundColor: (hasApplied || applied) ? '#15803D' : theme.primary,
+                  backgroundColor: (hasApplied || applied)
+                    ? (isDark ? '#166534' : '#15803D')
+                    : theme.primary,
                 },
               ]}
               onPress={handleApply}

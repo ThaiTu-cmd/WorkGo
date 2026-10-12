@@ -1,61 +1,20 @@
 import * as React from 'react';
-import { StyleSheet, View, Share } from 'react-native';
+import { StyleSheet, View, Share, useColorScheme } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { PressableScale } from '@/components/pressable-scale';
-import { type MobilePostItem, type ExecutionType } from '@/api/posts';
+import { type MobilePostItem } from '@/api/posts';
 import { Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatVND } from '@/utils/format';
+import { EXEC_CONFIG, getExecStyle } from '@/constants/exec-config';
 
 export interface ServiceCardProps {
   post: MobilePostItem;
   onPress?: (id: string) => void;
 }
-
-const EXEC_CONFIG: Record<
-  ExecutionType,
-  { label: string; bg: string; fg: string; border: string }
-> = {
-  DIGITAL: {
-    label: 'Kỹ thuật số',
-    bg: 'rgba(2, 132, 199, 0.12)',
-    fg: '#0284C7',
-    border: 'rgba(2, 132, 199, 0.25)',
-  },
-  ONSITE: {
-    label: 'Tại chỗ',
-    bg: 'rgba(217, 119, 6, 0.12)',
-    fg: '#D97706',
-    border: 'rgba(217, 119, 6, 0.25)',
-  },
-  DELIVERY: {
-    label: 'Giao hàng',
-    bg: 'rgba(5, 150, 105, 0.12)',
-    fg: '#059669',
-    border: 'rgba(5, 150, 105, 0.25)',
-  },
-  APPOINTMENT: {
-    label: 'Đặt hẹn',
-    bg: 'rgba(124, 58, 237, 0.12)',
-    fg: '#7C3AED',
-    border: 'rgba(124, 58, 237, 0.25)',
-  },
-  HOURLY: {
-    label: 'Theo giờ',
-    bg: 'rgba(2, 132, 199, 0.12)',
-    fg: '#0284C7',
-    border: 'rgba(2, 132, 199, 0.25)',
-  },
-  PROJECT: {
-    label: 'Dự án',
-    bg: 'rgba(2, 132, 199, 0.12)',
-    fg: '#0284C7',
-    border: 'rgba(2, 132, 199, 0.25)',
-  },
-};
 
 function ServiceCardInner({ post, onPress }: ServiceCardProps) {
   const theme = useTheme();
@@ -81,7 +40,11 @@ function ServiceCardInner({ post, onPress }: ServiceCardProps) {
     }
   };
 
-  const execStyle = EXEC_CONFIG[post.executionType] ?? EXEC_CONFIG.DIGITAL;
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const execStyle = post.executionType in EXEC_CONFIG
+    ? getExecStyle(post.executionType, isDark)
+    : getExecStyle('DIGITAL', isDark);
   const coverImage = post.attachments?.[0] ?? null;
 
   return (

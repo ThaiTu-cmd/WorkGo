@@ -11,6 +11,7 @@ import { ExecutionSection } from "./filters/execution-section";
 import { BudgetSection } from "./filters/budget-section";
 import { DeliverySection } from "./filters/delivery-section";
 import { RatingVerifiedSection } from "./filters/rating-verified-section";
+import { LocationSection } from "./filters/location-section";
 
 export { ChevronDown, ChevronUp };
 
@@ -30,6 +31,7 @@ export interface FilterValues {
   deliveryTime?: number;
   minRating?: number;
   onlyVerified?: boolean;
+  location?: string;
 }
 
 export interface FilterSidebarProps {
@@ -52,6 +54,7 @@ export function FilterSidebar({
   // Collapsible section states
   const [catOpen, setCatOpen] = React.useState(true);
   const [typeOpen, setTypeOpen] = React.useState(true);
+  const [locOpen, setLocOpen] = React.useState(true);
   const [priceOpen, setPriceOpen] = React.useState(true);
   const [deliveryOpen, setDeliveryOpen] = React.useState(true);
   const [ratingOpen, setRatingOpen] = React.useState(true);
@@ -59,6 +62,7 @@ export function FilterSidebar({
   const hasActiveFilters = Boolean(
     values.category ||
     values.executionType ||
+    values.location ||
     values.budgetMin !== undefined ||
     values.budgetMax !== undefined ||
     values.deliveryTime !== undefined ||
@@ -102,6 +106,15 @@ export function FilterSidebar({
         onChange={(executionType) => onChange({ ...values, executionType })}
         isOpen={typeOpen}
         onToggle={() => setTypeOpen(!typeOpen)}
+      />
+
+      {/* Location Filter Section (Visible when ONSITE or DELIVERY) */}
+      <LocationSection
+        value={values.location}
+        visible={values.executionType === "ONSITE" || values.executionType === "DELIVERY"}
+        onChange={(location) => onChange({ ...values, location })}
+        isOpen={locOpen}
+        onToggle={() => setLocOpen(!locOpen)}
       />
 
       {/* 3. Budget / Price Section */}

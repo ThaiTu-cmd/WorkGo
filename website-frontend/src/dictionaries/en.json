@@ -595,7 +595,22 @@
     "title": "Saved Jobs",
     "empty": "No saved jobs yet",
     "save": "Save Job",
-    "unsave": "Unsave Job"
+    "unsave": "Unsave Job",
+    "undo": "Undo"
+  },
+  "share": {
+    "title": "Share Job",
+    "copied": "Link copied to clipboard",
+    "failed": "Failed to copy link"
+  },
+  "draft": {
+    "restored": "Draft restored",
+    "cleared": "Draft cleared"
+  },
+  "location": {
+    "filter": "Work Location",
+    "all": "All Locations",
+    "placeholder": "Select province / city"
   },
   "toast": {
     "saved": "Job saved",

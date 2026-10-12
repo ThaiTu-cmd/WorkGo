@@ -6,10 +6,21 @@ import { hapticFeedback } from '@/utils/haptics';
 export const SAVED_KEY_PREFIX = 'workgo_saved_jobs_v1:';
 const MAX_SAVED = 200;
 
+export async function restore(userId: string | null | undefined, prevList: string[]): Promise<void> {
+  const uid = userId || 'guest';
+  const key = `${SAVED_KEY_PREFIX}${uid}`;
+  try {
+    await AsyncStorage.setItem(key, JSON.stringify(prevList));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 interface SavedContextType {
   savedIds: string[];
   isSaved: (postId: string) => boolean;
   toggleSaved: (postId: string) => Promise<boolean>;
+  restoreSaved: (prevList: string[]) => Promise<void>;
   loading: boolean;
 }
 
@@ -17,6 +28,7 @@ const SavedContext = createContext<SavedContextType>({
   savedIds: [],
   isSaved: () => false,
   toggleSaved: async () => false,
+  restoreSaved: async () => {},
   loading: false,
 });
 
@@ -85,8 +97,20 @@ export function SavedJobsProvider({ children }: { children: React.ReactNode }) {
     [savedIds, storageKey]
   );
 
+  const restoreSaved = useCallback(
+    async (prevList: string[]): Promise<void> => {
+      setSavedIds(prevList);
+      try {
+        await AsyncStorage.setItem(storageKey, JSON.stringify(prevList));
+      } catch {
+        // Ignored
+      }
+    },
+    [storageKey]
+  );
+
   return (
-    <SavedContext.Provider value={{ savedIds, isSaved, toggleSaved, loading }}>
+    <SavedContext.Provider value={{ savedIds, isSaved, toggleSaved, restoreSaved, loading }}>
       {children}
     </SavedContext.Provider>
   );

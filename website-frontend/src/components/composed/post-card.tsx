@@ -10,13 +10,16 @@ import {
   Sparkles,
   MapPin,
   MessageSquare,
+  Share2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { formatVND } from "@/lib/format";
 import type { PostItem } from "@/lib/adapters/posts";
-import { isSaved as checkSaved, toggleSaved } from "@/lib/saved-store";
+import { isSaved as checkSaved, toggleSaved, loadSaved, restoreSaved } from "@/lib/saved-store";
+import { copyPostLink } from "@/lib/share";
+import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 
 export interface PostCardProps {
@@ -84,10 +87,48 @@ export function PostCard({ post, locale = "vi", userId = "guest" }: PostCardProp
     getServerSnapshot
   );
 
+  const { toast } = useToast();
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const ok = await copyPostLink(post.postId, locale);
+    if (ok) {
+      toast({
+        type: "success",
+        title: "Đã sao chép liên kết",
+        description: "Bạn có thể gửi liên kết này cho người khác.",
+      });
+    } else {
+      toast({
+        type: "error",
+        title: "Không thể sao chép liên kết",
+      });
+    }
+  };
+
   const handleBookmark = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    const prev = loadSaved(userId);
+    const wasSaved = isSaved;
     toggleSaved(userId, post.postId);
+    if (wasSaved) {
+      toast({
+        type: "info",
+        title: "Đã bỏ lưu việc làm",
+        duration: 3000,
+        action: (
+          <button
+            type="button"
+            onClick={() => restoreSaved(userId, prev)}
+            className="text-xs font-semibold text-primary underline hover:opacity-80 cursor-pointer"
+          >
+            Hoàn tác
+          </button>
+        ),
+      });
+    }
   };
 
   const badgeVariant =
@@ -142,20 +183,30 @@ export function PostCard({ post, locale = "vi", userId = "guest" }: PostCardProp
             </Badge>
           </div>
 
-          {/* Top Right: Favorite Bookmark Button */}
-          <button
-            type="button"
-            onClick={handleBookmark}
-            className={cn(
-              "absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-surface/90 backdrop-blur-md transition-transform duration-200 active:scale-125 cursor-pointer shadow-xs",
-              isSaved
-                ? "text-primary fill-primary"
-                : "text-fg-tertiary hover:text-primary"
-            )}
-            aria-label={isSaved ? "Bỏ lưu việc làm" : "Lưu việc làm"}
-          >
-            <Bookmark className={cn("h-4 w-4", isSaved && "fill-primary")} />
-          </button>
+          {/* Top Right: Share & Favorite Bookmark Buttons */}
+          <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleShare}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-surface/90 backdrop-blur-md text-fg-tertiary hover:text-primary transition-transform duration-200 active:scale-125 cursor-pointer shadow-xs"
+              aria-label="Chia sẻ việc làm"
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleBookmark}
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-full bg-surface/90 backdrop-blur-md transition-transform duration-200 active:scale-125 cursor-pointer shadow-xs",
+                isSaved
+                  ? "text-primary fill-primary"
+                  : "text-fg-tertiary hover:text-primary"
+              )}
+              aria-label={isSaved ? "Bỏ lưu việc làm" : "Lưu việc làm"}
+            >
+              <Bookmark className={cn("h-4 w-4", isSaved && "fill-primary")} />
+            </button>
+          </div>
         </div>
 
         <CardContent className="p-4 flex-1 flex flex-col justify-between space-y-3">
@@ -168,7 +219,7 @@ export function PostCard({ post, locale = "vi", userId = "guest" }: PostCardProp
                   {post.client.name}
                 </span>
                 <ShieldCheck
-                  className="h-3.5 w-3.5 text-[#00732E] shrink-0"
+                  className="h-3.5 w-3.5 text-success dark:text-emerald-400 shrink-0"
                   aria-label="Đối tác đã xác minh"
                 />
               </div>

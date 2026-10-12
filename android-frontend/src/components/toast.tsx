@@ -1,19 +1,32 @@
 import * as React from 'react';
-import { StyleSheet, Text, Animated } from 'react-native';
+import { StyleSheet, Text, Animated, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { hapticFeedback } from '@/utils/haptics';
 
 export type ToastType = 'success' | 'error' | 'info';
 
+export interface ToastOptions {
+  actionLabel?: string;
+  onAction?: () => void;
+  durationMs?: number;
+}
+
+export interface ToastData {
+  message: string;
+  type: ToastType;
+  actionLabel?: string;
+  onAction?: () => void;
+}
+
 export interface ToastContextValue {
-  show: (message: string, type?: ToastType) => void;
+  show: (message: string, type?: ToastType, opts?: ToastOptions) => void;
   hide: () => void;
 }
 
 const ToastContext = React.createContext<ToastContextValue | null>(null);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toast, setToast] = React.useState<{ message: string; type: ToastType } | null>(null);
+  const [toast, setToast] = React.useState<ToastData | null>(null);
   const [fadeAnim] = React.useState(() => new Animated.Value(0));
   const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -32,11 +45,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, [fadeAnim]);
 
   const show = React.useCallback(
-    (message: string, type: ToastType = 'info') => {
+    (message: string, type: ToastType = 'info', opts?: ToastOptions) => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
-      setToast({ message, type });
+      setToast({
+        message,
+        type,
+        actionLabel: opts?.actionLabel,
+        onAction: opts?.onAction,
+      });
 
       if (type === 'success') {
         void hapticFeedback.success();
@@ -53,9 +71,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         useNativeDriver: true,
       }).start();
 
+      const duration = opts?.durationMs ?? (opts?.actionLabel ? 3000 : 2500);
       timerRef.current = setTimeout(() => {
         hide();
-      }, 2500);
+      }, duration);
     },
     [fadeAnim, hide]
   );
@@ -63,7 +82,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ show, hide }}>
       {children}
-      {toast && <ToastHost message={toast.message} type={toast.type} opacity={fadeAnim} />}
+      {toast && (
+        <ToastHost
+          message={toast.message}
+          type={toast.type}
+          actionLabel={toast.actionLabel}
+          onAction={toast.onAction}
+          opacity={fadeAnim}
+          onDismiss={hide}
+        />
+      )}
     </ToastContext.Provider>
   );
 }
@@ -83,10 +111,16 @@ export function ToastHost({
   message,
   type,
   opacity,
+  actionLabel,
+  onAction,
+  onDismiss,
 }: {
   message: string;
   type: ToastType;
   opacity: Animated.Value;
+  actionLabel?: string;
+  onAction?: () => void;
+  onDismiss?: () => void;
 }) {
   const insets = useSafeAreaInsets();
 
@@ -109,9 +143,22 @@ export function ToastHost({
           opacity,
         },
       ]}
-      pointerEvents="none"
+      pointerEvents={actionLabel ? 'box-none' : 'none'}
     >
       <Text style={styles.text}>{message}</Text>
+      {actionLabel && onAction && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={actionLabel}
+          onPress={() => {
+            onAction();
+            onDismiss?.();
+          }}
+          style={styles.actionBtn}
+        >
+          <Text style={styles.actionText}>{actionLabel}</Text>
+        </Pressable>
+      )}
     </Animated.View>
   );
 }
@@ -130,13 +177,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
   },
   text: {
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
-    textAlign: 'center',
+    flex: 1,
+    marginRight: 8,
+  },
+  actionBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  actionText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

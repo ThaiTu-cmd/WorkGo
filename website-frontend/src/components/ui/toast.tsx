@@ -12,6 +12,7 @@ export interface ToastItem {
   title: string;
   description?: string;
   duration?: number;
+  action?: React.ReactNode;
 }
 
 interface ToastContextValue {
@@ -107,6 +108,9 @@ function ToastCard({
         <h4 className="text-sm font-semibold text-fg leading-5">{item.title}</h4>
         {item.description && (
           <p className="text-xs text-fg-secondary mt-0.5 leading-4">{item.description}</p>
+        )}
+        {item.action && (
+          <div className="mt-2">{item.action}</div>
         )}
       </div>
       <button

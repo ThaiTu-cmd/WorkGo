@@ -17,6 +17,7 @@ import { CategorySection } from './filters/category-section';
 import { ExecutionSection } from './filters/execution-section';
 import { BudgetSection } from './filters/budget-section';
 import { VerifiedSection } from './filters/verified-section';
+import { LocationSection } from './filters/location-section';
 
 export interface FilterState {
   category?: string;
@@ -24,6 +25,7 @@ export interface FilterState {
   budgetMin?: number;
   budgetMax?: number;
   verifiedOnly?: boolean;
+  location?: string;
 }
 
 export interface FilterSheetProps {
@@ -59,6 +61,9 @@ function FilterSheetModalContent({
   const [verifiedOnly, setVerifiedOnly] = React.useState<boolean>(
     currentFilters.verifiedOnly ?? false
   );
+  const [location, setLocation] = React.useState<string>(
+    currentFilters.location ?? 'ALL'
+  );
 
   const handleApply = () => {
     onApply({
@@ -67,6 +72,7 @@ function FilterSheetModalContent({
       budgetMin: budgetMin ? Number(budgetMin) : undefined,
       budgetMax: budgetMax ? Number(budgetMax) : undefined,
       verifiedOnly,
+      location: location !== 'ALL' ? location : undefined,
     });
     onClose();
   };
@@ -77,6 +83,7 @@ function FilterSheetModalContent({
     setBudgetMin('');
     setBudgetMax('');
     setVerifiedOnly(false);
+    setLocation('ALL');
     onReset();
     onClose();
   };
@@ -117,6 +124,13 @@ function FilterSheetModalContent({
           <ExecutionSection
             selectedExecType={execType}
             onSelectExecType={setExecType}
+          />
+
+          {/* Location filter (only for ONSITE / DELIVERY) */}
+          <LocationSection
+            value={location}
+            visible={execType === 'ONSITE' || execType === 'DELIVERY'}
+            onChange={setLocation}
           />
 
           {/* Budget Presets and Inputs */}

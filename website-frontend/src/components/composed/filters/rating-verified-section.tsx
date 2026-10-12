@@ -68,7 +68,7 @@ export function RatingVerifiedSection({
       <div className="pt-1">
         <label className="flex items-center justify-between text-xs font-semibold text-fg cursor-pointer">
           <span className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-[#00732E]" />
+            <ShieldCheck className="h-4 w-4 text-success dark:text-emerald-400" />
             Chỉ đối tác đã xác minh
           </span>
           <input

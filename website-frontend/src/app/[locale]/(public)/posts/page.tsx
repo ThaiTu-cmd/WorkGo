@@ -37,6 +37,7 @@ function PostsMarketplaceContent() {
   const bMaxParam = searchParams.get("budgetMax");
   const sortParam = searchParams.get("sort") || "newest";
   const pageParam = Number(searchParams.get("page")) || 1;
+  const locParam = searchParams.get("location") || "";
 
   // Local state
   const [searchInput, setSearchInput] = React.useState(qParam);
@@ -138,6 +139,7 @@ function PostsMarketplaceContent() {
     q: qParam,
     category: catParam || undefined,
     executionType: execParam || undefined,
+    location: locParam || undefined,
     budgetMin: bMinParam ? Number(bMinParam) : undefined,
     budgetMax: bMaxParam ? Number(bMaxParam) : undefined,
     sort: sortParam,
@@ -147,6 +149,7 @@ function PostsMarketplaceContent() {
     updateQuery({
       category: newValues.category,
       executionType: newValues.executionType,
+      location: newValues.location,
       budgetMin: newValues.budgetMin,
       budgetMax: newValues.budgetMax,
       page: 1,
@@ -159,8 +162,14 @@ function PostsMarketplaceContent() {
   };
 
   const hasActiveFilters = Boolean(
-    qParam || catParam || execParam || bMinParam || bMaxParam
+    qParam || catParam || execParam || locParam || bMinParam || bMaxParam
   );
+
+  const displayedPosts = React.useMemo(() => {
+    if (!locParam) return posts;
+    const locLower = locParam.toLowerCase();
+    return posts.filter((p) => p.locationSnapshot?.toLowerCase().includes(locLower));
+  }, [posts, locParam]);
 
   const quickPills = React.useMemo(
     () => getFiverrContent(locale).categories.items.map((c) => c.label),
@@ -388,6 +397,19 @@ function PostsMarketplaceContent() {
             </Badge>
           )}
 
+          {locParam && (
+            <Badge variant="secondary" className="gap-1 pr-1">
+              <span>{locParam}</span>
+              <button
+                onClick={() => updateQuery({ location: undefined, page: 1 })}
+                className="inline-flex items-center justify-center rounded-full p-0.5 hover:text-danger hover:bg-muted/80 cursor-pointer"
+                aria-label="Xóa bộ lọc địa điểm"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+
           {(bMinParam || bMaxParam) && (
             <Badge variant="secondary" className="gap-1 pr-1">
               <span>
@@ -441,7 +463,7 @@ function PostsMarketplaceContent() {
               description="Không thể tải danh sách việc làm. Vui lòng kiểm tra lại kết nối và thử lại."
               onRetry={handleRetry}
             />
-          ) : posts.length === 0 ? (
+          ) : displayedPosts.length === 0 ? (
             <div>
               <EmptyState
                 title={t("empty")}
@@ -476,7 +498,7 @@ function PostsMarketplaceContent() {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {posts.map((post, idx) => (
+                {displayedPosts.map((post, idx) => (
                   <Reveal key={post.postId} delay={idx * 50} className="h-full">
                     <PostCard post={post} locale={locale} />
                   </Reveal>

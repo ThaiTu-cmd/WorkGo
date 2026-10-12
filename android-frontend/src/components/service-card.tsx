@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Share } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 
@@ -21,39 +21,39 @@ const EXEC_CONFIG: Record<
 > = {
   DIGITAL: {
     label: 'Kỹ thuật số',
-    bg: '#EFF6FF',
-    fg: '#1D4ED8',
-    border: '#BFDBFE',
+    bg: 'rgba(2, 132, 199, 0.12)',
+    fg: '#0284C7',
+    border: 'rgba(2, 132, 199, 0.25)',
   },
   ONSITE: {
     label: 'Tại chỗ',
-    bg: '#FEF3C7',
-    fg: '#B45309',
-    border: '#FDE68A',
+    bg: 'rgba(217, 119, 6, 0.12)',
+    fg: '#D97706',
+    border: 'rgba(217, 119, 6, 0.25)',
   },
   DELIVERY: {
     label: 'Giao hàng',
-    bg: '#ECFDF5',
-    fg: '#047857',
-    border: '#A7F3D0',
+    bg: 'rgba(5, 150, 105, 0.12)',
+    fg: '#059669',
+    border: 'rgba(5, 150, 105, 0.25)',
   },
   APPOINTMENT: {
     label: 'Đặt hẹn',
-    bg: '#F3E8FF',
-    fg: '#6D28D9',
-    border: '#DDD6FE',
+    bg: 'rgba(124, 58, 237, 0.12)',
+    fg: '#7C3AED',
+    border: 'rgba(124, 58, 237, 0.25)',
   },
   HOURLY: {
     label: 'Theo giờ',
-    bg: '#EFF6FF',
-    fg: '#1D4ED8',
-    border: '#BFDBFE',
+    bg: 'rgba(2, 132, 199, 0.12)',
+    fg: '#0284C7',
+    border: 'rgba(2, 132, 199, 0.25)',
   },
   PROJECT: {
     label: 'Dự án',
-    bg: '#EFF6FF',
-    fg: '#1D4ED8',
-    border: '#BFDBFE',
+    bg: 'rgba(2, 132, 199, 0.12)',
+    fg: '#0284C7',
+    border: 'rgba(2, 132, 199, 0.25)',
   },
 };
 
@@ -68,6 +68,16 @@ function ServiceCardInner({ post, onPress }: ServiceCardProps) {
         pathname: '/detail',
         params: { id: post.postId },
       });
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Xem việc làm "${post.title}" trên WorkGo: https://workgo.vn/posts/${post.postId}`,
+      });
+    } catch {
+      // Ignored
     }
   };
 
@@ -165,7 +175,7 @@ function ServiceCardInner({ post, onPress }: ServiceCardProps) {
           </View>
         )}
 
-        {/* Footer: Price & Proposals */}
+        {/* Footer: Price & Proposals & Share */}
         <View style={[styles.footer, { borderTopColor: theme.border }]}>
           <View style={styles.priceCol}>
             <ThemedText style={[styles.pricePrefix, { color: theme.textSecondary }]}>
@@ -176,13 +186,29 @@ function ServiceCardInner({ post, onPress }: ServiceCardProps) {
             </ThemedText>
           </View>
 
-          {post.proposalsCount !== undefined && post.proposalsCount > 0 && (
-            <View style={styles.proposalsBadge}>
-              <ThemedText style={[styles.proposalsText, { color: theme.textSecondary }]}>
-                💬 {post.proposalsCount} đề xuất
+          <View style={styles.footerActions}>
+            {post.proposalsCount !== undefined && post.proposalsCount > 0 && (
+              <View style={styles.proposalsBadge}>
+                <ThemedText style={[styles.proposalsText, { color: theme.textSecondary }]}>
+                  💬 {post.proposalsCount} đề xuất
+                </ThemedText>
+              </View>
+            )}
+
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel="Chia sẻ việc làm"
+              onPress={handleShare}
+              style={[
+                styles.shareBtn,
+                { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+              ]}
+            >
+              <ThemedText style={[styles.shareIcon, { color: theme.textSecondary }]}>
+                ↗
               </ThemedText>
-            </View>
-          )}
+            </PressableScale>
+          </View>
         </View>
       </View>
     </PressableScale>
@@ -313,5 +339,22 @@ const styles = StyleSheet.create({
   },
   proposalsText: {
     fontSize: 12,
+  },
+  footerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  shareBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareIcon: {
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

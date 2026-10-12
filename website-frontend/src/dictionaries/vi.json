@@ -595,7 +595,22 @@
     "title": "Việc đã lưu",
     "empty": "Chưa lưu việc nào",
     "save": "Lưu việc làm",
-    "unsave": "Bỏ lưu việc làm"
+    "unsave": "Bỏ lưu việc làm",
+    "undo": "Hoàn tác"
+  },
+  "share": {
+    "title": "Chia sẻ việc làm",
+    "copied": "Đã sao chép liên kết",
+    "failed": "Không thể sao chép liên kết"
+  },
+  "draft": {
+    "restored": "Đã khôi phục bản nháp",
+    "cleared": "Đã xóa bản nháp"
+  },
+  "location": {
+    "filter": "Khu vực làm việc",
+    "all": "Tất cả địa điểm",
+    "placeholder": "Chọn tỉnh / thành phố"
   },
   "toast": {
     "saved": "Đã lưu công việc",

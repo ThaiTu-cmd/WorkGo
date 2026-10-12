@@ -46,6 +46,23 @@ export function toggleSaved(userId: string, postId: string): string[] {
   return next;
 }
 
+export function restoreSaved(userId: string, prev: string[]): string[] {
+  if (typeof window === 'undefined') {
+    return prev;
+  }
+  try {
+    window.localStorage.setItem(getStorageKey(userId), JSON.stringify(prev));
+    window.dispatchEvent(
+      new CustomEvent('workgo:saved_changed', {
+        detail: { userId: userId || 'guest', prev },
+      })
+    );
+  } catch {
+    // QuotaExceededError or storage disabled
+  }
+  return prev;
+}
+
 export function isSaved(userId: string, postId: string): boolean {
   return loadSaved(userId).includes(postId);
 }

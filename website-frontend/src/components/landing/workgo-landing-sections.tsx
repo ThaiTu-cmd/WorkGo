@@ -262,7 +262,7 @@ export function WorkgoLandingSections({ locale }: WorkgoLandingSectionsProps) {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
           <div className="md:col-span-1">
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#1677FF] to-[#0B4DBB] flex items-center justify-center text-white font-black text-sm leading-none select-none">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#1677FF] to-[#0B4DBB] flex items-center justify-center text-white font-extrabold text-sm leading-none select-none">
                 W
               </div>
               <span className="text-fg font-bold text-lg tracking-tight">

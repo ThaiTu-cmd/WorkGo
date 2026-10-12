@@ -33,7 +33,7 @@ export function WalletSummary({
             </div>
           </div>
 
-          <div className="font-mono text-2xl md:text-3xl font-black text-primary tabular-nums tracking-tight">
+          <div className="font-mono text-2xl md:text-3xl font-extrabold text-primary tabular-nums tracking-tight">
             {formatVND(availableBalance, locale)}
           </div>
 
@@ -70,7 +70,7 @@ export function WalletSummary({
             </div>
           </div>
 
-          <div className="font-mono text-2xl md:text-3xl font-black text-fg tabular-nums tracking-tight">
+          <div className="font-mono text-2xl md:text-3xl font-extrabold text-fg tabular-nums tracking-tight">
             {formatVND(escrowBalance, locale)}
           </div>
 
@@ -92,7 +92,7 @@ export function WalletSummary({
             </div>
           </div>
 
-          <div className="font-mono text-2xl md:text-3xl font-black text-fg tabular-nums tracking-tight">
+          <div className="font-mono text-2xl md:text-3xl font-extrabold text-fg tabular-nums tracking-tight">
             {formatVND(earnedBalance, locale)}
           </div>
 

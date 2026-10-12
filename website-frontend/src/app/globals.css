@@ -897,3 +897,8 @@ select option {
     transform: none !important;
   }
 }
+
+/* VIS-W02: Anchor offset to prevent fixed/sticky header clipping */
+[id] {
+  scroll-margin-top: 88px;
+}

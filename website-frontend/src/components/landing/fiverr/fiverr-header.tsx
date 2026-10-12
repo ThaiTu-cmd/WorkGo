@@ -71,7 +71,7 @@ export function FiverrHeader({ locale }: FiverrHeaderProps): React.JSX.Element {
             aria-label={t("header.brandLabel")}
             className="flex shrink-0 items-center gap-2 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222325]"
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#222325] text-sm font-black leading-none text-white">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#222325] text-sm font-extrabold leading-none text-white">
               W
             </span>
             <span className="text-lg font-bold leading-none tracking-tight text-[#222325]">

@@ -39,6 +39,13 @@ export default function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem('workgo_theme')||'dark';document.documentElement.classList.remove('light','dark');document.documentElement.classList.add(t);document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
           }}
         />
+        <noscript>
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `.reveal,.reveal-visible{opacity:1!important;transform:none!important}`,
+            }}
+          />
+        </noscript>
       </head>
       <body className="min-h-screen bg-app text-fg flex flex-col font-sans">
         {children}

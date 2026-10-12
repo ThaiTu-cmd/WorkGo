@@ -83,7 +83,7 @@ export function FiverrFooter({
           style={{ borderTopWidth: "0.8px" }}
         >
           <div className="flex items-center gap-2.5 select-none">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#222325] text-sm font-black leading-none text-white">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#222325] text-sm font-extrabold leading-none text-white">
               W
             </span>
             <span className="text-lg font-bold leading-none tracking-tight text-[#222325]">

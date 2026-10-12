@@ -145,7 +145,7 @@ export function AppShellClient({
         <DrawerContent side="left" className="h-[100dvh] bg-surface/95 backdrop-blur-2xl border-r border-border">
           <DrawerHeader>
             <div className="flex items-center gap-2.5">
-              <div className="h-7 w-7 rounded-control bg-gradient-to-br from-[#1677FF] to-[#0B4DBB] flex items-center justify-center text-white font-black text-sm leading-none select-none shadow-xs">
+              <div className="h-7 w-7 rounded-control bg-gradient-to-br from-[#1677FF] to-[#0B4DBB] flex items-center justify-center text-white font-extrabold text-sm leading-none select-none shadow-xs">
                 W
               </div>
               <DrawerTitle className="text-base font-bold text-primary">WorkGo</DrawerTitle>

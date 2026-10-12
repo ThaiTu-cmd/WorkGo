@@ -12,6 +12,7 @@ import {
   Star,
   CheckCircle2,
   Send,
+  ShieldCheck,
 } from "lucide-react";
 import { PageContainer } from "@/components/shell/page-container";
 import { Breadcrumb } from "@/components/shell/breadcrumb";
@@ -181,8 +182,9 @@ export default function PostDetailPage() {
               <div className="flex items-center gap-4">
                 <Avatar name={post.client.name} size="md" />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <span className="font-semibold text-sm text-fg">{post.client.name}</span>
+                    <ShieldCheck className="h-4 w-4 text-[#00732E]" />
                     <Badge variant="success" className="text-[10px] h-4">
                       Đã xác thực
                     </Badge>
@@ -197,6 +199,29 @@ export default function PostDetailPage() {
                     <span>•</span>
                     <span>Phản hồi: {post.client.responseTime}</span>
                   </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Marketplace Protection & FAQ Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base font-semibold">Bảo đảm & Quy trình bảo vệ Escrow</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-xs text-fg-secondary">
+              <div className="flex items-start gap-2.5">
+                <ShieldCheck className="h-4 w-4 text-[#00732E] shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-fg block">Bảo vệ thanh toán qua Escrow</strong>
+                  Tiền công được giữ an toàn tại tài khoản trung gian và chỉ giải ngân khi khách hàng nghiệm thu kết quả.
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-fg block">Quy trình giải ngân theo tiến độ</strong>
+                  Mọi sản phẩm bàn giao đều có lịch sử kiểm duyệt minh bạch và hỗ trợ chia nhỏ các mốc thanh toán.
                 </div>
               </div>
             </CardContent>

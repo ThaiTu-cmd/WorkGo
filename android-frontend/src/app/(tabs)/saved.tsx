@@ -29,8 +29,23 @@ export default function SavedJobsScreen() {
 
   const idsKey = savedIds.join(',');
   const isFetching = !storeLoading && savedIds.length > 0 && loadedState.idsKey !== idsKey;
-  const posts = savedIds.length === 0 ? [] : loadedState.posts;
+  const posts = React.useMemo(
+    () => (savedIds.length === 0 ? [] : loadedState.posts),
+    [savedIds.length, loadedState.posts]
+  );
   const loading = storeLoading || isFetching;
+
+  const PAGE_SIZE = 20;
+  const [page, setPage] = React.useState(1);
+  const pagedPosts = React.useMemo(() => {
+    return posts.slice(0, page * PAGE_SIZE);
+  }, [posts, page]);
+
+  const handleEndReached = () => {
+    if (pagedPosts.length < posts.length) {
+      setPage((prev) => prev + 1);
+    }
+  };
 
   React.useEffect(() => {
     if (storeLoading || savedIds.length === 0) return;
@@ -105,7 +120,7 @@ export default function SavedJobsScreen() {
           </View>
         ) : (
           <FlatList
-            data={posts}
+            data={pagedPosts}
             keyExtractor={(item) => item.postId}
             renderItem={({ item }) => (
               <ServiceCard post={item} onPress={handleCardPress} />
@@ -117,6 +132,8 @@ export default function SavedJobsScreen() {
             initialNumToRender={6}
             removeClippedSubviews={Platform.OS === 'android'}
             keyboardDismissMode="on-drag"
+            onEndReached={handleEndReached}
+            onEndReachedThreshold={0.5}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}

@@ -17,11 +17,10 @@ import { ServiceCard } from '@/components/service-card';
 import { FilterSheet, type FilterState } from '@/components/filter-sheet';
 import { LoadingSkeleton, EmptyState, ErrorState } from '@/components/states';
 import { catalogApi, type MobileCategory } from '@/api/catalog';
-import { postsApi, type MobilePostItem } from '@/api/posts';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
-import { hapticFeedback } from '@/utils/haptics';
+import { useCatalogPosts } from '@/hooks/use-catalog-posts';
 
 const FEATURED_CHIPS = ['Thiết kế Logo', 'Lập trình Web', 'Dịch thuật Anh - Việt'];
 
@@ -39,13 +38,6 @@ export default function CatalogScreen() {
   const [filterSheetVisible, setFilterSheetVisible] = React.useState(false);
 
   const [categories, setCategories] = React.useState<MobileCategory[]>([]);
-  const [posts, setPosts] = React.useState<MobilePostItem[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [filtering, setFiltering] = React.useState(false);
-  const [refreshing, setRefreshing] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const [page, setPage] = React.useState(1);
-  const [totalPages, setTotalPages] = React.useState(1);
 
   // Fetch categories on mount
   React.useEffect(() => {
@@ -58,145 +50,41 @@ export default function CatalogScreen() {
     };
   }, []);
 
-  const fetchMorePosts = async (nextPage: number) => {
-    try {
-      const resolvedExecType =
-        selectedExecType !== 'ALL'
-          ? selectedExecType
-          : filters.executionType && filters.executionType !== 'ALL'
-            ? filters.executionType
-            : undefined;
+  const resolvedExecType =
+    selectedExecType !== 'ALL'
+      ? selectedExecType
+      : filters.executionType && filters.executionType !== 'ALL'
+        ? filters.executionType
+        : undefined;
 
-      const res = await postsApi.list({
-        q: query.trim() || undefined,
-        category: filters.category,
-        executionType: resolvedExecType,
-        budgetMin: filters.budgetMin,
-        budgetMax: filters.budgetMax,
-        page: nextPage,
-        limit: 10,
-      });
+  const {
+    posts: rawPosts,
+    loading,
+    filtering,
+    refreshing,
+    error,
+    refresh: handleRefresh,
+    loadMore: handleLoadMore,
+  } = useCatalogPosts({
+    query: debouncedQuery,
+    category: filters.category,
+    executionType: resolvedExecType,
+    budgetMin: filters.budgetMin,
+    budgetMax: filters.budgetMax,
+    limit: 10,
+  });
 
-      setPosts((prev) => [...prev, ...res.data]);
-      setTotalPages(res.meta.totalPages);
-      setPage(nextPage);
-    } catch {
-      // Keep existing list on pagination failure
-    }
-  };
-
-  // Fetch when filters or query changes
-  React.useEffect(() => {
-    let active = true;
-    const controller = new AbortController();
-
-    // Trigger filtering asynchronously to avoid synchronous effect setState
-    Promise.resolve().then(() => {
-      if (active) setFiltering(true);
-    });
-
-    const resolvedExecType =
-      selectedExecType !== 'ALL'
-        ? selectedExecType
-        : filters.executionType && filters.executionType !== 'ALL'
-          ? filters.executionType
-          : undefined;
-
-    postsApi
-      .list(
-        {
-          q: debouncedQuery.trim() || undefined,
-          category: filters.category,
-          executionType: resolvedExecType,
-          budgetMin: filters.budgetMin,
-          budgetMax: filters.budgetMax,
-          page: 1,
-          limit: 10,
-        },
-        { signal: controller.signal }
-      )
-      .then((res) => {
-        if (active) {
-          setPosts(res.data);
-          setTotalPages(res.meta.totalPages);
-          setPage(1);
-          setError(null);
-        }
-      })
-      .catch((err: unknown) => {
-        if (!active) return;
-        if (
-          err &&
-          typeof err === 'object' &&
-          ((err as { code?: string }).code === 'ABORTED' ||
-            (err as { name?: string }).name === 'AbortError')
-        ) {
-          return;
-        }
-        setError(
-          err instanceof Error ? err.message : 'Không thể kết nối đến máy chủ WorkGo'
-        );
-      })
-      .finally(() => {
-        if (active) {
-          setLoading(false);
-          setFiltering(false);
-          setRefreshing(false);
-        }
-      });
-
-    return () => {
-      active = false;
-      controller.abort();
-    };
-  }, [debouncedQuery, selectedExecType, filters]);
-
-  const handleRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    const resolvedExecType =
-      selectedExecType !== 'ALL'
-        ? selectedExecType
-        : filters.executionType && filters.executionType !== 'ALL'
-          ? filters.executionType
-          : undefined;
-
-    postsApi
-      .list({
-        q: query.trim() || undefined,
-        category: filters.category,
-        executionType: resolvedExecType,
-        budgetMin: filters.budgetMin,
-        budgetMax: filters.budgetMax,
-        page: 1,
-        limit: 10,
-      })
-      .then((res) => {
-        setPosts(res.data);
-        setTotalPages(res.meta.totalPages);
-        setPage(1);
-        setError(null);
-        void hapticFeedback.success();
-      })
-      .catch((err: unknown) => {
-        setError(
-          err instanceof Error ? err.message : 'Không thể kết nối đến máy chủ WorkGo'
-        );
-      })
-      .finally(() => {
-        setRefreshing(false);
-      });
-  }, [query, selectedExecType, filters]);
-
-  const handleLoadMore = () => {
-    if (page < totalPages && !loading && !filtering) {
-      fetchMorePosts(page + 1);
-    }
-  };
+  const posts = React.useMemo(() => {
+    if (!filters.location || filters.location === 'ALL') return rawPosts;
+    const loc = filters.location.toLowerCase();
+    return rawPosts.filter((p) => p.locationSnapshot?.toLowerCase().includes(loc));
+  }, [rawPosts, filters.location]);
 
   const activeFilterCount =
     (filters.category ? 1 : 0) +
     (filters.budgetMin !== undefined || filters.budgetMax !== undefined ? 1 : 0) +
-    (filters.verifiedOnly ? 1 : 0);
+    (filters.verifiedOnly ? 1 : 0) +
+    (filters.location ? 1 : 0);
 
   return (
     <ThemedView style={styles.container}>

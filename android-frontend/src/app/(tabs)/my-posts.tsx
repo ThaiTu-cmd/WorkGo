@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {
-  Alert,
   FlatList,
   Platform,
   RefreshControl,
@@ -14,89 +13,39 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { PressableScale } from '@/components/pressable-scale';
 import { LoadingSkeleton, EmptyState } from '@/components/states';
-import { postsApi, type MobilePostItem } from '@/api/posts';
 import { useAuth } from '@/store/auth';
-import { useToast } from '@/components/toast';
 import { formatVND } from '@/utils/format';
 import { Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useMyPosts } from '@/hooks/use-my-posts';
 
 export default function MyPostsScreen() {
   const theme = useTheme();
   const { session, loading: authLoading } = useAuth();
-  const toast = useToast();
+  const {
+    posts: allPosts,
+    stats,
+    loading: postsLoading,
+    refreshing,
+    closingId,
+    refresh: handleRefresh,
+    closePost: handleClosePost,
+  } = useMyPosts();
 
-  const [loadedState, setLoadedState] = React.useState<{ sessionUserId: string | null; posts: MobilePostItem[] }>({
-    sessionUserId: null,
-    posts: [],
-  });
-  const [refreshing, setRefreshing] = React.useState(false);
-  const [closingId, setClosingId] = React.useState<string | null>(null);
+  const PAGE_SIZE = 10;
+  const [page, setPage] = React.useState(1);
 
-  const currentUserId = session?.userId ?? null;
-  const isFetching = !authLoading && Boolean(currentUserId) && loadedState.sessionUserId !== currentUserId;
-  const posts = !session ? [] : loadedState.posts;
-  const loading = authLoading || isFetching;
+  const posts = React.useMemo(() => {
+    return allPosts.slice(0, page * PAGE_SIZE);
+  }, [allPosts, page]);
 
-  React.useEffect(() => {
-    if (authLoading || !currentUserId) return;
-    let active = true;
-    postsApi.getMyPosts()
-      .then((data) => {
-        if (!active) return;
-        setLoadedState({ sessionUserId: currentUserId, posts: data });
-      })
-      .catch(() => {
-        if (!active) return;
-        toast.show('Không thể tải danh sách bài đăng', 'error');
-        setLoadedState({ sessionUserId: currentUserId, posts: [] });
-      });
-    return () => {
-      active = false;
-    };
-  }, [authLoading, currentUserId, toast]);
-
-  const handleRefresh = React.useCallback(() => {
-    if (!currentUserId) return;
-    setRefreshing(true);
-    postsApi.getMyPosts()
-      .then((data) => {
-        setLoadedState({ sessionUserId: currentUserId, posts: data });
-      })
-      .catch(() => {
-        toast.show('Không thể tải danh sách bài đăng', 'error');
-      })
-      .finally(() => {
-        setRefreshing(false);
-      });
-  }, [currentUserId, toast]);
-
-  const handleClosePost = (post: MobilePostItem) => {
-    Alert.alert(
-      'Xác nhận đóng tin',
-      `Bạn có chắc chắn muốn đóng tin "${post.title}" không? Sau khi đóng, đối tác sẽ không thể gửi báo giá mới.`,
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Đóng tin',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setClosingId(post.postId);
-              await postsApi.close(post.postId);
-              toast.show('Đã đóng tin tuyển dụng thành công', 'success');
-              handleRefresh();
-            } catch (err: unknown) {
-              const msg = err instanceof Error ? err.message : 'Không thể đóng bài đăng';
-              toast.show(msg, 'error');
-            } finally {
-              setClosingId(null);
-            }
-          },
-        },
-      ]
-    );
+  const handleEndReached = () => {
+    if (posts.length < allPosts.length) {
+      setPage((prev) => prev + 1);
+    }
   };
+
+  const loading = authLoading || postsLoading;
 
   if (!authLoading && !session) {
     return (
@@ -114,10 +63,6 @@ export default function MyPostsScreen() {
       </ThemedView>
     );
   }
-
-  const totalCount = posts.length;
-  const closedCount = posts.filter((p) => p.status === 'CLOSED').length;
-  const openCount = totalCount - closedCount;
 
   return (
     <ThemedView style={styles.container}>
@@ -139,7 +84,7 @@ export default function MyPostsScreen() {
             ]}
           >
             <ThemedText style={[styles.statValue, { color: theme.text }]}>
-              {totalCount}
+              {stats.total}
             </ThemedText>
             <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>
               Tổng tin
@@ -151,8 +96,8 @@ export default function MyPostsScreen() {
               { backgroundColor: theme.surface, borderColor: theme.border },
             ]}
           >
-            <ThemedText style={[styles.statValue, { color: '#00732E' }]}>
-              {openCount}
+            <ThemedText style={[styles.statValue, { color: theme.primary }]}>
+              {stats.open}
             </ThemedText>
             <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>
               Đang mở
@@ -165,7 +110,7 @@ export default function MyPostsScreen() {
             ]}
           >
             <ThemedText style={[styles.statValue, { color: theme.textSecondary }]}>
-              {closedCount}
+              {stats.closed}
             </ThemedText>
             <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>
               Đã đóng
@@ -197,6 +142,8 @@ export default function MyPostsScreen() {
             initialNumToRender={6}
             removeClippedSubviews={Platform.OS === 'android'}
             keyboardDismissMode="on-drag"
+            onEndReached={handleEndReached}
+            onEndReachedThreshold={0.5}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}

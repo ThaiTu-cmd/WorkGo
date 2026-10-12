@@ -252,13 +252,17 @@ test("QA-AND-06: Android mobile screens and core components contracts", () => {
 
 test("QA-AND-07: Android ServiceCard execution type styling and currency formatting", () => {
   const cardSrc = read("src/components/service-card.tsx");
+  const execSrc = read("src/constants/exec-config.ts");
 
-  assert.match(cardSrc, /DIGITAL:\s*\{/, "Must support DIGITAL");
-  assert.match(cardSrc, /ONSITE:\s*\{/, "Must support ONSITE");
-  assert.match(cardSrc, /DELIVERY:\s*\{/, "Must support DELIVERY");
-  assert.match(cardSrc, /APPOINTMENT:\s*\{/, "Must support APPOINTMENT");
-  assert.match(cardSrc, /HOURLY:\s*\{/, "Must support HOURLY");
-  assert.match(cardSrc, /PROJECT:\s*\{/, "Must support PROJECT");
+  assert.match(execSrc, /DIGITAL:\s*\{/, "Must support DIGITAL");
+  assert.match(execSrc, /ONSITE:\s*\{/, "Must support ONSITE");
+  assert.match(execSrc, /DELIVERY:\s*\{/, "Must support DELIVERY");
+  assert.match(execSrc, /APPOINTMENT:\s*\{/, "Must support APPOINTMENT");
+  assert.match(execSrc, /HOURLY:\s*\{/, "Must support HOURLY");
+  assert.match(execSrc, /PROJECT:\s*\{/, "Must support PROJECT");
+
+  assert.match(cardSrc, /from\s+['"]@\/constants\/exec-config['"]/, "Must import from exec-config");
+  assert.match(cardSrc, /getExecStyle\s*\(/, "Must call getExecStyle for theme-aware badge styling");
 
   function formatVND(amount) {
     return new Intl.NumberFormat("vi-VN", {

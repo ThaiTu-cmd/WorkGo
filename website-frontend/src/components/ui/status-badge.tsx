@@ -20,13 +20,27 @@ export type StatusType =
   | "CLIENT"
   | "PROVIDER"
   | "ADMIN"
+  | "DIGITAL"
+  | "ONSITE"
+  | "DELIVERY"
+  | "APPOINTMENT"
   | string;
 
 export interface StatusBadgeProps {
   status: StatusType;
   label?: string;
   className?: string;
-  variant?: "success" | "warning" | "danger" | "info" | "secondary" | "default";
+  variant?:
+    | "success"
+    | "warning"
+    | "danger"
+    | "info"
+    | "secondary"
+    | "default"
+    | "execDigital"
+    | "execOnsite"
+    | "execDelivery"
+    | "execAppointment";
 }
 
 /**
@@ -71,6 +85,18 @@ export function StatusBadge({
       case "PROVIDER":
       case "ADMIN":
         resolvedVariant = "info";
+        break;
+      case "DIGITAL":
+        resolvedVariant = "execDigital";
+        break;
+      case "ONSITE":
+        resolvedVariant = "execOnsite";
+        break;
+      case "DELIVERY":
+        resolvedVariant = "execDelivery";
+        break;
+      case "APPOINTMENT":
+        resolvedVariant = "execAppointment";
         break;
       default:
         resolvedVariant = "secondary";

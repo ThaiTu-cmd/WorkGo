@@ -76,12 +76,13 @@ export const Spacing = {
   three: 16,
   four: 24,
   five: 32,
-  seven: 48,
-  six: 64,
+  six: 48,
+  seven: 64,
 } as const;
 
 export const Radius = { control: 10, card: 18, modal: 26, pill: 9999 } as const;
 export const HitSlop = { btnH: 48, tabH: 56 } as const;
+export const Elevation = { card: 2, modal: 8 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 /** Max content width for container centering (cross-platform with web 1400) */

@@ -15,6 +15,10 @@ const badgeVariants = cva(
         danger: "bg-danger/15 text-danger border border-danger/30 shadow-xs",
         info: "bg-info/15 text-info border border-info/30 shadow-xs",
         outline: "border border-border text-fg-secondary bg-surface/60 backdrop-blur-xs",
+        execDigital: "bg-[#E0F2FE] text-[#0369A1] border border-[#BAE6FD]",
+        execOnsite: "bg-[#FEF3C7] text-[#B45309] border border-[#FDE68A]",
+        execDelivery: "bg-[#DCFCE7] text-[#15803D] border border-[#BBF7D0]",
+        execAppointment: "bg-[#F3E8FF] text-[#7C3AED] border border-[#E9D5FF]",
       },
     },
     defaultVariants: {

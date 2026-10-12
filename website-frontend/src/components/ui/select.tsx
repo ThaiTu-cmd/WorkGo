@@ -18,7 +18,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-10 w-full items-center justify-between rounded-control border bg-surface px-3 py-2 text-base md:text-sm text-fg transition-colors placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 cursor-pointer",
+      "flex h-11 w-full items-center justify-between rounded-control border bg-surface px-3 py-2 text-base md:text-sm text-fg transition-colors placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 cursor-pointer",
       error
         ? "border-danger focus:ring-danger"
         : "border-border-strong focus:border-primary focus:ring-primary",

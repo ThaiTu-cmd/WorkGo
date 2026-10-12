@@ -133,3 +133,37 @@ export function cxGlass(
       return 'glass';
   }
 }
+
+/**
+ * Standard Trust Blue application tokens for marketplace views.
+ */
+export const WORKGO_APP_TOKENS = {
+  bgApp: '#F8FAFC',
+  bgSurface: '#FFFFFF',
+  bgMuted: '#F1F5F9',
+  borderDefault: '#E2E8F0',
+  borderStrong: '#CBD5E1',
+  textPrimary: '#0F172A',
+  textSecondary: '#475569',
+  textTertiary: '#94A3B8',
+  primary: '#2563EB',
+  primaryHover: '#1D4ED8',
+  primaryActive: '#1E40AF',
+  primarySubtle: '#EFF6FF',
+  success: '#15803D',
+  successBg: '#F0FDF4',
+  warning: '#B45309',
+  warningBg: '#FFFBEB',
+  danger: '#DC2626',
+  dangerBg: '#FEF2F2',
+  info: '#0284C7',
+  infoBg: '#F0F9FF',
+  execDigitalBg: '#E0F2FE',
+  execDigitalFg: '#0369A1',
+  execOnsiteBg: '#FEF3C7',
+  execOnsiteFg: '#B45309',
+  execDeliveryBg: '#DCFCE7',
+  execDeliveryFg: '#15803D',
+  execAppointmentBg: '#F3E8FF',
+  execAppointmentFg: '#7C3AED',
+} as const;

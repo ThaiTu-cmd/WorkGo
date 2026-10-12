@@ -58,6 +58,14 @@
   --glass-card-bg: rgba(6, 20, 47, 0.6);
   --glass-panel-bg: rgba(6, 20, 47, 0.75);
   --glass-dock-bg: rgba(3, 11, 28, 0.85);
+  --exec-digital-bg: #E0F2FE;
+  --exec-digital-fg: #0369A1;
+  --exec-onsite-bg: #FEF3C7;
+  --exec-onsite-fg: #B45309;
+  --exec-delivery-bg: #DCFCE7;
+  --exec-delivery-fg: #15803D;
+  --exec-appointment-bg: #F3E8FF;
+  --exec-appointment-fg: #7C3AED;
 }
 
 [data-theme="light"],
@@ -107,6 +115,14 @@
   --accent-mint-hover: #0B4DBB;
   --accent-mint-ink: #FFFFFF;
   --bg-deep-space: #F5F9FF;
+  --exec-digital-bg: #E0F2FE;
+  --exec-digital-fg: #0369A1;
+  --exec-onsite-bg: #FEF3C7;
+  --exec-onsite-fg: #B45309;
+  --exec-delivery-bg: #DCFCE7;
+  --exec-delivery-fg: #15803D;
+  --exec-appointment-bg: #F3E8FF;
+  --exec-appointment-fg: #7C3AED;
 }
 
 @theme inline {
@@ -140,6 +156,14 @@
   --color-danger-bg: var(--danger-bg);
   --color-info: var(--info);
   --color-info-bg: var(--info-bg);
+  --color-exec-digital-bg: var(--exec-digital-bg);
+  --color-exec-digital-fg: var(--exec-digital-fg);
+  --color-exec-onsite-bg: var(--exec-onsite-bg);
+  --color-exec-onsite-fg: var(--exec-onsite-fg);
+  --color-exec-delivery-bg: var(--exec-delivery-bg);
+  --color-exec-delivery-fg: var(--exec-delivery-fg);
+  --color-exec-appointment-bg: var(--exec-appointment-bg);
+  --color-exec-appointment-fg: var(--exec-appointment-fg);
   --font-sans: var(--font-be-vietnam-pro), Inter, system-ui, sans-serif;
   --radius-control: 10px;
   --radius-card: 18px;

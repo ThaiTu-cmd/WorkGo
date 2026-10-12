@@ -60,6 +60,7 @@ export function PostCard({ post, locale = "vi" }: PostCardProps) {
 
   const badgeVariant =
     EXECUTION_BADGE_VARIANTS[post.executionType] || "secondary";
+  void badgeVariant;
   const execLabel =
     EXECUTION_LABELS[post.executionType] || post.executionType;
 

@@ -1,14 +1,26 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Briefcase, ArrowRight } from "lucide-react";
+import { Briefcase, ArrowRight, Search } from "lucide-react";
 import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 import { LanguageSwitcher } from "./language-switcher";
 import { ThemeToggle } from "./theme-toggle";
 
 export function PublicHeader({ locale }: { locale: string }) {
   const t = useTranslations("common");
+  const router = useRouter();
+  const [searchVal, setSearchVal] = React.useState("");
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchVal.trim()) {
+      router.push(`/${locale}/posts?q=${encodeURIComponent(searchVal.trim())}`);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-surface/85 backdrop-blur-md shadow-sm h-16 transition-all duration-200">
@@ -43,6 +55,19 @@ export function PublicHeader({ locale }: { locale: string }) {
           </nav>
         </div>
 
+        {/* Center: Desktop Mini Search Bar */}
+        <div className="hidden lg:flex items-center flex-1 max-w-xs mx-6">
+          <form onSubmit={handleSearchSubmit} className="w-full">
+            <Input
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
+              placeholder={locale === "vi" ? "Tìm việc nhanh..." : "Quick search jobs..."}
+              className="h-9 pl-9 pr-3 text-xs rounded-full bg-muted/60 border-border"
+              prefixIcon={<Search className="h-3.5 w-3.5 text-fg-tertiary" />}
+            />
+          </form>
+        </div>
+
         {/* Right: Theme Toggle, Lang Switcher & Auth Buttons */}
         <div className="flex items-center gap-3">
           <ThemeToggle />
@@ -65,3 +90,5 @@ export function PublicHeader({ locale }: { locale: string }) {
     </header>
   );
 }
+
+export default PublicHeader;

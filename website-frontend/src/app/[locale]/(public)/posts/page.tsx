@@ -463,6 +463,38 @@ function PostsMarketplaceContent() {
               description="Không thể tải danh sách việc làm. Vui lòng kiểm tra lại kết nối và thử lại."
               onRetry={handleRetry}
             />
+          ) : posts.length === 0 ? (
+            <div>
+              <EmptyState
+                title={t("empty")}
+                description="Thử điều chỉnh hoặc xóa các điều kiện lọc để tìm kiếm các bài đăng việc làm khác."
+                action={
+                  hasActiveFilters ? (
+                    <Button variant="primary" onClick={handleClearFilters}>
+                      {tCommon("clearFilters")}
+                    </Button>
+                  ) : undefined
+                }
+              />
+              {featuredLabels.length > 0 && (
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                  <span className="text-xs text-fg-tertiary">{t("featuredLabel")}</span>
+                  {featuredLabels.map((label) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => {
+                        setSearchInput(label);
+                        updateQuery({ q: label, page: 1 });
+                      }}
+                      className="h-8 shrink-0 rounded-full border border-border bg-surface px-3 text-xs font-semibold text-fg-secondary hover:text-fg hover:border-border-strong transition-colors cursor-pointer"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : displayedPosts.length === 0 ? (
             <div>
               <EmptyState

@@ -127,10 +127,12 @@ test("C2-2 / SRCH-04: Web fiverr-search-form debounces query for suggestions wit
 
 test("C2-2 / SRCH-05: Mobile catalog.tsx uses useDebouncedValue and AbortController", () => {
   const src = readAndroid("src/app/catalog.tsx");
+  const hookSrc = existsAndroid("src/hooks/use-catalog-posts.ts") ? readAndroid("src/hooks/use-catalog-posts.ts") : "";
+  const combined = src + "\n" + hookSrc;
   assert.match(src, /useDebouncedValue/, "catalog.tsx must use useDebouncedValue hook");
-  assert.match(src, /AbortController/, "catalog.tsx must instantiate AbortController");
-  assert.match(src, /signal:\s*(?:controller|c)\.signal/, "catalog.tsx must forward signal to postsApi.list");
-  assert.match(src, /(?:controller|c)\.abort\(\)/, "catalog.tsx must abort previous request on cleanup");
+  assert.match(combined, /AbortController/, "catalog.tsx / useCatalogPosts must instantiate AbortController");
+  assert.match(combined, /signal:\s*(?:controller|c)\.signal/, "catalog.tsx / useCatalogPosts must forward signal to postsApi.list");
+  assert.match(combined, /(?:controller|c)\.abort\(\)/, "catalog.tsx / useCatalogPosts must abort previous request on cleanup");
 });
 
 test("C2-2 / SRCH-06: Mobile posts.ts passes signal to apiFetch and throws errors", () => {

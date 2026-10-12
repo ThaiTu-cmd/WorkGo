@@ -219,7 +219,7 @@ export function PostCard({ post, locale = "vi", userId = "guest" }: PostCardProp
                   {post.client.name}
                 </span>
                 <ShieldCheck
-                  className="h-3.5 w-3.5 text-success dark:text-emerald-400 shrink-0"
+                  className="h-3.5 w-3.5 text-[#00732E] dark:text-emerald-400 shrink-0"
                   aria-label="Đối tác đã xác minh"
                 />
               </div>

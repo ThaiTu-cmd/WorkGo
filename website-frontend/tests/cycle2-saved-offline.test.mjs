@@ -61,15 +61,19 @@ test("C2-9 / SAVED-04: Mobile (tabs)/saved.tsx renders EmptyState with 'Chưa l�
 test("C2-9 / MYPOST-01: Mobile (tabs)/my-posts.tsx calls getMyPosts and close", () => {
   assert.ok(existsAndroid("src/app/(tabs)/my-posts.tsx"), "src/app/(tabs)/my-posts.tsx must exist");
   const src = readAndroid("src/app/(tabs)/my-posts.tsx");
-  assert.match(src, /postsApi\s*\.\s*getMyPosts/, "Must call getMyPosts");
-  assert.match(src, /postsApi\s*\.\s*close/, "Must call postsApi.close");
+  const hookSrc = existsAndroid("src/hooks/use-my-posts.ts") ? readAndroid("src/hooks/use-my-posts.ts") : "";
+  const combined = src + "\n" + hookSrc;
+  assert.match(combined, /postsApi\s*\.\s*getMyPosts/, "Must call getMyPosts");
+  assert.match(combined, /postsApi\s*\.\s*close/, "Must call postsApi.close");
   assert.match(src, /formatVND/, "Must use formatVND");
 });
 
 test("C2-9 / MYPOST-02: Mobile (tabs)/my-posts.tsx prompts confirm before closing post", () => {
   const src = readAndroid("src/app/(tabs)/my-posts.tsx");
-  assert.match(src, /Alert\.alert/, "Must prompt confirmation alert");
-  assert.match(src, /Xác nhận đóng tin/, "Alert title must be 'Xác nhận đóng tin'");
+  const hookSrc = existsAndroid("src/hooks/use-my-posts.ts") ? readAndroid("src/hooks/use-my-posts.ts") : "";
+  const combined = src + "\n" + hookSrc;
+  assert.match(combined, /Alert\.alert/, "Must prompt confirmation alert");
+  assert.match(combined, /Xác nhận đóng tin/, "Alert title must be 'Xác nhận đóng tin'");
 });
 
 test("C2-9 / MYPOST-03: Mobile (tabs)/_layout.tsx configures saved and my-posts tabs", () => {

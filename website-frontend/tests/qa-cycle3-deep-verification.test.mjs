@@ -7,9 +7,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ANDROID_ROOT = path.resolve(ROOT, "../android-frontend");
 const readAndroid = (p) => fs.readFileSync(path.join(ANDROID_ROOT, p), "utf-8");
-const existsAndroid = (p) => fs.existsSync(path.join(ANDROID_ROOT, p));
 const readWeb = (p) => fs.readFileSync(path.join(ROOT, p), "utf-8");
-const existsWeb = (p) => fs.existsSync(path.join(ROOT, p));
 
 // ========================================================
 // QA-C3-01: IDEMPOTENCY KEY GENERATION & FORWARDING CONTRACT

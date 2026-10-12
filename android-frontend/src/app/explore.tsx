@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -122,6 +123,7 @@ export default function ExploreScreen() {
             </ThemedText>
             <PressableScale
               style={[styles.ctaButton, { backgroundColor: theme.primary }]}
+              onPress={() => router.push('/catalog')}
             >
               <ThemedText style={styles.ctaButtonText}>Đăng việc ngay</ThemedText>
             </PressableScale>

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { EntranceView } from '@/components/entrance-view';
@@ -75,12 +76,17 @@ export default function HomeScreen() {
                 Danh mục nổi bật
               </ThemedText>
             </View>
-            <HomeCategories items={CATEGORIES} />
+            <HomeCategories
+              items={CATEGORIES}
+              onSelectCategory={(cat) =>
+                router.push({ pathname: '/catalog', params: { q: cat.title } })
+              }
+            />
           </EntranceView>
 
           {/* Featured Action Card */}
           <EntranceView delay={240}>
-            <HomeExploreCard />
+            <HomeExploreCard onCtaPress={() => router.push('/catalog')} />
           </EntranceView>
         </ScrollView>
       </SafeAreaView>

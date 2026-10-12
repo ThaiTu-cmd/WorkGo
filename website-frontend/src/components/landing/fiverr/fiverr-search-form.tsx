@@ -73,9 +73,19 @@ export function FiverrSearchForm({
     clearHistoryLabel ?? (locale === "vi" ? "Xóa lịch sử" : "Clear history");
   const resultsCountTemplate = locale === "vi" ? "Tìm thấy {n} gợi ý" : "{n} suggestions found";
 
+  const [debouncedQuery, setDebouncedQuery] = React.useState(query);
+  React.useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 300);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [query]);
+
   const { filteredRecents, filteredTrending, flatList } = React.useMemo(() => {
     const allTrending = getFiverrContent(locale).trending.items.slice(0, 6);
-    const nq = query.trim().toLowerCase();
+    const nq = debouncedQuery.trim().toLowerCase();
     const r = nq
       ? recents.filter((s) => s.toLowerCase().includes(nq)).slice(0, 5)
       : recents.slice(0, 5);
@@ -87,7 +97,7 @@ export function FiverrSearchForm({
       filteredTrending: trendingSlice,
       flatList: [...r, ...trendingSlice],
     };
-  }, [query, locale, recents]);
+  }, [debouncedQuery, locale, recents]);
 
   const onSelectSuggestion = (val: string) => {
     const q = sanitizeSearchQuery(val);

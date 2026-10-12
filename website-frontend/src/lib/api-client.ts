@@ -57,6 +57,7 @@ export type ApiFetchOptions = {
   token?: string;
   baseUrl?: string;
   _isRetry?: boolean;
+  signal?: AbortSignal;
 };
 
 export async function apiFetch<T>(
@@ -72,6 +73,7 @@ export async function apiFetch<T>(
     token,
     baseUrl = API_BASE_URL,
     _isRetry = false,
+    signal,
   } = options;
 
   const reqHeaders: Record<string, string> = {
@@ -126,8 +128,18 @@ export async function apiFetch<T>(
       body: body instanceof FormData ? body : body !== undefined ? JSON.stringify(body) : undefined,
       cache,
       credentials: credentialsMode,
+      signal,
     });
   } catch (err) {
+    if (err && typeof err === "object" && (err as { name?: string }).name === "AbortError") {
+      throw new ApiError(
+        "ABORTED",
+        "Yêu cầu đã bị hủy.",
+        "Request was aborted.",
+        0,
+        err
+      );
+    }
     throw new ApiError(
       "NETWORK_ERROR",
       "Không thể kết nối máy chủ.",

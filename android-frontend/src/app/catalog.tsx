@@ -19,6 +19,7 @@ import { catalogApi, type MobileCategory } from '@/api/catalog';
 import { postsApi, type MobilePostItem } from '@/api/posts';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
 
 const FEATURED_CHIPS = ['Thiết kế Logo', 'Lập trình Web', 'Dịch thuật Anh - Việt'];
 
@@ -27,6 +28,7 @@ export default function CatalogScreen() {
   const params = useLocalSearchParams<{ q?: string; category?: string }>();
 
   const [query, setQuery] = React.useState<string>(params.q ?? '');
+  const debouncedQuery = useDebouncedValue(query, 300);
   const [selectedExecType, setSelectedExecType] = React.useState<ExecutionTypeChip>('ALL');
   const [filters, setFilters] = React.useState<FilterState>({
     category: params.category,
@@ -84,6 +86,7 @@ export default function CatalogScreen() {
   // Fetch when filters or query changes
   React.useEffect(() => {
     let active = true;
+    const controller = new AbortController();
 
     // Trigger filtering asynchronously to avoid synchronous effect setState
     Promise.resolve().then(() => {
@@ -98,15 +101,18 @@ export default function CatalogScreen() {
           : undefined;
 
     postsApi
-      .list({
-        q: query.trim() || undefined,
-        category: filters.category,
-        executionType: resolvedExecType,
-        budgetMin: filters.budgetMin,
-        budgetMax: filters.budgetMax,
-        page: 1,
-        limit: 10,
-      })
+      .list(
+        {
+          q: debouncedQuery.trim() || undefined,
+          category: filters.category,
+          executionType: resolvedExecType,
+          budgetMin: filters.budgetMin,
+          budgetMax: filters.budgetMax,
+          page: 1,
+          limit: 10,
+        },
+        { signal: controller.signal }
+      )
       .then((res) => {
         if (active) {
           setPosts(res.data);
@@ -116,11 +122,18 @@ export default function CatalogScreen() {
         }
       })
       .catch((err: unknown) => {
-        if (active) {
-          setError(
-            err instanceof Error ? err.message : 'Không thể kết nối đến máy chủ WorkGo'
-          );
+        if (!active) return;
+        if (
+          err &&
+          typeof err === 'object' &&
+          ((err as { code?: string }).code === 'ABORTED' ||
+            (err as { name?: string }).name === 'AbortError')
+        ) {
+          return;
         }
+        setError(
+          err instanceof Error ? err.message : 'Không thể kết nối đến máy chủ WorkGo'
+        );
       })
       .finally(() => {
         if (active) {
@@ -132,8 +145,9 @@ export default function CatalogScreen() {
 
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [query, selectedExecType, filters]);
+  }, [debouncedQuery, selectedExecType, filters]);
 
   const handleRefresh = React.useCallback(() => {
     setRefreshing(true);

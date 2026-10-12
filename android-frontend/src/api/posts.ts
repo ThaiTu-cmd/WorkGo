@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch, ApiError } from './client';
 
 export type ExecutionType =
   | 'DIGITAL'
@@ -103,11 +103,15 @@ function toQuery(f: MobilePostFilters): string {
 }
 
 export const postsApi = {
-  async list(filters: MobilePostFilters = {}): Promise<MobilePage<MobilePostItem>> {
+  async list(
+    filters: MobilePostFilters = {},
+    opts?: { signal?: AbortSignal }
+  ): Promise<MobilePage<MobilePostItem>> {
     try {
       const qs = toQuery(filters);
       const res = await apiFetch<Envelope<SpringPageResponse<MobilePostItem>> | SpringPageResponse<MobilePostItem>>(
-        `/api/v1/posts${qs ? `?${qs}` : ''}`
+        `/api/v1/posts${qs ? `?${qs}` : ''}`,
+        { signal: opts?.signal }
       );
       const page = unwrap(res);
       const rawItems = page?.content || page?.data || [];
@@ -124,17 +128,19 @@ export const postsApi = {
           totalPages,
         },
       };
-    } catch {
-      // Return truthful empty page on missing backend / 404 / network
-      return {
-        data: [],
-        meta: {
-          page: filters.page ?? 1,
-          size: filters.limit ?? 10,
-          total: 0,
-          totalPages: 0,
-        },
-      };
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 404) {
+        return {
+          data: [],
+          meta: {
+            page: filters.page ?? 1,
+            size: filters.limit ?? 10,
+            total: 0,
+            totalPages: 0,
+          },
+        };
+      }
+      throw err;
     }
   },
 

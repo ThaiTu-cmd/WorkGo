@@ -90,5 +90,52 @@ test("C2-1 / PROP-04: detail.tsx wires ProposalSheet and hasApplied state check"
   const src = readAndroid("src/app/detail.tsx");
   assert.match(src, /proposalsApi\.hasApplied/, "detail.tsx must check hasApplied on mount");
   assert.match(src, /ProposalSheet/, "detail.tsx must render ProposalSheet");
-  assert.match(src, /setSheetOpen|sheetVisible/, "detail.tsx must control ProposalSheet visibility");
+  assert.match(src, /setSheetVisible|sheetVisible/, "detail.tsx must control ProposalSheet visibility");
 });
+
+// ==========================================
+// C2-2: SEARCH DEBOUNCE & ABORT CONTROLLER
+// ==========================================
+
+test("C2-2 / SRCH-01: use-debounced-value.ts exists and exposes debounceValue and useDebouncedValue", () => {
+  const file = "src/hooks/use-debounced-value.ts";
+  assert.ok(existsAndroid(file), "use-debounced-value.ts must exist");
+  const src = readAndroid(file);
+
+  assert.match(src, /export\s+function\s+debounceValue/, "Must export debounceValue promise core");
+  assert.match(src, /export\s+function\s+useDebouncedValue/, "Must export useDebouncedValue hook");
+  assert.match(src, /delay\s*=\s*300/, "Default delay must be 300ms");
+});
+
+test("C2-2 / SRCH-02: Web api-client.ts supports signal and handles AbortError with code ABORTED", () => {
+  const src = readWeb("src/lib/api-client.ts");
+  assert.match(src, /signal\?:?\s*AbortSignal/, "ApiFetchOptions must include optional signal");
+  assert.match(src, /signal[,:\s]/, "fetch must receive signal");
+  assert.match(src, /['"]ABORTED['"]/, "Must map AbortError to ApiError code ABORTED");
+});
+
+test("C2-2 / SRCH-03: Web posts adapter passes signal to apiFetch", () => {
+  const src = readWeb("src/lib/adapters/posts.ts");
+  assert.match(src, /signal/, "postsApi.list must accept or forward signal options");
+});
+
+test("C2-2 / SRCH-04: Web fiverr-search-form debounces query for suggestions with 300ms", () => {
+  const src = readWeb("src/components/landing/fiverr/fiverr-search-form.tsx");
+  assert.match(src, /300/, "Search form must use 300ms debounce delay for suggestions");
+  assert.match(src, /sanitizeSearchQuery/, "submitSearch must sanitize and submit query immediately");
+});
+
+test("C2-2 / SRCH-05: Mobile catalog.tsx uses useDebouncedValue and AbortController", () => {
+  const src = readAndroid("src/app/catalog.tsx");
+  assert.match(src, /useDebouncedValue/, "catalog.tsx must use useDebouncedValue hook");
+  assert.match(src, /AbortController/, "catalog.tsx must instantiate AbortController");
+  assert.match(src, /signal:\s*(?:controller|c)\.signal/, "catalog.tsx must forward signal to postsApi.list");
+  assert.match(src, /(?:controller|c)\.abort\(\)/, "catalog.tsx must abort previous request on cleanup");
+});
+
+test("C2-2 / SRCH-06: Mobile posts.ts passes signal to apiFetch and throws errors", () => {
+  const src = readAndroid("src/api/posts.ts");
+  assert.match(src, /signal\?:?\s*AbortSignal/, "Mobile postsApi.list must accept signal option");
+  assert.match(src, /signal/, "Mobile postsApi.list must forward signal to apiFetch");
+});
+

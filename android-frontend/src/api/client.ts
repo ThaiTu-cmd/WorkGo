@@ -116,6 +116,7 @@ export async function apiFetch<T>(
     idempotencyKey?: string;
     timeoutMs?: number;
     retryCount?: number;
+    signal?: AbortSignal;
   } = {}
 ): Promise<T> {
   const {
@@ -124,6 +125,7 @@ export async function apiFetch<T>(
     idempotencyKey,
     timeoutMs = 8000,
     retryCount = 0,
+    signal,
   } = opts;
 
   const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
@@ -143,6 +145,14 @@ export async function apiFetch<T>(
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  if (signal) {
+    if (signal.aborted) {
+      controller.abort();
+    } else {
+      signal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
+  }
 
   try {
     const res = await fetch(url, {
@@ -186,6 +196,9 @@ export async function apiFetch<T>(
     return json.result;
   } catch (err: unknown) {
     clearTimeout(timeoutId);
+    if (signal?.aborted) {
+      throw new ApiError('ABORTED', 'Yêu cầu đã bị hủy.', 0);
+    }
     if (err instanceof ApiError) {
       throw err;
     }

@@ -68,8 +68,11 @@ function unwrap<T>(res: Envelope<T> | T): T {
 }
 
 export const postsApi = {
-  async list(filters: PostFilters = {}, token?: string): Promise<Page<PostItem>> {
-    const res = await apiFetch<Envelope<SpringPageResponse<PostItem>> | SpringPageResponse<PostItem>>(backendRoutes.posts.list(toQuery(filters)), { token });
+  async list(filters: PostFilters = {}, token?: string, opts?: { signal?: AbortSignal }): Promise<Page<PostItem>> {
+    const res = await apiFetch<Envelope<SpringPageResponse<PostItem>> | SpringPageResponse<PostItem>>(
+      backendRoutes.posts.list(toQuery(filters)),
+      { token, signal: opts?.signal }
+    );
     const page = unwrap(res);
     const normalized = normalizeSpringPage(page);
     return { data: normalized.data, meta: { ...normalized.meta, page: normalized.meta.page + 1 } };

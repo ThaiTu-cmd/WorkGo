@@ -1,0 +1,241 @@
+.card {
+  background-color: var(--wg-surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--wg-border);
+  box-shadow: var(--shadow-card);
+  transition: all var(--transition-base);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: #d1d5db;
+}
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 60%;
+  overflow: hidden;
+  background-color: var(--wg-border-light);
+}
+
+.coverImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-smooth);
+}
+
+.card:hover .coverImage {
+  transform: scale(1.05);
+}
+
+.imageOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.typeBadge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.badgeDigital {
+  background-color: var(--badge-digital-bg);
+  color: var(--badge-digital-text);
+  border: 1px solid var(--badge-digital-border);
+}
+
+.badgeOnsite {
+  background-color: var(--badge-onsite-bg);
+  color: var(--badge-onsite-text);
+  border: 1px solid var(--badge-onsite-border);
+}
+
+.badgeDelivery {
+  background-color: var(--badge-delivery-bg);
+  color: var(--badge-delivery-text);
+  border: 1px solid var(--badge-delivery-border);
+}
+
+.badgeAppointment {
+  background-color: var(--badge-appointment-bg);
+  color: var(--badge-appointment-text);
+  border: 1px solid var(--badge-appointment-border);
+}
+
+.favoriteBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(4px);
+  transition: all var(--transition-fast);
+}
+
+.favoriteBtn:hover {
+  background: rgba(0, 0, 0, 0.5);
+  transform: scale(1.1);
+}
+
+.favoriteActive {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+.cardContent {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.providerRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 1px solid var(--wg-border);
+}
+
+.providerInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.providerNameWrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.providerName {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--wg-text);
+}
+
+.verifiedIcon {
+  color: var(--wg-primary);
+}
+
+.providerLevel {
+  font-size: 0.75rem;
+  color: var(--wg-text-secondary);
+}
+
+.serviceTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--wg-text);
+  margin-bottom: 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 2.8em;
+  transition: color var(--transition-fast);
+}
+
+.card:hover .serviceTitle {
+  color: var(--wg-primary);
+}
+
+.ratingRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.875rem;
+  margin-bottom: 14px;
+}
+
+.starIcon {
+  color: var(--wg-star);
+}
+
+.ratingScore {
+  font-weight: 700;
+  color: var(--wg-text);
+}
+
+.reviewCount {
+  color: var(--wg-text-muted);
+}
+
+.cardDivider {
+  height: 1px;
+  background-color: var(--wg-border-light);
+  margin-top: auto;
+  margin-bottom: 12px;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.deliveryBadge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: var(--wg-text-secondary);
+  background-color: var(--wg-surface-alt);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.priceContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.priceLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--wg-text-muted);
+  font-weight: 600;
+}
+
+.priceValue {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--wg-text);
+  font-family: var(--font-heading);
+}

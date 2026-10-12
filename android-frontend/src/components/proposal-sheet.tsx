@@ -16,20 +16,26 @@ import { Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { hapticFeedback } from '@/utils/haptics';
 import { formatVND } from '@/utils/format';
+import { pickAttachment, type SelectedAttachment } from '@/utils/attachment';
+import { loadDraft, saveDraft, clearDraft } from '@/store/proposal-draft';
 
 export interface ProposalSheetProps {
   visible: boolean;
   postId: string;
+  userId?: string;
   budgetMax?: number;
   hasApplied: boolean;
   isProvider: boolean;
   submitting: boolean;
   error?: string | null;
   onClose: () => void;
-  onSubmit: (input: MobileProposalInput) => void;
+  onSubmit: (input: MobileProposalInput, opts?: { idempotencyKey?: string }) => void | Promise<void>;
 }
 
 function ProposalSheetModalContent({
+  visible,
+  postId,
+  userId,
   budgetMax,
   hasApplied,
   isProvider,
@@ -40,12 +46,64 @@ function ProposalSheetModalContent({
 }: ProposalSheetProps) {
   const theme = useTheme();
 
+  const submittingRef = React.useRef(false);
+  const idempotencyKeyRef = React.useRef<string | null>(null);
+
   const [price, setPrice] = React.useState('');
   const [days, setDays] = React.useState('');
   const [message, setMessage] = React.useState('');
   const [validationError, setValidationError] = React.useState<string | null>(null);
+  const [attachment, setAttachment] = React.useState<SelectedAttachment | null>(null);
+  const [attachmentError, setAttachmentError] = React.useState<string | null>(null);
 
-  const handleSubmit = () => {
+  // Load draft on mount / visible
+  React.useEffect(() => {
+    let active = true;
+    if (visible && postId) {
+      loadDraft(userId, postId).then((draft) => {
+        if (!active || !draft) return;
+        if (draft.price !== undefined) setPrice(String(draft.price));
+        if (draft.estimatedDays !== undefined) setDays(String(draft.estimatedDays));
+        if (draft.message !== undefined) setMessage(draft.message);
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [visible, postId, userId]);
+
+  // Debounced auto-save draft
+  React.useEffect(() => {
+    if (!visible) return;
+    const timer = setTimeout(() => {
+      if (price || days || message) {
+        void saveDraft(userId, postId, {
+          price: price ? Number(price) : undefined,
+          estimatedDays: days ? Number(days) : undefined,
+          message,
+        });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [price, days, message, visible, postId, userId]);
+
+  const handlePickFile = async () => {
+    setAttachmentError(null);
+    const res = await pickAttachment();
+    if (res.canceled) return;
+    if (!res.success) {
+      setAttachmentError(res.error ?? 'Không thể tải tệp lên.');
+      return;
+    }
+    if (res.file) {
+      setAttachment(res.file);
+    }
+  };
+
+  const handleSubmit = async () => {
+    // Synchronous lock to prevent double-tap submissions
+    if (submittingRef.current || submitting) return;
+
     setValidationError(null);
 
     if (!isProvider) {
@@ -86,11 +144,33 @@ function ProposalSheetModalContent({
       return;
     }
 
-    onSubmit({
-      price: numPrice,
-      estimatedDays: numDays,
-      message: message.trim(),
-    });
+    // Generate or reuse idempotency key for this submission attempt
+    if (!idempotencyKeyRef.current) {
+      idempotencyKeyRef.current =
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}-${postId}`;
+    }
+
+    submittingRef.current = true;
+    try {
+      await onSubmit(
+        {
+          price: numPrice,
+          estimatedDays: numDays,
+          message: message.trim(),
+        },
+        { idempotencyKey: idempotencyKeyRef.current }
+      );
+      // Reset idempotency key and clear draft on successful submission
+      idempotencyKeyRef.current = null;
+      await clearDraft(userId, postId);
+      await hapticFeedback.success();
+    } catch {
+      // Keep draft & preserve idempotency key for retry
+    } finally {
+      submittingRef.current = false;
+    }
   };
 
   const activeError = validationError || error;
@@ -241,6 +321,53 @@ function ProposalSheetModalContent({
               <ThemedText style={[styles.charCount, { color: theme.textSecondary }]}>
                 {message.trim().length}/20 ký tự
               </ThemedText>
+            </View>
+
+            {/* Field: Attachment */}
+            <View style={styles.field}>
+              <ThemedText style={styles.label}>
+                Tài liệu đính kèm (CV, hồ sơ năng lực - PDF, JPG, PNG ≤10MB)
+              </ThemedText>
+              {attachment ? (
+                <View
+                  style={[
+                    styles.attachmentBox,
+                    { borderColor: theme.border, backgroundColor: theme.backgroundElement },
+                  ]}
+                >
+                  <ThemedText style={[styles.attachmentName, { color: theme.text }]} numberOfLines={1}>
+                    📎 {attachment.name}
+                  </ThemedText>
+                  <PressableScale
+                    accessibilityRole="button"
+                    accessibilityLabel="Xóa tệp đính kèm"
+                    onPress={() => setAttachment(null)}
+                    style={styles.attachmentRemoveBtn}
+                  >
+                    <ThemedText style={{ color: '#DC2626', fontSize: 13, fontWeight: '600' }}>
+                      Xóa
+                    </ThemedText>
+                  </PressableScale>
+                </View>
+              ) : (
+                <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel="Chọn tệp đính kèm"
+                  onPress={handlePickFile}
+                  disabled={hasApplied || !isProvider || submitting}
+                  style={[
+                    styles.attachPickBtn,
+                    { borderColor: theme.border, backgroundColor: theme.backgroundElement },
+                  ]}
+                >
+                  <ThemedText style={[styles.attachPickBtnText, { color: theme.primary }]}>
+                    + Chọn tệp (PDF/JPG/PNG)
+                  </ThemedText>
+                </PressableScale>
+              )}
+              {attachmentError && (
+                <ThemedText style={styles.attachmentErrorText}>{attachmentError}</ThemedText>
+              )}
             </View>
           </ScrollView>
 
@@ -417,6 +544,41 @@ const styles = StyleSheet.create({
   charCount: {
     fontSize: 12,
     textAlign: 'right',
+  },
+  attachmentBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Spacing.three,
+    borderRadius: Radius.control,
+    borderWidth: 1,
+  },
+  attachmentName: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+    marginRight: Spacing.two,
+  },
+  attachmentRemoveBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  attachPickBtn: {
+    height: 44,
+    borderRadius: Radius.control,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  attachPickBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  attachmentErrorText: {
+    color: '#DC2626',
+    fontSize: 12,
+    marginTop: 4,
   },
   footer: {
     flexDirection: 'row',

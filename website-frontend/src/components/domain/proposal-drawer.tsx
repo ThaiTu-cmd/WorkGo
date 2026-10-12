@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { proposalSchema, type ProposalFormData } from "@/lib/schemas/proposal";
 import { proposalsApi, type ProposalItem } from "@/lib/adapters/proposals";
 import type { PostItem } from "@/lib/adapters/posts";
+import { loadDraft, saveDraft, clearDraft } from "@/lib/proposal-draft";
 import {
   Drawer,
   DrawerContent,
@@ -27,6 +28,7 @@ export interface ProposalDrawerProps {
   onOpenChange: (open: boolean) => void;
   onSuccess?: (created: ProposalItem) => void;
   locale?: string;
+  userId?: string;
 }
 
 export function ProposalDrawer({
@@ -35,16 +37,22 @@ export function ProposalDrawer({
   onOpenChange,
   onSuccess,
   locale = "vi",
+  userId,
 }: ProposalDrawerProps) {
   const t = useTranslations("proposal");
   const tCommon = useTranslations("common");
   const tVal = useTranslations("validation");
   const { toast } = useToast();
 
+  const submittingRef = React.useRef(false);
+  const [selectedFile, setSelectedFile] = React.useState<{ name: string; size: number } | null>(null);
+  const [attachmentError, setAttachmentError] = React.useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
     reset,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<ProposalFormData>({
     resolver: zodResolver(proposalSchema),
@@ -56,24 +64,79 @@ export function ProposalDrawer({
     },
   });
 
-  const onSubmit = async (data: ProposalFormData) => {
-    try {
-      const created = await proposalsApi.submit(post.postId, data);
-      toast({
-        type: "success",
-        title: t("submitSuccess"),
-        description: "Khách hàng sẽ nhận được thông báo về đề xuất của bạn.",
-      });
-      reset();
-      onOpenChange(false);
-      onSuccess?.(created);
-    } catch {
-      toast({
-        type: "error",
-        title: "Không thể gửi đề xuất",
-        description: "Vui lòng kiểm tra lại thông tin và thử lại.",
+  const saveTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleFormChange = () => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      const values = getValues();
+      if (
+        values.price !== undefined ||
+        values.message ||
+        values.terms ||
+        values.estimatedDays !== undefined
+      ) {
+        saveDraft(userId, post.postId, {
+          price: values.price,
+          estimatedDays: values.estimatedDays,
+          message: values.message,
+          terms: values.terms,
+        });
+      }
+    }, 300);
+  };
+
+  // Prefill from draft on open
+  React.useEffect(() => {
+    if (open) {
+      Promise.resolve().then(() => {
+        const draft = loadDraft(userId, post.postId);
+        if (draft) {
+          reset({
+            price: draft.price ?? post.budgetMin,
+            estimatedDays: draft.estimatedDays ?? 7,
+            message: draft.message ?? "",
+            terms: draft.terms ?? "",
+          });
+        }
       });
     }
+  }, [open, post.postId, post.budgetMin, reset, userId]);
+
+  React.useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
+
+  const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (submittingRef.current) return;
+
+    void handleSubmit(async (data: ProposalFormData) => {
+      submittingRef.current = true;
+      try {
+        const created = await proposalsApi.submit(post.postId, data);
+        toast({
+          type: "success",
+          title: t("submitSuccess"),
+          description: "Khách hàng sẽ nhận được thông báo về đề xuất của bạn.",
+        });
+        clearDraft(userId, post.postId);
+        setSelectedFile(null);
+        reset();
+        onOpenChange(false);
+        onSuccess?.(created);
+      } catch {
+        toast({
+          type: "error",
+          title: "Không thể gửi đề xuất",
+          description: "Vui lòng kiểm tra lại thông tin và thử lại.",
+        });
+      } finally {
+        submittingRef.current = false;
+      }
+    })(e);
   };
 
   return (
@@ -103,7 +166,7 @@ export function ProposalDrawer({
           </div>
 
           {/* Form */}
-          <form id="proposal-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form id="proposal-form" onSubmit={onFormSubmit} onChange={handleFormChange} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field
                 label={t("price")}
@@ -163,6 +226,58 @@ export function ProposalDrawer({
                 className="min-h-[80px]"
               />
             </Field>
+
+            {/* Attachment slot */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-fg">
+                Tài liệu đính kèm (CV, hồ sơ năng lực - PDF, JPG, PNG tối đa 10MB)
+              </label>
+              {selectedFile ? (
+                <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-muted/40 text-sm">
+                  <span className="truncate max-w-[200px] text-fg font-medium">{selectedFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFile(null)}
+                    className="text-xs text-error hover:underline ml-2"
+                  >
+                    Xóa
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    id="proposal-attachment"
+                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                    className="hidden"
+                    onChange={(e) => {
+                      setAttachmentError(null);
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const allowed = ["application/pdf", "image/jpeg", "image/png"];
+                      if (!allowed.includes(file.type)) {
+                        setAttachmentError("Chỉ chấp nhận tệp định dạng PDF, JPG hoặc PNG.");
+                        return;
+                      }
+                      if (file.size > 10 * 1024 * 1024) {
+                        setAttachmentError("Kích thước tệp vượt quá giới hạn 10MB.");
+                        return;
+                      }
+                      setSelectedFile({ name: file.name, size: file.size });
+                    }}
+                  />
+                  <label
+                    htmlFor="proposal-attachment"
+                    className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-surface hover:bg-muted text-fg transition-colors"
+                  >
+                    <span>📎 Chọn tệp</span>
+                  </label>
+                </div>
+              )}
+              {attachmentError && (
+                <p className="text-xs text-error">{attachmentError}</p>
+              )}
+            </div>
 
             <div className="pt-4 border-t border-border flex items-center justify-end gap-2">
               <Button

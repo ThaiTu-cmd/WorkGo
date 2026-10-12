@@ -93,12 +93,15 @@ export default function DetailScreen() {
     setSheetVisible(true);
   };
 
-  const handleProposalSubmit = async (input: MobileProposalInput) => {
+  const handleProposalSubmit = async (
+    input: MobileProposalInput,
+    opts?: { idempotencyKey?: string }
+  ) => {
     if (!id) return;
     try {
       setSubmitting(true);
       setProposalError(null);
-      await proposalsApi.submit(id, input);
+      await proposalsApi.submit(id, input, opts);
       setApplied(true);
       setHasApplied(true);
       setSheetVisible(false);
@@ -112,6 +115,7 @@ export default function DetailScreen() {
       }
       setProposalError(errMsg);
       toast.show(errMsg, 'error');
+      throw err;
     } finally {
       setSubmitting(false);
     }
@@ -359,6 +363,7 @@ export default function DetailScreen() {
           <ProposalSheet
             visible={sheetVisible}
             postId={post.postId}
+            userId={session?.userId}
             budgetMax={post.budgetMax}
             hasApplied={hasApplied || applied}
             isProvider={session?.role === 'PROVIDER'}

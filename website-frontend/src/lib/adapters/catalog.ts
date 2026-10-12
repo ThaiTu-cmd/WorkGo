@@ -41,8 +41,19 @@ export function mapBackendCategory(raw: BackendCategoryResponse): CategoryItem {
   };
 }
 
+export const CATEGORY_CACHE_TTL_MS = 5 * 60 * 1000;
+let categoryCache: { data: CategoryItem[]; ts: number } | null = null;
+
+export function clearCategoryCache(): void {
+  categoryCache = null;
+}
+
 export const catalogApi = {
   async getCategories(): Promise<CategoryItem[]> {
+    if (categoryCache && Date.now() - categoryCache.ts < CATEGORY_CACHE_TTL_MS) {
+      return categoryCache.data;
+    }
+
     try {
       // Call through BFF proxy route without cross-origin port 8082
       const res = await apiFetch<{
@@ -63,10 +74,9 @@ export const catalogApi = {
         items = res;
       }
 
-      if (items.length > 0) {
-        return items.map(mapBackendCategory);
-      }
-      return CATALOG_OFFLINE_FALLBACK;
+      const result = items.length > 0 ? items.map(mapBackendCategory) : CATALOG_OFFLINE_FALLBACK;
+      categoryCache = { data: result, ts: Date.now() };
+      return result;
     } catch {
       // Fallback gracefully when catalog service is offline or not reachable
       return CATALOG_OFFLINE_FALLBACK;

@@ -139,3 +139,20 @@ test("C2-2 / SRCH-06: Mobile posts.ts passes signal to apiFetch and throws error
   assert.match(src, /signal/, "Mobile postsApi.list must forward signal to apiFetch");
 });
 
+// ==========================================
+// C2-7: CATEGORY CACHE TTL 5 MINUTES
+// ==========================================
+
+test("C2-7 / CACHE-01: Web adapters catalog.ts has CATEGORY_CACHE_TTL_MS and clearCategoryCache", () => {
+  const src = readWeb("src/lib/adapters/catalog.ts");
+  assert.match(src, /CATEGORY_CACHE_TTL_MS\s*=\s*5\s*\*\s*60\s*\*\s*1000/, "Web must export 5min TTL");
+  assert.match(src, /export\s+function\s+clearCategoryCache/, "Web must export clearCategoryCache()");
+});
+
+test("C2-7 / CACHE-02: Mobile api catalog.ts has CATEGORY_CACHE_TTL_MS and clearCategoryCache", () => {
+  const src = readAndroid("src/api/catalog.ts");
+  assert.match(src, /CATEGORY_CACHE_TTL_MS\s*=\s*5\s*\*\s*60\s*\*\s*1000/, "Mobile must export 5min TTL");
+  assert.match(src, /export\s+function\s+clearCategoryCache/, "Mobile must export clearCategoryCache()");
+});
+
+

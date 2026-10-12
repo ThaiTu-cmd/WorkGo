@@ -64,7 +64,7 @@ function formatVND(amount: number): string {
   }).format(amount);
 }
 
-export function ServiceCard({ post, onPress }: ServiceCardProps) {
+function ServiceCardInner({ post, onPress }: ServiceCardProps) {
   const theme = useTheme();
 
   const handlePress = () => {
@@ -194,6 +194,14 @@ export function ServiceCard({ post, onPress }: ServiceCardProps) {
       </View>
     </PressableScale>
   );
+}
+
+const MemoizedServiceCard = React.memo(ServiceCardInner, (prev, next) => {
+  return prev.post.postId === next.post.postId && prev.onPress === next.onPress;
+});
+
+export function ServiceCard(props: ServiceCardProps) {
+  return <MemoizedServiceCard {...props} />;
 }
 
 const styles = StyleSheet.create({

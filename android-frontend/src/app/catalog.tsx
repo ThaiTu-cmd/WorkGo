@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   FlatList,
+  Platform,
   RefreshControl,
   StyleSheet,
   View,
@@ -253,6 +254,12 @@ export default function CatalogScreen() {
           <FlatList
             data={posts}
             keyExtractor={(item) => item.postId}
+            windowSize={5}
+            maxToRenderPerBatch={6}
+            initialNumToRender={6}
+            removeClippedSubviews={Platform.OS === 'android'}
+            keyboardDismissMode="on-drag"
+            // Note: getItemLayout is omitted because service card height varies dynamically (~280-320px) depending on title length clamp (1-2 lines) and proposal badges
             renderItem={({ item }) => (
               <ServiceCard
                 post={item}

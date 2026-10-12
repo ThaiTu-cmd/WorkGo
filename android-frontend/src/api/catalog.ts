@@ -18,8 +18,19 @@ interface SpringPage<T> {
   };
 }
 
+export const CATEGORY_CACHE_TTL_MS = 5 * 60 * 1000;
+let categoryCache: { data: MobileCategory[]; ts: number } | null = null;
+
+export function clearCategoryCache(): void {
+  categoryCache = null;
+}
+
 export const catalogApi = {
   async getRootCategories(page = 0, size = 20): Promise<MobileCategory[]> {
+    if (page === 0 && categoryCache && Date.now() - categoryCache.ts < CATEGORY_CACHE_TTL_MS) {
+      return categoryCache.data;
+    }
+
     try {
       const res = await apiFetch<SpringPage<{
         id: string;
@@ -29,13 +40,19 @@ export const catalogApi = {
       }>>(`/api/v1/catalog/categories/roots?page=${page}&size=${size}`);
 
       const items = res.content || res.data || [];
-      return items.map((c) => ({
+      const mapped = items.map((c) => ({
         id: c.id,
         name: c.name,
         slug: c.slug,
         parentId: c.parent_id,
         icon: getCategoryIcon(c.slug),
       }));
+
+      if (page === 0) {
+        categoryCache = { data: mapped, ts: Date.now() };
+      }
+
+      return mapped;
     } catch {
       // Truthful empty fallback on network or service error
       return [];

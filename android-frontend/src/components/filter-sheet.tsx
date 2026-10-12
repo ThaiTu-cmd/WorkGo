@@ -3,8 +3,6 @@ import {
   Modal,
   ScrollView,
   StyleSheet,
-  Switch,
-  TextInput,
   View,
 } from 'react-native';
 
@@ -14,6 +12,11 @@ import { type MobileCategory } from '@/api/catalog';
 import { type ExecutionType } from '@/api/posts';
 import { Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+
+import { CategorySection } from './filters/category-section';
+import { ExecutionSection } from './filters/execution-section';
+import { BudgetSection } from './filters/budget-section';
+import { VerifiedSection } from './filters/verified-section';
 
 export interface FilterState {
   category?: string;
@@ -31,20 +34,6 @@ export interface FilterSheetProps {
   onApply: (filters: FilterState) => void;
   onReset: () => void;
 }
-
-const PRICE_PRESETS = [
-  { label: 'Dưới 500k', min: 0, max: 500000 },
-  { label: '500k - 2 triệu', min: 500000, max: 2000000 },
-  { label: 'Trên 2 triệu', min: 2000000, max: undefined },
-];
-
-const EXEC_OPTIONS: { id: ExecutionType | 'ALL'; label: string }[] = [
-  { id: 'ALL', label: 'Tất cả' },
-  { id: 'DIGITAL', label: 'Kỹ thuật số' },
-  { id: 'ONSITE', label: 'Tại chỗ' },
-  { id: 'DELIVERY', label: 'Giao hàng' },
-  { id: 'APPOINTMENT', label: 'Đặt hẹn' },
-];
 
 function FilterSheetModalContent({
   onClose,
@@ -112,182 +101,31 @@ function FilterSheetModalContent({
 
         <ScrollView style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
           {/* Category selection */}
-          {categories.length > 0 && (
-            <View style={styles.section}>
-              <ThemedText style={styles.sectionTitle}>Danh mục</ThemedText>
-              <View style={styles.chipGrid}>
-                <PressableScale
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: !category ? theme.primary : theme.backgroundElement,
-                      borderColor: !category ? theme.primary : theme.border,
-                    },
-                  ]}
-                  onPress={() => setCategory(undefined)}
-                >
-                  <ThemedText
-                    style={[
-                      styles.chipText,
-                      { color: !category ? '#FFFFFF' : theme.text },
-                    ]}
-                  >
-                    Tất cả danh mục
-                  </ThemedText>
-                </PressableScale>
-                {categories.map((c) => {
-                  const isSelected = category === c.id;
-                  return (
-                    <PressableScale
-                      key={c.id}
-                      style={[
-                        styles.chip,
-                        {
-                          backgroundColor: isSelected ? theme.primary : theme.backgroundElement,
-                          borderColor: isSelected ? theme.primary : theme.border,
-                        },
-                      ]}
-                      onPress={() => setCategory(c.id)}
-                    >
-                      <ThemedText
-                        style={[
-                          styles.chipText,
-                          { color: isSelected ? '#FFFFFF' : theme.text },
-                        ]}
-                      >
-                        {c.icon ? `${c.icon} ` : ''}{c.name}
-                      </ThemedText>
-                    </PressableScale>
-                  );
-                })}
-              </View>
-            </View>
-          )}
+          <CategorySection
+            categories={categories}
+            selectedCategory={category}
+            onSelectCategory={setCategory}
+          />
 
           {/* Execution type */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Hình thức thực hiện</ThemedText>
-            <View style={styles.chipGrid}>
-              {EXEC_OPTIONS.map((opt) => {
-                const isSelected = execType === opt.id;
-                return (
-                  <PressableScale
-                    key={opt.id}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor: isSelected ? theme.primary : theme.backgroundElement,
-                        borderColor: isSelected ? theme.primary : theme.border,
-                      },
-                    ]}
-                    onPress={() => setExecType(opt.id)}
-                  >
-                    <ThemedText
-                      style={[
-                        styles.chipText,
-                        { color: isSelected ? '#FFFFFF' : theme.text },
-                      ]}
-                    >
-                      {opt.label}
-                    </ThemedText>
-                  </PressableScale>
-                );
-              })}
-            </View>
-          </View>
+          <ExecutionSection
+            selectedExecType={execType}
+            onSelectExecType={setExecType}
+          />
 
           {/* Budget Presets and Inputs */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Ngân sách (VNĐ)</ThemedText>
-            <View style={styles.chipGrid}>
-              {PRICE_PRESETS.map((p) => {
-                const isSelected =
-                  budgetMin === String(p.min) &&
-                  (p.max === undefined ? !budgetMax : budgetMax === String(p.max));
-                return (
-                  <PressableScale
-                    key={p.label}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor: isSelected ? theme.primary : theme.backgroundElement,
-                        borderColor: isSelected ? theme.primary : theme.border,
-                      },
-                    ]}
-                    onPress={() => {
-                      setBudgetMin(String(p.min));
-                      setBudgetMax(p.max !== undefined ? String(p.max) : '');
-                    }}
-                  >
-                    <ThemedText
-                      style={[
-                        styles.chipText,
-                        { color: isSelected ? '#FFFFFF' : theme.text },
-                      ]}
-                    >
-                      {p.label}
-                    </ThemedText>
-                  </PressableScale>
-                );
-              })}
-            </View>
-            <View style={styles.inputRow}>
-              <TextInput
-                value={budgetMin}
-                onChangeText={setBudgetMin}
-                keyboardType="numeric"
-                placeholder="Tối thiểu"
-                placeholderTextColor={theme.textSecondary}
-                style={[
-                  styles.priceInput,
-                  {
-                    color: theme.text,
-                    backgroundColor: theme.backgroundElement,
-                    borderColor: theme.border,
-                  },
-                ]}
-              />
-              <ThemedText style={styles.rangeDash}>—</ThemedText>
-              <TextInput
-                value={budgetMax}
-                onChangeText={setBudgetMax}
-                keyboardType="numeric"
-                placeholder="Tối đa"
-                placeholderTextColor={theme.textSecondary}
-                style={[
-                  styles.priceInput,
-                  {
-                    color: theme.text,
-                    backgroundColor: theme.backgroundElement,
-                    borderColor: theme.border,
-                  },
-                ]}
-              />
-            </View>
-          </View>
+          <BudgetSection
+            budgetMin={budgetMin}
+            budgetMax={budgetMax}
+            onChangeMin={setBudgetMin}
+            onChangeMax={setBudgetMax}
+          />
 
           {/* Verified Only Switch */}
-          <View
-            style={[
-              styles.switchRow,
-              {
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.border,
-              },
-            ]}
-          >
-            <View style={styles.switchInfo}>
-              <ThemedText style={styles.switchLabel}>Chuyên gia đã xác thực</ThemedText>
-              <ThemedText style={[styles.switchSub, { color: theme.textSecondary }]}>
-                Chỉ hiển thị các tài khoản đã hoàn tất xác minh danh tính
-              </ThemedText>
-            </View>
-            <Switch
-              value={verifiedOnly}
-              onValueChange={setVerifiedOnly}
-              trackColor={{ false: theme.border, true: theme.primary }}
-            />
-          </View>
+          <VerifiedSection
+            verifiedOnly={verifiedOnly}
+            onToggleVerified={setVerifiedOnly}
+          />
         </ScrollView>
 
         {/* Action Footer */}
@@ -370,67 +208,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: Spacing.four,
     gap: Spacing.four,
-  },
-  section: {
-    gap: Spacing.two,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  chipGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-  chip: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Radius.pill,
-    borderWidth: 1,
-    minHeight: 40,
-    justifyContent: 'center',
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    marginTop: Spacing.one,
-  },
-  priceInput: {
-    flex: 1,
-    height: 48,
-    borderRadius: Radius.control,
-    borderWidth: 1,
-    paddingHorizontal: Spacing.three,
-    fontSize: 14,
-  },
-  rangeDash: {
-    fontSize: 16,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: Spacing.three,
-    borderRadius: Radius.control,
-    borderWidth: 1,
-  },
-  switchInfo: {
-    flex: 1,
-    marginRight: Spacing.two,
-    gap: 2,
-  },
-  switchLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  switchSub: {
-    fontSize: 12,
   },
   footer: {
     flexDirection: 'row',

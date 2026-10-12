@@ -46,12 +46,12 @@ export const proposalsApi = {
     }
   },
   async submit(postId: string, data: ProposalFormData, token?: string): Promise<ProposalItem> {
-    return unwrapOne(await apiFetch<Envelope<ProposalItem> | ProposalItem>(backendRoutes.proposals.forPost(postId), { method: "POST", body: data, token }));
+    return unwrapOne(await apiFetch<Envelope<ProposalItem> | ProposalItem>(backendRoutes.proposals.forPost(postId), { method: "POST", body: data, token, idempotency: true }));
   },
   async accept(proposalId: string, token?: string): Promise<ProposalItem> {
-    return unwrapOne(await apiFetch<Envelope<ProposalItem> | ProposalItem>(backendRoutes.proposals.accept(proposalId), { method: "POST", token }));
+    return unwrapOne(await apiFetch<Envelope<ProposalItem> | ProposalItem>(backendRoutes.proposals.accept(proposalId), { method: "POST", token, idempotency: true }));
   },
   async reject(proposalId: string, token?: string): Promise<ProposalItem> {
-    return unwrapOne(await apiFetch<Envelope<ProposalItem> | ProposalItem>(backendRoutes.proposals.reject(proposalId), { method: "POST", token }));
+    return unwrapOne(await apiFetch<Envelope<ProposalItem> | ProposalItem>(backendRoutes.proposals.reject(proposalId), { method: "POST", token, idempotency: true }));
   },
 };

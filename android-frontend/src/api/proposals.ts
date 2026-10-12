@@ -31,11 +31,13 @@ export const proposalsApi = {
     }
   },
 
-  async submit(postId: string, data: MobileProposalInput): Promise<void> {
+  async submit(postId: string, data: MobileProposalInput, opts?: { idempotencyKey?: string }): Promise<void> {
+    const idempotencyKey = opts?.idempotencyKey ?? (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${postId}`);
     await apiFetch(
       `/api/v1/posts/${encodeURIComponent(postId)}/proposals`,
       {
         method: 'POST',
+        idempotencyKey,
         body: {
           price: data.price,
           estimated_days: data.estimatedDays,

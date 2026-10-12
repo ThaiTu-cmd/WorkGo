@@ -103,7 +103,10 @@ export function SearchBar({
                 borderColor: activeFilterCount > 0 ? theme.primary : theme.border,
               },
             ]}
-            onPress={onOpenFilter}
+            onPress={() => {
+              void hapticFeedback.selection();
+              onOpenFilter();
+            }}
           >
             <ThemedText style={styles.filterIcon}>⚙️</ThemedText>
             {activeFilterCount > 0 && (

@@ -14,6 +14,7 @@ import { type MobileCategory } from '@/api/catalog';
 import { type ExecutionType } from '@/api/posts';
 import { Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { hapticFeedback } from '@/utils/haptics';
 
 import { CategorySection } from './filters/category-section';
 import { ExecutionSection } from './filters/execution-section';
@@ -68,6 +69,11 @@ function FilterSheetModalContent({
     currentFilters.location ?? 'ALL'
   );
 
+  const handleClose = () => {
+    void hapticFeedback.selection();
+    onClose();
+  };
+
   const handleApply = () => {
     onApply({
       category: category || undefined,
@@ -77,10 +83,11 @@ function FilterSheetModalContent({
       verifiedOnly,
       location: location !== 'ALL' ? location : undefined,
     });
-    onClose();
+    handleClose();
   };
 
   const handleReset = () => {
+    void hapticFeedback.selection();
     setCategory(undefined);
     setExecType('ALL');
     setBudgetMin('');
@@ -113,7 +120,7 @@ function FilterSheetModalContent({
             accessibilityLabel="Đóng bộ lọc"
             accessibilityHint="Đóng bảng bộ lọc tìm kiếm"
             style={styles.closeBtn}
-            onPress={onClose}
+            onPress={handleClose}
           >
             <ThemedText style={[styles.closeBtnText, { color: theme.textSecondary }]}>
               ✕

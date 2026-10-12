@@ -178,6 +178,11 @@ function ProposalSheetModalContent({
 
   const activeError = validationError || error;
 
+  const handleClose = () => {
+    void hapticFeedback.selection();
+    onClose();
+  };
+
   return (
     <View style={styles.backdrop}>
       <Pressable
@@ -211,7 +216,7 @@ function ProposalSheetModalContent({
               accessibilityLabel="Đóng biểu mẫu đề xuất"
               accessibilityHint="Đóng cửa sổ báo giá và quay lại màn hình chi tiết"
               style={styles.closeBtn}
-              onPress={onClose}
+              onPress={handleClose}
             >
               <ThemedText style={[styles.closeBtnText, { color: theme.textSecondary }]}>
                 ✕

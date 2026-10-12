@@ -22,6 +22,7 @@ import { Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatVND } from '@/utils/format';
 import { EXEC_CONFIG, getExecStyle } from '@/constants/exec-config';
+import { hapticFeedback } from '@/utils/haptics';
 
 export default function DetailScreen() {
   const theme = useTheme();
@@ -82,6 +83,7 @@ export default function DetailScreen() {
     if (hasApplied || applied) {
       return;
     }
+    void hapticFeedback.selection();
     setProposalError(null);
     setSheetVisible(true);
   };
@@ -344,7 +346,7 @@ export default function DetailScreen() {
               <ThemedText style={[styles.budgetLabel, { color: theme.textSecondary }]}>
                 Ngân sách
               </ThemedText>
-              <ThemedText style={[styles.budgetValue, { color: theme.primary }]}>
+              <ThemedText style={[styles.budgetValue, { color: theme.primary }]} numberOfLines={1}>
                 {formatVND(post.budgetMin)}
               </ThemedText>
             </View>

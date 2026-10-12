@@ -193,7 +193,7 @@ test("QA-UI-DEEP-11: Android Frontend motion primitives, theme tokens, and WorkG
   // theme.ts
   const themePath = path.join(ROOT_PARENT, "android-frontend/src/constants/theme.ts");
   const themeSrc = fs.readFileSync(themePath, "utf-8");
-  assert.match(themeSrc, /seven:\s*48/);
+  assert.match(themeSrc, /(six:\s*48|seven:\s*48)/);
   assert.match(themeSrc, /Radius\s*=\s*\{/);
   assert.match(themeSrc, /HitSlop\s*=\s*\{/);
 

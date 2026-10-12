@@ -47,8 +47,18 @@ export default function ExploreScreen() {
       <ThemedView style={styles.container}>
         <EntranceView delay={0}>
           <ThemedView style={styles.titleContainer}>
-            <View style={styles.badge}>
-              <ThemedText style={styles.badgeText}>WorkGo Ecosystem</ThemedText>
+            <View
+              style={[
+                styles.badge,
+                {
+                  backgroundColor: theme.primarySubtle,
+                  borderColor: theme.border,
+                },
+              ]}
+            >
+              <ThemedText style={[styles.badgeText, { color: theme.primary }]}>
+                WorkGo Ecosystem
+              </ThemedText>
             </View>
             <ThemedText type="hero" style={styles.centerTitle}>
               Khám phá WorkGo
@@ -144,15 +154,12 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
   },
   badge: {
-    backgroundColor: '#EFF6FF',
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
     borderRadius: Radius.control ?? 10,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
   },
   badgeText: {
-    color: '#2563EB',
     fontSize: 12,
     fontWeight: '600',
   },

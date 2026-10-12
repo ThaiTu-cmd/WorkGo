@@ -1,12 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { Star, ShieldCheck } from "lucide-react";
 import { FiverrCarousel } from "./fiverr-carousel";
 import { FIVERR_ICONS } from "./fiverr-category-grid";
 import { getFiverrContent } from "@/lib/landing/fiverr-content";
 import { FIVERR_COLOR, FIVERR_SHADOW } from "@/lib/landing/fiverr-tokens";
+import { formatPriceVND } from "@/lib/landing/format-price";
 import { FiverrReveal } from "./fiverr-reveal";
+import { FiverrTiltCard } from "./fiverr-tilt-card";
+import { FiverrImage } from "./fiverr-image";
+
+// formatPrice delegates to formatPriceVND using Intl.NumberFormat
+export const formatPrice = formatPriceVND;
 
 export interface FiverrPopularServicesProps {
   locale: string;
@@ -16,7 +22,7 @@ export interface FiverrPopularServicesProps {
 }
 
 /**
- * FiverrPopularServices — measured 200×266 dark-green card, radius 16,
+ * FiverrPopularServices — measured 200×300 dark-green card, radius 16,
  * `padding 25px 6px 6px`, shadow `0 3px 10px rgba(0,0,0,.13)`.
  */
 export function FiverrPopularServices({
@@ -40,35 +46,66 @@ export function FiverrPopularServices({
           nextLabel={nextLabel}
           itemGapClass="gap-4 pb-2"
         >
-          {content.popular.services.map((service) => {
+          {content.popular.services.map((service, idx) => {
             const Icon = FIVERR_ICONS[service.icon];
             return (
-              <Link
-                key={service.id}
-                href={`/${locale}/posts`}
-                className="fiverr-press flex h-[266px] w-[200px] shrink-0 snap-start flex-col rounded-2xl p-[25px_6px_6px] text-white transition-transform duration-200 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003912]"
-                style={{ backgroundColor: FIVERR_COLOR.cardGreen, boxShadow: FIVERR_SHADOW.pop }}
-              >
-                <div className="flex items-center justify-between px-2.5">
-                  <h3 className="text-lg font-bold leading-[28px]">{service.title}</h3>
-                  <Star
-                    className="h-4 w-4 shrink-0 fill-current text-white/70"
-                    aria-hidden="true"
-                  />
-                </div>
-
-                <p className="px-2.5 pt-1 text-xs leading-[18px] text-white/70">{service.blurb}</p>
-
-                <div
-                  className="animate-fiverr-pan mt-2 flex h-[168px] flex-1 items-center justify-center overflow-hidden rounded-xl"
-                  style={{
-                    backgroundImage: `linear-gradient(140deg, ${service.accent[0]}, ${service.accent[1]})`,
-                  }}
-                  aria-hidden="true"
+              <FiverrTiltCard key={service.id} className="shrink-0 snap-start">
+                <Link
+                  href={`/${locale}/posts?q=${encodeURIComponent(service.title)}`}
+                  className="fiverr-press card-shine group flex h-[300px] w-[200px] flex-col justify-between rounded-2xl p-[25px_6px_6px] text-white transition-transform duration-200 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003912]"
+                  style={{ backgroundColor: FIVERR_COLOR.cardGreen, boxShadow: FIVERR_SHADOW.pop }}
                 >
-                  <Icon className="h-12 w-12 shrink-0 text-white/90" />
-                </div>
-              </Link>
+                  <div className="flex flex-col gap-1 px-2.5">
+                    <div className="flex items-start justify-between gap-1">
+                      <h3 className="min-h-[56px] flex-1 text-balance text-lg font-bold leading-[28px] line-clamp-2">
+                        {service.title}
+                      </h3>
+                      <Star
+                        className="mt-1 h-4 w-4 shrink-0 fill-current text-white/70"
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <p className="min-h-[36px] text-xs leading-[18px] text-white/70 line-clamp-2">
+                      {service.blurb}
+                    </p>
+                  </div>
+
+                  <div
+                    className="relative mx-[4px] mb-[4px] mt-2 h-[148px] shrink-0 overflow-hidden rounded-xl"
+                    aria-hidden="true"
+                  >
+                    <FiverrImage
+                      src={service.image.src}
+                      alt={service.image.alt}
+                      sizes="200px"
+                      eager={idx < 2}
+                      gradient={service.accent}
+                      icon={<Icon className="absolute inset-0 m-auto h-12 w-12 text-white/90 drop-shadow" />}
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        backgroundImage: `linear-gradient(140deg, ${service.accent[0]}66, ${service.accent[1]}D9)`,
+                      }}
+                    />
+                    <Icon className="absolute inset-0 m-auto h-12 w-12 text-white/90 drop-shadow" />
+                    {service.priceFrom && (
+                      <div className="absolute left-2 top-2 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-sm pointer-events-none">
+                        {formatPriceVND(service.priceFrom, locale)}
+                      </div>
+                    )}
+                    <div
+                      className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-[#00732E] px-2 py-1 text-[11px] font-bold text-white shadow-sm pointer-events-none"
+                      aria-label={locale === "vi" ? "Đã xác minh" : "Verified"}
+                      title={locale === "vi" ? "Đã xác minh" : "Verified"}
+                    >
+                      <ShieldCheck className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      <span>{locale === "vi" ? "Đã xác minh" : "Verified"}</span>
+                    </div>
+                  </div>
+                </Link>
+              </FiverrTiltCard>
             );
           })}
         </FiverrCarousel>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
+import { FiverrImage } from "./fiverr-image";
 import { FIVERR_ICONS } from "./fiverr-category-grid";
 import { getFiverrContent } from "@/lib/landing/fiverr-content";
 import { FIVERR_COLOR, FIVERR_RADIUS } from "@/lib/landing/fiverr-tokens";
@@ -40,7 +41,7 @@ export function FiverrFeaturePanels({
                 }}
               >
               <div className="flex flex-col items-start gap-6 lg:max-w-[640px]">
-                <h2 className="text-[32px] font-extralight leading-[1.06] tracking-[-0.06em] text-white md:text-[36px] lg:text-[52px]">
+                <h2 className="text-[32px] font-extralight leading-[1.06] tracking-[-0.06em] text-white md:text-[36px] lg:text-[52px] text-balance">
                   {panel.title}
                 </h2>
 
@@ -67,15 +68,29 @@ export function FiverrFeaturePanels({
               </div>
 
               <div
-                className="animate-fiverr-pan relative flex h-[200px] w-full shrink-0 items-center justify-center overflow-hidden border border-white/15 lg:h-[320px] lg:flex-1"
+                className="relative flex h-[200px] w-full shrink-0 items-center justify-center overflow-hidden border border-white/15 lg:h-[320px] lg:flex-1"
                 style={{
-                  backgroundImage: `linear-gradient(140deg, ${panel.gradient[1]}, ${panel.gradient[0]})`,
                   borderRadius: FIVERR_RADIUS.card,
                 }}
                 role="img"
-                aria-label={imageAlt}
+                aria-label={`${imageAlt}: ${panel.title}`}
               >
-                <Icon className="h-24 w-24 shrink-0 text-white/60 drop-shadow" strokeWidth={1} />
+                <FiverrImage
+                  src={panel.image.src}
+                  alt={panel.image.alt}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  gradient={panel.gradient}
+                  icon={<Icon className="animate-fiverr-float relative z-10 h-24 w-24 shrink-0 text-white/60 drop-shadow" strokeWidth={1} />}
+                  className="object-cover"
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: `linear-gradient(140deg, ${panel.gradient[0]}B3, ${panel.gradient[1]}E6)`,
+                  }}
+                  aria-hidden="true"
+                />
+                <Icon className="animate-fiverr-float relative z-10 h-24 w-24 shrink-0 text-white/60 drop-shadow" strokeWidth={1} />
               </div>
             </article>
           </FiverrReveal>

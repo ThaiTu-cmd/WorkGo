@@ -239,7 +239,10 @@
     "hotCategories": "Danh mục nổi bật",
     "jobsAvailable": "việc làm đang tuyển dụng",
     "saveJob": "Lưu tin",
-    "savedJob": "Đã lưu"
+    "savedJob": "Đã lưu",
+    "quickFilterLabel": "Lọc nhanh theo danh mục",
+    "quickFilterAll": "Tất cả",
+    "featuredLabel": "Thử các việc nổi bật:"
   },
   "jobForm": {
     "createTitle": "Đăng việc làm mới",
@@ -478,10 +481,17 @@
         "brandLabel": "WorkGo — về trang chủ",
         "searchLabel": "Tìm kiếm dịch vụ",
         "searchSubmitLabel": "Tìm kiếm",
+        "searchEmptyHint": "Vui lòng nhập từ khóa, ví dụ: thiết kế logo",
         "openMenuLabel": "Mở menu",
         "closeMenuLabel": "Đóng menu",
         "drawerLabel": "Menu điều hướng chính",
         "languageLabel": "Chọn ngôn ngữ"
+      },
+      "search": {
+        "clearLabel": "Xóa từ khóa",
+        "recentLabel": "Tìm kiếm gần đây",
+        "clearHistory": "Xóa lịch sử",
+        "resultsCount": "Tìm thấy {n} gợi ý"
       },
       "trending": {
         "regionLabel": "Danh mục thịnh hành"
@@ -489,6 +499,8 @@
       "hero": {
         "searchLabel": "Bạn đang tìm dịch vụ gì?",
         "searchSubmitLabel": "Tìm kiếm",
+        "searchEmptyHint": "Vui lòng nhập từ khóa, ví dụ: thiết kế logo",
+        "suggestionsLabel": "Từ khóa thịnh hành",
         "pauseLabel": "Tạm dừng video nền",
         "playLabel": "Phát video nền",
         "backgroundAlt": "Nền động đại dương hạt",
@@ -499,7 +511,9 @@
         "toggleMoreLabel": "Hiện thêm danh mục"
       },
       "popular": {
-        "regionLabel": "Dịch vụ phổ biến"
+        "regionLabel": "Dịch vụ phổ biến",
+        "fromPrice": "Từ",
+        "verifiedBadge": "Đã xác minh"
       },
       "valueProps": {
         "regionLabel": "Cam kết của WorkGo"
@@ -511,6 +525,10 @@
       "guides": {
         "regionLabel": "Hướng dẫn",
         "imageAlt": "Minh hoạ hướng dẫn"
+      },
+      "testimonials": {
+        "regionLabel": "Đánh giá từ cộng đồng",
+        "verifiedBadge": "Đã xác minh"
       },
       "cta": {
         "regionLabel": "Kêu gọi hành động"
@@ -526,6 +544,46 @@
         "prevLabel": "Xem mục trước",
         "nextLabel": "Xem mục tiếp theo"
       }
+    }
+  },
+  "info": {
+    "breadcrumbHome": "Trang chủ",
+    "backToHome": "Quay về trang chủ",
+    "toc": "Nội dung chính",
+    "ctaTitle": "Sẵn sàng phát triển cùng WorkGo?",
+    "ctaPrimary": "Đăng ký miễn phí",
+    "ctaSecondary": "Khám phá việc làm",
+    "about": {
+      "title": "Về WorkGo",
+      "desc": "Nền tảng kết nối nhân tài tự do và doanh nghiệp hiện đại tại Việt Nam"
+    },
+    "pricing": {
+      "title": "Biểu phí minh bạch",
+      "desc": "Chi phí rõ ràng, không phụ phí ẩn, tối ưu cho cả khách hàng và đối tác"
+    },
+    "pro": {
+      "title": "WorkGo Pro",
+      "desc": "Giải pháp toàn diện cho doanh nghiệp tuyển chọn nhân tài cấp cao và tự động hóa AI"
+    },
+    "guides": {
+      "title": "Cẩm nang & Hướng dẫn",
+      "desc": "Kiến thức thực chiến giúp bạn phát triển sự nghiệp freelance và mở rộng dự án"
+    },
+    "help": {
+      "title": "Trung tâm hỗ trợ",
+      "desc": "Giải đáp thắc mắc, hướng dẫn thanh toán, hoàn tiền và kết nối cộng đồng"
+    },
+    "terms": {
+      "title": "Điều khoản dịch vụ",
+      "desc": "Quy định sử dụng và trách nhiệm của thành viên trên nền tảng WorkGo"
+    },
+    "privacy": {
+      "title": "Chính sách bảo mật",
+      "desc": "Cam kết bảo vệ dữ liệu cá nhân và thông tin thanh toán của người dùng"
+    },
+    "trustSafety": {
+      "title": "An toàn & Ký quỹ",
+      "desc": "Cơ chế bảo vệ thanh toán escrow, giải quyết tranh chấp và an toàn giao dịch"
     }
   }
 }

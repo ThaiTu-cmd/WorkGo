@@ -10,6 +10,7 @@ export interface FiverrRevealProps {
   y?: number;     // default 18
   className?: string;
   as?: "div" | "section" | "li" | "span";
+  style?: React.CSSProperties;
 }
 
 export function FiverrReveal({
@@ -18,6 +19,7 @@ export function FiverrReveal({
   y = 18,
   className,
   as = "div",
+  style,
 }: FiverrRevealProps) {
   const { ref, visible } = useReveal<HTMLDivElement>();
   const Tag = as as "div";
@@ -28,6 +30,7 @@ export function FiverrReveal({
       style={{
         transitionDelay: `${delay}ms`,
         ["--reveal-y" as string]: `${y}px`,
+        ...style,
       }}
       className={cn("reveal", visible && "reveal-visible", className)}
     >

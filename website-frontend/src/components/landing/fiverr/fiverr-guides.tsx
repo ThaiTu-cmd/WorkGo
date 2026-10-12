@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { FiverrImage } from "./fiverr-image";
 import { FIVERR_ICONS } from "./fiverr-category-grid";
 import { getFiverrContent } from "@/lib/landing/fiverr-content";
 import { FIVERR_COLOR, FIVERR_RADIUS } from "@/lib/landing/fiverr-tokens";
 import { FiverrReveal } from "./fiverr-reveal";
+import { FiverrTiltCard } from "./fiverr-tilt-card";
 
 export interface FiverrGuidesProps {
   locale: string;
@@ -32,7 +34,7 @@ export function FiverrGuides({
           {content.guides.title}
         </h2>
         <Link
-          href={`/${locale}/posts`}
+          href={`/${locale}/guides`}
           className="fiverr-press inline-flex items-center gap-1.5 text-base font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222325]"
           style={{ color: FIVERR_COLOR.ink700 }}
         >
@@ -46,27 +48,43 @@ export function FiverrGuides({
           const Icon = FIVERR_ICONS[guide.icon];
           return (
             <li key={guide.id}>
-              <Link
-                href={`/${locale}/posts`}
-                className="fiverr-press group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222325]"
-              >
-                <div
-                  className="aspect-[4/3] w-full overflow-hidden"
-                  style={{
-                    borderRadius: FIVERR_RADIUS.media,
-                    backgroundImage: `linear-gradient(140deg, ${guide.from[0]}, ${guide.from[1]})`,
-                  }}
-                  role="img"
-                  aria-label={imageAlt}
+              <FiverrTiltCard max={6}>
+                <Link
+                  href={`/${locale}/guides/${guide.id}`}
+                  className="fiverr-press group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222325]"
                 >
-                  <div className="flex h-full w-full items-center justify-center">
-                    <Icon className="h-14 w-14 shrink-0 text-white/60 drop-shadow transition-transform duration-300 group-hover:scale-110" strokeWidth={1} />
+                  <div
+                    className="relative aspect-[4/3] w-full overflow-hidden"
+                    style={{
+                      borderRadius: FIVERR_RADIUS.media,
+                    }}
+                    role="img"
+                    aria-label={imageAlt}
+                  >
+                    <FiverrImage
+                      src={guide.image.src}
+                      alt={guide.image.alt}
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      gradient={guide.from}
+                      icon={<Icon className="h-14 w-14 shrink-0 text-white/60 drop-shadow transition-transform duration-300 group-hover:scale-110" strokeWidth={1} />}
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        backgroundImage: `linear-gradient(140deg, ${guide.from[0]}99, ${guide.from[1]}D9)`,
+                      }}
+                      aria-hidden="true"
+                    />
+                    <div className="relative z-10 flex h-full w-full items-center justify-center">
+                      <Icon className="h-14 w-14 shrink-0 text-white/60 drop-shadow transition-transform duration-300 group-hover:scale-110" strokeWidth={1} />
+                    </div>
                   </div>
-                </div>
-                <h3 className="mt-4 text-lg font-bold leading-7" style={{ color: FIVERR_COLOR.ink700 }}>
-                  {guide.title}
-                </h3>
-              </Link>
+                  <h3 className="mt-4 min-h-[56px] text-lg font-bold leading-7 line-clamp-2" style={{ color: FIVERR_COLOR.ink700 }}>
+                    {guide.title}
+                  </h3>
+                </Link>
+              </FiverrTiltCard>
             </li>
           );
         })}

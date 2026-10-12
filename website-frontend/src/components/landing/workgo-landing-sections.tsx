@@ -211,7 +211,7 @@ export function WorkgoLandingSections({ locale }: WorkgoLandingSectionsProps) {
                   <div className="text-sm font-bold text-primary">{job.budget}</div>
                 </div>
                 <Link
-                  href={`/${locale}/posts`}
+                  href={`/${locale}/posts?q=${encodeURIComponent(job.title)}`}
                   className="pressable px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-primary hover:brightness-110 transition-colors"
                 >
                   {locale === "en" ? "Apply" : "Ứng tuyển"}
@@ -279,9 +279,9 @@ export function WorkgoLandingSections({ locale }: WorkgoLandingSectionsProps) {
               {t("footer.solutions")}
             </div>
             <ul className="space-y-2.5 text-xs">
-              <li><Link href={`/${locale}/posts`} className="pressable hover:text-fg transition-colors">{locale === "en" ? "Developer Hiring" : "Tuyển dụng lập trình"}</Link></li>
-              <li><Link href={`/${locale}/posts`} className="pressable hover:text-fg transition-colors">{locale === "en" ? "Escrow Contracts" : "Hợp đồng Escrow"}</Link></li>
-              <li><Link href={`/${locale}/posts`} className="pressable hover:text-fg transition-colors">{locale === "en" ? "Milestone Protection" : "Bảo chứng mốc bàn giao"}</Link></li>
+              <li><Link href={`/${locale}/pro`} className="pressable hover:text-fg transition-colors">{locale === "en" ? "Developer Hiring" : "Tuyển dụng lập trình"}</Link></li>
+              <li><Link href={`/${locale}/trust-safety#escrow`} className="pressable hover:text-fg transition-colors">{locale === "en" ? "Escrow Contracts" : "Hợp đồng Escrow"}</Link></li>
+              <li><Link href={`/${locale}/trust-safety#milestones`} className="pressable hover:text-fg transition-colors">{locale === "en" ? "Milestone Protection" : "Bảo chứng mốc bàn giao"}</Link></li>
             </ul>
           </div>
 
@@ -301,9 +301,9 @@ export function WorkgoLandingSections({ locale }: WorkgoLandingSectionsProps) {
               {t("footer.legal")}
             </div>
             <ul className="space-y-2.5 text-xs">
-              <li><span className="pressable hover:text-fg cursor-pointer">{locale === "en" ? "Terms of Service" : "Điều khoản dịch vụ"}</span></li>
-              <li><span className="pressable hover:text-fg cursor-pointer">{locale === "en" ? "Privacy Policy" : "Chính sách bảo mật"}</span></li>
-              <li><span className="pressable hover:text-fg cursor-pointer">{locale === "en" ? "Dispute Resolution" : "Quy chế giải quyết tranh chấp"}</span></li>
+              <li><Link href={`/${locale}/terms`} className="pressable hover:text-fg transition-colors">{locale === "en" ? "Terms of Service" : "Điều khoản dịch vụ"}</Link></li>
+              <li><Link href={`/${locale}/privacy`} className="pressable hover:text-fg transition-colors">{locale === "en" ? "Privacy Policy" : "Chính sách bảo mật"}</Link></li>
+              <li><Link href={`/${locale}/trust-safety`} className="pressable hover:text-fg transition-colors">{locale === "en" ? "Dispute Resolution" : "Quy chế giải quyết tranh chấp"}</Link></li>
             </ul>
           </div>
         </div>

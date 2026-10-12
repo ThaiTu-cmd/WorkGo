@@ -10,6 +10,7 @@ import { FiverrPopularServices } from "./fiverr-popular-services";
 import { FiverrValueProps } from "./fiverr-value-props";
 import { FiverrFeaturePanels } from "./fiverr-feature-panels";
 import { FiverrGuides } from "./fiverr-guides";
+import { FiverrTestimonials } from "./fiverr-testimonials";
 import { FiverrCtaBanner } from "./fiverr-cta-banner";
 import { FiverrFooter } from "./fiverr-footer";
 
@@ -58,6 +59,10 @@ export function FiverrLanding({ locale }: FiverrLandingProps): React.JSX.Element
         locale={locale}
         regionLabel={t("guides.regionLabel")}
         imageAlt={t("guides.imageAlt")}
+      />
+      <FiverrTestimonials
+        locale={locale}
+        regionLabel={t("testimonials.regionLabel")}
       />
       <FiverrCtaBanner locale={locale} regionLabel={t("cta.regionLabel")} />
       <FiverrFooter locale={locale} regionLabel={t("footer.regionLabel")} />

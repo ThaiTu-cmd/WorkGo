@@ -239,7 +239,10 @@
     "hotCategories": "Popular categories",
     "jobsAvailable": "jobs actively hiring",
     "saveJob": "Save job",
-    "savedJob": "Saved"
+    "savedJob": "Saved",
+    "quickFilterLabel": "Quick filter by category",
+    "quickFilterAll": "All",
+    "featuredLabel": "Try featured jobs:"
   },
   "jobForm": {
     "createTitle": "Post a New Job",
@@ -478,10 +481,17 @@
         "brandLabel": "WorkGo — back to home",
         "searchLabel": "Search for a service",
         "searchSubmitLabel": "Search",
+        "searchEmptyHint": "Type a keyword, e.g. logo design",
         "openMenuLabel": "Open menu",
         "closeMenuLabel": "Close menu",
         "drawerLabel": "Main navigation menu",
         "languageLabel": "Choose language"
+      },
+      "search": {
+        "clearLabel": "Clear search",
+        "recentLabel": "Recent searches",
+        "clearHistory": "Clear history",
+        "resultsCount": "{n} suggestions found"
       },
       "trending": {
         "regionLabel": "Trending categories"
@@ -489,6 +499,8 @@
       "hero": {
         "searchLabel": "What service are you looking for?",
         "searchSubmitLabel": "Search",
+        "searchEmptyHint": "Type a keyword, e.g. logo design",
+        "suggestionsLabel": "Trending searches",
         "pauseLabel": "Pause background video",
         "playLabel": "Play background video",
         "backgroundAlt": "Particle ocean background",
@@ -499,7 +511,9 @@
         "toggleMoreLabel": "Show more categories"
       },
       "popular": {
-        "regionLabel": "Popular services"
+        "regionLabel": "Popular services",
+        "fromPrice": "From",
+        "verifiedBadge": "Verified"
       },
       "valueProps": {
         "regionLabel": "Why WorkGo"
@@ -511,6 +525,10 @@
       "guides": {
         "regionLabel": "Guides",
         "imageAlt": "Guide illustration"
+      },
+      "testimonials": {
+        "regionLabel": "Community reviews",
+        "verifiedBadge": "Verified"
       },
       "cta": {
         "regionLabel": "Call to action"
@@ -526,6 +544,46 @@
         "prevLabel": "Show previous items",
         "nextLabel": "Show next items"
       }
+    }
+  },
+  "info": {
+    "breadcrumbHome": "Home",
+    "backToHome": "Back to home",
+    "toc": "On this page",
+    "ctaTitle": "Ready to get started with WorkGo?",
+    "ctaPrimary": "Join for free",
+    "ctaSecondary": "Explore jobs",
+    "about": {
+      "title": "About WorkGo",
+      "desc": "The leading marketplace connecting independent professionals and modern businesses in Vietnam"
+    },
+    "pricing": {
+      "title": "Transparent Pricing",
+      "desc": "Clear fees, no hidden costs, optimized for both clients and independent partners"
+    },
+    "pro": {
+      "title": "WorkGo Pro",
+      "desc": "Comprehensive enterprise solution for vetted top-tier talent and AI automation"
+    },
+    "guides": {
+      "title": "Guides & Knowledge",
+      "desc": "Practical insights to accelerate your freelance career and scale project delivery"
+    },
+    "help": {
+      "title": "Help Center",
+      "desc": "24/7 answers, payment guidance, refund protection, and community support"
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "desc": "Legal terms and participation guidelines for the WorkGo platform"
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "desc": "Our commitment to safeguarding personal data and financial transaction security"
+    },
+    "trustSafety": {
+      "title": "Trust & Safety",
+      "desc": "Dual-sided escrow protection, transparent milestone agreements, and fair dispute mediation"
     }
   }
 }

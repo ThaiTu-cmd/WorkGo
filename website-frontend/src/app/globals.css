@@ -729,3 +729,147 @@ select option {
 
 
 
+
+/* --- Landing Vivid Motion Layer (Additive) --- */
+@keyframes fiverrCardShine {
+  0% { transform: translateX(-120%) skewX(-12deg); }
+  100% { transform: translateX(240%) skewX(-12deg); }
+}
+
+@keyframes fiverrHeroGlow {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.9; }
+}
+
+.animate-fiverr-float {
+  animation: fiverrFloatY 5s ease-in-out infinite;
+}
+
+.card-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-shine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  transform: translateX(-120%) skewX(-12deg);
+  pointer-events: none;
+}
+
+.card-shine:hover::after {
+  animation: fiverrCardShine 900ms ease forwards;
+}
+
+.trusted-marquee {
+  display: flex;
+  gap: 2rem;
+  width: max-content;
+  animation: fiverrMarquee 28s linear infinite;
+}
+
+.trusted-marquee:hover {
+  animation-play-state: paused;
+}
+
+.faq-accordion {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.faq-accordion[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+/* Search validation shake animation */
+.search-shake {
+  animation: searchShake 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes searchShake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(3px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+
+/* Polish tokens for Vietnamese typography */
+.cta-vi-accent {
+  font-family: var(--font-be-vietnam-pro), Inter, system-ui, sans-serif;
+  font-weight: 800;
+}
+
+.text-balance-hero,
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Cycle 2 Image shimmer & focus elevate */
+.img-shimmer {
+  background: linear-gradient(90deg, #EDEFF2 25%, #DDE3EA 50%, #EDEFF2 75%);
+  background-size: 200% 100%;
+  animation: fiverrShimmer 1.6s linear infinite;
+}
+
+.focus-elevate {
+  border-radius: 16px;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.focus-elevate:focus-within {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  outline: 2px solid #222325;
+  outline-offset: 2px;
+}
+
+.pill-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+.rail-momentum {
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-motion-vivid, .bg-orb, .bg-twinkle-dot, .landing-cone-animated, .auth-cone-animated,
+  .animate-pulse-glow-strong, .animate-subtle-glow-strong, .animate-float-strong,
+  .animate-fiverr-float,
+  .card-shine::after,
+  .card-shine:hover::after,
+  .trusted-marquee,
+  .faq-accordion,
+  .search-shake,
+  .img-shimmer {
+    animation: none !important;
+    transition: none !important;
+  }
+  .search-shake {
+    animation: none !important;
+  }
+  .card-shine::after {
+    display: none !important;
+  }
+  .focus-elevate:focus-within {
+    transform: none !important;
+  }
+  .rail-momentum {
+    scroll-snap-type: none !important;
+  }
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .btn-marketplace:hover,
+  .btn-marketplace:active {
+    transform: none !important;
+  }
+}

@@ -35,12 +35,28 @@ export interface FiverrCategory {
   href: string;
 }
 
+export interface FiverrImage {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+}
+
 export interface FiverrPopularService {
   id: string;
   title: string;
   blurb: string;
   accent: [string, string];
   icon: LucideIconName;
+  image: FiverrImage;
+  priceFrom: number;
+}
+
+export interface FiverrTestimonial {
+  quote: string;
+  name: string;
+  role: string;
+  initials: string;
 }
 
 export interface FiverrGuide {
@@ -48,6 +64,7 @@ export interface FiverrGuide {
   title: string;
   from: [string, string];
   icon: LucideIconName;
+  image: FiverrImage;
 }
 
 export interface FiverrValueProp {
@@ -64,6 +81,7 @@ export interface FiverrPanel {
   footnote?: string;
   gradient: [string, string];
   icon: LucideIconName;
+  image: FiverrImage;
 }
 
 export interface FiverrFooterColumn {
@@ -94,6 +112,7 @@ export interface FiverrLandingContent {
   valueProps: { title: string; cta: string; items: FiverrValueProp[] };
   panels: FiverrPanel[];
   guides: { title: string; seeMore: string; items: FiverrGuide[] };
+  testimonials: { title: string; items: FiverrTestimonial[] };
   cta: { titleLead: string; titleAccent: string; button: string };
   footer: { columns: FiverrFooterColumn[]; copyright: string; tagline: string };
 }
@@ -193,6 +212,13 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           blurb: 'Từ kho sản phẩm đến đơn hàng đầu tiên trong 7 ngày.',
           accent: ['#FF7640', '#4D1727'],
           icon: 'Sparkles',
+          priceFrom: 499000,
+          image: {
+            src: '/images/landing/popular-tiktok-shop.webp',
+            alt: 'Gian hàng TikTok Shop chuyên nghiệp',
+            width: 800,
+            height: 1000,
+          },
         },
         {
           id: 'ai-programming',
@@ -200,6 +226,13 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           blurb: 'Tích hợp mô hình ngôn ngữ vào sản phẩm của bạn.',
           accent: ['#1DBF73', '#003912'],
           icon: 'Bot',
+          priceFrom: 1200000,
+          image: {
+            src: '/images/landing/popular-ai-programming.webp',
+            alt: 'Lập trình AI và ứng dụng thông minh',
+            width: 800,
+            height: 1000,
+          },
         },
         {
           id: 'web-development',
@@ -207,6 +240,13 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           blurb: 'Website tốc độ cao, sẵn sàng mở rộng và tối ưu SEO.',
           accent: ['#2EA8FF', '#06142F'],
           icon: 'Code2',
+          priceFrom: 1500000,
+          image: {
+            src: '/images/landing/popular-web-dev.webp',
+            alt: 'Phát triển website chuẩn SEO',
+            width: 800,
+            height: 1000,
+          },
         },
         {
           id: 'video-editing',
@@ -214,6 +254,13 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           blurb: 'Cắt ghép nhanh, thêm phụ đề và hiệu ứng chuyên nghiệp.',
           accent: ['#8B5CF6', '#2E1065'],
           icon: 'Clapperboard',
+          priceFrom: 399000,
+          image: {
+            src: '/images/landing/popular-video-edit.webp',
+            alt: 'Chỉnh sửa video và hiệu ứng chuyển động',
+            width: 800,
+            height: 1000,
+          },
         },
         {
           id: 'software-development',
@@ -221,6 +268,13 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           blurb: 'Ứng dụng web và di động theo yêu cầu riêng của bạn.',
           accent: ['#38BDF8', '#0C4A6E'],
           icon: 'Zap',
+          priceFrom: 2500000,
+          image: {
+            src: '/images/landing/popular-software-dev.webp',
+            alt: 'Phát triển phần mềm tùy chỉnh',
+            width: 800,
+            height: 1000,
+          },
         },
         {
           id: 'book-publishing',
@@ -228,6 +282,13 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           blurb: 'Biên tập, bìa sách và đăng ký ISBN trọn gói.',
           accent: ['#F59E0B', '#421300'],
           icon: 'Briefcase',
+          priceFrom: 899000,
+          image: {
+            src: '/images/landing/popular-book-publish.webp',
+            alt: 'Thiết kế bìa và dàn trang xuất bản sách',
+            width: 800,
+            height: 1000,
+          },
         },
       ],
     },
@@ -267,6 +328,12 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
         footnote: '100% hoàn tiền',
         gradient: ['#00732E', '#003912'],
         icon: 'Users',
+        image: {
+          src: '/images/landing/panel-find-experts.webp',
+          alt: 'Chuyên gia công nghệ làm việc theo yêu cầu',
+          width: 1600,
+          height: 900,
+        },
       },
       {
         id: 'automate-with-ai',
@@ -277,9 +344,15 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           'Phân tích dữ liệu và sinh báo cáo tức thì',
         ],
         ctaLabel: 'Khám phá WorkGo AI',
-        ctaHref: '/posts',
+        ctaHref: '/posts?q=' + encodeURIComponent('Dịch vụ AI'),
         gradient: ['#6B2A0C', '#421300'],
         icon: 'Bot',
+        image: {
+          src: '/images/landing/panel-ai-automation.webp',
+          alt: 'Giải pháp tự động hoá thông minh với AI',
+          width: 1600,
+          height: 900,
+        },
       },
     ],
     guides: {
@@ -291,18 +364,59 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           title: 'Cách viết yêu cầu dự án để nhận báo giá chính xác',
           from: ['#1677FF', '#06142F'],
           icon: 'Briefcase',
+          image: {
+            src: '/images/landing/guide-brief.webp',
+            alt: 'Hướng dẫn viết yêu cầu dự án rõ ràng',
+            width: 800,
+            height: 600,
+          },
         },
         {
           id: 'guide-portfolio',
           title: 'Xây dựng hồ sơ đối tác tự do thu hút khách hàng',
           from: ['#1DBF73', '#003912'],
           icon: 'Users',
+          image: {
+            src: '/images/landing/guide-portfolio.webp',
+            alt: 'Bí quyết xây dựng hồ sơ năng lực ấn tượng',
+            width: 800,
+            height: 600,
+          },
         },
         {
           id: 'guide-budget',
           title: 'Ngân sách hợp lý cho từng hạng mục dịch vụ',
           from: ['#FF7640', '#4D1727'],
           icon: 'Wallet',
+          image: {
+            src: '/images/landing/guide-budget.webp',
+            alt: 'Cách xác định ngân sách dự án hợp lý',
+            width: 800,
+            height: 600,
+          },
+        },
+      ],
+    },
+    testimonials: {
+      title: 'Được tin dùng bởi cộng đồng',
+      items: [
+        {
+          quote: 'WorkGo giúp công ty chúng tôi tìm được chuyên gia React và AI chỉ trong 24 giờ. Cơ chế Escrow an toàn tuyệt đối.',
+          name: 'Nguyễn Hải Nam',
+          role: 'CTO tại TechVentures',
+          initials: 'HN',
+        },
+        {
+          quote: 'Là lập trình viên tự do, tôi hoàn toàn yên tâm nhận dự án lớn nhờ hệ thống bảo chứng thanh toán rõ ràng, nhanh gọn.',
+          name: 'Trần Mai Anh',
+          role: 'Fullstack Freelancer',
+          initials: 'MA',
+        },
+        {
+          quote: 'Chất lượng dịch vụ và tính chuyên nghiệp vượt xa mong đợi. Giao diện trực quan, giải quyết thanh toán tức thì.',
+          name: 'Lê Hoàng Quân',
+          role: 'Founder, GreenCommerce',
+          initials: 'HQ',
         },
       ],
     },
@@ -433,6 +547,13 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           blurb: 'From product listing to first order in seven days.',
           accent: ['#FF7640', '#4D1727'],
           icon: 'Sparkles',
+          priceFrom: 499000,
+          image: {
+            src: '/images/landing/popular-tiktok-shop.webp',
+            alt: 'Professional TikTok Shop setup',
+            width: 800,
+            height: 1000,
+          },
         },
         {
           id: 'ai-programming',
@@ -440,6 +561,13 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           blurb: 'Ship large language models inside your product.',
           accent: ['#1DBF73', '#003912'],
           icon: 'Bot',
+          priceFrom: 1200000,
+          image: {
+            src: '/images/landing/popular-ai-programming.webp',
+            alt: 'AI application development',
+            width: 800,
+            height: 1000,
+          },
         },
         {
           id: 'web-development',
@@ -447,6 +575,13 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           blurb: 'Fast, scalable, SEO-ready websites that convert.',
           accent: ['#2EA8FF', '#06142F'],
           icon: 'Code2',
+          priceFrom: 1500000,
+          image: {
+            src: '/images/landing/popular-web-dev.webp',
+            alt: 'Full-stack web development',
+            width: 800,
+            height: 1000,
+          },
         },
         {
           id: 'video-editing',
@@ -454,6 +589,13 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           blurb: 'Tight cuts, subtitles and motion that hold attention.',
           accent: ['#8B5CF6', '#2E1065'],
           icon: 'Clapperboard',
+          priceFrom: 399000,
+          image: {
+            src: '/images/landing/popular-video-edit.webp',
+            alt: 'Video editing & motion graphics',
+            width: 800,
+            height: 1000,
+          },
         },
         {
           id: 'software-development',
@@ -461,6 +603,13 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           blurb: 'Custom web and mobile apps built to your spec.',
           accent: ['#38BDF8', '#0C4A6E'],
           icon: 'Zap',
+          priceFrom: 2500000,
+          image: {
+            src: '/images/landing/popular-software-dev.webp',
+            alt: 'Custom software engineering',
+            width: 800,
+            height: 1000,
+          },
         },
         {
           id: 'book-publishing',
@@ -468,6 +617,13 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           blurb: 'Editing, cover design and ISBN registration handled.',
           accent: ['#F59E0B', '#421300'],
           icon: 'Briefcase',
+          priceFrom: 899000,
+          image: {
+            src: '/images/landing/popular-book-publish.webp',
+            alt: 'Book formatting and cover publishing',
+            width: 800,
+            height: 1000,
+          },
         },
       ],
     },
@@ -495,6 +651,12 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
         footnote: '100% money-back guarantee',
         gradient: ['#00732E', '#003912'],
         icon: 'Users',
+        image: {
+          src: '/images/landing/panel-find-experts.webp',
+          alt: 'Tech experts working on demand',
+          width: 1600,
+          height: 900,
+        },
       },
       {
         id: 'automate-with-ai',
@@ -505,9 +667,15 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           'Instant data analysis and report generation',
         ],
         ctaLabel: 'Explore WorkGo AI',
-        ctaHref: '/posts',
+        ctaHref: '/posts?q=' + encodeURIComponent('AI services'),
         gradient: ['#6B2A0C', '#421300'],
         icon: 'Bot',
+        image: {
+          src: '/images/landing/panel-ai-automation.webp',
+          alt: 'Smart AI automation solutions',
+          width: 1600,
+          height: 900,
+        },
       },
     ],
     guides: {
@@ -519,18 +687,59 @@ export const FIVERR_CONTENT: Record<Locale2, FiverrLandingContent> = {
           title: 'How to write a project brief that gets accurate quotes',
           from: ['#1677FF', '#06142F'],
           icon: 'Briefcase',
+          image: {
+            src: '/images/landing/guide-brief.webp',
+            alt: 'How to write a clear project brief',
+            width: 800,
+            height: 600,
+          },
         },
         {
           id: 'guide-portfolio',
           title: 'Build a freelancer portfolio that wins clients',
           from: ['#1DBF73', '#003912'],
           icon: 'Users',
+          image: {
+            src: '/images/landing/guide-portfolio.webp',
+            alt: 'Building a winning freelancer portfolio',
+            width: 800,
+            height: 600,
+          },
         },
         {
           id: 'guide-budget',
           title: 'A realistic budget for every service category',
           from: ['#FF7640', '#4D1727'],
           icon: 'Wallet',
+          image: {
+            src: '/images/landing/guide-budget.webp',
+            alt: 'Setting an effective project budget',
+            width: 800,
+            height: 600,
+          },
+        },
+      ],
+    },
+    testimonials: {
+      title: 'Trusted by the community',
+      items: [
+        {
+          quote: 'WorkGo helped our startup find top-tier React & AI engineers within 24 hours. The escrow protection is second to none.',
+          name: 'Hai Nam Nguyen',
+          role: 'CTO, TechVentures',
+          initials: 'HN',
+        },
+        {
+          quote: 'As a freelance software engineer, I can focus 100% on delivery knowing payments are backed by smart milestones.',
+          name: 'Mai Anh Tran',
+          role: 'Fullstack Freelancer',
+          initials: 'MA',
+        },
+        {
+          quote: 'Exceptional service and talent quality. The seamless contracts and instant escrow payouts elevated our growth.',
+          name: 'Hoang Quan Le',
+          role: 'Founder, GreenCommerce',
+          initials: 'HQ',
         },
       ],
     },

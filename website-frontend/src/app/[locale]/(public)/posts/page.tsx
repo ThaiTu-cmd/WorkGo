@@ -17,6 +17,8 @@ import { PostCard } from "@/components/composed/post-card";
 import { FilterSidebar, type FilterValues } from "@/components/composed/filter-sidebar";
 import { postsApi, type PostItem } from "@/lib/adapters/posts";
 import { catalogApi, type CategoryItem } from "@/lib/adapters/catalog";
+import { getFiverrContent } from "@/lib/landing/fiverr-content";
+import { Reveal } from "@/components/ui/reveal";
 import { cn } from "@/lib/utils";
 
 function PostsMarketplaceContent() {
@@ -42,6 +44,8 @@ function PostsMarketplaceContent() {
   const [posts, setPosts] = React.useState<PostItem[]>([]);
   const [meta, setMeta] = React.useState({ page: 1, limit: 6, total: 0, totalPages: 1 });
   const [loading, setLoading] = React.useState(true);
+  const [filtering, setFiltering] = React.useState(false);
+  const firstRun = React.useRef(true);
   const [error, setError] = React.useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = React.useState(false);
 
@@ -66,6 +70,12 @@ function PostsMarketplaceContent() {
   // Load posts
   React.useEffect(() => {
     let active = true;
+    if (firstRun.current) {
+      firstRun.current = false;
+    } else {
+      setFiltering(true);
+    }
+
     postsApi
       .list({
         q: qParam || undefined,
@@ -82,12 +92,14 @@ function PostsMarketplaceContent() {
           setPosts(res.data);
           setMeta(res.meta);
           setLoading(false);
+          setFiltering(false);
         }
       })
       .catch(() => {
         if (active) {
           setError(true);
           setLoading(false);
+          setFiltering(false);
         }
       });
 
@@ -148,6 +160,39 @@ function PostsMarketplaceContent() {
 
   const hasActiveFilters = Boolean(
     qParam || catParam || execParam || bMinParam || bMaxParam
+  );
+
+  const quickPills = React.useMemo(
+    () => getFiverrContent(locale).categories.items.map((c) => c.label),
+    [locale]
+  );
+
+  const featuredLabels = React.useMemo(
+    () => getFiverrContent(locale).trending.items.slice(0, 3),
+    [locale]
+  );
+
+  const skeletonGrid = (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div
+          key={i}
+          className="rounded-card border border-border bg-surface p-5 space-y-4"
+        >
+          <Skeleton className="h-5 w-3/4" />
+          <Skeleton className="h-6 w-1/2" />
+          <div className="flex gap-2">
+            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-5 w-16 rounded-full" />
+          </div>
+          <Skeleton className="h-10 w-full" />
+          <div className="pt-3 border-t border-border flex items-center justify-between">
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-4 w-12" />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 
   return (
@@ -226,7 +271,50 @@ function PostsMarketplaceContent() {
         </div>
       </div>
 
-      {/* Quick Category Pills Carousel */}
+      {/* Quick Category Pills from Landing */}
+      <div
+        className="pill-scroll rail-momentum mb-3 flex gap-2 overflow-x-auto pb-1 fiverr-no-scrollbar"
+        role="group"
+        aria-label={t("quickFilterLabel")}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setSearchInput("");
+            updateQuery({ q: undefined, page: 1 });
+          }}
+          aria-pressed={!qParam}
+          className={cn(
+            "h-9 shrink-0 whitespace-nowrap rounded-full border px-4 text-sm font-semibold transition-colors cursor-pointer",
+            !qParam
+              ? "bg-[#222325] text-white border-[#222325]"
+              : "bg-white text-[#222325] border-[#DADBDD] hover:bg-black/5"
+          )}
+        >
+          {t("quickFilterAll")}
+        </button>
+        {quickPills.map((label) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => {
+              setSearchInput(label);
+              updateQuery({ q: label, page: 1 });
+            }}
+            aria-pressed={qParam === label}
+            className={cn(
+              "h-9 shrink-0 whitespace-nowrap rounded-full border px-4 text-sm font-semibold transition-colors cursor-pointer",
+              qParam === label
+                ? "bg-[#222325] text-white border-[#222325]"
+                : "bg-white text-[#222325] border-[#DADBDD] hover:bg-black/5"
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Category Pills Filter */}
       {categories.length > 0 && (
         <div className="mb-6">
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
@@ -341,29 +429,12 @@ function PostsMarketplaceContent() {
           </div>
         </div>
 
-        {/* Right: Posts Grid / States */}
+        {/* Right: Posts Grid / States (loading || filtering) */}
         <div className="md:col-span-3">
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div
-                  key={i}
-                  className="rounded-card border border-border bg-surface p-5 space-y-4"
-                >
-                  <Skeleton className="h-5 w-3/4" />
-                  <Skeleton className="h-6 w-1/2" />
-                  <div className="flex gap-2">
-                    <Skeleton className="h-5 w-16 rounded-full" />
-                    <Skeleton className="h-5 w-16 rounded-full" />
-                  </div>
-                  <Skeleton className="h-10 w-full" />
-                  <div className="pt-3 border-t border-border flex items-center justify-between">
-                    <Skeleton className="h-6 w-24" />
-                    <Skeleton className="h-4 w-12" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            skeletonGrid
+          ) : filtering ? (
+            skeletonGrid
           ) : error ? (
             <ErrorState
               title={tCommon("loading")}
@@ -371,22 +442,44 @@ function PostsMarketplaceContent() {
               onRetry={handleRetry}
             />
           ) : posts.length === 0 ? (
-            <EmptyState
-              title={t("empty")}
-              description="Thử điều chỉnh hoặc xóa các điều kiện lọc để tìm kiếm các bài đăng việc làm khác."
-              action={
-                hasActiveFilters ? (
-                  <Button variant="primary" onClick={handleClearFilters}>
-                    {tCommon("clearFilters")}
-                  </Button>
-                ) : undefined
-              }
-            />
+            <div>
+              <EmptyState
+                title={t("empty")}
+                description="Thử điều chỉnh hoặc xóa các điều kiện lọc để tìm kiếm các bài đăng việc làm khác."
+                action={
+                  hasActiveFilters ? (
+                    <Button variant="primary" onClick={handleClearFilters}>
+                      {tCommon("clearFilters")}
+                    </Button>
+                  ) : undefined
+                }
+              />
+              {featuredLabels.length > 0 && (
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                  <span className="text-xs text-fg-tertiary">{t("featuredLabel")}</span>
+                  {featuredLabels.map((label) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => {
+                        setSearchInput(label);
+                        updateQuery({ q: label, page: 1 });
+                      }}
+                      className="h-8 shrink-0 rounded-full border border-border bg-surface px-3 text-xs font-semibold text-fg-secondary hover:text-fg hover:border-border-strong transition-colors cursor-pointer"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {posts.map((post) => (
-                  <PostCard key={post.postId} post={post} locale={locale} />
+                {posts.map((post, idx) => (
+                  <Reveal key={post.postId} delay={idx * 50} className="h-full">
+                    <PostCard post={post} locale={locale} />
+                  </Reveal>
                 ))}
               </div>
 

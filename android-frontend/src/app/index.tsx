@@ -30,8 +30,18 @@ export default function HomeScreen() {
           {/* Header Brand */}
           <EntranceView delay={0}>
             <View style={styles.header}>
-              <View style={styles.brandBadge}>
-                <ThemedText style={styles.brandBadgeText}>WorkGo Mobile</ThemedText>
+              <View
+                style={[
+                  styles.brandBadge,
+                  {
+                    backgroundColor: theme.primarySubtle,
+                    borderColor: theme.border,
+                  },
+                ]}
+              >
+                <ThemedText style={[styles.brandBadgeText, { color: theme.primary }]}>
+                  WorkGo Mobile
+                </ThemedText>
               </View>
               <ThemedText type="hero" style={styles.title}>
                 Tìm việc & Thuê chuyên gia
@@ -101,15 +111,12 @@ const styles = StyleSheet.create({
   },
   brandBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#EFF6FF',
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
     borderRadius: Spacing.one,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
   },
   brandBadgeText: {
-    color: '#2563EB',
     fontSize: 12,
     fontWeight: '600',
   },

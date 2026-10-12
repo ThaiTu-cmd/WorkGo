@@ -25,6 +25,7 @@ import { formatVND, formatDateOnly } from "@/lib/format";
 import { postsApi, type PostItem } from "@/lib/adapters/posts";
 import { proposalsApi } from "@/lib/adapters/proposals";
 import { ProposalDrawer } from "@/components/domain/proposal-drawer";
+import { Reveal } from "@/components/ui/reveal";
 
 export default function PostDetailPage() {
   const t = useTranslations("posts");
@@ -95,7 +96,7 @@ export default function PostDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Post Details */}
-        <div className="lg:col-span-2 space-y-6">
+        <Reveal delay={0} className="lg:col-span-2 space-y-6">
           {/* Header Card */}
           <Card>
             <CardContent className="p-6 md:p-8 space-y-4">
@@ -200,10 +201,10 @@ export default function PostDetailPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </Reveal>
 
         {/* Right Column: Sticky Action & Proposal Panel (360px) */}
-        <div>
+        <Reveal delay={80}>
           <div className="sticky top-24 space-y-4">
             <Card className="border-primary/30 shadow-md">
               <CardHeader className="pb-3">
@@ -238,7 +239,7 @@ export default function PostDetailPage() {
               </CardContent>
             </Card>
           </div>
-        </div>
+        </Reveal>
       </div>
 
       {/* Proposal Drawer */}

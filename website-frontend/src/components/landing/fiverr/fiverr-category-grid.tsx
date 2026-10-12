@@ -6,6 +6,7 @@ import {
   Bot,
   Briefcase,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Clapperboard,
   Code2,
@@ -66,6 +67,37 @@ export function FiverrCategoryGrid({
 }: FiverrCategoryGridProps): React.JSX.Element {
   const content = getFiverrContent(locale);
   const [expanded, setExpanded] = React.useState(false);
+  const railRef = React.useRef<HTMLUListElement>(null);
+
+  const EDGE_SLOP = 4;
+  const [canLeft, setCanLeft] = React.useState(false);
+  const [canRight, setCanRight] = React.useState(true);
+
+  const updateEdges = React.useCallback(() => {
+    const el = railRef.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > EDGE_SLOP);
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - EDGE_SLOP);
+  }, []);
+
+  React.useEffect(() => {
+    updateEdges();
+    const el = railRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", updateEdges, { passive: true });
+    window.addEventListener("resize", updateEdges);
+    return () => {
+      el.removeEventListener("scroll", updateEdges);
+      window.removeEventListener("resize", updateEdges);
+    };
+  }, [updateEdges]);
+
+  const scrollRail = (delta: number) => {
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    railRef.current?.scrollBy({ left: delta, behavior: prefersReduced ? "auto" : "smooth" });
+  };
 
   const items = content.categories.items;
   const hiddenCount = Math.max(0, items.length - MOBILE_VISIBLE);
@@ -78,37 +110,57 @@ export function FiverrCategoryGrid({
     <section aria-label={regionLabel} className="bg-white px-6 py-8 md:px-8 md:py-10">
       <FiverrReveal className="relative">
         {/* Desktop: horizontal rail */}
-        <ul className="hidden items-stretch gap-4 md:flex">
-          {items.map((item) => {
-            const Icon = FIVERR_ICONS[item.icon];
-            return (
-              <li key={item.key} className="flex">
-                <Link
-                  href={`/${locale}${item.href}`}
-                  aria-label={item.label}
-                  className={cn(tile, "w-[129px] h-[129px] md:w-[129px] md:h-[129px]")}
-                  style={{ boxShadow: FIVERR_SHADOW.card }}
+        <div className="relative hidden md:block">
+          <ul
+            ref={railRef}
+            className="flex items-stretch gap-4 overflow-x-auto scroll-smooth fiverr-no-scrollbar rail-momentum py-1"
+          >
+            {items.map((item) => {
+              const Icon = FIVERR_ICONS[item.icon];
+              return (
+                <li key={item.key} className="flex">
+                  <Link
+                    href={`/${locale}/posts?q=${encodeURIComponent(item.label)}`}
+                    aria-label={item.label}
+                    className={cn(tile, "w-[129px] h-[129px] md:w-[129px] md:h-[129px]")}
+                    style={{ boxShadow: FIVERR_SHADOW.card }}
+                  >
+                    <Icon
+                      className="h-6 w-6 shrink-0"
+                      style={{ color: FIVERR_COLOR.ink900 }}
+                      aria-hidden="true"
+                    />
+                    <span className="text-sm leading-[20px] text-[#222325] line-clamp-2">{item.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+            <li className="flex items-center gap-2">
+              {canLeft && (
+                <button
+                  type="button"
+                  onClick={() => scrollRail(-280)}
+                  aria-label="Cuộn danh mục sang trái"
+                  className="fiverr-press flex h-10 w-10 items-center justify-center rounded-full border border-[#DADBDD] bg-white text-[#222325] hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222325]"
+                  style={{ boxShadow: "0 3px 10px rgba(0,0,0,0.13)" }}
                 >
-                  <Icon
-                    className="h-6 w-6 shrink-0"
-                    style={{ color: FIVERR_COLOR.ink900 }}
-                    aria-hidden="true"
-                  />
-                  <span className="text-sm leading-[20px] text-[#222325]">{item.label}</span>
-                </Link>
-              </li>
-            );
-          })}
-          <li className="flex items-center">
-            <span
-              aria-hidden="true"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#DADBDD] bg-white text-[#222325]"
-              style={{ boxShadow: "0 3px 10px rgba(0,0,0,0.13)" }}
-            >
-              <ChevronRight className="h-5 w-5 shrink-0" />
-            </span>
-          </li>
-        </ul>
+                  <ChevronLeft className="h-5 w-5 shrink-0" />
+                </button>
+              )}
+              {canRight && (
+                <button
+                  type="button"
+                  onClick={() => scrollRail(280)}
+                  aria-label="Cuộn xem thêm danh mục"
+                  className="fiverr-press flex h-10 w-10 items-center justify-center rounded-full border border-[#DADBDD] bg-white text-[#222325] hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222325]"
+                  style={{ boxShadow: "0 3px 10px rgba(0,0,0,0.13)" }}
+                >
+                  <ChevronRight className="h-5 w-5 shrink-0" />
+                </button>
+              )}
+            </li>
+          </ul>
+        </div>
 
         {/* Mobile: 3-column grid + progressive disclosure */}
         <ul className="grid grid-cols-3 gap-3 md:hidden">
@@ -117,7 +169,7 @@ export function FiverrCategoryGrid({
             return (
               <li key={item.key} className="flex">
                 <Link
-                  href={`/${locale}${item.href}`}
+                  href={`/${locale}/posts?q=${encodeURIComponent(item.label)}`}
                   aria-label={item.label}
                   className={cn(tile, "w-full aspect-square min-h-[88px]")}
                   style={{ boxShadow: FIVERR_SHADOW.card }}
@@ -127,7 +179,7 @@ export function FiverrCategoryGrid({
                     style={{ color: FIVERR_COLOR.ink900 }}
                     aria-hidden="true"
                   />
-                  <span className="text-xs leading-[16px] text-[#222325]">{item.label}</span>
+                  <span className="text-xs leading-[16px] text-[#222325] line-clamp-2">{item.label}</span>
                 </Link>
               </li>
             );

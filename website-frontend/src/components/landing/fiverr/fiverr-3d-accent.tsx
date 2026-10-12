@@ -3,6 +3,7 @@
 import * as React from "react";
 import dynamic from "next/dynamic";
 import { useReveal } from "@/lib/motion";
+import { resolveParticleDensity } from "@/lib/landing/adaptive-3d";
 
 export interface Fiverr3dAccentProps {
   locale?: string;
@@ -10,7 +11,7 @@ export interface Fiverr3dAccentProps {
   density?: number;
 }
 
-const ThreeCanvas = dynamic(() => import("./fiverr-3d-canvas"), {
+const ThreeCanvas = dynamic(() => import("./fiverr-3d-hero-scene"), {
   ssr: false,
   loading: () => null,
 });
@@ -18,9 +19,10 @@ const ThreeCanvas = dynamic(() => import("./fiverr-3d-canvas"), {
 export function Fiverr3dAccent({
   locale,
   className,
-  density = 300,
+  density,
 }: Fiverr3dAccentProps) {
   void locale; // locale giữ parity i18n
+  const effDensity = density ?? resolveParticleDensity();
   const [enabled, setEnabled] = React.useState(false);
   const { ref, visible } = useReveal<HTMLDivElement>({ threshold: 0 });
 
@@ -48,13 +50,9 @@ export function Fiverr3dAccent({
     }
   }, [visible]);
 
-  if (!enabled) {
-    return <div aria-hidden="true" className={className} />;
-  }
-
   return (
     <div ref={ref} className={className} aria-hidden="true">
-      <ThreeCanvas density={density} />
+      {enabled && <ThreeCanvas density={effDensity} />}
     </div>
   );
 }

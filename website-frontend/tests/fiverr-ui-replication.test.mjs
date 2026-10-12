@@ -24,6 +24,7 @@ const FILES = {
   valueProps: BASE + "fiverr-value-props.tsx",
   panels: BASE + "fiverr-feature-panels.tsx",
   guides: BASE + "fiverr-guides.tsx",
+  testimonials: BASE + "fiverr-testimonials.tsx",
   cta: BASE + "fiverr-cta-banner.tsx",
   footer: BASE + "fiverr-footer.tsx",
   carousel: BASE + "fiverr-carousel.tsx",
@@ -48,6 +49,7 @@ test("FIV-02 - Landing orchestrator wires all sections in Fiverr order and paint
     "FiverrValueProps",
     "FiverrFeaturePanels",
     "FiverrGuides",
+    "FiverrTestimonials",
     "FiverrCtaBanner",
     "FiverrFooter",
   ];

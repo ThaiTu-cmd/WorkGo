@@ -12,7 +12,7 @@ export interface FiverrButtonProps
   extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   variant?: Variant;
   size?: Size;
-  href?: string;
+  href: string;
   asChild?: boolean;
 }
 
@@ -25,7 +25,7 @@ const styles: Record<Variant, string> = {
 export function FiverrButton({
   variant = "dark",
   size = "md",
-  href = "#",
+  href,
   className,
   children,
   asChild,

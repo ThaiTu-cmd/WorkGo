@@ -77,5 +77,24 @@ export const FIVERR_HIT = {
   headerH: 64,
 } as const;
 
+export const FIVERR_3D = {
+  perspective: 800,
+  tiltMax: 8,
+  parallaxHero: 14,
+  glowBlur: 60,
+  dprMax: 1.75,
+  pointDensity: 450,
+} as const;
+
+export const FIVERR_EASE = {
+  out: "cubic-bezier(0.22, 1, 0.36, 1)",
+  spring: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+} as const;
+
+export const FIVERR_FRAME = { fps: 60, frameMinMs: 1000 / 60 } as const;
+export const FIVERR_SHIMMER = { bg: "linear-gradient(90deg,#EDEFF2 25%,#DDE3EA 50%,#EDEFF2 75%)", durMs: 1600 } as const;
+export const FIVERR_FOCUS = { liftPx: 4, ringColor: "#222325", shadow: "0 12px 28px rgba(0,0,0,.18)" } as const;
+export const FIVERR_DENSITY = { high: 300, low: 150, memThresholdGb: 4, cpuThreshold: 4 } as const;
+
 export type FiverrColorToken = keyof typeof FIVERR_COLOR;
 export type FiverrTypeToken = keyof typeof FIVERR_TYPE_SCALE;

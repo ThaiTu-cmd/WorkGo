@@ -5,21 +5,22 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { GitBranch, Globe, MessageCircle, Network, Send } from "lucide-react";
 import { getFiverrContent } from "@/lib/landing/fiverr-content";
+import { footerHref } from "@/lib/landing/info-content";
 import { FIVERR_COLOR } from "@/lib/landing/fiverr-tokens";
 import { FiverrReveal } from "./fiverr-reveal";
 
-
 export interface FiverrFooterProps {
   locale: string;
-  regionLabel: string;
+  regionLabel?: string;
 }
 
-/**
- * Channel badges. `lucide-react` v1 ships no brand marks (Github/Twitter/
- * Linkedin/Facebook were removed upstream), so generic glyphs stand in.
- * They render as non-interactive badges because WorkGo does not publish
- * verified external profile URLs — inventing hrefs would ship dead links.
- */
+const SOCIAL_HREFS: Record<string, string> = {
+  community: "/help#community",
+  opensource: "/about#open-source",
+  newsletter: "/guides",
+  network: "/pro#teams",
+};
+
 const SOCIALS = [
   { key: "community", label: "Cộng đồng WorkGo", Icon: MessageCircle },
   { key: "opensource", label: "Mã nguồn mở", Icon: GitBranch },
@@ -35,7 +36,7 @@ const SOCIALS = [
  */
 export function FiverrFooter({
   locale,
-  regionLabel,
+  regionLabel = "Chân trang",
 }: FiverrFooterProps): React.JSX.Element {
   const t = useTranslations("landing.fiverr");
   const content = getFiverrContent(locale);
@@ -65,7 +66,7 @@ export function FiverrFooter({
                 {column.links.map((link) => (
                   <li key={link}>
                     <Link
-                      href={`/${locale}/posts`}
+                      href={footerHref(locale, column.heading, link)}
                       className="text-sm leading-[22px] text-[#222325] underline-offset-2 transition-colors duration-200 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222325]"
                     >
                       {link}
@@ -100,14 +101,14 @@ export function FiverrFooter({
             <ul className="flex items-center gap-3" aria-label={t("footer.socialLabel")}>
               {SOCIALS.map(({ key, label, Icon }) => (
                 <li key={key}>
-                  <span
-                    role="img"
+                  <Link
+                    href={`/${locale}${SOCIAL_HREFS[key] ?? "/help"}`}
                     aria-label={label}
                     title={label}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-[#DADBDD] text-[#222325]"
+                    className="fiverr-press flex h-9 w-9 items-center justify-center rounded-full border border-[#DADBDD] text-[#222325] transition-colors duration-150 hover:bg-[#222325]/5 hover:border-[#222325] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222325]"
                   >
                     <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  </span>
+                  </Link>
                 </li>
               ))}
             </ul>

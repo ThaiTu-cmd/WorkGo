@@ -3,7 +3,7 @@ import { Be_Vietnam_Pro, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 
 const beVietnamPro = Be_Vietnam_Pro({
-  weight: ["400", "500", "600", "700"],
+  weight: ["200", "300", "400", "500", "600", "700", "800"],
   subsets: ["latin", "vietnamese"],
   variable: "--font-be-vietnam-pro",
   display: "swap",

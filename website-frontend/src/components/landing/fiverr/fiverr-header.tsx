@@ -2,13 +2,13 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Menu, Search, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { LanguageSwitcher } from "@/components/shell/language-switcher";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { getFiverrContent } from "@/lib/landing/fiverr-content";
 import { FIVERR_COLOR } from "@/lib/landing/fiverr-tokens";
+import { FiverrSearchForm } from "./fiverr-search-form";
 
 export interface FiverrHeaderProps {
   locale: string;
@@ -21,9 +21,7 @@ export interface FiverrHeaderProps {
 export function FiverrHeader({ locale }: FiverrHeaderProps): React.JSX.Element {
   const t = useTranslations("landing.fiverr");
   const content = getFiverrContent(locale);
-  const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const [query, setQuery] = React.useState("");
 
   const drawerId = "fiverr-mobile-drawer";
 
@@ -40,16 +38,10 @@ export function FiverrHeader({ locale }: FiverrHeaderProps): React.JSX.Element {
   const close = React.useCallback(() => setOpen(false), []);
 
   const linkBtn =
-    "pressable inline-flex h-[42px] items-center rounded-lg px-4 text-base font-semibold text-[#222325] transition-colors duration-200 hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222325]";
-
-  const submitSearch = (event: React.SyntheticEvent) => {
-    event.preventDefault();
-    const q = query.trim();
-    router.push(q ? `/${locale}/posts?q=${encodeURIComponent(q)}` : `/${locale}/posts`);
-  };
+    "pressable inline-flex h-[42px] shrink-0 items-center whitespace-nowrap rounded-lg px-3 text-[15px] font-semibold text-[#222325] transition-colors duration-200 hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222325] xl:px-4 xl:text-base";
 
   const navItems = [
-    { label: content.nav.pro, href: `/${locale}/posts` },
+    { label: content.nav.pro, href: `/${locale}/pro` },
     { label: content.nav.explore, href: `/${locale}/posts` },
   ];
 
@@ -72,7 +64,7 @@ export function FiverrHeader({ locale }: FiverrHeaderProps): React.JSX.Element {
         className="w-full bg-white border-b border-[#DADBDD]"
         style={{ borderBottomWidth: "0.8px" }}
       >
-        <div className="mx-auto flex min-h-[64px] md:h-[53px] max-w-[1400px] items-center justify-between gap-3 px-6 py-2 md:gap-8 md:py-4 md:px-8">
+        <div className="mx-auto flex min-h-[64px] md:h-[53px] max-w-[1400px] items-center justify-between gap-2 px-6 py-2 md:gap-8 md:py-4 md:px-8 lg:gap-3 xl:gap-8 overflow-x-clip">
           {/* Brand */}
           <Link
             href={`/${locale}`}
@@ -88,56 +80,44 @@ export function FiverrHeader({ locale }: FiverrHeaderProps): React.JSX.Element {
           </Link>
 
           {/* Desktop inline search (measured: 423 × 42, radius 4) */}
-          <form
-            onSubmit={submitSearch}
+          <FiverrSearchForm
+            locale={locale}
+            id="fiverr-header-search"
+            placeholder={content.nav.searchPlaceholder}
+            searchLabel={t("header.searchLabel")}
+            submitLabel={t("header.searchSubmitLabel")}
+            emptyHint={t("header.searchEmptyHint")}
+            clearLabel={t("search.clearLabel")}
+            suggestionsLabel={t("hero.suggestionsLabel")}
+            variant="header"
             role="search"
-            className="hidden h-[42px] w-[423px] items-center bg-white xl:flex"
-          >
-            <label className="sr-only" htmlFor="fiverr-header-search">
-              {t("header.searchLabel")}
-            </label>
-            <input
-              id="fiverr-header-search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={content.nav.searchPlaceholder}
-              className="h-full min-w-0 flex-1 rounded-l border border-r-0 px-4 text-base outline-none transition-[border-color] duration-150 ease-in-out"
-              style={{ borderColor: FIVERR_COLOR.fieldBorder, color: FIVERR_COLOR.ink500 }}
-            />
-            <button
-              type="submit"
-              aria-label={t("header.searchSubmitLabel")}
-              title={t("header.searchSubmitLabel")}
-              className="pressable flex h-full w-[50px] items-center justify-center rounded-r text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222325]"
-              style={{ backgroundColor: FIVERR_COLOR.btnSearch }}
-            >
-              <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
-            </button>
-          </form>
+          />
 
           {/* Desktop actions */}
           <nav
             aria-label={t("header.drawerLabel")}
-            className="hidden items-center gap-2 lg:flex"
+            className="hidden min-w-0 items-center gap-1 lg:flex xl:gap-2"
           >
             {navItems.map((item) => (
               <Link key={item.label} href={item.href} className={linkBtn}>
                 {item.label}
               </Link>
             ))}
-            <div className="h-4 w-px" style={{ backgroundColor: FIVERR_COLOR.hairline }} />
-            <ThemeToggle />
-            <LanguageSwitcher currentLocale={locale} />
-            <div className="h-4 w-px" style={{ backgroundColor: FIVERR_COLOR.hairline }} />
-            <Link href={`/${locale}/register`} className={linkBtn}>
-              {content.nav.becomeSeller}
-            </Link>
+            <div className="h-4 w-px shrink-0" style={{ backgroundColor: FIVERR_COLOR.hairline }} />
+            <div className="shrink-0"><ThemeToggle /></div>
+            <div className="shrink-0"><LanguageSwitcher currentLocale={locale} /></div>
+            <div className="h-4 w-px shrink-0" style={{ backgroundColor: FIVERR_COLOR.hairline }} />
+            <div className="hidden min-w-0 items-center gap-1 xl:flex">
+              <Link href={`/${locale}/register`} className={linkBtn}>
+                {content.nav.becomeSeller}
+              </Link>
+            </div>
             <Link href={`/${locale}/login`} className={linkBtn}>
               {content.nav.signIn}
             </Link>
             <Link
               href={`/${locale}/register`}
-              className="pressable inline-flex h-[42px] items-center rounded-lg px-4 text-base font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222325]"
+              className="pressable shrink-0 whitespace-nowrap inline-flex h-[42px] items-center rounded-lg px-3 text-[15px] xl:px-4 xl:text-base font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#222325]"
               style={{ backgroundColor: FIVERR_COLOR.btnDark }}
             >
               {content.nav.join}
@@ -161,22 +141,18 @@ export function FiverrHeader({ locale }: FiverrHeaderProps): React.JSX.Element {
                 <Menu className="h-5 w-5 shrink-0" aria-hidden="true" />
               )}
             </button>
-            <label className="sr-only" htmlFor="fiverr-mobile-search">
-              {t("header.searchLabel")}
-            </label>
-            <input
+            <FiverrSearchForm
+              locale={locale}
               id="fiverr-mobile-search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  submitSearch(e);
-                }
-              }}
               placeholder={content.nav.mobileSearchPlaceholder}
-              className="h-9 min-w-0 flex-1 max-w-[200px] rounded-lg border bg-white px-3 text-sm outline-none"
-              style={{ borderColor: FIVERR_COLOR.fieldBorder, color: FIVERR_COLOR.ink500 }}
+              searchLabel={t("header.searchLabel")}
+              submitLabel={t("header.searchSubmitLabel")}
+              emptyHint={t("header.searchEmptyHint")}
+              clearLabel={t("search.clearLabel")}
+              suggestionsLabel={t("hero.suggestionsLabel")}
+              variant="mobile"
+              role="search"
+              className="flex items-center min-w-0 flex-1 max-w-[200px]"
             />
             <Link
               href={`/${locale}/register`}

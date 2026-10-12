@@ -21,6 +21,7 @@ import { postsApi, type MobilePostItem } from '@/api/posts';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { hapticFeedback } from '@/utils/haptics';
 
 const FEATURED_CHIPS = ['Thiết kế Logo', 'Lập trình Web', 'Dịch thuật Anh - Việt'];
 
@@ -174,6 +175,7 @@ export default function CatalogScreen() {
         setTotalPages(res.meta.totalPages);
         setPage(1);
         setError(null);
+        void hapticFeedback.success();
       })
       .catch((err: unknown) => {
         setError(

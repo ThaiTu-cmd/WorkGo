@@ -14,6 +14,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { type MobileProposalInput } from '@/api/proposals';
 import { Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { hapticFeedback } from '@/utils/haptics';
 
 export interface ProposalSheetProps {
   visible: boolean;
@@ -56,33 +57,39 @@ function ProposalSheetModalContent({
 
     if (!isProvider) {
       setValidationError('Chỉ tài khoản Đối tác được gửi báo giá');
+      void hapticFeedback.error();
       return;
     }
 
     if (hasApplied) {
       setValidationError('Bạn đã gửi đề xuất cho bài đăng này');
+      void hapticFeedback.error();
       return;
     }
 
     const numPrice = Number(price);
     if (!price || isNaN(numPrice) || numPrice <= 0) {
       setValidationError('Giá báo phải lớn hơn 0');
+      void hapticFeedback.error();
       return;
     }
 
     if (budgetMax !== undefined && budgetMax > 0 && numPrice > budgetMax) {
       setValidationError(`Giá báo không được vượt quá ngân sách tối đa (${formatVND(budgetMax)})`);
+      void hapticFeedback.error();
       return;
     }
 
     const numDays = Number(days);
     if (!days || isNaN(numDays) || !Number.isInteger(numDays) || numDays < 1) {
       setValidationError('Thời gian thực hiện tối thiểu 1 ngày (số nguyên)');
+      void hapticFeedback.error();
       return;
     }
 
     if (!message || message.trim().length < 20) {
       setValidationError('Lời nhắn và giải pháp phải có tối thiểu 20 ký tự');
+      void hapticFeedback.error();
       return;
     }
 
@@ -117,7 +124,13 @@ function ProposalSheetModalContent({
                 </ThemedText>
               )}
             </View>
-            <PressableScale style={styles.closeBtn} onPress={onClose}>
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel="Đóng biểu mẫu đề xuất"
+              accessibilityHint="Đóng cửa sổ báo giá và quay lại màn hình chi tiết"
+              style={styles.closeBtn}
+              onPress={onClose}
+            >
               <ThemedText style={[styles.closeBtnText, { color: theme.textSecondary }]}>
                 ✕
               </ThemedText>
@@ -131,14 +144,21 @@ function ProposalSheetModalContent({
           >
             {/* Error banner */}
             {activeError && (
-              <View style={styles.errorBanner}>
+              <View
+                style={styles.errorBanner}
+                accessibilityRole="alert"
+                accessibilityLabel={activeError}
+              >
                 <ThemedText style={styles.errorBannerText}>{activeError}</ThemedText>
               </View>
             )}
 
             {/* Non-provider notice */}
             {!isProvider && (
-              <View style={styles.warningBox}>
+              <View
+                style={styles.warningBox}
+                accessibilityRole="alert"
+              >
                 <ThemedText style={styles.warningText}>
                   ⚠️ Bạn đang đăng nhập bằng tài khoản Khách hàng. Chỉ tài khoản Đối tác (Provider) mới có quyền nộp báo giá.
                 </ThemedText>
@@ -147,7 +167,10 @@ function ProposalSheetModalContent({
 
             {/* Has applied notice */}
             {hasApplied && (
-              <View style={styles.infoBox}>
+              <View
+                style={styles.infoBox}
+                accessibilityRole="alert"
+              >
                 <ThemedText style={styles.infoText}>
                   ✓ Bạn đã gửi đề xuất cho bài đăng này. Không thể gửi thêm đề xuất mới.
                 </ThemedText>
@@ -158,6 +181,8 @@ function ProposalSheetModalContent({
             <View style={styles.field}>
               <ThemedText style={styles.label}>Giá đề xuất (VNĐ) *</ThemedText>
               <TextInput
+                accessible={true}
+                accessibilityLabel="Giá đề xuất bằng Việt Nam Đồng"
                 value={price}
                 onChangeText={setPrice}
                 keyboardType="numeric"
@@ -179,6 +204,8 @@ function ProposalSheetModalContent({
             <View style={styles.field}>
               <ThemedText style={styles.label}>Thời gian hoàn thành (ngày) *</ThemedText>
               <TextInput
+                accessible={true}
+                accessibilityLabel="Thời gian hoàn thành tính theo ngày"
                 value={days}
                 onChangeText={setDays}
                 keyboardType="numeric"
@@ -200,6 +227,8 @@ function ProposalSheetModalContent({
             <View style={styles.field}>
               <ThemedText style={styles.label}>Lời nhắn & Cam kết (tối thiểu 20 ký tự) *</ThemedText>
               <TextInput
+                accessible={true}
+                accessibilityLabel="Lời nhắn và cam kết giải pháp"
                 value={message}
                 onChangeText={setMessage}
                 multiline
@@ -225,6 +254,9 @@ function ProposalSheetModalContent({
           {/* Action Footer */}
           <View style={[styles.footer, { borderTopColor: theme.border }]}>
             <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel="Hủy bỏ"
+              accessibilityHint="Đóng biểu mẫu đề xuất"
               style={[
                 styles.cancelBtn,
                 { borderColor: theme.border, backgroundColor: theme.surface },
@@ -238,6 +270,9 @@ function ProposalSheetModalContent({
             </PressableScale>
 
             <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={submitting ? 'Đang gửi đề xuất' : hasApplied ? 'Đã gửi đề xuất' : 'Gửi đề xuất'}
+              accessibilityHint="Xác nhận nộp báo giá đề xuất cho khách hàng"
               style={[
                 styles.submitBtn,
                 {

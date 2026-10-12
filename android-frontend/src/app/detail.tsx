@@ -16,6 +16,7 @@ import { ProposalSheet } from '@/components/proposal-sheet';
 import { postsApi, type MobilePostItem, type ExecutionType } from '@/api/posts';
 import { proposalsApi, type MobileProposalInput } from '@/api/proposals';
 import { useAuth } from '@/store/auth';
+import { useToast } from '@/components/toast';
 import { Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -47,6 +48,7 @@ export default function DetailScreen() {
   const [post, setPost] = React.useState<MobilePostItem | null>(null);
   const [loading, setLoading] = React.useState(Boolean(id));
   const [applied, setApplied] = React.useState(false);
+  const toast = useToast();
   const [hasApplied, setHasApplied] = React.useState(false);
   const [sheetVisible, setSheetVisible] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
@@ -107,14 +109,16 @@ export default function DetailScreen() {
       setApplied(true);
       setHasApplied(true);
       setSheetVisible(false);
+      toast.show('Đã gửi đề xuất thành công!', 'success');
     } catch (err: unknown) {
+      let errMsg = 'Không thể gửi đề xuất. Vui lòng thử lại sau.';
       if (err && typeof err === 'object' && 'messageVi' in err) {
-        setProposalError((err as { messageVi: string }).messageVi);
+        errMsg = (err as { messageVi: string }).messageVi;
       } else if (err instanceof Error) {
-        setProposalError(err.message);
-      } else {
-        setProposalError('Không thể gửi đề xuất. Vui lòng thử lại sau.');
+        errMsg = err.message;
       }
+      setProposalError(errMsg);
+      toast.show(errMsg, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -129,6 +133,9 @@ export default function DetailScreen() {
         {/* Header Bar */}
         <View style={styles.headerBar}>
           <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Quay lại"
+            accessibilityHint="Quay lại màn hình danh sách công việc"
             style={[
               styles.backBtn,
               { backgroundColor: theme.surface, borderColor: theme.border },
@@ -335,6 +342,9 @@ export default function DetailScreen() {
             </View>
 
             <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={(hasApplied || applied) ? 'Đã gửi đề xuất' : 'Gửi báo giá'}
+              accessibilityHint="Mở biểu mẫu gửi báo giá cho công việc này"
               style={[
                 styles.applyBtn,
                 {

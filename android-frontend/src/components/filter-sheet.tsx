@@ -92,7 +92,13 @@ function FilterSheetModalContent({
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: theme.border }]}>
           <ThemedText style={styles.headerTitle}>Bộ lọc tìm kiếm</ThemedText>
-          <PressableScale style={styles.closeBtn} onPress={onClose}>
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Đóng bộ lọc"
+            accessibilityHint="Đóng bảng bộ lọc tìm kiếm"
+            style={styles.closeBtn}
+            onPress={onClose}
+          >
             <ThemedText style={[styles.closeBtnText, { color: theme.textSecondary }]}>
               ✕
             </ThemedText>
@@ -131,6 +137,9 @@ function FilterSheetModalContent({
         {/* Action Footer */}
         <View style={[styles.footer, { borderTopColor: theme.border }]}>
           <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Xóa bộ lọc"
+            accessibilityHint="Xóa toàn bộ tiêu chí lọc đã chọn"
             style={[
               styles.resetBtn,
               { borderColor: theme.border, backgroundColor: theme.surface },
@@ -142,6 +151,9 @@ function FilterSheetModalContent({
             </ThemedText>
           </PressableScale>
           <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Áp dụng bộ lọc"
+            accessibilityHint="Áp dụng các tiêu chí lọc đã chọn vào danh sách công việc"
             style={[styles.applyBtn, { backgroundColor: theme.primary }]}
             onPress={handleApply}
           >

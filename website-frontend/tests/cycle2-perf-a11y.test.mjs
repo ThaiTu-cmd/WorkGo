@@ -69,3 +69,46 @@ test("C2-6 / SPLIT-02: Web FilterSidebar modular sections exist and are composed
   assert.match(sidebarSrc, /DeliverySection/, "filter-sidebar.tsx must import/render DeliverySection");
   assert.match(sidebarSrc, /RatingVerifiedSection/, "filter-sidebar.tsx must import/render RatingVerifiedSection");
 });
+
+// ==========================================
+// C2-8: HAPTICS, TOAST & A11Y CONTRACTS
+// ==========================================
+
+test("C2-8 / A11Y-01: Mobile toast system exists and has auto-dismiss & alert role", () => {
+  assert.ok(existsAndroid("src/components/toast.tsx"), "toast.tsx must exist");
+  const src = readAndroid("src/components/toast.tsx");
+  assert.match(src, /export\s+function\s+ToastProvider/, "Must export ToastProvider");
+  assert.match(src, /export\s+function\s+useToast/, "Must export useToast");
+  assert.match(src, /export\s+function\s+ToastHost/, "Must export ToastHost");
+  assert.match(src, /2500/, "Toast must have 2500ms auto-dismiss timer");
+  assert.match(src, /accessibilityRole=["']alert["']/, "Toast must have accessibilityRole='alert'");
+});
+
+test("C2-8 / A11Y-02: Mobile haptics utility safely guards platform errors", () => {
+  assert.ok(existsAndroid("src/utils/haptics.ts"), "haptics.ts must exist");
+  const src = readAndroid("src/utils/haptics.ts");
+  assert.match(src, /selectionAsync/, "Must call selectionAsync");
+  assert.match(src, /notificationAsync/, "Must call notificationAsync");
+  assert.match(src, /catch/, "Must have try/catch error guard");
+});
+
+test("C2-8 / A11Y-03: Mobile offline banner component exists with retry", () => {
+  assert.ok(existsAndroid("src/components/offline-banner.tsx"), "offline-banner.tsx must exist");
+  const src = readAndroid("src/components/offline-banner.tsx");
+  assert.match(src, /export\s+function\s+OfflineBanner/, "Must export OfflineBanner");
+  assert.match(src, /onRetry/, "Must accept onRetry callback");
+  assert.match(src, /accessibilityRole=["']alert["']/, "Banner must have alert role");
+});
+
+test("C2-8 / A11Y-04: Mobile interactive controls define accessibilityLabel and accessibilityRole", () => {
+  const searchSrc = readAndroid("src/components/search-bar.tsx");
+  assert.match(searchSrc, /accessibilityLabel/, "SearchBar must have accessibilityLabel");
+  assert.match(searchSrc, /accessibilityRole=["']button["']/, "SearchBar buttons must have accessibilityRole='button'");
+
+  const filterSrc = readAndroid("src/components/filter-sheet.tsx");
+  assert.match(filterSrc, /accessibilityLabel=["']Xóa bộ lọc["']/, "FilterSheet must label clear button");
+  assert.match(filterSrc, /accessibilityLabel=["']Áp dụng bộ lọc["']/, "FilterSheet must label apply button");
+
+  const detailSrc = readAndroid("src/app/detail.tsx");
+  assert.match(detailSrc, /accessibilityLabel=["']Quay lại["']/, "detail.tsx must label back button");
+});

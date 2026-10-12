@@ -10,6 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { PressableScale } from '@/components/pressable-scale';
 import { Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { hapticFeedback } from '@/utils/haptics';
 
 export type ExecutionTypeChip =
   | 'ALL'
@@ -62,6 +63,8 @@ export function SearchBar({
         >
           <ThemedText style={styles.searchIcon}>🔍</ThemedText>
           <TextInput
+            accessible={true}
+            accessibilityLabel="Tìm kiếm việc, chuyên gia, dịch vụ"
             value={query}
             onChangeText={onChangeQuery}
             onSubmitEditing={onSubmitQuery}
@@ -75,6 +78,9 @@ export function SearchBar({
           />
           {query.length > 0 && (
             <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel="Xóa từ khóa tìm kiếm"
+              accessibilityHint="Xóa sạch nội dung ô tìm kiếm"
               style={styles.clearButton}
               onPress={() => onChangeQuery('')}
             >
@@ -87,6 +93,9 @@ export function SearchBar({
 
         {onOpenFilter && (
           <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Bộ lọc nâng cao"
+            accessibilityHint="Mở bảng tùy chọn bộ lọc tìm kiếm"
             style={[
               styles.filterButton,
               {
@@ -117,6 +126,9 @@ export function SearchBar({
           return (
             <PressableScale
               key={chip.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Lọc theo ${chip.label}`}
+              accessibilityHint={`Chọn hình thức thực hiện công việc ${chip.label}`}
               style={[
                 styles.chip,
                 {
@@ -124,7 +136,10 @@ export function SearchBar({
                   borderColor: isSelected ? theme.primary : theme.border,
                 },
               ]}
-              onPress={() => onSelectExecType(chip.id)}
+              onPress={() => {
+                void hapticFeedback.selection();
+                onSelectExecType(chip.id);
+              }}
             >
               <ThemedText
                 style={[

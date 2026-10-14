@@ -1,4 +1,4 @@
-package com.workgo.catalog.configuration;
+package com.workgo.order.configuration;
 
 import com.workgo.catalog.configuration.CustomJwtDecoder;
 import lombok.AccessLevel;

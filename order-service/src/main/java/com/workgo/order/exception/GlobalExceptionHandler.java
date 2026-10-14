@@ -1,6 +1,7 @@
-package com.workgo.catalog.exception;
+package com.workgo.order.exception;
 
 import com.workgo.catalog.dto.ApiResponse;
+import com.workgo.catalog.exception.AppException;
 import com.workgo.catalog.exception.ErrorCode;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
@@ -8,8 +9,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-
-import java.net.ResponseCache;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {

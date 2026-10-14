@@ -1,8 +1,11 @@
-package com.workgo.catalog.utils;
+package com.workgo.order.utils;
 
-import com.workgo.catalog.exception.AppException;
-import com.workgo.catalog.exception.ErrorCode;
+
+import com.workgo.order.exception.AppException;
+import com.workgo.order.exception.ErrorCode;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,7 +16,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class TokenUtils {
 
@@ -24,9 +28,22 @@ public class TokenUtils {
                 .getPrincipal();
         String providerId = jwt.getClaimAsString("providerId");
 
-        if(providerId == null) throw new AppException(ErrorCode.UNAUTHORIZED);
+        if(providerId == null) throw new AppException(ErrorCode.UNAUTHENTICATED);
 
         return UUID.fromString(providerId);
+    }
+
+    public UUID getCurrentUserId(){
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
+
+        String userId = jwt.getClaimAsString("userId");
+
+        if(userId == null) throw new AppException(ErrorCode.UNAUTHENTICATED);
+
+        return UUID.fromString(userId);
+
     }
 
     public int createDeletedMark(){

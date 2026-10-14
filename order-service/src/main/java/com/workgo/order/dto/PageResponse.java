@@ -1,4 +1,4 @@
-package com.workgo.catalog.dto;
+package com.workgo.order.dto;
 
 
 import lombok.*;

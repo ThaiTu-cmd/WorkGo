@@ -1,13 +1,12 @@
-package com.workgo.catalog.dto.response;
+package com.workgo.order.dto.response.client;
 
 
-import com.workgo.catalog.enumeration.ExecutionType;
-import com.workgo.catalog.enumeration.ServiceStatus;
+import com.workgo.order.enumeration.ExecutionType;
+import com.workgo.order.enumeration.client.ServiceStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
-import java.util.Set;
 import java.util.UUID;
 
 @Getter

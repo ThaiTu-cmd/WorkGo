@@ -1,4 +1,4 @@
-package com.workgo.catalog.configuration;
+package com.workgo.order.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.workgo.catalog.dto.ApiResponse;

@@ -1,9 +1,7 @@
-package com.workgo.catalog.dto.response;
+package com.workgo.order.dto.response.client;
 
-import com.workgo.catalog.entity.Service;
-import com.workgo.catalog.enumeration.BookingStatus;
-import com.workgo.catalog.enumeration.PackageStatus;
-import jakarta.persistence.*;
+
+import com.workgo.order.enumeration.client.PackageStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

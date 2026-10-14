@@ -1,4 +1,4 @@
-package com.workgo.catalog.enumeration;
+package com.workgo.order.enumeration.client;
 
 public enum PackageStatus {
     INACTIVE,

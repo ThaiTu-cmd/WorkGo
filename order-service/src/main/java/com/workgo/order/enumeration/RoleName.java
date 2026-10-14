@@ -1,7 +1,8 @@
-package com.workgo.identity.enumeration;
+package com.workgo.order.enumeration;
 
 public enum RoleName {
     ADMIN,
     CLIENT,
-    PROVIDER
+    PROVIDER,
+    SYSTEM
 }

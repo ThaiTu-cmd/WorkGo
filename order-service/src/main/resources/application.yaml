@@ -7,5 +7,9 @@ spring:
   application:
     name: order-service
 
-# TODO: Thêm datasource khi order-service có DB
-# TODO: Thêm kafka config khi cần
+app:
+  services:
+    catalog: ${CATALOG_SERVICE_URL:http://localhost:8082/catalog}
+
+order:
+  platform-fee-rate: 0.10

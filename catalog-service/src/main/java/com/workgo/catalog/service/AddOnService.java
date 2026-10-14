@@ -20,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -101,5 +102,18 @@ public class AddOnService {
         addOnRepository.save(addOn);
     }
 
+    public List<AddOnResponse> getAllByService(UUID serviceId){
+
+        if(!serviceRepository.existsById(serviceId)){
+            throw new AppException(ErrorCode.SERVICE_NOT_EXISTED);
+        }
+
+        List<AddOn> addOnList =  addOnRepository.findAllByService_ServiceId(serviceId);
+
+        return addOnList.stream()
+                .map(addOnMapper::toAddOnResponse)
+                .toList();
+
+    }
 
 }

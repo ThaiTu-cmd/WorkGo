@@ -1,6 +1,7 @@
-package com.workgo.catalog.exception;
+package com.workgo.order.exception;
 
 
+import com.workgo.order.exception.ErrorCode;
 
 public class AppException extends RuntimeException{
 

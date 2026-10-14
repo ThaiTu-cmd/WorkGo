@@ -156,3 +156,7 @@ docs/
 
 ### Playwright MCP ###
 .playwright-mcp/
+
+### Project Context & Tracking (local only — không push lên github) ###
+PROJECT_CONTEXT.md
+*.context.md

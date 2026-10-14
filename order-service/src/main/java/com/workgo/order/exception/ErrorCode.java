@@ -1,4 +1,4 @@
-package com.workgo.catalog.exception;
+package com.workgo.order.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,39 +23,21 @@ public enum ErrorCode {
     USER_NOT_EXISTED(1006, "User dose not exist", HttpStatus.NOT_FOUND),
     UNAUTHORIZED(1007, "You do not have that permission", HttpStatus.UNAUTHORIZED),
 
-    //===============CATEGORY===================
-    CATEGORY_EXISTED(1008, "Category is already existed ", HttpStatus.BAD_REQUEST),
-    CATEGORY_NOT_EXISTED(1009, "Category is not existed !", HttpStatus.BAD_REQUEST),
-    PARENT_CATEGORY_NOT_EXISTED(1010, "The parent of this category is not existed", HttpStatus.BAD_REQUEST),
+    //===============ORDER====================
+    ORDER_NOT_FOUND(2001, "Order not found", HttpStatus.NOT_FOUND),
+    ORDER_INVALID_STATUS_TRANSITION(2002, "Order cannot move to that status", HttpStatus.BAD_REQUEST),
+    ORDER_CANNOT_BUY_OWN_SERVICE(2003, "You cannot order your own service", HttpStatus.BAD_REQUEST),
+    ORDER_EXECUTION_TYPE_NOT_SUPPORTED(2004, "Execution type is not supported yet", HttpStatus.BAD_REQUEST),
+    ORDER_CANCEL_NOT_ALLOWED(2005, "Order cannot be cancelled at this status", HttpStatus.BAD_REQUEST),
+    SERVICE_ID_REQUIRED(2010, "Service id is required", HttpStatus.BAD_REQUEST),
+    PACKAGE_ID_REQUIRED(2011, "Package id is required", HttpStatus.BAD_REQUEST),
+    SERVICE_NOT_FOUND(2012, "Service not found", HttpStatus.NOT_FOUND),
+    PACKAGE_NOT_FOUND(2013, "Package not found", HttpStatus.NOT_FOUND),
+    CATALOG_UNAVAILABLE(2014, "Catalog service is unavailable", HttpStatus.SERVICE_UNAVAILABLE),
+    SERVICE_NOT_AVAILABLE(2015, "Service is not available for ordering", HttpStatus.BAD_REQUEST),
+    PACKAGE_NOT_AVAILABLE(2016, "Package is not available for ordering", HttpStatus.BAD_REQUEST)
 
-    //===============SERVICE==============================
-    SERVICE_EXISTED(1011, "This service is already existed !", HttpStatus.BAD_REQUEST),
-    SERVICE_NOT_EXISTED(1012, "This service is not existed !", HttpStatus.BAD_REQUEST),
-
-    //===============PACKAGE==============================
-    PACKAGE_EXISTED(1013, "This package name already exists in this service !", HttpStatus.BAD_REQUEST),
-    PACKAGE_NOT_EXISTED(1014, "This package does not exist !", HttpStatus.NOT_FOUND),
-
-    //===============MEDIA==============================
-    MEDIA_EXISTED(1015, "This media URL already exists in this service !", HttpStatus.BAD_REQUEST),
-    MEDIA_NOT_EXISTED(1016, "This media does not exist !", HttpStatus.NOT_FOUND),
-    INVALID_START_END_TIME(1017, "The values of start/ end time is invalid", HttpStatus.CONFLICT),
-
-    //==============AVAILABLE RULE========================
-    RULE_NOT_EXISTED(1018, "This rule is not existed", HttpStatus.NOT_FOUND),
-
-    //=================ADD ON=====================
-    ADD_ON_NOT_EXISTED(1019, "This add-on is not existed", HttpStatus.NOT_FOUND),
-
-
-    //=============BOOKING SLOT=============
-    SLOT_NOT_EXISTED(1020, "This slot does not exist", HttpStatus.NOT_FOUND),
-    SLOT_NOT_AVAILABLE(1021, "This slot is not available", HttpStatus.CONFLICT),
-    SLOT_IN_PAST(1022, "This slot is in the past", HttpStatus.CONFLICT),
-    SLOT_NOT_HELD_BY_ORDER(1023, "This slot is not held by this order", HttpStatus.CONFLICT),
-    SLOT_CONFLICT(1024, "Slot was just taken, please retry", HttpStatus.CONFLICT),
-    ;
-
+;
     private int code;
     private String message;
     private HttpStatusCode statusCode;

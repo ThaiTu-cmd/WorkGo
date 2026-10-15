@@ -1,8 +1,8 @@
 package com.workgo.order.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.workgo.catalog.dto.ApiResponse;
-import com.workgo.catalog.exception.ErrorCode;
+import com.workgo.order.dto.ApiResponse;
+import com.workgo.order.exception.ErrorCode;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

@@ -1,6 +1,5 @@
 package com.workgo.order.configuration;
 
-import com.workgo.catalog.configuration.CustomJwtDecoder;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;

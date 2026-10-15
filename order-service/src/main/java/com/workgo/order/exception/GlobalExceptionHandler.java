@@ -1,8 +1,6 @@
 package com.workgo.order.exception;
 
-import com.workgo.catalog.dto.ApiResponse;
-import com.workgo.catalog.exception.AppException;
-import com.workgo.catalog.exception.ErrorCode;
+import com.workgo.order.dto.ApiResponse;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;

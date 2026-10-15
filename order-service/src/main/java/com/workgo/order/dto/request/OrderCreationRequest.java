@@ -4,6 +4,7 @@ package com.workgo.order.dto.request;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -17,5 +18,7 @@ public class OrderCreationRequest {
     UUID serviceId;
 
     UUID packageId;
+
+    List<UUID> addonIds;
 
 }

@@ -36,4 +36,6 @@ public class OrderItemResponse {
 
     UUID orderId;
 
+    int sortOrder;
+
 }

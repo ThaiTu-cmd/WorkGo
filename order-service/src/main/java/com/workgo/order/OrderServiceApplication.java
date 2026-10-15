@@ -1,13 +1,15 @@
-package com.devteria.gateway;
+package com.workgo.order;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
+@EnableFeignClients
 public class OrderServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(com.devteria.gateway.OrderServiceApplication.class, args);
+		SpringApplication.run(com.workgo.order.OrderServiceApplication.class, args);
 	}
 
 }

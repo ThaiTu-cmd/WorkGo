@@ -45,6 +45,9 @@ public class OrderItem {
     @Column(name = "created_at")
     Instant createdAt = Instant.now();
 
+    @Column(name = "sort_order")
+    int sortOrder;
+
 //    @Column(name = "updated_at")
 //    Instant updatedAt;
 

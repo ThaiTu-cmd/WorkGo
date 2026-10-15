@@ -22,6 +22,7 @@ public enum ErrorCode {
     UNAUTHENTICATED(1005, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     USER_NOT_EXISTED(1006, "User dose not exist", HttpStatus.NOT_FOUND),
     UNAUTHORIZED(1007, "You do not have that permission", HttpStatus.UNAUTHORIZED),
+    FORBIDDEN(1008, "You do not have permission to perform this action", HttpStatus.FORBIDDEN),
 
     //===============ORDER====================
     ORDER_NOT_FOUND(2001, "Order not found", HttpStatus.NOT_FOUND),
@@ -35,7 +36,11 @@ public enum ErrorCode {
     PACKAGE_NOT_FOUND(2013, "Package not found", HttpStatus.NOT_FOUND),
     CATALOG_UNAVAILABLE(2014, "Catalog service is unavailable", HttpStatus.SERVICE_UNAVAILABLE),
     SERVICE_NOT_AVAILABLE(2015, "Service is not available for ordering", HttpStatus.BAD_REQUEST),
-    PACKAGE_NOT_AVAILABLE(2016, "Package is not available for ordering", HttpStatus.BAD_REQUEST)
+    PACKAGE_NOT_AVAILABLE(2016, "Package is not available for ordering", HttpStatus.BAD_REQUEST),
+
+    ORDER_ADDON_NOT_FOUND(2017, "Addon not found", HttpStatus.NOT_FOUND),
+    ORDER_ADDON_NOT_AVAILABLE(2018, "Addon is not available for ordering", HttpStatus.BAD_REQUEST),
+    ORDER_ITEM_TOTAL_MISMATCH(2019, "Order items total does not match subtotal", HttpStatus.INTERNAL_SERVER_ERROR)
 
 ;
     private int code;

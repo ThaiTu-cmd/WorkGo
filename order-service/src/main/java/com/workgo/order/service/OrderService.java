@@ -1,9 +1,7 @@
 package com.workgo.order.service;
 
-
 import com.workgo.order.dto.PageResponse;
 import com.workgo.order.dto.request.OrderCreationRequest;
-import com.workgo.order.dto.response.OrderItemResponse;
 import com.workgo.order.dto.response.OrderResponse;
 import com.workgo.order.dto.response.OrderStatusHistoryResponse;
 import com.workgo.order.dto.response.client.AddOnResponse;
@@ -13,6 +11,7 @@ import com.workgo.order.entity.Order;
 import com.workgo.order.entity.OrderItem;
 import com.workgo.order.entity.OrderStatusHistory;
 import com.workgo.order.enumeration.*;
+import com.workgo.order.enumeration.client.AddOnStatus;
 import com.workgo.order.enumeration.client.PackageStatus;
 import com.workgo.order.enumeration.client.ServiceStatus;
 import com.workgo.order.exception.AppException;
@@ -41,6 +40,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -64,13 +64,19 @@ public class OrderService {
     @Transactional
     public OrderResponse createOrder(OrderCreationRequest request){
 
-        UUID userId = tokenUtils.getCurrentUserId();
+        UUID clientId = tokenUtils.getCurrentUserId();
+
+        if (!tokenUtils.hasRole("ROLE_CLIENT")) {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+
         ServiceResponse serviceResponse = catalogClient.getService(request.getServiceId());
-        PackageResponse packageResponse = catalogClient.getPackage(request.getPackageId());
 
         if(!ServiceStatus.PUBLISHED.equals(serviceResponse.getStatus())){
             throw new AppException(ErrorCode.SERVICE_NOT_AVAILABLE);
         }
+
+        PackageResponse packageResponse = catalogClient.getPackage(request.getPackageId());
 
         if (!request.getServiceId().equals(packageResponse.getServiceId())){
             throw new AppException(ErrorCode.PACKAGE_NOT_FOUND);
@@ -80,82 +86,142 @@ public class OrderService {
             throw new AppException(ErrorCode.PACKAGE_NOT_AVAILABLE);
         }
 
-        if (serviceResponse.getProviderId().equals(tokenUtils.getCurrentProviderId())){
+        List<AddOnResponse> addOns = collectAddons(request.getServiceId(), request.getAddonIds());
+
+        //provider khong duoc mua cua chinh minh
+        if (Objects.equals(serviceResponse.getProviderId(), tokenUtils.getCurrentProviderIdOrNull())){
             throw new AppException(ErrorCode.ORDER_CANNOT_BUY_OWN_SERVICE);
         }
 
-        ExecutionType executionType = serviceResponse.getExecutionType();
-
+        //tinh subtotal
         BigDecimal subtotal = packageResponse.getPrice();
-        BigDecimal platformFee = subtotal.multiply(platformFeeRate).setScale(2, RoundingMode.HALF_UP);
 
+        for (AddOnResponse addOn : addOns){
+            subtotal = subtotal.add(addOn.getPrice());
+        }
+
+        BigDecimal platformFee = subtotal.multiply(platformFeeRate).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal totalAmount = subtotal;                          // client tra dung gia niem yet
+        BigDecimal providerNetAmount = subtotal.subtract(platformFee);
+
+        //luu order -> lay id
         Order order = orderRepository.save(Order.builder()
                 .orderNumber(generateOrderNumber())
                 .orderStatus(OrderStatus.PENDING_PAYMENT)
+                .paymentStatus(PaymentStatus.PENDING)
                 .sourceType(SourceType.SERVICE)
                 .sourceId(serviceResponse.getServiceId())
-                .clientId(userId)
+                .clientId(clientId)
                 .providerId(serviceResponse.getProviderId())
                 .serviceId(serviceResponse.getServiceId())
                 .packageId(packageResponse.getPackageId())
-                .executionType(executionType)
+                .executionType(serviceResponse.getExecutionType())
                 .title(serviceResponse.getTitle() + " - " + packageResponse.getName())
                 .subtotal(subtotal)
                 .platformFee(platformFee)
-                .totalAmount(subtotal)
-                .providerNetAmount(subtotal.subtract(platformFee))
+                .totalAmount(totalAmount)
+                .providerNetAmount(providerNetAmount)
+                .currency(packageResponse.getCurrency() == null ? "VND" : packageResponse.getCurrency())
                 .placedAt(Instant.now())
                 .build());
 
+        //luu OrderItem
+        List<OrderItem> orderItems = buildOrderItems(order, packageResponse, addOns, platformFee);
 
-        OrderItem packageItem = OrderItem.builder()
+        orderItemRepository.saveAll(orderItems);
+
+        //TODO (M3): handler.create(order, request) -> EXECUTION + DIGITAL_EXECUTION/ONSITE_EXECUTION
+        //TODO (M6): ONSITE -> catalogClient.holdSlot(request.getBookingSlotId(), order.getOrderId())
+        //TODO (B6): luu OrderSnapshot trong cung transaction nay
+
+        //ghi lai order status history
+        orderStatusService.recordCreated(order, clientId);
+
+        return orderMapper.toOrderResponse(order);
+    }
+
+    //loc ra addon duoc chon
+    private List<AddOnResponse> collectAddons(UUID serviceId, List<UUID> addonIds) {
+
+        if (addonIds == null || addonIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<UUID, AddOnResponse> addOnsOfService = catalogClient.getAllAddonsByService(serviceId)
+                .stream()
+                .collect(Collectors.toMap(
+                        AddOnResponse::getAddOnId,
+                        addOn -> addOn,
+                        (first, second) -> first));
+
+        List<AddOnResponse> selected = new ArrayList<>();
+
+        for (UUID addOnId : new LinkedHashSet<>(addonIds)) {
+
+            AddOnResponse addOn = addOnsOfService.get(addOnId);
+
+            if (addOn == null) {
+                throw new AppException(ErrorCode.ORDER_ADDON_NOT_FOUND);
+            }
+
+            if (!AddOnStatus.ACTIVE.equals(addOn.getStatus())) {
+                throw new AppException(ErrorCode.ORDER_ADDON_NOT_AVAILABLE);
+            }
+
+            selected.add(addOn);
+        }
+
+        return selected;
+    }
+
+    private List<OrderItem> buildOrderItems(Order order,
+                                            PackageResponse packageResponse,
+                                            List<AddOnResponse> addOns,
+                                            BigDecimal platformFee) {
+
+        List<OrderItem> items = new ArrayList<>();
+        int sortOrder = 0;
+
+        //luu package
+        items.add(OrderItem.builder()
                 .name(packageResponse.getName())
                 .quantity(1)
                 .unitPrice(packageResponse.getPrice())
                 .amount(packageResponse.getPrice())
                 .itemType(ItemType.PACKAGE)
                 .referenceId(packageResponse.getPackageId())
+                .sortOrder(sortOrder++)
                 .order(order)
-                .build();
+                .build());
 
-        orderItemRepository.save(packageItem);
-
-        order.getOrderItem().add(packageItem);
-
-        List<AddOnResponse> addOnResponseList = catalogClient
-                .getAllAddonsByService(request.getServiceId());
-
-        if(!addOnResponseList.isEmpty()){
-            BigDecimal addonTotalAmount = BigDecimal.ZERO;
-            List<OrderItem> orderItems = new ArrayList<>();
-
-            for(AddOnResponse addOn : addOnResponseList){
-                OrderItem orderItem = OrderItem.builder()
-                        .name(addOn.getName())
-                        .quantity(1)
-                        .unitPrice(addOn.getPrice())
-                        .amount(addOn.getPrice())
-                        .itemType(ItemType.ADDON)
-                        .referenceId(addOn.getAddOnId())
-                        .order(order)
-                        .build();
-
-                orderItems.add(orderItem);
-                order.getOrderItem().add(orderItem);
-                addonTotalAmount = addonTotalAmount.add(addOn.getPrice());
-            }
-            order.setTotalAmount(order.getTotalAmount().add(addonTotalAmount));
-            orderItemRepository.saveAll(orderItems);
-            orderRepository.save(order);
+        //luu cac add-on
+        for (AddOnResponse addOn : addOns) {
+            items.add(OrderItem.builder()
+                    .name(addOn.getName())
+                    .quantity(1)
+                    .unitPrice(addOn.getPrice())
+                    .amount(addOn.getPrice())
+                    .itemType(ItemType.ADDON)
+                    .referenceId(addOn.getAddOnId())
+                    .sortOrder(sortOrder++)
+                    .order(order)
+                    .build());
         }
 
+      //platform-fee
+        items.add(OrderItem.builder()
+                .name("Phi nen tang")
+                .quantity(1)
+                .unitPrice(platformFee)
+                .amount(platformFee)
+                .itemType(ItemType.PLATFORM_FEE)
+                .sortOrder(sortOrder)
+                .order(order)
+                .build());
 
-
-        //luu lich su cap nhat order
-        orderStatusService.recordCreated(order, userId);
-        return orderMapper.toOrderResponse(order);
-
+        return items;
     }
+
 
     public PageResponse<OrderResponse> getMyOrders(RoleName roleName, int page, int size){
 
@@ -221,6 +287,6 @@ public class OrderService {
         String random = UUID.randomUUID().toString();
 
         return "WG" + date + "-" + random;
-     }
+    }
 
 }

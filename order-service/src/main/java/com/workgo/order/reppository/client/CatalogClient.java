@@ -3,6 +3,7 @@ package com.workgo.order.reppository.client;
 import com.workgo.order.dto.ApiResponse;
 import com.workgo.order.dto.response.client.AddOnResponse;
 import com.workgo.order.dto.response.client.PackageResponse;
+import com.workgo.order.dto.response.client.ProviderProfileResponse;
 import com.workgo.order.dto.response.client.ServiceResponse;
 import org.apache.kafka.shaded.com.google.protobuf.Api;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -23,5 +24,7 @@ public interface CatalogClient {
 
     @GetMapping("/internal/addons/services/{serviceId}")
     List<AddOnResponse> getAllAddonsByService(@PathVariable UUID serviceId);
+
+
 
 }

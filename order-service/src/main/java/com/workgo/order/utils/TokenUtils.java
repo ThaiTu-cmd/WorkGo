@@ -6,44 +6,53 @@ import com.workgo.order.exception.ErrorCode;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.UUID;
 
 @Component
-@NoArgsConstructor
-@AllArgsConstructor
-@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class TokenUtils {
 
-    //lay providerId tu token
     public UUID getCurrentProviderId() {
-        Jwt jwt = (Jwt) SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getPrincipal();
+        UUID providerId = getCurrentProviderIdOrNull();
+
+        if (providerId == null) throw new AppException(ErrorCode.UNAUTHENTICATED);
+
+        return providerId;
+    }
+
+    public UUID getCurrentProviderIdOrNull() {
+        Jwt jwt = currentJwt();
         String providerId = jwt.getClaimAsString("providerId");
 
-        if(providerId == null) throw new AppException(ErrorCode.UNAUTHENTICATED);
+        if (providerId == null || providerId.isBlank()) return null;
 
         return UUID.fromString(providerId);
     }
 
     public UUID getCurrentUserId(){
-        Jwt jwt = (Jwt) SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getPrincipal();
-
+        Jwt jwt = currentJwt();
         String userId = jwt.getClaimAsString("userId");
 
         if(userId == null) throw new AppException(ErrorCode.UNAUTHENTICATED);
 
         return UUID.fromString(userId);
 
+    }
+
+    public boolean hasRole(String roleName) {
+        Jwt jwt = currentJwt();
+        String scope = jwt.getClaimAsString("scope");
+
+        if (scope == null || scope.isBlank()) return false;
+
+        return Arrays.stream(scope.split("\\s+"))
+                .anyMatch(roleName::equals);
     }
 
     public int createDeletedMark(){
@@ -54,4 +63,9 @@ public class TokenUtils {
 
     }
 
+    private Jwt currentJwt() {
+        return (Jwt) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
+    }
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Be_Vietnam_Pro, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 
@@ -34,7 +35,9 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${beVietnamPro.variable} ${instrumentSerif.variable} antialiased`} suppressHydrationWarning>
       <head>
-        <script
+        <Script
+          id="workgo-theme"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var s=localStorage.getItem('workgo_theme');var t=s||(typeof matchMedia!=='undefined'&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');document.documentElement.classList.remove('light','dark');document.documentElement.classList.add(t);document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
           }}

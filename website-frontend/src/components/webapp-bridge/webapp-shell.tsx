@@ -63,6 +63,26 @@ export default function WebAppShell() {
   );
 
   // Write-through: form create/edit flows land here first.
+  // S4: offline state for the banner (M3) — refreshed on online/offline events.
+  // SSR-safe: initial true matches server HTML (no banner); the real
+  // navigator.onLine value syncs on mount to avoid hydration mismatch
+  // (Node defines global navigator but navigator.onLine is undefined).
+  const [isOnline, setIsOnline] = useState(true);
+  useEffect(() => {
+    // Sync browser-only navigator.onLine post-hydration so server HTML
+    // (assumed online) matches first client render; avoids hydration
+    // mismatch (Node's global navigator exists but onLine is undefined).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsOnline(navigator.onLine);
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
   const [serviceFormMode, setServiceFormMode] = useState<"create" | "edit">("create");
   const [editServiceId, setEditServiceId] = useState<string | null>(null);
   const [catalogFilters, setCatalogFilters] = useState({
@@ -197,6 +217,12 @@ export default function WebAppShell() {
 
   return (
     <div className={`${styles.appRoot} ${styles["webapp-scope"]}`}>
+      {/* S4: offline banner — local data keeps working, user must know why */}
+      {!isOnline && (
+        <div className={styles.offlineBanner} role="status">
+          <span>Bạn đang ngoại tuyến — ứng dụng vẫn dùng được với dữ liệu đã lưu trên thiết bị này.</span>
+        </div>
+      )}
       {/* Toast queue (max 3, each auto-dismisses + manual close) */}
       {toasts.length > 0 && (
         <div className={styles.toastStack}>

@@ -42,6 +42,8 @@
   letter-spacing: -0.03em;
   margin-bottom: 20px;
   color: #ffffff;
+  text-wrap: balance;
+  overflow-wrap: break-word;
 }
 
 @media (max-width: 900px) {
@@ -73,6 +75,7 @@
 
 .searchWrapper {
   width: 100%;
+  min-width: 0;
   display: flex;
   justify-content: center;
   margin-bottom: 24px;
@@ -108,6 +111,15 @@
   font-size: 0.82rem;
   font-weight: 500;
   transition: all var(--transition-fast);
+  position: relative;
+  min-height: 32px;
+}
+
+/* C2-2: effective hit-area ~44px, visual unchanged */
+.tagBtn::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
 }
 
 .tagBtn:hover {

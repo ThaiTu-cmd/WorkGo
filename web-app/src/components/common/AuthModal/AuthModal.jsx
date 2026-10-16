@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Lock, User, Mail, CheckCircle2, AlertCircle } from 'lucide-react';
-import axiosClient from '../../../api/axiosClient';
 import styles from './AuthModal.module.css';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 
 export default function AuthModal({ initialMode = 'login', onClose }) {
   const [mode, setMode] = useState(initialMode);
@@ -15,6 +15,20 @@ export default function AuthModal({ initialMode = 'login', onClose }) {
   });
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const closeBtnRef = useRef(null);
+  const trapRef = useRef(null);
+  // F3: keep Tab cycling inside the dialog.
+  useFocusTrap(trapRef, true);
+
+  // R3: Escape closes the modal; focus lands on Close for keyboard users.
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    if (closeBtnRef.current) closeBtnRef.current.focus();
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,60 +39,33 @@ export default function AuthModal({ initialMode = 'login', onClose }) {
     setLoading(true);
     setFeedback(null);
 
-    try {
-      if (mode === 'login') {
-        const res = await axiosClient.post('/identity/auth/token', {
-          userName: formData.userName,
-          password: formData.password
-        });
+    await new Promise((resolve) => setTimeout(resolve, 350));
 
-        if (res && res.result && res.result.token) {
-          localStorage.setItem('accessToken', res.result.token);
-          setFeedback({
-            type: 'success',
-            message: `Đăng nhập thành công! Chào mừng ${formData.userName}.`
-          });
-          setTimeout(() => {
-            onClose();
-          }, 1500);
-        } else {
-          setFeedback({
-            type: 'success',
-            message: 'Đăng nhập thành công (Môi trường phát triển)!'
-          });
-          setTimeout(() => onClose(), 1200);
-        }
-      } else {
-        await axiosClient.post('/identity/users/registration', {
-          userName: formData.userName,
-          password: formData.password,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email
-        });
-
-        setFeedback({
-          type: 'success',
-          message: 'Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay.'
-        });
-        setTimeout(() => setMode('login'), 1200);
-      }
-    } catch (err) {
-      const errMsg = err.response?.data?.message || 'Không thể kết nối đến Identity Service. Đang chạy chế độ demo.';
+    if (mode === 'login') {
+      const mockToken = `mock-token-${Date.now()}`;
+      localStorage.setItem('accessToken', mockToken);
       setFeedback({
-        type: 'error',
-        message: errMsg
+        type: 'success',
+        message: `Đăng nhập thành công! Chào mừng ${formData.userName || 'bạn'} (Demo).`
       });
-    } finally {
-      setLoading(false);
+      setTimeout(() => {
+        onClose();
+      }, 1000);
+    } else {
+      setFeedback({
+        type: 'success',
+        message: 'Đăng ký tài khoản thành công (Demo)! Bạn có thể đăng nhập ngay.'
+      });
+      setTimeout(() => setMode('login'), 1000);
     }
+    setLoading(false);
   };
 
   return (
     <div className={styles.modalBackdrop} onClick={onClose}>
-      <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
+      <div className={styles.modalBox} ref={trapRef} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={mode === 'login' ? 'Đăng nhập vào WorkGo' : 'Tạo tài khoản WorkGo mới'}>
         {/* Close Button */}
-        <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close modal">
+        <button type="button" ref={closeBtnRef} className={styles.closeBtn} onClick={onClose} aria-label="Close modal">
           <X size={20} />
         </button>
 

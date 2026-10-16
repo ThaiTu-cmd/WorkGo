@@ -53,6 +53,10 @@
   position: absolute;
   top: 10px;
   left: 10px;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.72rem;
   font-weight: 700;
   padding: 3px 8px;
@@ -100,6 +104,12 @@
   transition: all var(--transition-fast);
 }
 
+.favoriteBtn::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
 .favoriteBtn:hover {
   background: rgba(0, 0, 0, 0.5);
   transform: scale(1.1);
@@ -134,18 +144,25 @@
 .providerInfo {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  flex: 1;
 }
 
 .providerNameWrap {
   display: flex;
   align-items: center;
   gap: 4px;
+  min-width: 0;
 }
 
 .providerName {
   font-weight: 700;
   font-size: 0.85rem;
   color: var(--wg-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .verifiedIcon {
@@ -167,7 +184,9 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  height: 2.8em;
+  min-height: 2.8em;
+  height: auto;
+  overflow-wrap: break-word;
   transition: color var(--transition-fast);
 }
 

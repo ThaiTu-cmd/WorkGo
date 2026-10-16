@@ -46,7 +46,7 @@ export default function SearchToolbar({
           <h1 className={styles.pageTitle}>
             {categoryName === 'Tất cả danh mục' ? 'Khám phá tất cả dịch vụ' : categoryName}
           </h1>
-          <span className={styles.resultCount}>
+          <span className={styles.resultCount} aria-live="polite" aria-atomic="true">
             Tìm thấy <strong>{totalResults}</strong> dịch vụ
           </span>
         </div>

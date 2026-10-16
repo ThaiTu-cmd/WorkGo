@@ -69,3 +69,22 @@ ol {
     padding-right: 16px;
   }
 }
+
+/* H6 guard: fixed header never clips anchored sections */
+[id] {
+  scroll-margin-top: calc(var(--header-height) + 16px);
+}
+
+/* R3: visible keyboard focus ring on brand token (append-only).
+   Local `outline: none` on inputs is kept — their :focus border + box-shadow
+   still applies; this ring only ADDS a halo for button/link/control focus. */
+:where(button, a, [role="button"], input[type="checkbox"], input[type="radio"], select, [tabindex]):focus-visible {
+  outline: 2px solid var(--wg-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

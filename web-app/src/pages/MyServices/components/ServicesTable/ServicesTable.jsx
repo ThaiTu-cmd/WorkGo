@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import StatusBadge from '../StatusBadge/StatusBadge';
 import { 
   Eye, 
@@ -12,7 +12,9 @@ import {
   MapPin, 
   Truck,
   MoreVertical,
-  AlertCircle
+  AlertCircle,
+  RotateCcw,
+  Plus
 } from 'lucide-react';
 import styles from './ServicesTable.module.css';
 
@@ -29,8 +31,28 @@ export default function ServicesTable({
   onBulkPause,
   onBulkActivate,
   onBulkDelete,
+  onClearFilters,
+  onCreateService,
 }) {
   const [activeMenuId, setActiveMenuId] = useState(null);
+  const menuRef = useRef(null);
+
+  // R3: Escape closes the row dropdown; outside click does too.
+  useEffect(() => {
+    if (!activeMenuId) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setActiveMenuId(null);
+    };
+    const onPointer = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setActiveMenuId(null);
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('pointerdown', onPointer);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('pointerdown', onPointer);
+    };
+  }, [activeMenuId]);
 
   const isAllSelected = services.length > 0 && selectedIds.length === services.length;
   const isIndeterminate = selectedIds.length > 0 && selectedIds.length < services.length;
@@ -67,7 +89,30 @@ export default function ServicesTable({
         <h3 className={styles.emptyTitle}>Không tìm thấy dịch vụ nào</h3>
         <p className={styles.emptyText}>
           Thử thay đổi từ khóa tìm kiếm hoặc chọn bộ lọc trạng thái khác.
+          Mọi thay đổi của bạn vẫn được lưu tự động trên thiết bị này.
         </p>
+        <div className={styles.emptyActions}>
+          {onClearFilters && (
+            <button
+              type="button"
+              className={styles.emptyResetBtn}
+              onClick={onClearFilters}
+            >
+              <RotateCcw size={16} />
+              <span>Xóa tất cả bộ lọc</span>
+            </button>
+          )}
+          {onCreateService && (
+            <button
+              type="button"
+              className={styles.emptySecondaryBtn}
+              onClick={onCreateService}
+            >
+              <Plus size={16} />
+              <span>Tạo dịch vụ mới</span>
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -76,7 +121,7 @@ export default function ServicesTable({
     <div className={styles.tableWrapper}>
       {selectedIds.length > 0 && (
         <div className={styles.bulkActionBar}>
-          <div className={styles.bulkCount}>
+          <div className={styles.bulkCount} aria-live="polite" aria-atomic="true">
             Đã chọn <strong>{selectedIds.length}</strong> dịch vụ
           </div>
           <div className={styles.bulkButtons}>
@@ -234,7 +279,7 @@ export default function ServicesTable({
                       <Edit3 size={16} />
                     </button>
 
-                    <div className={styles.menuWrapper}>
+                    <div className={styles.menuWrapper} ref={isMenuOpen ? menuRef : undefined}>
                       <button
                         type="button"
                         className={styles.iconBtn}

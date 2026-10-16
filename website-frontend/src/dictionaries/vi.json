@@ -1,7 +1,6 @@
 {
   "common": {
     "appName": "WorkGo",
-    "mockData": "Dữ liệu mẫu",
     "save": "Lưu thay đổi",
     "cancel": "Hủy bỏ",
     "delete": "Xóa",
@@ -240,7 +239,10 @@
     "hotCategories": "Danh mục nổi bật",
     "jobsAvailable": "việc làm đang tuyển dụng",
     "saveJob": "Lưu tin",
-    "savedJob": "Đã lưu"
+    "savedJob": "Đã lưu",
+    "quickFilterLabel": "Lọc nhanh theo danh mục",
+    "quickFilterAll": "Tất cả",
+    "featuredLabel": "Thử các việc nổi bật:"
   },
   "jobForm": {
     "createTitle": "Đăng việc làm mới",
@@ -260,8 +262,8 @@
     "attachments": "Tệp đính kèm (Tối đa 10MB)",
     "saveDraft": "Lưu nháp",
     "publish": "Đăng bài ngay",
-    "createSuccess": "Đăng việc làm thành công! (Mock)",
-    "updateSuccess": "Cập nhật bài đăng thành công! (Mock)"
+    "createSuccess": "Đăng việc làm thành công!",
+    "updateSuccess": "Cập nhật bài đăng thành công!"
   },
   "proposal": {
     "drawerTitle": "Gửi đề xuất thực hiện",
@@ -275,7 +277,12 @@
     "terms": "Điều khoản bổ sung (tùy chọn)",
     "submit": "Xác nhận gửi đề xuất",
     "submitSuccess": "Đề xuất đã được gửi thành công!",
-    "alreadySubmitted": "Bạn đã gửi đề xuất cho bài đăng này."
+    "alreadySubmitted": "Bạn đã gửi đề xuất cho bài đăng này.",
+    "bidAmount": "Giá đề xuất",
+    "coverLetter": "Lời nhắn & Giải pháp",
+    "clientOnly": "Chỉ tài khoản Đối tác được gửi báo giá",
+    "duplicate": "Bạn đã gửi đề xuất cho bài đăng này",
+    "priceExceeds": "Giá báo không được vượt quá ngân sách tối đa"
   },
   "applications": {
     "title": "Quản lý đề xuất ứng tuyển",
@@ -324,7 +331,7 @@
     "amountPlaceholder": "Tối thiểu 1.000 ₫",
     "payNow": "Thanh toán ngay",
     "processing": "Đang xử lý giao dịch...",
-    "success": "Giao dịch nạp tiền thành công! (Mock)",
+    "success": "Giao dịch nạp tiền thành công!",
     "failed": "Thanh toán thất bại. Vui lòng thử lại."
   },
   "payout": {
@@ -337,7 +344,7 @@
     "defaultAccount": "Đặt làm tài khoản mặc định",
     "addBtn": "Thêm tài khoản nhận tiền",
     "savedAccounts": "Danh sách tài khoản đã liên kết",
-    "addSuccess": "Đã thêm tài khoản nhận tiền thành công! (Mock)"
+    "addSuccess": "Đã thêm tài khoản nhận tiền thành công!"
   },
   "review": {
     "modalTitle": "Đánh giá chất lượng dịch vụ",
@@ -472,6 +479,156 @@
       "solutions": "Giải pháp",
       "company": "Công ty",
       "legal": "Pháp lý"
+    },
+    "fiverr": {
+      "header": {
+        "skipToContent": "Chuyển tới nội dung chính",
+        "brandLabel": "WorkGo — về trang chủ",
+        "searchLabel": "Tìm kiếm dịch vụ",
+        "searchSubmitLabel": "Tìm kiếm",
+        "searchEmptyHint": "Vui lòng nhập từ khóa, ví dụ: thiết kế logo",
+        "openMenuLabel": "Mở menu",
+        "closeMenuLabel": "Đóng menu",
+        "drawerLabel": "Menu điều hướng chính",
+        "languageLabel": "Chọn ngôn ngữ"
+      },
+      "search": {
+        "clearLabel": "Xóa từ khóa",
+        "recentLabel": "Tìm kiếm gần đây",
+        "clearHistory": "Xóa lịch sử",
+        "resultsCount": "Tìm thấy {n} gợi ý"
+      },
+      "trending": {
+        "regionLabel": "Danh mục thịnh hành"
+      },
+      "hero": {
+        "searchLabel": "Bạn đang tìm dịch vụ gì?",
+        "searchSubmitLabel": "Tìm kiếm",
+        "searchEmptyHint": "Vui lòng nhập từ khóa, ví dụ: thiết kế logo",
+        "suggestionsLabel": "Từ khóa thịnh hành",
+        "pauseLabel": "Tạm dừng video nền",
+        "playLabel": "Phát video nền",
+        "backgroundAlt": "Nền động đại dương hạt",
+        "chipsLabel": "Dịch vụ gợi ý"
+      },
+      "categories": {
+        "regionLabel": "Danh mục dịch vụ",
+        "toggleMoreLabel": "Hiện thêm danh mục"
+      },
+      "popular": {
+        "regionLabel": "Dịch vụ phổ biến",
+        "fromPrice": "Từ",
+        "verifiedBadge": "Đã xác minh"
+      },
+      "valueProps": {
+        "regionLabel": "Cam kết của WorkGo"
+      },
+      "panels": {
+        "regionLabel": "Giải pháp nổi bật",
+        "imageAlt": "Minh hoạ dịch vụ"
+      },
+      "guides": {
+        "regionLabel": "Hướng dẫn",
+        "imageAlt": "Minh hoạ hướng dẫn"
+      },
+      "testimonials": {
+        "regionLabel": "Đánh giá từ cộng đồng",
+        "verifiedBadge": "Đã xác minh"
+      },
+      "cta": {
+        "regionLabel": "Kêu gọi hành động"
+      },
+      "footer": {
+        "regionLabel": "Chân trang",
+        "socialLabel": "Mạng xã hội của WorkGo",
+        "languageLabel": "Ngôn ngữ",
+        "currencyLabel": "Tiền tệ",
+        "builtWith": "Nền tảng kết nối độc lập"
+      },
+      "carousel": {
+        "prevLabel": "Xem mục trước",
+        "nextLabel": "Xem mục tiếp theo"
+      }
     }
+  },
+  "info": {
+    "breadcrumbHome": "Trang chủ",
+    "backToHome": "Quay về trang chủ",
+    "toc": "Nội dung chính",
+    "ctaTitle": "Sẵn sàng phát triển cùng WorkGo?",
+    "ctaPrimary": "Đăng ký miễn phí",
+    "ctaSecondary": "Khám phá việc làm",
+    "about": {
+      "title": "Về WorkGo",
+      "desc": "Nền tảng kết nối nhân tài tự do và doanh nghiệp hiện đại tại Việt Nam"
+    },
+    "pricing": {
+      "title": "Biểu phí minh bạch",
+      "desc": "Chi phí rõ ràng, không phụ phí ẩn, tối ưu cho cả khách hàng và đối tác"
+    },
+    "pro": {
+      "title": "WorkGo Pro",
+      "desc": "Giải pháp toàn diện cho doanh nghiệp tuyển chọn nhân tài cấp cao và tự động hóa AI"
+    },
+    "guides": {
+      "title": "Cẩm nang & Hướng dẫn",
+      "desc": "Kiến thức thực chiến giúp bạn phát triển sự nghiệp freelance và mở rộng dự án"
+    },
+    "help": {
+      "title": "Trung tâm hỗ trợ",
+      "desc": "Giải đáp thắc mắc, hướng dẫn thanh toán, hoàn tiền và kết nối cộng đồng"
+    },
+    "terms": {
+      "title": "Điều khoản dịch vụ",
+      "desc": "Quy định sử dụng và trách nhiệm của thành viên trên nền tảng WorkGo"
+    },
+    "privacy": {
+      "title": "Chính sách bảo mật",
+      "desc": "Cam kết bảo vệ dữ liệu cá nhân và thông tin thanh toán của người dùng"
+    },
+    "trustSafety": {
+      "title": "An toàn & Ký quỹ",
+      "desc": "Cơ chế bảo vệ thanh toán escrow, giải quyết tranh chấp và an toàn giao dịch"
+    }
+  },
+  "saved": {
+    "title": "Việc đã lưu",
+    "empty": "Chưa lưu việc nào",
+    "save": "Lưu việc làm",
+    "unsave": "Bỏ lưu việc làm",
+    "undo": "Hoàn tác"
+  },
+  "share": {
+    "title": "Chia sẻ việc làm",
+    "copied": "Đã sao chép liên kết",
+    "failed": "Không thể sao chép liên kết"
+  },
+  "draft": {
+    "restored": "Đã khôi phục bản nháp",
+    "cleared": "Đã xóa bản nháp"
+  },
+  "location": {
+    "filter": "Khu vực làm việc",
+    "all": "Tất cả địa điểm",
+    "placeholder": "Chọn tỉnh / thành phố"
+  },
+  "toast": {
+    "saved": "Đã lưu công việc",
+    "unsaved": "Đã bỏ lưu công việc",
+    "copied": "Đã sao chép liên kết",
+    "submitted": "Đã gửi đề xuất thành công",
+    "offline": "Đang ngoại tuyến",
+    "online": "Đã kết nối lại trực tuyến"
+  },
+  "offline": {
+    "banner": "Bạn đang ngoại tuyến. Vui lòng kiểm tra kết nối mạng.",
+    "retry": "Thử lại"
+  },
+  "myPosts": {
+    "title": "Quản lý tin đăng",
+    "empty": "Chưa có bài đăng nào",
+    "close": "Đóng tin",
+    "closeConfirm": "Bạn có chắc chắn muốn đóng tin tuyển dụng này không?",
+    "stats": "Thống kê tin đăng"
   }
 }

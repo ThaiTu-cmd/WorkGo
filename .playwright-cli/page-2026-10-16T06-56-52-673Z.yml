@@ -1,0 +1,429 @@
+- generic [ref=f1e3]:
+  - banner [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - generic [ref=f1e6]:
+        - link "W WorkGo ." [ref=f1e7] [cursor=pointer]:
+          - /url: "#"
+          - generic [ref=f1e8]: W
+          - generic [ref=f1e10]: WorkGo
+          - generic: .
+        - generic [ref=f1e869]:
+          - textbox "Bạn muốn tìm dịch vụ gì?" [ref=f1e873]
+          - button "Tìm kiếm" [ref=f1e874] [cursor=pointer]
+      - navigation [ref=f1e11]:
+        - button "Danh mục dịch vụ" [ref=f1e12] [cursor=pointer]
+        - button "Quản lý Dịch vụ" [active] [ref=f1e13] [cursor=pointer]
+        - link "Quy trình" [ref=f1e14] [cursor=pointer]:
+          - /url: "#how-it-works"
+        - link "Tại sao chọn WorkGo" [ref=f1e15] [cursor=pointer]:
+          - /url: "#why-workgo"
+        - button "Kênh Chuyên gia" [ref=f1e16] [cursor=pointer]
+      - generic [ref=f1e19]:
+        - button "Đăng nhập" [ref=f1e20] [cursor=pointer]
+        - button "Đăng ký" [ref=f1e21] [cursor=pointer]
+  - generic [ref=f1e879]:
+    - generic [ref=f1e880]:
+      - generic [ref=f1e881]:
+        - button "Trang chủ" [ref=f1e882] [cursor=pointer]
+        - generic [ref=f1e885]: /
+        - generic [ref=f1e886]: Kênh Chuyên gia
+        - generic [ref=f1e887]: /
+        - generic [ref=f1e888]: Quản lý Dịch vụ (My Services)
+      - generic [ref=f1e893]:
+        - text: "Tài khoản Chuyên gia:"
+        - strong [ref=f1e894]: Trần Minh Quang
+        - text: (Top Rated)
+    - generic [ref=f1e896]:
+      - heading "Danh mục Dịch vụ đang bán" [level=1] [ref=f1e897]
+      - paragraph [ref=f1e898]: Theo dõi tình trạng hiển thị, mức giá, số lượt xem và hiệu suất các gói dịch vụ bạn cung cấp trên WorkGo.
+    - generic [ref=f1e899]:
+      - generic [ref=f1e900]:
+        - generic [ref=f1e901]: Dịch vụ Đang bán
+        - generic [ref=f1e908]:
+          - generic [ref=f1e909]: 3 / 6
+          - generic [ref=f1e910]:
+            - generic [ref=f1e911]: Hoạt động sẵn sàng nhận đơn
+            - generic [ref=f1e912]: +1 tuần này
+      - generic [ref=f1e916]:
+        - generic [ref=f1e917]: Lượt xem (30 ngày)
+        - generic [ref=f1e923]:
+          - generic [ref=f1e924]: "12.390"
+          - generic [ref=f1e925]:
+            - generic [ref=f1e926]: Lượt hiển thị trên kết quả tìm kiếm
+            - generic [ref=f1e927]: +18.4%
+      - generic [ref=f1e931]:
+        - generic [ref=f1e932]: Đơn hàng tích lũy
+        - generic [ref=f1e938]:
+          - generic [ref=f1e939]: 112 đơn
+          - generic [ref=f1e940]:
+            - generic [ref=f1e941]: Tỉ lệ hoàn thành đạt 99.2%
+            - generic [ref=f1e942]: Escrow an toàn
+      - generic [ref=f1e946]:
+        - generic [ref=f1e947]: Điểm đánh giá trung bình
+        - generic [ref=f1e952]:
+          - generic [ref=f1e953]: 4.92 ★
+          - generic [ref=f1e954]:
+            - generic [ref=f1e955]: Dựa trên tất cả dịch vụ có review
+            - generic [ref=f1e956]: Chuyên gia Pro
+    - generic [ref=f1e960]:
+      - generic [ref=f1e961]:
+        - button "Tất cả 6" [ref=f1e962] [cursor=pointer]:
+          - generic [ref=f1e963]: Tất cả
+          - generic [ref=f1e964]: "6"
+        - button "Đang bán 3" [ref=f1e965] [cursor=pointer]:
+          - generic [ref=f1e966]: Đang bán
+          - generic [ref=f1e967]: "3"
+        - button "Chờ duyệt 1" [ref=f1e968] [cursor=pointer]:
+          - generic [ref=f1e969]: Chờ duyệt
+          - generic [ref=f1e970]: "1"
+        - button "Tạm ngưng 1" [ref=f1e971] [cursor=pointer]:
+          - generic [ref=f1e972]: Tạm ngưng
+          - generic [ref=f1e973]: "1"
+        - button "Bản nháp 1" [ref=f1e974] [cursor=pointer]:
+          - generic [ref=f1e975]: Bản nháp
+          - generic [ref=f1e976]: "1"
+      - generic [ref=f1e977]:
+        - textbox "Tìm kiếm theo tên dịch vụ..." [ref=f1e979]
+        - combobox [ref=f1e981] [cursor=pointer]:
+          - option "Tất cả danh mục" [selected]
+          - option "Lập trình & Công nghệ"
+          - option "Thiết kế & Đồ họa"
+          - option "Sửa chữa Điện nước"
+          - option "Vệ sinh & Dọn dẹp"
+        - button "Tạo dịch vụ mới" [ref=f1e982] [cursor=pointer]
+    - table [ref=f1e986]:
+      - rowgroup [ref=f1e987]:
+        - row [ref=f1e988]:
+          - columnheader [ref=f1e989]:
+            - checkbox "Chọn tất cả" [ref=f1e990] [cursor=pointer]
+          - columnheader "Dịch vụ đang cung cấp" [ref=f1e991]
+          - columnheader "Mức giá & Gói" [ref=f1e992]
+          - columnheader "Hiệu quả hoạt động" [ref=f1e993]
+          - columnheader "Trạng thái" [ref=f1e994]
+          - columnheader "Nhận đơn" [ref=f1e995]
+          - columnheader "Thao tác" [ref=f1e996]
+      - rowgroup [ref=f1e997]:
+        - row "Chọn Thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React / Next.js Thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React / Next.js Thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React / Next.js Lập trình & Công nghệ Số (Digital) 2.500.000 ₫ – 8.500.000 ₫ 3 gói dịch vụ Lượt hiển thị 4.820 lượt xem Đơn hàng tích lũy 42 đơn hàng 4.98 (38) Đang hoạt động" [ref=f1e998]:
+          - cell [ref=f1e999]:
+            - checkbox "Chọn Thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React / Next.js" [ref=f1e1000] [cursor=pointer]
+          - cell "Thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React / Next.js Thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React / Next.js Lập trình & Công nghệ Số (Digital)" [ref=f1e1001]:
+            - generic [ref=f1e1002]:
+              - img "Thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React / Next.js" [ref=f1e1003]
+              - generic [ref=f1e1004]:
+                - button "Thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React / Next.js" [ref=f1e1005] [cursor=pointer]
+                - generic [ref=f1e1006]:
+                  - generic [ref=f1e1007]: Lập trình & Công nghệ
+                  - generic "Thực hiện Online 100%" [ref=f1e1008]: Số (Digital)
+          - cell "2.500.000 ₫ – 8.500.000 ₫ 3 gói dịch vụ" [ref=f1e1011]:
+            - generic [ref=f1e1012]:
+              - generic [ref=f1e1013]: 2.500.000 ₫ – 8.500.000 ₫
+              - generic [ref=f1e1014]: 3 gói dịch vụ
+          - cell "Lượt hiển thị 4.820 lượt xem Đơn hàng tích lũy 42 đơn hàng 4.98 (38)" [ref=f1e1015]:
+            - generic [ref=f1e1016]:
+              - generic [ref=f1e1017]:
+                - img "Lượt hiển thị" [ref=f1e1018]
+                - generic [ref=f1e1021]: 4.820 lượt xem
+              - generic [ref=f1e1022]:
+                - img "Đơn hàng tích lũy" [ref=f1e1023]
+                - generic [ref=f1e1026]:
+                  - strong [ref=f1e1027]: "42"
+                  - text: đơn hàng
+              - generic [ref=f1e1031]:
+                - strong [ref=f1e1032]: "4.98"
+                - text: (38)
+          - cell "Đang hoạt động" [ref=f1e1033]
+          - cell [ref=f1e1037]:
+            - generic "Bấm để Tạm ngưng nhận đơn" [ref=f1e1038]:
+              - checkbox [checked]
+              - generic [ref=f1e1039] [cursor=pointer]
+          - cell [ref=f1e1040]:
+            - generic [ref=f1e1041]:
+              - button "Xem trang công khai" [ref=f1e1042] [cursor=pointer]
+              - button "Chỉnh sửa nội dung" [ref=f1e1047] [cursor=pointer]
+              - button "Tùy chọn khác" [ref=f1e1051] [cursor=pointer]
+        - row "Chọn Phát triển ứng dụng di động React Native đa nền tảng iOS & Android Phát triển ứng dụng di động React Native đa nền tảng iOS & Android Phát triển ứng dụng di động React Native đa nền tảng iOS & Android Lập trình & Công nghệ Số (Digital) 5.000.000 ₫ – 15.000.000 ₫ 3 gói dịch vụ Lượt hiển thị 2.150 lượt xem Đơn hàng tích lũy 18 đơn hàng 4.92 (16) Đang hoạt động" [ref=f1e1056]:
+          - cell [ref=f1e1057]:
+            - checkbox "Chọn Phát triển ứng dụng di động React Native đa nền tảng iOS & Android" [ref=f1e1058] [cursor=pointer]
+          - cell "Phát triển ứng dụng di động React Native đa nền tảng iOS & Android Phát triển ứng dụng di động React Native đa nền tảng iOS & Android Lập trình & Công nghệ Số (Digital)" [ref=f1e1059]:
+            - generic [ref=f1e1060]:
+              - img "Phát triển ứng dụng di động React Native đa nền tảng iOS & Android" [ref=f1e1061]
+              - generic [ref=f1e1062]:
+                - button "Phát triển ứng dụng di động React Native đa nền tảng iOS & Android" [ref=f1e1063] [cursor=pointer]
+                - generic [ref=f1e1064]:
+                  - generic [ref=f1e1065]: Lập trình & Công nghệ
+                  - generic "Thực hiện Online 100%" [ref=f1e1066]: Số (Digital)
+          - cell "5.000.000 ₫ – 15.000.000 ₫ 3 gói dịch vụ" [ref=f1e1069]:
+            - generic [ref=f1e1070]:
+              - generic [ref=f1e1071]: 5.000.000 ₫ – 15.000.000 ₫
+              - generic [ref=f1e1072]: 3 gói dịch vụ
+          - cell "Lượt hiển thị 2.150 lượt xem Đơn hàng tích lũy 18 đơn hàng 4.92 (16)" [ref=f1e1073]:
+            - generic [ref=f1e1074]:
+              - generic [ref=f1e1075]:
+                - img "Lượt hiển thị" [ref=f1e1076]
+                - generic [ref=f1e1079]: 2.150 lượt xem
+              - generic [ref=f1e1080]:
+                - img "Đơn hàng tích lũy" [ref=f1e1081]
+                - generic [ref=f1e1084]:
+                  - strong [ref=f1e1085]: "18"
+                  - text: đơn hàng
+              - generic [ref=f1e1089]:
+                - strong [ref=f1e1090]: "4.92"
+                - text: (16)
+          - cell "Đang hoạt động" [ref=f1e1091]
+          - cell [ref=f1e1095]:
+            - generic "Bấm để Tạm ngưng nhận đơn" [ref=f1e1096]:
+              - checkbox [checked]
+              - generic [ref=f1e1097] [cursor=pointer]
+          - cell [ref=f1e1098]:
+            - generic [ref=f1e1099]:
+              - button "Xem trang công khai" [ref=f1e1100] [cursor=pointer]
+              - button "Chỉnh sửa nội dung" [ref=f1e1105] [cursor=pointer]
+              - button "Tùy chọn khác" [ref=f1e1109] [cursor=pointer]
+        - row "Chọn Tối ưu hóa tốc độ tải trang & bảo mật Web Core Vitals điểm 95+ Tối ưu hóa tốc độ tải trang & bảo mật Web Core Vitals điểm 95+ Tối ưu hóa tốc độ tải trang & bảo mật Web Core Vitals điểm 95+ Lập trình & Công nghệ Số (Digital) 1.200.000 ₫ – 3.600.000 ₫ 3 gói dịch vụ Lượt hiển thị 890 lượt xem Đơn hàng tích lũy 8 đơn hàng 4.88 (7) Chờ duyệt" [ref=f1e1114]:
+          - cell [ref=f1e1115]:
+            - checkbox "Chọn Tối ưu hóa tốc độ tải trang & bảo mật Web Core Vitals điểm 95+" [ref=f1e1116] [cursor=pointer]
+          - cell "Tối ưu hóa tốc độ tải trang & bảo mật Web Core Vitals điểm 95+ Tối ưu hóa tốc độ tải trang & bảo mật Web Core Vitals điểm 95+ Lập trình & Công nghệ Số (Digital)" [ref=f1e1117]:
+            - generic [ref=f1e1118]:
+              - img "Tối ưu hóa tốc độ tải trang & bảo mật Web Core Vitals điểm 95+" [ref=f1e1119]
+              - generic [ref=f1e1120]:
+                - button "Tối ưu hóa tốc độ tải trang & bảo mật Web Core Vitals điểm 95+" [ref=f1e1121] [cursor=pointer]
+                - generic [ref=f1e1122]:
+                  - generic [ref=f1e1123]: Lập trình & Công nghệ
+                  - generic "Thực hiện Online 100%" [ref=f1e1124]: Số (Digital)
+          - cell "1.200.000 ₫ – 3.600.000 ₫ 3 gói dịch vụ" [ref=f1e1127]:
+            - generic [ref=f1e1128]:
+              - generic [ref=f1e1129]: 1.200.000 ₫ – 3.600.000 ₫
+              - generic [ref=f1e1130]: 3 gói dịch vụ
+          - cell "Lượt hiển thị 890 lượt xem Đơn hàng tích lũy 8 đơn hàng 4.88 (7)" [ref=f1e1131]:
+            - generic [ref=f1e1132]:
+              - generic [ref=f1e1133]:
+                - img "Lượt hiển thị" [ref=f1e1134]
+                - generic [ref=f1e1137]: 890 lượt xem
+              - generic [ref=f1e1138]:
+                - img "Đơn hàng tích lũy" [ref=f1e1139]
+                - generic [ref=f1e1142]:
+                  - strong [ref=f1e1143]: "8"
+                  - text: đơn hàng
+              - generic [ref=f1e1147]:
+                - strong [ref=f1e1148]: "4.88"
+                - text: (7)
+          - cell "Chờ duyệt" [ref=f1e1149]
+          - cell [ref=f1e1153]:
+            - generic "Bấm để Kích hoạt nhận đơn" [ref=f1e1154]:
+              - checkbox [disabled]
+          - cell [ref=f1e1156]:
+            - generic [ref=f1e1157]:
+              - button "Xem trang công khai" [ref=f1e1158] [cursor=pointer]
+              - button "Chỉnh sửa nội dung" [ref=f1e1163] [cursor=pointer]
+              - button "Tùy chọn khác" [ref=f1e1167] [cursor=pointer]
+        - row "Chọn Thiết kế trọn bộ nhận diện thương hiệu & Logo công ty phong cách tối giản Thiết kế trọn bộ nhận diện thương hiệu & Logo công ty phong cách tối giản Thiết kế trọn bộ nhận diện thương hiệu & Logo công ty phong cách tối giản Thiết kế & Đồ họa Số (Digital) 1.200.000 ₫ – 4.500.000 ₫ 3 gói dịch vụ Lượt hiển thị 3.410 lượt xem Đơn hàng tích lũy 29 đơn hàng 4.95 (24) Đang hoạt động" [ref=f1e1172]:
+          - cell [ref=f1e1173]:
+            - checkbox "Chọn Thiết kế trọn bộ nhận diện thương hiệu & Logo công ty phong cách tối giản" [ref=f1e1174] [cursor=pointer]
+          - cell "Thiết kế trọn bộ nhận diện thương hiệu & Logo công ty phong cách tối giản Thiết kế trọn bộ nhận diện thương hiệu & Logo công ty phong cách tối giản Thiết kế & Đồ họa Số (Digital)" [ref=f1e1175]:
+            - generic [ref=f1e1176]:
+              - img "Thiết kế trọn bộ nhận diện thương hiệu & Logo công ty phong cách tối giản" [ref=f1e1177]
+              - generic [ref=f1e1178]:
+                - button "Thiết kế trọn bộ nhận diện thương hiệu & Logo công ty phong cách tối giản" [ref=f1e1179] [cursor=pointer]
+                - generic [ref=f1e1180]:
+                  - generic [ref=f1e1181]: Thiết kế & Đồ họa
+                  - generic "Thực hiện Online 100%" [ref=f1e1182]: Số (Digital)
+          - cell "1.200.000 ₫ – 4.500.000 ₫ 3 gói dịch vụ" [ref=f1e1185]:
+            - generic [ref=f1e1186]:
+              - generic [ref=f1e1187]: 1.200.000 ₫ – 4.500.000 ₫
+              - generic [ref=f1e1188]: 3 gói dịch vụ
+          - cell "Lượt hiển thị 3.410 lượt xem Đơn hàng tích lũy 29 đơn hàng 4.95 (24)" [ref=f1e1189]:
+            - generic [ref=f1e1190]:
+              - generic [ref=f1e1191]:
+                - img "Lượt hiển thị" [ref=f1e1192]
+                - generic [ref=f1e1195]: 3.410 lượt xem
+              - generic [ref=f1e1196]:
+                - img "Đơn hàng tích lũy" [ref=f1e1197]
+                - generic [ref=f1e1200]:
+                  - strong [ref=f1e1201]: "29"
+                  - text: đơn hàng
+              - generic [ref=f1e1205]:
+                - strong [ref=f1e1206]: "4.95"
+                - text: (24)
+          - cell "Đang hoạt động" [ref=f1e1207]
+          - cell [ref=f1e1211]:
+            - generic "Bấm để Tạm ngưng nhận đơn" [ref=f1e1212]:
+              - checkbox [checked]
+              - generic [ref=f1e1213] [cursor=pointer]
+          - cell [ref=f1e1214]:
+            - generic [ref=f1e1215]:
+              - button "Xem trang công khai" [ref=f1e1216] [cursor=pointer]
+              - button "Chỉnh sửa nội dung" [ref=f1e1221] [cursor=pointer]
+              - button "Tùy chọn khác" [ref=f1e1225] [cursor=pointer]
+        - row "Chọn Khảo sát, lắp đặt & bảo dưỡng hệ thống camera an ninh AI tại nhà Khảo sát, lắp đặt & bảo dưỡng hệ thống camera an ninh AI tại nhà Khảo sát, lắp đặt & bảo dưỡng hệ thống camera an ninh AI tại nhà Sửa chữa Điện nước Tận nơi 850.000 ₫ – 2.800.000 ₫ 3 gói dịch vụ Lượt hiển thị 1.120 lượt xem Đơn hàng tích lũy 15 đơn hàng 4.85 (12) Tạm ngưng" [ref=f1e1230]:
+          - cell [ref=f1e1231]:
+            - checkbox "Chọn Khảo sát, lắp đặt & bảo dưỡng hệ thống camera an ninh AI tại nhà" [ref=f1e1232] [cursor=pointer]
+          - cell "Khảo sát, lắp đặt & bảo dưỡng hệ thống camera an ninh AI tại nhà Khảo sát, lắp đặt & bảo dưỡng hệ thống camera an ninh AI tại nhà Sửa chữa Điện nước Tận nơi" [ref=f1e1233]:
+            - generic [ref=f1e1234]:
+              - img "Khảo sát, lắp đặt & bảo dưỡng hệ thống camera an ninh AI tại nhà" [ref=f1e1235]
+              - generic [ref=f1e1236]:
+                - button "Khảo sát, lắp đặt & bảo dưỡng hệ thống camera an ninh AI tại nhà" [ref=f1e1237] [cursor=pointer]
+                - generic [ref=f1e1238]:
+                  - generic [ref=f1e1239]: Sửa chữa Điện nước
+                  - generic "Khảo sát / Thực hiện tại nhà" [ref=f1e1240]: Tận nơi
+          - cell "850.000 ₫ – 2.800.000 ₫ 3 gói dịch vụ" [ref=f1e1244]:
+            - generic [ref=f1e1245]:
+              - generic [ref=f1e1246]: 850.000 ₫ – 2.800.000 ₫
+              - generic [ref=f1e1247]: 3 gói dịch vụ
+          - cell "Lượt hiển thị 1.120 lượt xem Đơn hàng tích lũy 15 đơn hàng 4.85 (12)" [ref=f1e1248]:
+            - generic [ref=f1e1249]:
+              - generic [ref=f1e1250]:
+                - img "Lượt hiển thị" [ref=f1e1251]
+                - generic [ref=f1e1254]: 1.120 lượt xem
+              - generic [ref=f1e1255]:
+                - img "Đơn hàng tích lũy" [ref=f1e1256]
+                - generic [ref=f1e1259]:
+                  - strong [ref=f1e1260]: "15"
+                  - text: đơn hàng
+              - generic [ref=f1e1264]:
+                - strong [ref=f1e1265]: "4.85"
+                - text: (12)
+          - cell "Tạm ngưng" [ref=f1e1266]
+          - cell [ref=f1e1270]:
+            - generic "Bấm để Kích hoạt nhận đơn" [ref=f1e1271]:
+              - checkbox
+              - generic [ref=f1e1272] [cursor=pointer]
+          - cell [ref=f1e1273]:
+            - generic [ref=f1e1274]:
+              - button "Xem trang công khai" [ref=f1e1275] [cursor=pointer]
+              - button "Chỉnh sửa nội dung" [ref=f1e1280] [cursor=pointer]
+              - button "Tùy chọn khác" [ref=f1e1284] [cursor=pointer]
+        - row "Chọn Tư vấn thiết kế kiến trúc vi dịch vụ Microservices & CI/CD Cloud Tư vấn thiết kế kiến trúc vi dịch vụ Microservices & CI/CD Cloud Tư vấn thiết kế kiến trúc vi dịch vụ Microservices & CI/CD Cloud Lập trình & Công nghệ Số (Digital) 4.000.000 ₫ – 12.000.000 ₫ 3 gói dịch vụ Lượt hiển thị 0 lượt xem Đơn hàng tích lũy 0 đơn hàng Bản nháp" [ref=f1e1289]:
+          - cell [ref=f1e1290]:
+            - checkbox "Chọn Tư vấn thiết kế kiến trúc vi dịch vụ Microservices & CI/CD Cloud" [ref=f1e1291] [cursor=pointer]
+          - cell "Tư vấn thiết kế kiến trúc vi dịch vụ Microservices & CI/CD Cloud Tư vấn thiết kế kiến trúc vi dịch vụ Microservices & CI/CD Cloud Lập trình & Công nghệ Số (Digital)" [ref=f1e1292]:
+            - generic [ref=f1e1293]:
+              - img "Tư vấn thiết kế kiến trúc vi dịch vụ Microservices & CI/CD Cloud" [ref=f1e1294]
+              - generic [ref=f1e1295]:
+                - button "Tư vấn thiết kế kiến trúc vi dịch vụ Microservices & CI/CD Cloud" [ref=f1e1296] [cursor=pointer]
+                - generic [ref=f1e1297]:
+                  - generic [ref=f1e1298]: Lập trình & Công nghệ
+                  - generic "Thực hiện Online 100%" [ref=f1e1299]: Số (Digital)
+          - cell "4.000.000 ₫ – 12.000.000 ₫ 3 gói dịch vụ" [ref=f1e1302]:
+            - generic [ref=f1e1303]:
+              - generic [ref=f1e1304]: 4.000.000 ₫ – 12.000.000 ₫
+              - generic [ref=f1e1305]: 3 gói dịch vụ
+          - cell "Lượt hiển thị 0 lượt xem Đơn hàng tích lũy 0 đơn hàng" [ref=f1e1306]:
+            - generic [ref=f1e1307]:
+              - generic [ref=f1e1308]:
+                - img "Lượt hiển thị" [ref=f1e1309]
+                - generic [ref=f1e1312]: 0 lượt xem
+              - generic [ref=f1e1313]:
+                - img "Đơn hàng tích lũy" [ref=f1e1314]
+                - generic [ref=f1e1317]:
+                  - strong [ref=f1e1318]: "0"
+                  - text: đơn hàng
+          - cell "Bản nháp" [ref=f1e1319]
+          - cell [ref=f1e1323]:
+            - generic "Bấm để Kích hoạt nhận đơn" [ref=f1e1324]:
+              - checkbox
+              - generic [ref=f1e1325] [cursor=pointer]
+          - cell [ref=f1e1326]:
+            - generic [ref=f1e1327]:
+              - button "Xem trang công khai" [ref=f1e1328] [cursor=pointer]
+              - button "Chỉnh sửa nội dung" [ref=f1e1333] [cursor=pointer]
+              - button "Tùy chọn khác" [ref=f1e1337] [cursor=pointer]
+  - contentinfo [ref=f1e786]:
+    - generic [ref=f1e787]:
+      - generic [ref=f1e788]:
+        - generic [ref=f1e789]:
+          - heading "Danh mục dịch vụ" [level=4] [ref=f1e790]
+          - list [ref=f1e791]:
+            - listitem [ref=f1e792]:
+              - link "Lập trình & Công nghệ" [ref=f1e793] [cursor=pointer]:
+                - /url: "#categories"
+            - listitem [ref=f1e794]:
+              - link "Thiết kế đồ họa & UI/UX" [ref=f1e795] [cursor=pointer]:
+                - /url: "#categories"
+            - listitem [ref=f1e796]:
+              - link "Sửa chữa Điện nước" [ref=f1e797] [cursor=pointer]:
+                - /url: "#categories"
+            - listitem [ref=f1e798]:
+              - link "Vệ sinh & Dọn dẹp" [ref=f1e799] [cursor=pointer]:
+                - /url: "#categories"
+            - listitem [ref=f1e800]:
+              - link "Viết lách & Dịch thuật" [ref=f1e801] [cursor=pointer]:
+                - /url: "#categories"
+            - listitem [ref=f1e802]:
+              - link "Vận chuyển & Giao nhận" [ref=f1e803] [cursor=pointer]:
+                - /url: "#categories"
+            - listitem [ref=f1e804]:
+              - link "Marketing & Quảng cáo" [ref=f1e805] [cursor=pointer]:
+                - /url: "#categories"
+        - generic [ref=f1e806]:
+          - heading "Dành cho Khách hàng" [level=4] [ref=f1e807]
+          - list [ref=f1e808]:
+            - listitem [ref=f1e809]:
+              - link "Cách thức đặt dịch vụ" [ref=f1e810] [cursor=pointer]:
+                - /url: "#how-it-works"
+            - listitem [ref=f1e811]:
+              - link "Bảo chứng Ký quỹ (Escrow)" [ref=f1e812] [cursor=pointer]:
+                - /url: "#why-workgo"
+            - listitem [ref=f1e813]:
+              - link "Đăng tin tuyển dụng (Post Job)" [ref=f1e814] [cursor=pointer]:
+                - /url: "#cta"
+            - listitem [ref=f1e815]:
+              - link "Chính sách hoàn tiền & tranh chấp" [ref=f1e816] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f1e817]:
+              - link "Quy chuẩn nghiệm thu công việc" [ref=f1e818] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f1e819]:
+              - link "Câu hỏi thường gặp (FAQ)" [ref=f1e820] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=f1e821]:
+          - heading "Dành cho Chuyên gia" [level=4] [ref=f1e822]
+          - list [ref=f1e823]:
+            - listitem [ref=f1e824]:
+              - link "Đăng ký trở thành Chuyên gia" [ref=f1e825] [cursor=pointer]:
+                - /url: "#cta"
+            - listitem [ref=f1e826]:
+              - link "Tiêu chuẩn xác thực (Verification)" [ref=f1e827] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f1e828]:
+              - link "Quy định tạo gói dịch vụ (Packages)" [ref=f1e829] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f1e830]:
+              - link "Rút tiền & Tài khoản thanh toán" [ref=f1e831] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f1e832]:
+              - link "Cộng đồng Freelancer WorkGo" [ref=f1e833] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f1e834]:
+              - link "Bảo vệ quyền tác giả & sở hữu" [ref=f1e835] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=f1e836]:
+          - heading "Về WorkGo" [level=4] [ref=f1e837]
+          - list [ref=f1e838]:
+            - listitem [ref=f1e839]:
+              - link "Giới thiệu nền tảng" [ref=f1e840] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f1e841]:
+              - link "Cơ hội nghề nghiệp" [ref=f1e842] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f1e843]:
+              - link "Báo chí & Truyền thông" [ref=f1e844] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f1e845]:
+              - link "Điều khoản sử dụng" [ref=f1e846] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f1e847]:
+              - link "Chính sách bảo mật dữ liệu" [ref=f1e848] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f1e849]:
+              - link "Liên hệ & Trợ giúp 24/7" [ref=f1e850] [cursor=pointer]:
+                - /url: "#"
+      - generic [ref=f1e851]:
+        - generic [ref=f1e852]:
+          - generic [ref=f1e853]:
+            - generic [ref=f1e854]: W
+            - generic [ref=f1e855]: WorkGo
+          - generic [ref=f1e856]: © 2026 WorkGo Marketplace Inc. Nền tảng kết nối dịch vụ chuyên nghiệp hàng đầu.
+        - generic [ref=f1e857]:
+          - generic [ref=f1e858] [cursor=pointer]: Tiếng Việt
+          - generic [ref=f1e863] [cursor=pointer]: ₫ VND
+          - generic [ref=f1e865] [cursor=pointer]: Được bảo vệ bởi Escrow

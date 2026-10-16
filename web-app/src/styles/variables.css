@@ -77,3 +77,9 @@
   --container-max: 1320px;
   --header-height: 76px;
 }
+
+@media (max-width: 900px) {
+  :root {
+    --header-height: 64px;
+  }
+}

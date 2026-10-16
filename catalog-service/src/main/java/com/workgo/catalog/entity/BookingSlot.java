@@ -17,7 +17,6 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "booking_slots")
-@SQLRestriction("is_deleted = 0")
 public class BookingSlot {
 
     @Id

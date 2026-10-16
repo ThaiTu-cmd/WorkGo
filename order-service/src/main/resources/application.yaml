@@ -6,6 +6,20 @@ server:
 spring:
   application:
     name: order-service
+  datasource:
+    url: jdbc:postgresql://localhost:${ORDER_DB_PORT:5435}/${ORDER_DB:order_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:admin123}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
 
-# TODO: Thêm datasource khi order-service có DB
-# TODO: Thêm kafka config khi cần
+app:
+  services:
+    catalog: ${CATALOG_SERVICE_URL:http://localhost:8082/catalog}
+    identity: ${IDENTITY_SERVICE_URL:http://localhost:8081/identity}
+
+order:
+  platform-fee-rate: 0.10

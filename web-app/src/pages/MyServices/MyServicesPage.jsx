@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import { mockProviderServices } from '../../data/mockProviderServices';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  initialProviderServices,
+  persistProviderServices,
+} from './providerServicesStore';
 import StatsCards from './components/StatsCards/StatsCards';
 import ServicesToolbar from './components/ServicesToolbar/ServicesToolbar';
 import ServicesTable from './components/ServicesTable/ServicesTable';
@@ -19,7 +22,8 @@ export default function MyServicesPage({
   services: externalServices,
   onUpdateServices,
 }) {
-  const [internalServices, setInternalServices] = useState(mockProviderServices);
+  // C2-5: persisted snapshot wins on reload; mocks are the fallback.
+  const [internalServices, setInternalServices] = useState(initialProviderServices);
   const services = externalServices || internalServices;
   const setServices = (newValOrFn) => {
     if (onUpdateServices) {
@@ -38,6 +42,28 @@ export default function MyServicesPage({
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedIds, setSelectedIds] = useState([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // C2-5: write-through persistence — every resolved list (internal or
+  // bridge-external) is snapshotted under one key; reload restores it.
+  // R2: when the write fails (quota/private-mode) the store keeps an
+  // in-memory copy for the session; toast once so the user is not misled.
+  const persistFailedRef = useRef(false);
+  useEffect(() => {
+    if (persistProviderServices(services) === false) {
+      if (!persistFailedRef.current && onShowToast) {
+        persistFailedRef.current = true;
+        onShowToast('Bộ nhớ trình duyệt bị đầy hoặc bị chặn — thay đổi chỉ được giữ trong phiên này.');
+      }
+    } else {
+      persistFailedRef.current = false;
+    }
+  }, [services, onShowToast]);
+
+  const handleClearFilters = () => {
+    setActiveTab('ALL');
+    setSearchQuery('');
+    setSelectedCategory('ALL');
+  };
 
   const tabCounts = {
     all: services.length,
@@ -98,7 +124,9 @@ export default function MyServicesPage({
     }
   };
 
+  // R6: bulk Activate/Pause confirm like bulk Delete (YAGNI: window.confirm, no new modal).
   const handleBulkActivate = () => {
+    if (!window.confirm(`Kích hoạt ${selectedIds.length} dịch vụ đã chọn?`)) return;
     setServices((prev) =>
       prev.map((s) =>
         selectedIds.includes(s.serviceId) ? { ...s, status: 'ACTIVE' } : s
@@ -111,6 +139,7 @@ export default function MyServicesPage({
   };
 
   const handleBulkPause = () => {
+    if (!window.confirm(`Tạm ngưng ${selectedIds.length} dịch vụ đã chọn?`)) return;
     setServices((prev) =>
       prev.map((s) =>
         selectedIds.includes(s.serviceId) ? { ...s, status: 'PAUSED' } : s
@@ -226,6 +255,8 @@ export default function MyServicesPage({
           onBulkActivate={handleBulkActivate}
           onBulkPause={handleBulkPause}
           onBulkDelete={handleBulkDelete}
+          onClearFilters={handleClearFilters}
+          onCreateService={() => (onOpenCreateForm ? onOpenCreateForm() : setIsCreateModalOpen(true))}
         />
       </div>
 

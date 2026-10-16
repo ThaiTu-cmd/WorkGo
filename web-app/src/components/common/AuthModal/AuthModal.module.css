@@ -28,6 +28,8 @@
   border-radius: var(--radius-xl);
   width: 100%;
   max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
   padding: 36px 32px;
   position: relative;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
@@ -52,6 +54,8 @@
   right: 20px;
   width: 34px;
   height: 34px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
@@ -187,6 +191,8 @@
 
 .inputField {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 11px 14px;
   border: 1px solid var(--wg-border);
   border-radius: var(--radius-sm);
@@ -242,4 +248,13 @@
   font-weight: 700;
   margin-left: 6px;
   text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .modalBox {
+    padding: 24px 18px;
+  }
+  .nameRow {
+    grid-template-columns: 1fr;
+  }
 }

@@ -277,7 +277,12 @@
     "terms": "Điều khoản bổ sung (tùy chọn)",
     "submit": "Xác nhận gửi đề xuất",
     "submitSuccess": "Đề xuất đã được gửi thành công!",
-    "alreadySubmitted": "Bạn đã gửi đề xuất cho bài đăng này."
+    "alreadySubmitted": "Bạn đã gửi đề xuất cho bài đăng này.",
+    "bidAmount": "Giá đề xuất",
+    "coverLetter": "Lời nhắn & Giải pháp",
+    "clientOnly": "Chỉ tài khoản Đối tác được gửi báo giá",
+    "duplicate": "Bạn đã gửi đề xuất cho bài đăng này",
+    "priceExceeds": "Giá báo không được vượt quá ngân sách tối đa"
   },
   "applications": {
     "title": "Quản lý đề xuất ứng tuyển",
@@ -585,5 +590,45 @@
       "title": "An toàn & Ký quỹ",
       "desc": "Cơ chế bảo vệ thanh toán escrow, giải quyết tranh chấp và an toàn giao dịch"
     }
+  },
+  "saved": {
+    "title": "Việc đã lưu",
+    "empty": "Chưa lưu việc nào",
+    "save": "Lưu việc làm",
+    "unsave": "Bỏ lưu việc làm",
+    "undo": "Hoàn tác"
+  },
+  "share": {
+    "title": "Chia sẻ việc làm",
+    "copied": "Đã sao chép liên kết",
+    "failed": "Không thể sao chép liên kết"
+  },
+  "draft": {
+    "restored": "Đã khôi phục bản nháp",
+    "cleared": "Đã xóa bản nháp"
+  },
+  "location": {
+    "filter": "Khu vực làm việc",
+    "all": "Tất cả địa điểm",
+    "placeholder": "Chọn tỉnh / thành phố"
+  },
+  "toast": {
+    "saved": "Đã lưu công việc",
+    "unsaved": "Đã bỏ lưu công việc",
+    "copied": "Đã sao chép liên kết",
+    "submitted": "Đã gửi đề xuất thành công",
+    "offline": "Đang ngoại tuyến",
+    "online": "Đã kết nối lại trực tuyến"
+  },
+  "offline": {
+    "banner": "Bạn đang ngoại tuyến. Vui lòng kiểm tra kết nối mạng.",
+    "retry": "Thử lại"
+  },
+  "myPosts": {
+    "title": "Quản lý tin đăng",
+    "empty": "Chưa có bài đăng nào",
+    "close": "Đóng tin",
+    "closeConfirm": "Bạn có chắc chắn muốn đóng tin tuyển dụng này không?",
+    "stats": "Thống kê tin đăng"
   }
 }

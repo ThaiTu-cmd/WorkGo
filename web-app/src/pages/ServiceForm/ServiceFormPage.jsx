@@ -6,6 +6,13 @@ import Step2Pricing from './components/Step2Pricing/Step2Pricing';
 import Step3Media from './components/Step3Media/Step3Media';
 import { ArrowLeft, Check, Save } from 'lucide-react';
 import styles from './ServiceFormPage.module.css';
+import {
+  validateTitle,
+  validateDescription,
+  validatePrice,
+  sanitizeText,
+  clampPrice,
+} from './formValidation';
 
 export default function ServiceFormPage({
   mode = 'create',
@@ -108,20 +115,18 @@ export default function ServiceFormPage({
     }
   };
 
+  // F1: boundary checks via pure helpers (sanitize-then-measure, per-field VI messages).
   const validateStep = (step) => {
     const errs = {};
     if (step === 1) {
-      if (!formData.title || formData.title.trim().length < 15) {
-        errs.title = 'Vui lòng nhập tiêu đề từ 15 đến 100 ký tự!';
-      }
-      if (!formData.description || formData.description.trim().length < 20) {
-        errs.description = 'Vui lòng nhập mô tả chi tiết từ 20 ký tự trở lên!';
-      }
+      const titleErr = validateTitle(formData.title);
+      if (titleErr) errs.title = titleErr;
+      const descErr = validateDescription(formData.description);
+      if (descErr) errs.description = descErr;
     }
     if (step === 2) {
-      if (!formData.packages?.basic?.price || Number(formData.packages.basic.price) <= 0) {
-        errs.price = 'Giá gói Cơ bản phải lớn hơn 0!';
-      }
+      const priceErr = validatePrice(formData.packages?.basic?.price);
+      if (priceErr) errs.price = priceErr;
     }
     if (step === 3) {
       if (!formData.coverImage || !formData.coverImage.trim()) {
@@ -153,23 +158,26 @@ export default function ServiceFormPage({
       return;
     }
 
+    // F1: save sanitized values only (slug from the sanitized title).
+    const cleanTitle = sanitizeText(formData.title);
+    const cleanDescription = sanitizeText(formData.description);
     const savedService = {
       serviceId: isEdit ? serviceId : `svc-${Date.now()}`,
-      title: formData.title.trim(),
-      slug: formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+      title: cleanTitle,
+      slug: cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
       categorySlug: formData.categorySlug,
       categoryName: formData.categoryName,
       executionType: formData.executionType,
       coverImage: formData.coverImage,
       status: status,
-      basePrice: Number(formData.packages.basic.price),
-      priceRange: `${new Intl.NumberFormat('vi-VN').format(formData.packages.basic.price)} ₫ – ${new Intl.NumberFormat('vi-VN').format(formData.packages.premium.price)} ₫`,
+      basePrice: clampPrice(formData.packages.basic.price),
+      priceRange: `${new Intl.NumberFormat('vi-VN').format(clampPrice(formData.packages.basic.price))} ₫ – ${new Intl.NumberFormat('vi-VN').format(clampPrice(formData.packages.premium.price))} ₫`,
       packagesCount: 3,
       impressions: isEdit ? 4820 : 1,
       ordersCount: isEdit ? 42 : 0,
       avgRating: isEdit ? 4.98 : 0,
       reviewCount: isEdit ? 38 : 0,
-      description: formData.description,
+      description: cleanDescription,
       createdAt: isEdit ? '2026-02-15' : new Date().toISOString(),
     };
 

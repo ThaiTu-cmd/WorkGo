@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { AscendLandingView } from "@/components/landing/ascend-landing-view";
+import WebAppShell from "@/components/webapp-bridge/webapp-shell";
 
 export const metadata: Metadata = {
-  title: "WorkGo — Nền Tảng Kết Nối Việc Làm & Dịch Vụ Chuyên Nghiệp",
+  title: "WorkGo — Sàn Dịch vụ",
   description:
-    "Nền tảng kết nối nhân sự và dịch vụ chuyên nghiệp hàng đầu với cơ chế bảo chứng Escrow và quản lý tiến độ thời gian thực.",
+    "WorkGo — Sàn kết nối dịch vụ: tìm kiếm, đặt dịch vụ, quản lý dịch vụ và bảo chứng Escrow an toàn.",
 };
 
 export default async function LocaleRootPage({
@@ -12,6 +12,6 @@ export default async function LocaleRootPage({
 }: {
   params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
-  return <AscendLandingView locale={locale} />;
+  await params; // locale unused: web-app UI is VI-only (known limitation E5)
+  return <WebAppShell />;
 }

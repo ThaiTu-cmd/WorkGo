@@ -9,12 +9,15 @@ export default function Step2Pricing({ formData, onChange, errors = {} }) {
     premium: { title: 'Gói Enterprise VIP', desc: 'Trọn gói webapp hoàn chỉnh & thanh toán', days: 10, rev: 'Không giới hạn', price: 8500000 }
   };
 
+  // F1: keep raw numeric input (NaN → 0) so validateStep can REPORT range errors;
+  // the save path clamps as a safety net. Silent hard-clamp here would hide the error UI.
   const handlePackageChange = (tier, field, value) => {
+    const nextValue = field === 'price' ? (Number.isFinite(Number(value)) ? Number(value) : 0) : value;
     const updated = {
       ...packages,
       [tier]: {
         ...packages[tier],
-        [field]: value
+        [field]: nextValue
       }
     };
     onChange('packages', updated);
@@ -278,6 +281,13 @@ export default function Step2Pricing({ formData, onChange, errors = {} }) {
           </tbody>
         </table>
       </div>
+
+      {/* F1: price errors had no UI slot — user never knew why Next blocked. */}
+      {errors.price && (
+        <p role="alert" style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '-1rem', marginBottom: '1rem' }}>
+          {errors.price}
+        </p>
+      )}
 
       {/* Add-ons Upsells */}
       <h3 className={styles.addonsSectionTitle}>Dịch vụ gia tăng (Add-on Services / Upsells)</h3>

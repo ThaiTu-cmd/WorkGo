@@ -63,6 +63,14 @@
   justify-content: center;
   transition: all var(--transition-fast);
   box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+/* C2-2: effective hit-area 54px, visual stays 42px */
+.arrowBtn::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
 }
 
 .arrowBtn:hover:not(:disabled) {

@@ -110,7 +110,7 @@ test("HP-MIRROR-05: MANIFEST.json and README.mirror.md exist and are valid in th
     const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
     assert.equal(manifest.source, "web-app/src");
     assert.equal(manifest.totalFiles, 85);
-    assert.equal(manifest.totalBytes, 380311);
+    assert.equal(manifest.totalBytes, 380313);
     assert.equal(manifest.files.length, 85);
 
     const readmePath = path.join(mirrorDir, "README.mirror.md");

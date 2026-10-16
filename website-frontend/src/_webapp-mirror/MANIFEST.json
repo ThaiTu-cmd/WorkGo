@@ -1,7 +1,7 @@
 {
   "source": "web-app/src",
   "destMirror": "website-frontend/src/_webapp-mirror",
-  "createdAt": "2026-10-16T10:54:04.527Z",
+  "createdAt": "2026-10-16T14:28:33.975Z",
   "files": [
     {
       "relative": "api/axiosClient.js",
@@ -120,8 +120,8 @@
     },
     {
       "relative": "components/home/HeroBanner/HeroBanner.module.css",
-      "size": 3356,
-      "sha256": "8520af202d929b19e3793416ba7115780207c9cd4be7956226b9acf40eeaa5fe"
+      "size": 3358,
+      "sha256": "e64fed1f9885cedec37986277d75ce31347e17354386615979e7f31f574182c7"
     },
     {
       "relative": "components/home/HowItWorks/HowItWorks.jsx",
@@ -430,5 +430,5 @@
     }
   ],
   "totalFiles": 85,
-  "totalBytes": 380311
+  "totalBytes": 380313
 }

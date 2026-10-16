@@ -131,3 +131,69 @@ test("S6: REPORT.md has ops quickstart, gates, keys and the CLOSE mark", () => {
   assert.match(report, /3000/);
   assert.match(report, /workgo_provider_services_overrides/);
 });
+
+// ---------- S7: trung-pages edge cases (15 Excel pages) ----------
+const TRUNG = path.join(REPO, "website-frontend", "src", "components", "trung-pages");
+const trungRead = (p) => read(path.join(TRUNG, p));
+
+test("S7: every trung page sanitizes before measuring (strip tags, collapse space)", () => {
+  for (const p of [
+    "auth/authValidation.ts",
+    "profile/ProfileSettingsPage.tsx",
+    "jobs/JobPostPage.tsx",
+    "jobs/SubmitProposalPage.tsx",
+    "payment/PayoutSettingsPage.tsx",
+    "trust/ReviewFormPage.tsx",
+    "trust/DisputeCenterPage.tsx",
+  ]) {
+    const src = trungRead(p);
+    assert.ok(/replace\(\/<\[\^>\]\*>\/g/.test(src), `${p} must strip HTML tags before validation`);
+    assert.ok(src.includes("sanitizeText") || src.includes("sanitize"), `${p} must sanitize inputs`);
+  }
+});
+
+test("S7: budget/bid/amount bounds stay 50k-100M with VI messages", () => {
+  for (const p of ["jobs/JobPostPage.tsx", "jobs/SubmitProposalPage.tsx", "payment/PaymentGatewayPage.tsx"]) {
+    const src = trungRead(p);
+    assert.ok(src.includes("50000"), `${p} must reference PRICE floor 50000`);
+    assert.ok(src.includes("100000000"), `${p} must reference PRICE ceiling 100M`);
+    assert.ok(src.includes("tối thiểu là"), `${p} must carry VI min-price message`);
+  }
+});
+
+test("S7: duplicate guards — one proposal per provider/job, one review per order", () => {
+  assert.match(trungRead("jobs/SubmitProposalPage.tsx"), /Bạn đã gửi đề xuất cho việc này!/);
+  assert.match(trungRead("jobs/ProposalReviewPage.tsx"), /auto REJECTED|tự động từ chối/);
+  assert.match(trungRead("trust/ReviewFormPage.tsx"), /Đơn hàng này đã được đánh giá!/);
+});
+
+test("S7: payout masks account numbers, dispute validates optional evidence URL", () => {
+  assert.match(trungRead("payment/PayoutSettingsPage.tsx"), /\*\*\*\*/);
+  assert.match(trungRead("payment/PayoutSettingsPage.tsx"), /8-19/);
+  assert.match(trungRead("trust/DisputeCenterPage.tsx"), /Link minh chứng chưa đúng định dạng URL!/);
+  assert.match(trungRead("trust/DisputeCenterPage.tsx"), /từ 20 ký tự trở lên/);
+});
+
+test("S7: overlays trap focus and close on Escape", () => {
+  assert.match(trungRead("profile/AddressBookPage.tsx"), /Escape/);
+  assert.match(trungRead("profile/AddressBookPage.tsx"), /aria-modal/);
+  assert.match(trungRead("trust/ReviewFormPage.tsx"), /radiogroup/);
+});
+
+test("S7: trung css is 320px-safe (no horizontal spill, 44px touch)", () => {
+  const walk = (dir, out = []) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p, out);
+      else if (e.name.endsWith(".module.css")) out.push(p);
+    }
+    return out;
+  };
+  const files = walk(TRUNG);
+  assert.ok(files.length >= 16, `expected 16+ css modules, got ${files.length}`);
+  for (const f of files) {
+    const css = read(f);
+    assert.ok(/overflow-wrap:\s*break-word/.test(css) || /word-break:\s*break-word/.test(css), `${path.basename(f)} must wrap long text`);
+    assert.ok(/min-height:\s*44px/.test(css), `${path.basename(f)} must keep 44px touch targets`);
+  }
+});

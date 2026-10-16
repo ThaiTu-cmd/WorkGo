@@ -1,8 +1,8 @@
 # web-app mirror — website-frontend/src/_webapp-mirror
 
-- Source: `web-app/src` @ 8d5292a
-- Date (UTC): 2026-10-16T10:54:04.530Z
-- Files: 85, bytes: 380311
+- Source: `web-app/src` @ 04babc0
+- Date (UTC): 2026-10-16T14:28:33.977Z
+- Files: 85, bytes: 380313
 - Verify: `node scripts/copy-webapp-mirror.mjs --verify`
 - WARNING: Vite JSX reference only. Do NOT import directly into React Native / Next.js runtime.
   Preview mirror independently (copy to temp + `vite preview`), do not add to Expo Router / Next App Router.

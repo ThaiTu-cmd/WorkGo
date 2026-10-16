@@ -20,14 +20,55 @@ import {
   initialProviderServices,
   persistProviderServices,
 } from "@/_webapp-mirror/pages/MyServices/providerServicesStore";
+import TrungSubNav from "../trung-pages/_ui/TrungSubNav";
+import RegisterPage from "../trung-pages/auth/RegisterPage";
+import LoginPage from "../trung-pages/auth/LoginPage";
+import ProfileSettingsPage from "../trung-pages/profile/ProfileSettingsPage";
+import AddressBookPage from "../trung-pages/profile/AddressBookPage";
+import ProviderOnboardingPage from "../trung-pages/provider/ProviderOnboardingPage";
+import ProviderProfilePage from "../trung-pages/provider/ProviderProfilePage";
+import JobListPage from "../trung-pages/jobs/JobListPage";
+import JobPostPage from "../trung-pages/jobs/JobPostPage";
+import SubmitProposalPage from "../trung-pages/jobs/SubmitProposalPage";
+import ProposalReviewPage from "../trung-pages/jobs/ProposalReviewPage";
+import PaymentGatewayPage from "../trung-pages/payment/PaymentGatewayPage";
+import WalletPage from "../trung-pages/payment/WalletPage";
+import PayoutSettingsPage from "../trung-pages/payment/PayoutSettingsPage";
+import ReviewFormPage from "../trung-pages/trust/ReviewFormPage";
+import DisputeCenterPage from "../trung-pages/trust/DisputeCenterPage";
 import { Info } from "lucide-react";
 import styles from "./webapp-shell.module.css";
 
-type CatalogFilterParams = {
+export type CatalogFilterParams = {
   category?: string;
   executionType?: string;
   query?: string;
+  jobId?: string;
+  providerId?: string;
+  orderId?: string;
 };
+
+export type TrungPageKey =
+  | "home"
+  | "catalog"
+  | "detail"
+  | "my-services"
+  | "service-form"
+  | "register"
+  | "login"
+  | "profile-settings"
+  | "provider-onboarding"
+  | "address-book"
+  | "provider-profile"
+  | "job-list"
+  | "job-post"
+  | "submit-proposal"
+  | "proposal-review"
+  | "payment-gateway"
+  | "wallet"
+  | "payout-settings"
+  | "review-form"
+  | "dispute-center";
 
 type CategorySelection = {
   slug: string;
@@ -51,9 +92,12 @@ type ProviderService = (typeof mockProviderServices)[number] | SavedService;
 // through turbopack.resolveAlias to engine-backed shims; without the alias
 // it falls back to the mirror's own web-app mocks.
 export default function WebAppShell() {
-  const [currentPage, setCurrentPage] = useState("home"); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form'
-  const [previousPage, setPreviousPage] = useState("home");
+  const [currentPage, setCurrentPage] = useState<TrungPageKey>("home"); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form' + 15 trung-pages
+  const [previousPage, setPreviousPage] = useState<TrungPageKey>("home");
   const [selectedServiceId, setSelectedServiceId] = useState("svc-1");
+  const [selectedJobId, setSelectedJobId] = useState("");
+  const [selectedProviderId, setSelectedProviderId] = useState("");
+  const [selectedOrderId, setSelectedOrderId] = useState("");
   // C2-5: same persistence contract as web-app MyServicesPage — the
   // persisted snapshot wins on reload, bundled mocks are the fallback.
   // (Without this, the shell would feed the stale mock list and the
@@ -131,7 +175,7 @@ export default function WebAppShell() {
   }, [providerServices, showToast]);
 
   // Navigate handler from Header or links
-  const handleNavigate = (page: string, params: CatalogFilterParams = {}) => {
+  const handleNavigate = (page: TrungPageKey, params: CatalogFilterParams = {}) => {
     setPreviousPage(currentPage);
     setCurrentPage(page);
     if (page === "catalog") {
@@ -141,6 +185,10 @@ export default function WebAppShell() {
         query: params.query || "",
       });
     }
+    if (page === "provider-profile" && params.providerId) setSelectedProviderId(params.providerId);
+    if (page === "submit-proposal" && params.jobId) setSelectedJobId(params.jobId);
+    if (page === "proposal-review" && params.jobId) setSelectedJobId(params.jobId);
+    if (page === "review-form" && params.orderId) setSelectedOrderId(params.orderId);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -252,6 +300,9 @@ export default function WebAppShell() {
         />
       )}
 
+      {/* Trung auxiliary nav (Header mirror can't carry the 15 new links) */}
+      <TrungSubNav current={currentPage} onNavigate={handleNavigate} />
+
       {/* Main Content Router */}
       {currentPage === "home" && (
         <main className={styles.main}>
@@ -329,6 +380,82 @@ export default function WebAppShell() {
           onSaveSuccess={handleServiceFormSuccess}
           onShowToast={showToast}
         />
+      )}
+
+      {currentPage === "register" && (
+        <RegisterPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "login" && (
+        <LoginPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "profile-settings" && (
+        <ProfileSettingsPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "address-book" && (
+        <AddressBookPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "provider-onboarding" && (
+        <ProviderOnboardingPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "provider-profile" && (
+        <ProviderProfilePage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+          providerId={selectedProviderId || undefined}
+        />
+      )}
+
+      {currentPage === "job-list" && (
+        <JobListPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "job-post" && (
+        <JobPostPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "submit-proposal" && (
+        <SubmitProposalPage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+          jobId={selectedJobId || undefined}
+        />
+      )}
+
+      {currentPage === "proposal-review" && (
+        <ProposalReviewPage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+          jobId={selectedJobId || undefined}
+        />
+      )}
+
+      {currentPage === "payment-gateway" && (
+        <PaymentGatewayPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "wallet" && (
+        <WalletPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "payout-settings" && (
+        <PayoutSettingsPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "review-form" && (
+        <ReviewFormPage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+          orderId={selectedOrderId || undefined}
+        />
+      )}
+
+      {currentPage === "dispute-center" && (
+        <DisputeCenterPage onNavigate={handleNavigate} onShowToast={showToast} />
       )}
 
       {/* Footer (hidden on service-form wizard for clean focus) */}

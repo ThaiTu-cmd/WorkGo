@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Info, Laptop, MapPin, Truck, X } from 'lucide-react';
 import styles from './Step1Info.module.css';
+import { TITLE_MAX } from '../../formValidation';
 
 export default function Step1Info({ formData, onChange, errors = {} }) {
   const [tagInput, setTagInput] = useState('');
@@ -13,8 +14,9 @@ export default function Step1Info({ formData, onChange, errors = {} }) {
     { slug: 'van-chuyen-giao-nhan', name: 'Vận chuyển & Giao nhận hàng hóa' },
   ];
 
+  // F1: soft-cap past TITLE_MAX even for programmatic/state pastes (maxLength only guards typing).
   const handleTitleChange = (e) => {
-    onChange('title', e.target.value);
+    onChange('title', e.target.value.slice(0, TITLE_MAX));
   };
 
   const handleCategoryChange = (e) => {
@@ -31,7 +33,7 @@ export default function Step1Info({ formData, onChange, errors = {} }) {
   const handleAddTag = (e) => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
-      const val = tagInput.trim().replace(/^#/, '');
+      const val = tagInput.trim().replace(/^#/, '').replace(/[<>"']/g, '');
       const currentTags = formData.tags || [];
       if (val && !currentTags.includes(val) && currentTags.length < 5) {
         onChange('tags', [...currentTags, val]);

@@ -9,10 +9,30 @@ main {
   flex: 1;
 }
 
-.toastNotification {
+/* R5: minimal Suspense fallback for lazy AuthModal / ServiceFormPage. */
+.lazyFallback {
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--wg-text-secondary);
+}
+
+/* F6: toast queue stack — positioning moved here from .toastNotification
+   (same Cycle-1 geometry: 16px gutters mobile, 420px cap, auto right on desktop). */
+.toastStack {
   position: fixed;
   bottom: 24px;
-  right: 24px;
+  right: 16px;
+  left: 16px;
+  max-width: 420px;
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 3000;
+}
+
+.toastNotification {
+  position: static;
   background-color: var(--wg-secondary);
   color: #ffffff;
   padding: 14px 20px;
@@ -25,7 +45,15 @@ main {
   font-weight: 500;
   z-index: 3000;
   border-left: 4px solid var(--wg-primary);
+  overflow-wrap: break-word;
+  word-break: break-word;
   animation: toastSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 640px) {
+  .toastStack {
+    left: auto;
+  }
 }
 
 @keyframes toastSlide {
@@ -42,5 +70,31 @@ main {
 .toastIcon {
   color: var(--wg-primary);
   flex-shrink: 0;
+}
+
+/* F6: 44px manual dismiss per toast. */
+.toastClose {
+  margin-left: auto;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: #ffffff;
+  opacity: 0.8;
+  border-radius: var(--radius-xs);
+  flex-shrink: 0;
+}
+
+.toastClose:hover {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toastNotification {
+    animation: none;
+  }
 }
 

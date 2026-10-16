@@ -1,19 +1,12 @@
 import type { Metadata } from "next";
-import { AscendLandingView } from "@/components/landing/ascend-landing-view";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "WorkGo — Nền Tảng Kết Nối Việc Làm & Dịch Vụ Chuyên Nghiệp",
+  title: "WorkGo — Sàn Dịch vụ",
   description:
-    "Nền tảng kết nối nhân sự và dịch vụ chuyên nghiệp hàng đầu với cơ chế bảo chứng Escrow và quản lý tiến độ thời gian thực.",
+    "WorkGo — Sàn kết nối dịch vụ: tìm kiếm, đặt dịch vụ, quản lý dịch vụ và bảo chứng Escrow an toàn.",
 };
 
 export default function RootPage() {
-  // Legacy test compliance regex preservation:
-  // Tests in tests/routing-config.test.mjs verify: redirect("/vi/posts");
-  if (false as boolean) {
-    // redirect("/vi/posts");
-  }
-
-  // Render Landing Page trực tiếp tại http://localhost:3000 không redirect
-  return <AscendLandingView locale="vi" />;
+  redirect("/vi");
 }

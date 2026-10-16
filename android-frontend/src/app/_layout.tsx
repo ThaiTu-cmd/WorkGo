@@ -1,29 +1,12 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import { Stack } from 'expo-router';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
-import { AuthProvider } from '@/store/auth';
-import { ToastProvider } from '@/components/toast';
-import { SavedJobsProvider } from '@/store/saved';
-
-SplashScreen.preventAutoHideAsync();
-
+// Minimal stack: WebView home + preserved static-prototypes preview screen
+// (kept because no dev-build toolchain exists in this environment).
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      <AuthProvider>
-        <SavedJobsProvider>
-          <ToastProvider>
-            <AnimatedSplashOverlay />
-            <AppTabs />
-          </ToastProvider>
-        </SavedJobsProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="webapp-preview" />
+    </Stack>
   );
 }

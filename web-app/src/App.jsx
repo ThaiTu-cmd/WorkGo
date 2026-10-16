@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, Suspense, startTransition } from 'react';
 import Header from './components/common/Header/Header';
 import HeroBanner from './components/home/HeroBanner/HeroBanner';
 import TrustedBy from './components/home/TrustedBy/TrustedBy';
@@ -8,12 +8,16 @@ import ValueProposition from './components/home/ValueProposition/ValuePropositio
 import HowItWorks from './components/home/HowItWorks/HowItWorks';
 import DualCTA from './components/home/DualCTA/DualCTA';
 import Footer from './components/common/Footer/Footer';
-import AuthModal from './components/common/AuthModal/AuthModal';
 import CatalogSearchPage from './pages/CatalogSearch/CatalogSearchPage';
 import ServiceDetailPage from './pages/ServiceDetail/ServiceDetailPage';
 import MyServicesPage from './pages/MyServices/MyServicesPage';
-import ServiceFormPage from './pages/ServiceForm/ServiceFormPage';
-import { mockProviderServices } from './data/mockProviderServices';
+// R5: split rarely-opened heavy views out of the initial bundle.
+const AuthModal = React.lazy(() => import('./components/common/AuthModal/AuthModal'));
+const ServiceFormPage = React.lazy(() => import('./pages/ServiceForm/ServiceFormPage'));
+import {
+  initialProviderServices,
+  persistProviderServices,
+} from './pages/MyServices/providerServicesStore';
 import { Info } from 'lucide-react';
 import styles from './App.module.css';
 
@@ -21,7 +25,26 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('home'); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form'
   const [previousPage, setPreviousPage] = useState('home');
   const [selectedServiceId, setSelectedServiceId] = useState('svc-1');
-  const [providerServices, setProviderServices] = useState(mockProviderServices);
+  // C2-5: persisted snapshot wins on reload; bundled mocks are fallback.
+  // (MyServicesPage edits funnel through onUpdateServices into this state,
+  // so persistence must live here — otherwise reload restores the mock.)
+  const [providerServices, setProviderServices] = useState(initialProviderServices);
+
+  // Write-through: toggle/bulk/duplicate/delete/form-success all land here.
+  // R2: on write failure the store keeps a session in-memory copy; toast once.
+  const persistFailedRef = useRef(false);
+  useEffect(() => {
+    if (persistProviderServices(providerServices) === false) {
+      if (!persistFailedRef.current) {
+        persistFailedRef.current = true;
+        showToast('Bộ nhớ trình duyệt bị đầy hoặc bị chặn — thay đổi chỉ được giữ trong phiên này.');
+      }
+    } else {
+      persistFailedRef.current = false;
+    }
+    // showToast identity changes per render; depending on it would re-toast.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [providerServices]);
   const [serviceFormMode, setServiceFormMode] = useState('create'); // 'create' | 'edit'
   const [editServiceId, setEditServiceId] = useState(null);
   const [catalogFilters, setCatalogFilters] = useState({
@@ -31,11 +54,30 @@ export default function App() {
   });
 
   const [authModal, setAuthModal] = useState(null); // 'login' | 'register' | null
-  const [toastMessage, setToastMessage] = useState(null);
+  // F6: toast queue (max 3, newest on top) — showToast(message) signature unchanged
+  // so MyServicesPage/ServiceDetail call-sites need no edits.
+  const [toasts, setToasts] = useState([]);
+  const toastIdRef = useRef(0);
+  const toastTimersRef = useRef({});
+
+  useEffect(() => {
+    const timers = toastTimersRef.current;
+    return () => Object.values(timers).forEach((t) => clearTimeout(t));
+  }, []);
+
+  const dismissToast = (id) => {
+    const timer = toastTimersRef.current[id];
+    if (timer) {
+      clearTimeout(timer);
+      delete toastTimersRef.current[id];
+    }
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
   const showToast = (message) => {
-    setToastMessage(message);
-    setTimeout(() => setToastMessage(null), 3500);
+    const id = ++toastIdRef.current;
+    setToasts((prev) => [...prev.slice(-2), { id, message }]);
+    toastTimersRef.current[id] = setTimeout(() => dismissToast(id), 3500);
   };
 
   // Navigate handler from Header or links
@@ -86,18 +128,23 @@ export default function App() {
   };
 
   const handleOpenCreateForm = () => {
-    setServiceFormMode('create');
-    setEditServiceId(null);
-    setPreviousPage(currentPage);
-    setCurrentPage('service-form');
+    // R5: entering the lazy service-form suspends — transition keeps input responsive.
+    startTransition(() => {
+      setServiceFormMode('create');
+      setEditServiceId(null);
+      setPreviousPage(currentPage);
+      setCurrentPage('service-form');
+    });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenEditForm = (serviceId) => {
-    setServiceFormMode('edit');
-    setEditServiceId(serviceId);
-    setPreviousPage(currentPage);
-    setCurrentPage('service-form');
+    startTransition(() => {
+      setServiceFormMode('edit');
+      setEditServiceId(serviceId);
+      setPreviousPage(currentPage);
+      setCurrentPage('service-form');
+    });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -115,11 +162,23 @@ export default function App() {
 
   return (
     <div className={styles.appRoot}>
-      {/* Toast Alert */}
-      {toastMessage && (
-        <div className={styles.toastNotification}>
-          <Info size={18} className={styles.toastIcon} />
-          <span>{toastMessage}</span>
+      {/* Toast queue (max 3, each auto-dismisses + manual close) */}
+      {toasts.length > 0 && (
+        <div className={styles.toastStack}>
+          {toasts.map((t) => (
+            <div key={t.id} className={styles.toastNotification} role="status">
+              <Info size={18} className={styles.toastIcon} />
+              <span>{t.message}</span>
+              <button
+                type="button"
+                className={styles.toastClose}
+                onClick={() => dismissToast(t.id)}
+                aria-label="Đóng thông báo"
+              >
+                ×
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -128,7 +187,7 @@ export default function App() {
         <Header
           activePage={currentPage}
           onNavigate={handleNavigate}
-          onOpenAuth={(mode) => setAuthModal(mode)}
+          onOpenAuth={(mode) => startTransition(() => setAuthModal(mode))}
         />
       )}
 
@@ -157,7 +216,7 @@ export default function App() {
           <HowItWorks />
 
           {/* 7. Dual Call-to-Action */}
-          <DualCTA onOpenAuth={(mode) => setAuthModal(mode)} />
+          <DualCTA onOpenAuth={(mode) => startTransition(() => setAuthModal(mode))} />
         </main>
       )}
 
@@ -199,28 +258,32 @@ export default function App() {
       )}
 
       {currentPage === 'service-form' && (
-        /* Provider Multi-step Service Form Wizard */
-        <ServiceFormPage
-          mode={serviceFormMode}
-          serviceId={editServiceId}
-          onCancel={() => {
-            setCurrentPage('my-services');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          onSaveSuccess={handleServiceFormSuccess}
-          onShowToast={showToast}
-        />
+        /* Provider Multi-step Service Form Wizard (lazy chunk) */
+        <Suspense fallback={<div className={styles.lazyFallback} role="status">Đang tải biểu mẫu...</div>}>
+          <ServiceFormPage
+            mode={serviceFormMode}
+            serviceId={editServiceId}
+            onCancel={() => {
+              setCurrentPage('my-services');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onSaveSuccess={handleServiceFormSuccess}
+            onShowToast={showToast}
+          />
+        </Suspense>
       )}
 
       {/* Footer (hidden on service-form wizard for clean focus) */}
       {currentPage !== 'service-form' && <Footer />}
 
-      {/* Authentication Modal */}
+      {/* Authentication Modal (lazy chunk) */}
       {authModal && (
-        <AuthModal
-          initialMode={authModal}
-          onClose={() => setAuthModal(null)}
-        />
+        <Suspense fallback={<div className={styles.lazyFallback} role="status">Đang tải...</div>}>
+          <AuthModal
+            initialMode={authModal}
+            onClose={() => setAuthModal(null)}
+          />
+        </Suspense>
       )}
     </div>
   );

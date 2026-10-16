@@ -7,16 +7,19 @@
   flex-direction: column;
   gap: 16px;
   margin-bottom: 20px;
+  min-width: 0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .tabsRow {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   border-bottom: 1px solid #f1f5f9;
   padding-bottom: 12px;
   overflow-x: auto;
   scrollbar-width: none;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tabsRow::-webkit-scrollbar {
@@ -37,6 +40,16 @@
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 0;
+  position: relative;
+}
+
+/* C2-2: effective hit-area +12px, visual unchanged */
+.tabBtn::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
 }
 
 .tabBtn:hover {
@@ -75,8 +88,8 @@
 
 .searchBox {
   position: relative;
-  flex: 1;
-  min-width: 260px;
+  flex: 1 1 200px;
+  min-width: 0;
 }
 
 .searchIcon {
@@ -108,6 +121,8 @@
   position: relative;
   display: flex;
   align-items: center;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .filterIcon {
@@ -127,6 +142,8 @@
   outline: none;
   cursor: pointer;
   transition: all 0.2s ease;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .categorySelect:focus {
@@ -138,6 +155,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 18px;
+  min-height: 44px;
   background-color: #10b981;
   color: #ffffff;
   border: none;

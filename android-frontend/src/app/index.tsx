@@ -1,169 +1,91 @@
 import * as React from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { ActivityIndicator, BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WebView } from 'react-native-webview';
 
-import { router } from 'expo-router';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { EntranceView } from '@/components/entrance-view';
-import { HomeCategories } from '@/components/home-categories';
-import { HomeExploreCard } from '@/components/home-explore-card';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-
-const CATEGORIES = [
-  { id: '1', title: 'Thiết kế & Đồ họa', icon: '🎨', count: '124 việc' },
-  { id: '2', title: 'Lập trình & Web', icon: '💻', count: '98 việc' },
-  { id: '3', title: 'Viết lách & Dịch', icon: '✍️', count: '45 việc' },
-  { id: '4', title: 'Kỹ thuật tại nhà', icon: '🔧', count: '76 việc' },
-];
+export function resolveWebAppUrl(): string {
+  const fromEnv = process.env.EXPO_PUBLIC_WEBAPP_URL;
+  if (fromEnv) return fromEnv;
+  // Android emulator cannot reach host `localhost`; 10.0.2.2 maps to the host loopback.
+  if (__DEV__) return 'http://10.0.2.2:3000/vi';
+  return 'http://localhost:3000/vi';
+}
 
 export default function HomeScreen() {
-  const theme = useTheme();
+  const [uri] = React.useState<string>(resolveWebAppUrl);
+  const [failed, setFailed] = React.useState<boolean>(false);
+  const [nonce, setNonce] = React.useState<number>(0);
+  const webViewRef = React.useRef<WebView>(null);
+  const [canGoBack, setCanGoBack] = React.useState<boolean>(false);
+
+  // F4: hardware Back closes web overlays first (best-effort Escape inject —
+  // native cannot know modal state, no 2-way bridge by design), then goes
+  // back in WebView history, and only exits when history is empty.
+  React.useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      webViewRef.current?.injectJavaScript(
+        "window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));true;"
+      );
+      if (canGoBack) {
+        webViewRef.current?.goBack();
+        return true;
+      }
+      return false;
+    });
+    return () => sub.remove();
+  }, [canGoBack]);
+
+  const retry = React.useCallback(() => {
+    setFailed(false);
+    setNonce((n) => n + 1);
+  }, []);
+
+  if (failed) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.center}>
+          <Text style={styles.title}>Không tải được giao diện WebApp</Text>
+          <Text style={styles.hint}>
+            Hãy chắc website đang chạy (npm run dev tại website-frontend, cổng 3000) rồi thử lại.
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Thử tải lại giao diện WebApp"
+            onPress={retry}
+            style={styles.retryButton}>
+            <Text style={styles.retryText}>Thử lại</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {/* Header Brand */}
-          <EntranceView delay={0}>
-            <View style={styles.header}>
-              <View
-                style={[
-                  styles.brandBadge,
-                  {
-                    backgroundColor: theme.primarySubtle,
-                    borderColor: theme.border,
-                  },
-                ]}
-              >
-                <ThemedText style={[styles.brandBadgeText, { color: theme.primary }]}>
-                  WorkGo Mobile
-                </ThemedText>
-              </View>
-              <ThemedText type="hero" style={styles.title}>
-                Tìm việc & Thuê chuyên gia
-              </ThemedText>
-              <ThemedText style={styles.subtitle} themeColor="textSecondary">
-                Nền tảng kết nối dịch vụ chuyên nghiệp, an toàn với ký quỹ Escrow
-              </ThemedText>
-            </View>
-          </EntranceView>
-
-          {/* System Status Card */}
-          <EntranceView delay={80}>
-            <ThemedView
-              type="backgroundElement"
-              style={[styles.statusCard, { borderColor: theme.border }]}
-            >
-              <View style={styles.statusDot} />
-              <View style={styles.statusContent}>
-                <ThemedText style={styles.statusTitle}>Hệ sinh thái WorkGo</ThemedText>
-                <ThemedText style={styles.statusDesc} themeColor="textSecondary">
-                  BFF Unified Proxy & Microservices sẵn sàng
-                </ThemedText>
-              </View>
-            </ThemedView>
-          </EntranceView>
-
-          {/* Quick Categories */}
-          <EntranceView delay={160}>
-            <View style={styles.sectionHeader}>
-              <ThemedText type="subtitle" style={styles.sectionTitle}>
-                Danh mục nổi bật
-              </ThemedText>
-            </View>
-            <HomeCategories
-              items={CATEGORIES}
-              onSelectCategory={(cat) =>
-                router.push({ pathname: '/catalog', params: { q: cat.title } })
-              }
-            />
-          </EntranceView>
-
-          {/* Featured Action Card */}
-          <EntranceView delay={240}>
-            <HomeExploreCard onCtaPress={() => router.push('/catalog')} />
-          </EntranceView>
-        </ScrollView>
-      </SafeAreaView>
-    </ThemedView>
+    <SafeAreaView style={styles.safe}>
+      <WebView
+        key={nonce}
+        ref={webViewRef}
+        source={{ uri }}
+        startInLoadingState
+        renderLoading={() => (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" />
+          </View>
+        )}
+        onError={() => setFailed(true)}
+        onHttpError={() => setFailed(true)}
+        onNavigationStateChange={(ns) => setCanGoBack(ns.canGoBack)}
+        accessibilityLabel="Giao diện WebApp WorkGo"
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  safeArea: {
-    flex: 1,
-    maxWidth: MaxContentWidth,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.five,
-    gap: Spacing.four,
-  },
-  header: {
-    gap: Spacing.two,
-    paddingTop: Spacing.two,
-  },
-  brandBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-    borderRadius: Spacing.one,
-    borderWidth: 1,
-  },
-  brandBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-  },
-  subtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  statusCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
-  },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#15803D',
-  },
-  statusContent: {
-    flex: 1,
-  },
-  statusTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  statusDesc: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  sectionHeader: {
-    marginBottom: Spacing.two,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
+  safe: { flex: 1 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
+  title: { fontSize: 17, fontWeight: '700', textAlign: 'center' },
+  hint: { fontSize: 13, textAlign: 'center', opacity: 0.7 },
+  retryButton: { paddingHorizontal: 20, paddingVertical: 12, borderRadius: 10, backgroundColor: '#2563EB' },
+  retryText: { color: '#ffffff', fontSize: 15, fontWeight: '600' },
 });

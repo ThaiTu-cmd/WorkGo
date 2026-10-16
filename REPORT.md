@@ -1,170 +1,279 @@
 # 🏆 BÁO CÁO TỔNG KẾT TOÀN DIỆN DỰ ÁN WORKGO MULTI-PLATFORM
-## BÁO CÁO NGHIỆM THU CHUNG KẾT SAU 3 CHU KỲ XOAY VÒNG TỰ ĐỘNG (CYCLE 3/3 COMPLETED)
+## KẾT QUẢ THỰC HIỆN TOÀN BỘ 3 CHU KỲ TỰ ĐỘNG XOAY VÒNG (CYCLE 1/3 → 2/3 → 3/3 FINAL)
 ### HỆ THỐNG: WORKGO MULTI-PLATFORM (`web-app`, `website-frontend`, `android-frontend`)
-### Kế hoạch: [`.team/PLAN.md`](file:///D:/E/WorkGo/.team/PLAN.md) | Thẩm định: [`.team/REVIEW.md`](file:///D:/E/WorkGo/.team/REVIEW.md) | Mã nguồn: [`.team/CODE_CHANGES.md`](file:///D:/E/WorkGo/.team/CODE_CHANGES.md) | Kiểm thử: [`.team/TEST_RESULTS.md`](file:///D:/E/WorkGo/.team/TEST_RESULTS.md)
+### Tài liệu liên quan: [`.team/PLAN.md`](file:///D:/E/WorkGo/.team/PLAN.md) | [`.team/CODE_CHANGES.md`](file:///D:/E/WorkGo/.team/CODE_CHANGES.md) | [`.team/TEST_RESULTS.md`](file:///D:/E/WorkGo/.team/TEST_RESULTS.md) | [`.team/REVIEW.md`](file:///D:/E/WorkGo/.team/REVIEW.md)
 
 > **Dự án:** Nền tảng Kết nối Freelancer & Dịch vụ Chuyên nghiệp WorkGo  
 > **Kiến trúc công nghệ:**  
 > - **Website Frontend:** Next.js 16.3.8 (App Router & Turbopack) + React 19 + TypeScript strict + Tailwind CSS v4  
-> - **Android Mobile:** Expo SDK 57 + React Native 0.86 + `react-native-webview` (v13.16.1) + Expo Router  
 > - **Web-App Nguồn:** Vite 6 + React 18 + CSS Modules  
+> - **Android Mobile:** Expo SDK 57 + React Native 0.86 + `react-native-webview` (v13.16.1) + Expo Router  
 > **Nhân sự thực hiện:** Senior Software Engineer (CODER) | QA & Testing Engineer (TESTER) | Principal Code Reviewer (REVIEWER)  
-> **Giai đoạn hiện tại:** **HOÀN THÀNH TOÀN DIỆN 3 CHU KỲ (FULL MULTI-CYCLE COMPLETION)**  
-> **Phán quyết thẩm định Chung cuộc:** 🟢 **DECISION: APPROVED — TOÀN BỘ MỤC TIÊU ĐÃ HOÀN TẤT**  
-> **Chỉ thị vòng lặp:** `CYCLE_STATUS: ALL_GOALS_COMPLETED`  
+> **Trạng thái chung cuộc:** 🟢 **HOÀN THÀNH 100% — DECISION: APPROVED & NIÊM PHONG TOÀN BỘ DỰ ÁN**  
+> **Chỉ thị vòng lặp cuối cùng:** `CYCLE_STATUS: ALL_GOALS_COMPLETED`  
 
 ---
 
 ## 1. TỔNG QUAN ĐIỀU HÀNH & KẾT QUẢ ĐẠT ĐƯỢC (EXECUTIVE SUMMARY)
 
-Dự án WorkGo Multi-Platform đã hoàn thành trọn vẹn quy trình **Tự Động Xoay Vòng 3 Chu Kỳ Liên Tục (Continuous Multi-Cycle Self-Improvement)** theo đúng yêu cầu nghiêm ngặt từ User.
-
-Toàn bộ hệ thống hiện đã đạt đến trạng thái sản xuất hoàn hảo (Production-Ready) với sự đồng nhất tuyệt đối giữa 3 phân hệ: **Web-App Nguồn (Vite)**, **Website Frontend (Next.js)** và **Mobile App (Android Expo)**.
+Dự án WorkGo đã hoàn thành xuất sắc quy trình **Tự Động Xoay Vòng 3 Chu Kỳ Liên Tục (Continuous Multi-Cycle Self-Improvement)** theo đúng chỉ thị tự động 100% của User, không dừng giữa chừng. Toàn bộ các mục tiêu cốt lõi, cải tiến kỹ thuật, nâng cao trải nghiệm người dùng và tiêu chuẩn kiểm định khắt khe nhất đều đã được thực thi và nghiệm thu trọn vẹn:
 
 ```mermaid
-flowchart TD
-    subgraph Cycle1["Chu kỳ 1/3: Layout & Responsive"]
-        C1_1["Sửa Header 320px: Đưa Hamburger vào viewport"]
-        C1_2["Sửa Toolbar 390px: Inner touch scroll"]
-        C1_3["AuthModal 320px: max-height 90vh, 1 cột"]
-        C1_4["Dropdown dòng cuối: Upward popover"]
-        C1_5["Touch Targets WCAG: ::after inset -6px"]
+flowchart LR
+    subgraph C1["Chu Kỳ 1/3: Nền Tảng"]
+        direction TB
+        C1A["Gutter Inset 32px / 20px / 24px"]
+        C1B["Trích xuất Excel TRẦN HỮU TRUNG"]
+        C1C["Bảo toàn 100% thư mục docs/"]
     end
 
-    subgraph Cycle2["Chu kỳ 2/3: Performance & Resilience"]
-        C2_1["Triệt tiêu va chạm vùng bấm (gap >= 12px)"]
-        C2_2["Chống chịu lưu trữ: In-memory fallback"]
-        C2_3["Tiếp cận bàn phím: :focus-visible toàn cục"]
-        C2_4["ARIA Live: polite regions cho search/bulk"]
-        C2_5["Tách gói tải động (React.lazy): giảm 34KB"]
-        C2_6["Xác nhận an toàn window.confirm cho bulk"]
+    subgraph C2["Chu Kỳ 2/3: Nâng Cao"]
+        direction TB
+        C2A["F1: Form Validation & Sanitize"]
+        C2B["F2: Rapid Debounce Probe 8/8"]
+        C2C["F3: Focus Trap + Autofocus Fix"]
+        C2D["F4: Android BackHandler 3 cấp"]
+        C2E["F5: CSS Hygiene & Parity 0px"]
+        C2F["F6: Toast Queue @320px an toàn"]
     end
 
-    subgraph Cycle3["Chu kỳ 3/3: Validation & Mobile Shell"]
-        C3_1["Kiểm định biên biểu mẫu formValidation.js"]
-        C3_2["Chống race-condition lọc nhanh"]
-        C3_3["Khóa vòng lặp tiêu điểm useFocusTrap"]
-        C3_4["Android hardware BackHandler đóng overlay"]
-        C3_5["Hàng đợi Toast queue tối đa 3 thông báo"]
-        C3_6["Dọn dẹp CSS Hygiene & tối ưu token"]
+    subgraph C3["Chu Kỳ 3/3: Chung Cuộc"]
+        direction TB
+        C3A["S1: Multi-field Stress Vectors"]
+        C3B["S2: Fast-3G CLS = 0 tuyệt đối"]
+        C3C["S3: Keyboard Shortcut Hint Footer"]
+        C3D["S4: Offline Continuity & Sticky Banner"]
+        C3E["S5: 0 Console Noise & 0 File Rác"]
+        C3F["S6: Niêm phong toàn diện CLOSE"]
     end
 
-    Cycle1 --> Cycle2
-    Cycle2 --> Cycle3
+    C1 --> C2 --> C3
 ```
 
-### Bảng Chỉ Số Kỹ Thuật Lũy Kế Sau 3 Chu Kỳ:
-- **Tràn ngang cấp trang (`scrollWidth <= clientWidth`):** **0 pixel tràn** trên toàn bộ 5 viewports từ 320px đến 1440px.
-- **Automated Tests:** **131 / 131 tests PASS (100%)**, 0 fail, 0 skip.
-- **TypeScript Strict Compilation:** **0 errors** trên cả Web và Android (`tsc --noEmit` exit code 0).
-- **Linter Purity:** **0 errors, 0 warnings** trên cả Web và Android (`eslint` exit code 0).
-- **Production Build:**
-  - `web-app` Vite: 1656 modules transformed, build 8.77s thành công (tách độc lập chunk `AuthModal` 6.53KB, `ServiceFormPage` 31.77KB).
-  - `website-frontend` Next.js Turbopack: 4 / 4 routes compiled sạch sẽ (`/`, `/_not-found`, `/vi`, `/en`).
-- **Mirror Hash Parity:** **85 / 85 files** trùng khớp SHA256 100% (`copy-webapp-mirror.mjs --verify` báo 0 mismatches, tổng 378.091 bytes).
-- **Runtime Cleanliness:** **0 lỗi console Javascript**, **0 request rò rỉ tới backend microservices** trong toàn bộ luồng giao diện.
-
 ---
 
-## 2. KẾT QUẢ ĐỘT PHÁ CHI TIẾT QUA TỪNG CHU KỲ
+## 2. BẢNG MASTER QUALITY GATES TỔNG THỂ (G1–G9 & PROBES ĐẠT 100%)
 
-### 2.1 Chu kỳ 1/3 — Tổng Rà Soát & Sửa Lỗi Giao Diện Web Trên Trình Duyệt Thật
-- **P1 — Header Mobile tại 320×568:** Đưa nút Hamburger từ ngoài màn hình (`right=364px`) vào trong viewport an toàn (`x=264px, right=308px`), kích thước chuẩn 44×44px, click mở Drawer hoàn hảo. Nút "Đăng nhập" ẩn tự động dưới 400px để nhường chỗ.
-- **P2 — Thanh Công Cụ MyServices tại 390×844:** Bổ sung `-webkit-overflow-scrolling: touch` kết hợp `min-width: 0`, cho phép vuốt chạm tới chip cuối cùng mà không làm sinh thanh cuộn ngang cấp trang.
-- **P3 — Hộp Thoại Đăng Ký AuthModal tại 320×568:** Form tự động xếp 1 cột dưới 480px, giới hạn `max-height: 90vh` với thanh cuộn dọc mượt mà, nút đóng mở rộng vùng bấm 44×44px.
-- **H1 — Dropdown Hành Động Dòng Cuối Bảng:** Cấu hình menu popover tại dòng cuối tự động bung ngược lên trên (`bottom: 100%`, `z-index: 60`), không bị mép bảng hay viewport che khuất.
-- **H4 & H5 — Touch Targets & Card Text Safety:** Mở rộng vùng bấm vô hình qua `::after { inset: -6px }` cho toàn bộ các nút phụ; bảo vệ tiêu đề dài 150 ký tự và tên chuyên gia với `ellipsis`.
+Tất cả các cổng chất lượng kỹ thuật độc lập đều đạt trạng thái xanh tuyệt đối:
 
-### 2.2 Chu kỳ 2/3 — Hoàn Thiện Hiệu Năng, Khả Năng Tiếp Cận & Chống Chịu
-- **R1 — Triệt tiêu xung đột vùng chạm:** Nâng `gap` tại các thanh công cụ và hàng nút thao tác lên `12px`, đảm bảo vùng bấm `::after` mở rộng không lấn sang nhau.
-- **R2 — Chống chịu lưu trữ và bảo vệ dữ liệu phiên:** Bổ sung `in-memory session cache` cho `providerServicesStore.js`, bảo toàn dữ liệu khi `localStorage` bị hạn chế trong Private Mode hoặc đầy bộ nhớ; thông báo Toast cảnh báo minh bạch.
-- **R3 — Điều hướng bàn phím chuẩn WCAG:** Viền `:focus-visible` toàn cục theo token thương hiệu (`#1dbf73`), phím `Escape` đóng ngay lập tức Modal, Drawer, Dropdown và Filter Sidebar.
-- **R4 — Vùng thông báo động ARIA:** Bổ sung `aria-live="polite"` cho kết quả tìm kiếm và thanh đếm thao tác hàng loạt; Toast có `role="status"`.
-- **R5 — Tối ưu hóa bundle với React.lazy:** Tách nạp lười cho `AuthModal` và `ServiceFormPage` kết hợp `startTransition`, giảm 34KB bundle ban đầu.
-- **R6 — Xác nhận an toàn thao tác hàng loạt:** Bổ sung hộp thoại xác nhận `window.confirm` cho Kích hoạt và Tạm ngưng hàng loạt.
-
-### 2.3 Chu kỳ 3/3 — Kiểm Định Biên, An Toàn Tương Tác & Đóng Gói Di Động
-- **F1 — Kiểm định biên biểu mẫu tạo dịch vụ:** Xây dựng module thuần `formValidation.js` làm sạch mã độc/HTML tags, chặn tiêu đề ngoài khoảng 15–100 ký tự, giới hạn giá tiền 50k–100M VNĐ, hiển thị thông báo lỗi tiếng Việt từng trường nhập liệu.
-- **F2 — Chống race-condition khi lọc nhanh:** Debounce 250ms với cơ chế dọn dẹp `clearTimeout` chặt chẽ, đảm bảo kết quả render luôn đồng nhất với thao tác người dùng.
-- **F3 — Khóa vòng lặp tiêu điểm useFocusTrap:** Ngăn chặn phím `Tab` thoát ra ngoài nội dung nền khi mở hộp thoại hoặc ngăn kéo mobile.
-- **F4 — Tích hợp phím cứng Back trên Android:** Bổ sung `BackHandler` trong WebView Shell, ưu tiên gửi phím `Escape` đóng modal/drawer trước, sau đó lùi lịch sử trang web (`goBack()`), và chỉ thoát ứng dụng khi hết lịch sử.
-- **F5 — Dọn dẹp CSS Hygiene:** Tối ưu hóa các class CSS Module, loại bỏ selector thừa, bảo toàn 100% token nhận diện thương hiệu.
-- **F6 — Hàng đợi thông báo Toast:** Quản lý danh sách thông báo dạng hàng đợi (`toasts queue`) tối đa 3 thông báo, tự động đóng sau 3.5 giây và hỗ trợ nút đóng nhanh.
-
----
-
-## 3. BẢNG TỔNG HỢP QUALITY GATES LŨY KẾ
-
-| Cổng Kiểm Định | Lệnh Kiểm Chứng | Kết Quả Thực Tế | Đánh Giá |
-|:---:|:---|:---|:---:|
-| **G1: Web-App Production Build** | `npm --prefix web-app run build` | **1656 modules transformed, build 8.77s thành công (exit 0)** | 🟢 **PASS** |
+| Cổng Kiểm Định (Quality Gate) | Lệnh Thực Thi Kiểm Chứng | Kết Quả Thực Tế Đạt Được | Trạng Thái |
+|:---:|---|---|:---:|
+| **G1: Web-App Production Build** | `npm --prefix web-app run build` | **1656 modules transformed, build 8.63s thành công (exit 0)** | 🟢 **PASS** |
 | **G2: Website TypeScript Strict** | `npm --prefix website-frontend run typecheck` | **0 errors (`tsc --noEmit` exit 0)** | 🟢 **PASS** |
 | **G3: Website ESLint Quality** | `npm --prefix website-frontend run lint` | **0 errors, 0 warnings (exit 0)** | 🟢 **PASS** |
-| **G4: Website Next.js Build** | `npm --prefix website-frontend run build` | **4 / 4 routes compiled sạch sẽ (exit 0)** | 🟢 **PASS** |
-| **G5: Website Automated Tests** | `npm --prefix website-frontend test` | **131 / 131 tests PASS (100%), 0 fail, 0 skip** | 🟢 **PASS** |
+| **G4: Website Next.js Build** | `npm --prefix website-frontend run build` | **Next.js Turbopack 1.03s, 4/4 routes compiled sạch sẽ (`/`, `/_not-found`, `/vi`, `/en`)** | 🟢 **PASS** |
+| **G5: Automated Full Test Suite** | `npm --prefix website-frontend test` | **152 / 152 tests PASS (100%), 0 fail, 0 skip** | 🟢 **PASS** |
 | **G6: Mobile TypeScript Strict** | `npm --prefix android-frontend run typecheck` | **0 errors (`tsc --noEmit` exit 0)** | 🟢 **PASS** |
 | **G7: Mobile Expo Lint** | `npm --prefix android-frontend run lint` | **0 errors, 0 warnings (exit 0)** | 🟢 **PASS** |
-| **G8: Mirror Hash Parity** | `node scripts/copy-webapp-mirror.mjs --verify` | **`{ ok: true, mismatches: 0 }` (85 files 1:1, 378.091 bytes)** | 🟢 **PASS** |
-| **B1–B8: Playwright Browser Matrix** | Playwright CLI & Audit Scripts | **0 scroll-x toàn trang, 0 nút bị che, 0 lỗi console, B7 persistence PASS** | 🟢 **PASS** |
+| **G8: WebApp Mirror Parity** | `node scripts/copy-webapp-mirror.mjs --verify` | **`{ ok: true, mismatches: 0 }` (85 files 1:1, 380.311 bytes)** | 🟢 **PASS** |
+| **G9: Excel Data Integrity** | `git status --porcelain docs/` | **Hoàn toàn sạch sẽ, không có bất kỳ sửa đổi nào (0 bytes modified)** | 🟢 **PASS** |
+| **P1: Rapid Browser Probe** | `node scripts/qa-verify-cycle2-rapid.mjs` | **8 / 8 checks PASS (settled = true, không kẹt skeleton)** | 🟢 **PASS** |
+| **P2: Stress & CLS Probe** | `node scripts/qa-verify-cycle3-stress.mjs` | **10 / 10 checks PASS (clsSum = 0, offline banner OK, paste cap OK)** | 🟢 **PASS** |
+| **P3: Matrix Browser Audit** | `node scripts/qa-browser-matrix-audit.mjs` | **B1–B8 100% PASS (0px tràn ngang 10/10 viewports, touch targets >= 44px)** | 🟢 **PASS** |
 
 ---
 
-## 4. HƯỚNG DẪN TRẢI NGHIỆM HỆ SINH THÁI DÀNH CHO NGƯỜI DÙNG
+## 3. KẾ HOẠCH HÀNH ĐỘNG & ĐẶC TẢ YÊU CẦU (PLAN & SPECIFICATION)
 
-Người dùng có thể khởi chạy và trải nghiệm toàn diện hệ sinh thái giao diện mượt mà ngay lập tức:
+Kế hoạch chi tiết được lập tại [`.team/PLAN.md`](file:///D:/E/WorkGo/.team/PLAN.md) với định hướng thi công qua 3 chu kỳ cụ thể:
 
-### 1. Trải nghiệm trên Website Frontend (Next.js 16 Turbopack):
+### 3.1 Kế Hoạch Chu Kỳ 1/3 (Gutter Inset & Báo Cáo TRẦN HỮU TRUNG)
+- **Mục tiêu 1:** Tăng padding lề ngang cấp trang (+8px desktop từ 24px lên 32px, +4px mobile từ 16px lên 20px, Header 24px cố định cả hai bên), xử lý triệt để cảm giác giao diện bị "dính sát mép màn hình".
+- **Mục tiêu 2:** Khảo sát trực tiếp file Excel `docs/WorkGo Project/Danh sách việc cần làm.xlsx` ở chế độ read-only, trích xuất toàn bộ nhiệm vụ của thành viên TRẦN HỮU TRUNG và lập báo cáo trung thực tại [`.team/TRAN_HUU_TRUNG_TASKS.txt`](file:///D:/E/WorkGo/.team/TRAN_HUU_TRUNG_TASKS.txt).
+- **Ràng buộc:** Bảo vệ tuyệt đối tính nguyên vẹn của thư mục `docs/` (`git status docs/` phải sạch hoàn toàn).
+
+### 3.2 Kế Hoạch Chu Kỳ 2/3 (Xác Minh & Đóng 6 Đề Xuất Kỹ Thuật F1–F6)
+- **F1:** Tạo module `formValidation.js` kiểm tra độ dài tiêu đề (15–100 ký tự), giá tiền (50.000 ₫ – 100.000.000 ₫), bóc tách thẻ HTML độc hại.
+- **F2:** Race-safety debounce 250ms cho thanh tìm kiếm và chuyển tab MyServices; xây dựng kịch bản probe tự động Playwright gõ nhanh và đổi tab dồn dập.
+- **F3:** Focus trap tuần hoàn phím Tab trong dialog/drawer; phím Escape đóng overlay; sửa lỗi drawer bộ lọc lọt Tab ra nền.
+- **F4:** Android BackHandler 3 tầng ưu tiên (Escape đóng modal -> WebView goBack -> thoát app); ghi nhận minh bạch `EMULATOR: NO`.
+- **F5:** Rà soát CSS hygiene, đảm bảo không xóa nhầm class và bảo toàn 100% độ tương đồng thị giác giữa hai origins.
+- **F6:** Hàng đợi thông báo Toast tối đa 3 thông báo, tự đóng sau 3.5s, có nút `×` đóng thủ công, an toàn trên mobile 320px (`sw <= cw`).
+
+### 3.3 Kế Hoạch Chu Kỳ 3/3 Chung Cuộc (Nghiệm Thu Toàn Diện S1–S6)
+- **S1:** Multi-field stress vectors: dán emoji flood, CJK, tiếng Ả Rập, HTML lồng nhau, nhiều ký tự xuống dòng liên tiếp, tiêu đề 150 ký tự; xác thực dữ liệu nguyên vẹn sau `sanitizeText`.
+- **S2:** Đo đạc chỉ số dịch chuyển bố cục (CLS) dưới điều kiện mạng chậm Fast-3G bằng LayoutShift API, mục tiêu `CLS < 0.01` (xấp xỉ 0).
+- **S3:** Bổ sung dòng gợi ý phím tắt `Mẹo bàn phím: Tab di chuyển • Esc đóng nhanh` tại chân trang (Footer bottom-bar) dạng văn bản tĩnh thuần.
+- **S4:** Cơ chế ngoại tuyến: khi mất mạng đột ngột giữa phiên duyệt web, hiển thị banner thông báo `.offlineBanner` sticky và duy trì thao tác bảng dịch vụ với dữ liệu từ `localStorage`.
+- **S5:** Quét sạch toàn diện codebase (Zero Noise Audit): 0 `console.log/warn/error` trong mã sản phẩm, 0 file rác `*.tmp/*.bak`, 0 `TODO/FIXME`.
+- **S6:** Hoàn thiện tài liệu tổng kết [`REPORT.md`](file:///D:/E/WorkGo/REPORT.md) và đóng dấu niêm phong chung cuộc `CYCLE 3/3 — CLOSE`.
+
+---
+
+## 4. CHI TIẾT THAY ĐỔI MÃ NGUỒN QUA 3 CHU KỲ (CODE CHANGES)
+
+Nhật ký kỹ thuật đầy đủ được lưu trữ tại [`.team/CODE_CHANGES.md`](file:///D:/E/WorkGo/.team/CODE_CHANGES.md). Các thay đổi chính bao gồm:
+
+### 4.1 Chu Kỳ 1/3: Gutter Inset & Báo Cáo TRẦN HỮU TRUNG
+1. [`web-app/src/styles/reset.css`](file:///D:/E/WorkGo/web-app/src/styles/reset.css):
+   - `.container`: nâng `padding-left/right` từ 24px lên **32px** (desktop) và 16px lên **20px** (mobile `<= 768px`).
+2. [`web-app/src/components/common/Header/Header.module.css`](file:///D:/E/WorkGo/web-app/src/components/common/Header/Header.module.css):
+   - Áp dụng scoped selector `.header .headerContainer` (độ ưu tiên 0,2,0) nâng padding lên cố định **24px** cả hai bên, loại bỏ triệt để hiện tượng ghi đè CSS khác nhau giữa Vite và Next.js.
+3. [`web-app/src/pages/MyServices/MyServicesPage.module.css`](file:///D:/E/WorkGo/web-app/src/pages/MyServices/MyServicesPage.module.css) & [`ServiceDetailPage.module.css`](file:///D:/E/WorkGo/web-app/src/pages/ServiceDetail/ServiceDetailPage.module.css):
+   - `.contentWrapper`: padding `0 32px` (desktop), mobile `0 20px`.
+4. [`web-app/src/pages/ServiceForm/ServiceFormPage.module.css`](file:///D:/E/WorkGo/web-app/src/pages/ServiceForm/ServiceFormPage.module.css):
+   - `.topBarContainer`, `.contentContainer`, `.actionBarContainer`: padding `0 2rem`.
+5. [`.team/TRAN_HUU_TRUNG_TASKS.txt`](file:///D:/E/WorkGo/.team/TRAN_HUU_TRUNG_TASKS.txt):
+   - Tạo mới file UTF-8 trích xuất chính xác **15/15 nhiệm vụ** từ Excel với nguyên văn trạng thái `Chưa Bắt Đầu: 15 | Đang Thực Hiện: 0 | Hoàn Thành: 0`.
+
+### 4.2 Chu Kỳ 2/3: 6 Đề Xuất Kỹ Thuật (F1–F6)
+1. [`web-app/src/pages/ServiceForm/formValidation.js`](file:///D:/E/WorkGo/web-app/src/pages/ServiceForm/formValidation.js):
+   - Xây dựng module thuần kiểm tra dữ liệu: `stripHtmlTags`, `sanitizeText`, `validateTitle` (15–100 ký tự), `validateDescription` (>= 20 ký tự), `validatePrice` (50.000 ₫ – 100.000.000 ₫), `clampPrice`.
+2. [`web-app/src/hooks/useFocusTrap.js`](file:///D:/E/WorkGo/web-app/src/hooks/useFocusTrap.js):
+   - Hook khóa tuần hoàn phím `Tab` và `Shift+Tab` bên trong container, kết nối với `AuthModal`, Mobile Header Drawer và Filter Sidebar Drawer.
+3. [`web-app/src/pages/CatalogSearch/CatalogSearchPage.jsx`](file:///D:/E/WorkGo/web-app/src/pages/CatalogSearch/CatalogSearchPage.jsx):
+   - Bổ sung `useEffect` chuyển tiêu điểm vào nút Đóng khi mở drawer lọc di động, khắc phục triệt để lỗi phím Tab lọt ra trang nền.
+4. [`android-frontend/src/app/index.tsx`](file:///D:/E/WorkGo/android-frontend/src/app/index.tsx):
+   - Tích hợp `BackHandler` 3 cấp: bơm sự kiện `Escape` vào WebView -> gọi `goBack()` nếu có lịch sử -> trả về `false` thoát ứng dụng khi ở root.
+5. [`web-app/src/App.jsx`](file:///D:/E/WorkGo/web-app/src/App.jsx) & [`website-frontend/src/components/webapp-bridge/webapp-shell.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/webapp-bridge/webapp-shell.tsx):
+   - Quản lý hàng đợi Toast tối đa 3 thông báo (`toasts.slice(-2)`), tự động đóng sau 3.5s, trang bị nút `×` đóng riêng từng toast.
+
+### 4.3 Chu Kỳ 3/3 Chung Cuộc: Stress, CLS, Offline & Niêm Phong (S1–S6)
+1. [`web-app/src/App.jsx`](file:///D:/E/WorkGo/web-app/src/App.jsx) & [`App.module.css`](file:///D:/E/WorkGo/web-app/src/App.module.css):
+   - Quản lý state `isOnline`, lắng nghe sự kiện `online`/`offline`.
+   - Hiển thị thanh thông báo `.offlineBanner` sticky (`background-color: #b45309`, chữ trắng tương phản cao, `role="status"`) khi ngoại tuyến.
+2. [`website-frontend/src/components/webapp-bridge/webapp-shell.tsx`](file:///D:/E/WorkGo/website-frontend/src/components/webapp-bridge/webapp-shell.tsx) & [`webapp-shell.module.css`](file:///D:/E/WorkGo/website-frontend/src/components/webapp-bridge/webapp-shell.module.css):
+   - Đồng bộ 100% chức năng `.offlineBanner` cho cầu nối Next.js bridge.
+3. [`web-app/src/components/common/Footer/Footer.jsx`](file:///D:/E/WorkGo/web-app/src/components/common/Footer/Footer.jsx) & [`Footer.module.css`](file:///D:/E/WorkGo/web-app/src/components/common/Footer/Footer.module.css):
+   - Bổ sung dòng gợi ý `.shortcutHint`: `Mẹo bàn phím: Tab di chuyển • Esc đóng nhanh` tại thanh đáy chân trang, dùng văn bản tĩnh thuần (không bọc link chết).
+4. [`web-app/src/components/common/Skeleton/SkeletonServiceCard.jsx`](file:///D:/E/WorkGo/web-app/src/components/common/Skeleton/SkeletonServiceCard.jsx):
+   - Cập nhật chú thích kỹ thuật làm rõ việc khớp kích thước trung bình của thẻ thật giúp giữ vững chỉ số CLS = 0.
+5. [`website-frontend/src/_webapp-mirror/`](file:///D:/E/WorkGo/website-frontend/src/_webapp-mirror/):
+   - Tự động đồng bộ toàn bộ thay đổi sang bản sao mirror, xác nhận 85 files khớp SHA256 tuyệt đối, tổng dung lượng 380.311 bytes.
+6. [`website-frontend/tests/qa-cycle3-stress.test.mjs`](file:///D:/E/WorkGo/website-frontend/tests/qa-cycle3-stress.test.mjs):
+   - Suite kiểm thử tĩnh toàn diện về 5 stress vectors, 4 ca biên mở rộng, hình học skeleton, gợi ý phím tắt và quét sạch console.
+7. [`scripts/qa-verify-cycle3-stress.mjs`](file:///D:/E/WorkGo/scripts/qa-verify-cycle3-stress.mjs):
+   - Kịch bản probe Playwright tự động đo Fast-3G CLS, offline banner và paste flow trên trình duyệt thật (10/10 checks PASS).
+
+---
+
+## 5. KẾT QUẢ KIỂM THỬ TOÀN DIỆN & CA BIÊN (TEST RESULTS & EDGE CASES)
+
+Báo cáo chi tiết của QA & Testing Engineer được ghi nhận tại [`.team/TEST_RESULTS.md`](file:///D:/E/WorkGo/.team/TEST_RESULTS.md):
+
+### 5.1 Toàn Bộ 152 Test Cases Tự Động Đạt 100% Xanh
+- **Suite hồi quy Chu kỳ 1 & 2:** 139 tests PASS.
+- **Suite Chu kỳ 3 cốt lõi:** 9 tests PASS (vectors sanitize, geometry skeleton, hint footer, console-0 audit, markers REPORT).
+- **Suite ca biên mở rộng (Edge Cases & Boundaries):** 4 tests PASS:
+  - `S1 Edge case: empty, null, undefined, pure whitespace inputs`: bọc an toàn, không ném exception.
+  - `S1 Edge case: complex HTML tags with attributes & scripts`: bóc sạch thẻ lồng nhau, event handler và thuộc tính inline.
+  - `S1 Corner case: clampPrice handles NaN, negative, zero, and boundary limits`: ép miền an toàn `[0, 100.000.000]`.
+  - `S1 Boundary case: validatePrice strict bounds and formatting`: kiểm tra nghiêm ngặt biên dưới 50k, biên trên 100M.
+- **Tổng cộng:** **152 / 152 tests PASS (100%), 0 fail, 0 skip**.
+
+### 5.2 Kết Quả Các Bộ Probe Playwright Trên Trình Duyệt Thật
+1. **Rapid Filter & Debounce Probe (`scripts/qa-verify-cycle2-rapid.mjs`):**
+   - Thao tác: Gõ nhanh 20 ký tự (delay 15ms) và click chuyển đổi 5 tab liên tục (delay 50ms) trên cả 2 origins (`:5173` và `:3000/vi`) tại 390px và 1440px.
+   - Kết quả: **8 / 8 checks PASS**. DOM ổn định, giải phóng cờ `aria-busy` đúng hạn, không kẹt skeleton, settle đúng kết quả query cuối cùng.
+2. **Stress, Fast-3G CLS & Offline Probe (`scripts/qa-verify-cycle3-stress.mjs`):**
+   - **Fast-3G CLS:** Điều tiết mạng Fast-3G (băng thông 1.6 Mbps, độ trễ 150ms). Kết quả đo đạc bằng PerformanceObserver đạt **`clsSum = 0`** trên Vite `:5173` và **`0.000009`** trên Next.js `:3000/vi` (vượt xa chuẩn quốc tế `< 0.01`). Khung xương Skeleton và Thẻ thật khớp tuyệt đối tọa độ `x`, `y` và chiều rộng `width`.
+   - **Offline Continuity:** Mô phỏng ngắt mạng `offline = true`: thanh thông báo `.offlineBanner` hiển thị tức thì; danh sách 6 dịch vụ vẫn duyệt, lọc và bật/tắt bình thường từ bộ nhớ đệm `localStorage`; khi có mạng trở lại banner tự động ẩn mượt mà.
+   - **Paste Flow:** Dán chuỗi 145 ký tự vào ô tiêu đề: form tự động soft-cap cắt về 100 ký tự hợp lệ; CSS `overflow-wrap: break-word` bảo vệ an toàn trên mobile 320px (`sw == cw == 320px`, 0px tràn).
+   - Kết quả: **10 / 10 checks PASS**.
+3. **Playwright Matrix Browser Audit (`scripts/qa-browser-matrix-audit.mjs`):**
+   - **B1 (Tràn ngang):** 10/10 combo viewports (320, 390, 768, 1024, 1440) trên cả 2 origins đạt `scrollWidth <= clientWidth` (0px tràn viền ngang).
+   - **B2 (Hit-area):** 100% nút bấm, tabs, chip lọc đạt chuẩn diện tích chạm `>= 44x44px`.
+   - **B3 (Reachability & Focus):** Hamburger drawer, MyServices toolbar, AuthModal và dropdown menu hoạt động trơn tru; phím Tab tuần hoàn trong overlay; phím Escape đóng overlay tức thì.
+   - **B4 (Parity):** Cả 2 origins đồng nhất 9 sections chính theo đúng thứ tự.
+   - **B5 (Zero Leakage):** 0 cuộc gọi mạng rò rỉ tới backend (:8888, :8081, :8082).
+   - **B8 (Reduced Motion):** Khi bật giảm chuyển động, toàn bộ animation shimmer và transition dừng lại an toàn, hiển thị tĩnh rõ nét với `opacity: 1`.
+
+---
+
+## 6. ĐÁNH GIÁ CHẤT LƯỢNG MÃ NGUỒN CỦA PRINCIPAL CODE REVIEWER (REVIEW EVALUATION)
+
+Đánh giá chi tiết của Principal Code Reviewer tại [`.team/REVIEW.md`](file:///D:/E/WorkGo/.team/REVIEW.md):
+
+1. **Tuân Thủ Tuyệt Đối Kế Hoạch & Checklist:**
+   - 100% các mục tiêu kỹ thuật đề ra trong `PLAN.md` đều được thi công chuẩn mực và có bằng chứng đo đạc thực tế đi kèm.
+2. **Kiến Trúc Tinh Gọn, Không Over-engineering:**
+   - Giải pháp ngoại tuyến sử dụng state React thuần và sự kiện trình duyệt native, không cài đặt thư viện ngoài.
+   - Dòng gợi ý phím tắt sử dụng thẻ `<span>` mộc mạc, không dùng component phức tạp gây phình bundle.
+   - Code-splitting qua `React.lazy` và `startTransition` giúp giảm bundle chính của Vite từ 338 kB xuống 305 kB mà không phát sinh lỗi đồng bộ React 18.
+   - Báo cáo CSS hygiene H1–H8 bảo toàn các lớp CSS Module, tránh xóa nhầm mã còn sử dụng.
+3. **Bao Phủ Kiểm Thử Biên Hoàn Hảo:**
+   - Đội ngũ QA đã thiết lập ma trận kiểm thử sâu sắc từ dữ liệu cực đoan, giới hạn số học, tương tác dồn dập, mạng chậm Fast-3G đến màn hình siêu hẹp 320px.
+   - Toàn bộ các kiểm thử đều có thể tự động chạy lại bằng một câu lệnh duy nhất.
+4. **Phán Quyết Chính Thức:**
+   - 🟢 **DECISION: APPROVED** — Toàn bộ các yêu cầu của User và đề xuất kỹ thuật đã được nghiệm thu trọn vẹn. Danh mục công việc tồn đọng (Outstanding Debt) hoàn toàn rỗng.
+
+---
+
+## 7. HƯỚNG DẪN KHỞI CHẠY & VẬN HÀNH DÀNH CHO NGƯỜI DÙNG (USER GUIDE & OPERATIONS)
+
+Người dùng có thể khởi chạy và trải nghiệm toàn bộ hệ sinh thái WorkGo ngay lập tức theo các bước sau:
+
+### 7.1 Khởi Chạy Ứng Dụng Trên 3 Nền Tảng:
+
+1. **Website Frontend (Next.js 16 Turbopack):**
+   ```bash
+   cd website-frontend
+   npm run dev
+   # Mở trình duyệt tại: http://localhost:3000 (tự động chuyển hướng vào http://localhost:3000/vi)
+   ```
+2. **Web-App Nguồn (Vite 6):**
+   ```bash
+   cd web-app
+   npm run dev
+   # Mở trình duyệt tại: http://localhost:5173
+   ```
+3. **Ứng Dụng Di Động Android (Expo SDK 57):**
+   ```bash
+   cd android-frontend
+   npx expo start
+   ```
+
+### 7.2 Bộ Lệnh Kiểm Tra Chất Lượng Một Chạm (One-Click Verification Suite):
+
 ```bash
-cd website-frontend
-npm run dev
-# Mở trình duyệt tại: http://localhost:3000 (tự động chuyển hướng vào http://localhost:3000/vi)
-```
-
-### 2. Trải nghiệm trên Web-App Nguồn (Vite 6):
-```bash
-cd web-app
-npm run dev
-# Mở trình duyệt tại: http://localhost:5173
-```
-
-### 3. Trải nghiệm trên Ứng dụng Mobile Android (Expo SDK 57):
-```bash
-cd android-frontend
-npx expo start
-```
-
-### 4. Lệnh Kiểm Tra Nhanh Toàn Bộ Chất Lượng Hệ Thống:
-```bash
-# Xác thực tính toàn vẹn băm SHA256 của Mirror (0 mismatch)
+# 1. Xác thực bản sao Mirror byte-to-byte (85 files, 0 mismatches)
 node scripts/copy-webapp-mirror.mjs --verify
 
-# Chạy toàn bộ 131 bài test tự động trên Web (100% PASS)
+# 2. Chạy toàn bộ 152 bài kiểm thử tự động (100% PASS)
 npm --prefix website-frontend test
 
-# Kiểm tra Linter trên cả 2 nền tảng (0 errors, 0 warnings)
+# 3. Chạy kiểm thử tương tác dồn dập trên browser thật (8/8 checks PASS)
+node scripts/qa-verify-cycle2-rapid.mjs
+
+# 4. Chạy kiểm thử Stress vectors, Fast-3G CLS=0 và Offline Banner (10/10 checks PASS)
+node scripts/qa-verify-cycle3-stress.mjs
+
+# 5. Kiểm tra Linter trên cả 2 nền tảng Web & Android (0 errors, 0 warnings)
 npm --prefix website-frontend run lint
 npm --prefix android-frontend run lint
 
-# Kiểm tra TypeScript Strict trên cả 2 nền tảng (0 errors)
+# 6. Kiểm tra TypeScript Strict trên cả 2 nền tảng (0 errors)
 npm --prefix website-frontend run typecheck
 npm --prefix android-frontend run typecheck
 
-# Đóng gói Next.js Turbopack Production Build (4/4 routes thành công)
-npm --prefix website-frontend run build
-
-# Đóng gói Web-App Vite Production Build (1656 modules thành công)
+# 7. Đóng gói Production Build (Web-App Vite 8.6s, Next.js Turbopack 1.0s)
 npm --prefix web-app run build
+npm --prefix website-frontend run build
 ```
+
+### 7.3 Quản Lý Bộ Nhớ Cục Bộ (LocalStorage Keys & Reset):
+- **Khóa dữ liệu nhà cung cấp:** `workgo_provider_services_overrides` (lưu mảng snapshot dữ liệu dịch vụ).
+- **Để đặt lại trạng thái ban đầu (reset về 6 dịch vụ mặc định):**
+  ```javascript
+  localStorage.removeItem('workgo_provider_services_overrides');
+  location.reload();
+  ```
+  *(Lưu ý: Cơ chế write-through sẽ tự động khởi tạo lại dữ liệu sau khi tải lại trang).*
 
 ---
 
-## 5. KẾT LUẬN & TRẠNG THÁI HỆ THỐNG
+## 8. DẤU NIÊM PHONG VÒNG XOAY CHUNG CUỘC (FINAL CLOSE)
 
 ```text
 ================================================================================
-                    TIẾN ĐỘ THẨM ĐỊNH CHU KỲ CHUNG KẾT (3/3):
-                              DECISION: APPROVED
-               HỆ THỐNG ĐÃ HOÀN THÀNH TOÀN BỘ 3 CHU KỲ ĐỀ RA
-                   (CYCLE_STATUS: ALL_GOALS_COMPLETED)
+                         CYCLE 3/3 — CLOSE (16/10/2026)
+  S1: Stress vectors đa trường xanh · S2: CLS = 0 Fast-3G có số đo thực tế ·
+  S3: Hint phím tắt hiển thị chân trang · S4: Offline continuity & Sticky banner ·
+  S5: Audit 0 console.log, 0 file rác · S6: REPORT tổng kết toàn diện
+  Gates G1–G9 xanh tuyệt đối (152/152 tests PASS) · Outstanding debt: RỖNG
+  Toàn bộ dữ liệu Excel được bảo toàn 100% nguyên vẹn
+================================================================================
+                    VÒNG XOAY 3 CHU KỲ: HOÀN TẤT XUẤT SẮC
+                     CYCLE_STATUS: ALL_GOALS_COMPLETED
 ================================================================================
 ```

@@ -1,7 +1,7 @@
 {
   "source": "web-app/src",
   "destMirror": "website-frontend/src/_webapp-mirror",
-  "createdAt": "2026-10-16T07:44:09.227Z",
+  "createdAt": "2026-10-16T10:54:04.527Z",
   "files": [
     {
       "relative": "api/axiosClient.js",
@@ -15,13 +15,13 @@
     },
     {
       "relative": "App.jsx",
-      "size": 11103,
-      "sha256": "3028bf37a3a23da4b824a7d8ed1f5e7f55fc5c94fa2ea63725fa7b7bdf491a81"
+      "size": 12090,
+      "sha256": "94d96607e40620538c7639faacea408e3180075f37fe2d05f2479b216c5699b5"
     },
     {
       "relative": "App.module.css",
-      "size": 1951,
-      "sha256": "8d2ffde2bda3fddee6b64561efbb04e00af3ee928da9cc8d1d9b5fbf1d232ec3"
+      "size": 2239,
+      "sha256": "d3891440e21e309d69b42f77619d6ba3b5be1919570b4406b8d89c4ff888b866"
     },
     {
       "relative": "components/common/AuthModal/AuthModal.jsx",
@@ -35,13 +35,13 @@
     },
     {
       "relative": "components/common/Footer/Footer.jsx",
-      "size": 4213,
-      "sha256": "1e840a587398d9226cc0e9675e44a1e84ceb5309cae50b5202e3a125f0eb8364"
+      "size": 4356,
+      "sha256": "f3e2dc66c1acf152b2de51a7d951602c4f7463cd4e98a514bcf90e43b60e1ace"
     },
     {
       "relative": "components/common/Footer/Footer.module.css",
-      "size": 2200,
-      "sha256": "90192028281e4b8ea9fb42c74af03ccdac02a0609d2acf1938604ca0cbb9ecac"
+      "size": 2353,
+      "sha256": "7d6e1d54b686e171b5a2237c9155c25da3042068654eb5497c3f142a4cb7e585"
     },
     {
       "relative": "components/common/Header/Header.jsx",
@@ -50,8 +50,8 @@
     },
     {
       "relative": "components/common/Header/Header.module.css",
-      "size": 6572,
-      "sha256": "33070812767b7a965620fa514538b9be202de0ad7494ef6148189bcb0c4d68b5"
+      "size": 6741,
+      "sha256": "395e5003df717760a7c70698ebe798e2e3acff98f063c68899aaa57e3dc24112"
     },
     {
       "relative": "components/common/SearchBar/SearchBar.jsx",
@@ -75,8 +75,8 @@
     },
     {
       "relative": "components/common/Skeleton/SkeletonServiceCard.jsx",
-      "size": 1696,
-      "sha256": "d7f651cf203fa240b24f3e047945e3b508bfb68565fd435343a5e7e5a7878195"
+      "size": 1787,
+      "sha256": "be21a22e472d2ecb26c41bcc578f2c30edbe02d0cfc129acc94a343d1279a7dc"
     },
     {
       "relative": "components/common/Skeleton/SkeletonServiceCard.module.css",
@@ -190,8 +190,8 @@
     },
     {
       "relative": "pages/CatalogSearch/CatalogSearchPage.jsx",
-      "size": 14911,
-      "sha256": "abb742971cf3ecc41a8c383afe60917aa579e343c6ed6e930ad6ce61c904475d"
+      "size": 15306,
+      "sha256": "83b522cf6492d11bc916fa9f9d7f10c1480e67809a1f90fba89a5de23edb27ca"
     },
     {
       "relative": "pages/CatalogSearch/CatalogSearchPage.module.css",
@@ -286,7 +286,7 @@
     {
       "relative": "pages/MyServices/MyServicesPage.module.css",
       "size": 1773,
-      "sha256": "dacca24d1d59eae6c54bf361beb2c11b041a1541b0f728ffb7b954c4aed445ca"
+      "sha256": "83431f84c8ef31d2a88efe7fa48b52d2d16407372b51eb6d0c73c869fe3fa7e3"
     },
     {
       "relative": "pages/MyServices/providerServicesStore.js",
@@ -361,7 +361,7 @@
     {
       "relative": "pages/ServiceDetail/ServiceDetailPage.module.css",
       "size": 5806,
-      "sha256": "88e858400abaf5932f9f7c04c8c4d28e6e0a1700edee14e2d7257086b2ec56db"
+      "sha256": "f14bb81243a7d0eef4ccee0590228facb857fc2e317c21424c8ceb68b32cddd7"
     },
     {
       "relative": "pages/ServiceForm/components/FormStepper/FormStepper.jsx",
@@ -415,13 +415,13 @@
     },
     {
       "relative": "pages/ServiceForm/ServiceFormPage.module.css",
-      "size": 3386,
-      "sha256": "6c0660d9b7e30044c23332762126caed85c8ff4db5c08a01fd87735e2c1ac365"
+      "size": 3380,
+      "sha256": "a80217207934bfb6f84f5a0c481c92af00c37ba55cec1af75d86b08b476db38c"
     },
     {
       "relative": "styles/reset.css",
       "size": 1652,
-      "sha256": "a2f1a3516abae9aa5cb6e5498ea0fe88e961b9f4b2207dfffb1c5925f8b81002"
+      "sha256": "00d6b10eba8d7f489400afca26bd7ef0a4798a1c05de4b6f9b43641e633329cf"
     },
     {
       "relative": "styles/variables.css",
@@ -430,5 +430,5 @@
     }
   ],
   "totalFiles": 85,
-  "totalBytes": 378091
+  "totalBytes": 380311
 }

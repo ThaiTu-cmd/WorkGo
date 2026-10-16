@@ -143,6 +143,13 @@ for (const [name, file] of [
   });
 }
 
+// ---------- Cycle 2 N1: rapid probe script ----------
+test("Cycle2-N1: rapid probe script exists with type + tabs probes", () => {
+  const probe = read(path.join(REPO, "scripts", "qa-verify-cycle2-rapid.mjs"));
+  assert.match(probe, /rapid-type/);
+  assert.match(probe, /rapid-tabs/);
+});
+
 // ---------- S1: mirror parity for every touched source file ----------
 test("S1: every Cycle-3 source file is byte-identical in _webapp-mirror", () => {
   const files = [

@@ -23,14 +23,58 @@ import {
   initialProviderServices,
   persistProviderServices,
 } from "@/_webapp-mirror/pages/MyServices/providerServicesStore";
+import TrungSubNav from "../trung-pages/_ui/TrungSubNav";
+import RegisterPage from "../trung-pages/auth/RegisterPage";
+import LoginPage from "../trung-pages/auth/LoginPage";
+import ProfileSettingsPage from "../trung-pages/profile/ProfileSettingsPage";
+import AddressBookPage from "../trung-pages/profile/AddressBookPage";
+import ProviderOnboardingPage from "../trung-pages/provider/ProviderOnboardingPage";
+import ProviderProfilePage from "../trung-pages/provider/ProviderProfilePage";
+import JobListPage from "../trung-pages/jobs/JobListPage";
+import JobPostPage from "../trung-pages/jobs/JobPostPage";
+import SubmitProposalPage from "../trung-pages/jobs/SubmitProposalPage";
+import ProposalReviewPage from "../trung-pages/jobs/ProposalReviewPage";
+import PaymentGatewayPage from "../trung-pages/payment/PaymentGatewayPage";
+import WalletPage from "../trung-pages/payment/WalletPage";
+import PayoutSettingsPage from "../trung-pages/payment/PayoutSettingsPage";
+import ReviewFormPage from "../trung-pages/trust/ReviewFormPage";
+import DisputeCenterPage from "../trung-pages/trust/DisputeCenterPage";
 import { Info } from "lucide-react";
 import styles from "./webapp-shell.module.css";
 
-type CatalogFilterParams = {
+export type CatalogFilterParams = {
   category?: string;
   executionType?: string;
   query?: string;
+  jobId?: string;
+  providerId?: string;
+  orderId?: string;
 };
+
+export type TrungPageKey =
+  | "home"
+  | "catalog"
+  | "detail"
+  | "my-services"
+  | "service-form"
+  | "availability"
+  | "checkout"
+  | "orders"
+  | "register"
+  | "login"
+  | "profile-settings"
+  | "provider-onboarding"
+  | "address-book"
+  | "provider-profile"
+  | "job-list"
+  | "job-post"
+  | "submit-proposal"
+  | "proposal-review"
+  | "payment-gateway"
+  | "wallet"
+  | "payout-settings"
+  | "review-form"
+  | "dispute-center";
 
 type CategorySelection = {
   slug: string;
@@ -54,9 +98,12 @@ type ProviderService = (typeof mockProviderServices)[number] | SavedService;
 // through turbopack.resolveAlias to engine-backed shims; without the alias
 // it falls back to the mirror's own web-app mocks.
 export default function WebAppShell() {
-  const [currentPage, setCurrentPage] = useState("home"); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form' | 'availability' | 'checkout' | 'orders'
-  const [previousPage, setPreviousPage] = useState("home");
+  const [currentPage, setCurrentPage] = useState<TrungPageKey>("home"); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form' | 'availability' | 'checkout' | 'orders' + 15 trung-pages
+  const [previousPage, setPreviousPage] = useState<TrungPageKey>("home");
   const [selectedServiceId, setSelectedServiceId] = useState("svc-1");
+  const [selectedJobId, setSelectedJobId] = useState("");
+  const [selectedProviderId, setSelectedProviderId] = useState("");
+  const [selectedOrderId, setSelectedOrderId] = useState("");
   // { service, pkg, addons } handed over by ServiceDetailPage "Tiếp tục đặt hàng".
   const [checkoutOrder, setCheckoutOrder] = useState<Record<string, unknown> | null>(null);
   // C2-5: same persistence contract as web-app MyServicesPage — the
@@ -68,6 +115,26 @@ export default function WebAppShell() {
   );
 
   // Write-through: form create/edit flows land here first.
+  // S4: offline state for the banner (M3) — refreshed on online/offline events.
+  // SSR-safe: initial true matches server HTML (no banner); the real
+  // navigator.onLine value syncs on mount to avoid hydration mismatch
+  // (Node defines global navigator but navigator.onLine is undefined).
+  const [isOnline, setIsOnline] = useState(true);
+  useEffect(() => {
+    // Sync browser-only navigator.onLine post-hydration so server HTML
+    // (assumed online) matches first client render; avoids hydration
+    // mismatch (Node's global navigator exists but onLine is undefined).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsOnline(navigator.onLine);
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
   const [serviceFormMode, setServiceFormMode] = useState<"create" | "edit">("create");
   const [editServiceId, setEditServiceId] = useState<string | null>(null);
   const [catalogFilters, setCatalogFilters] = useState({
@@ -116,7 +183,7 @@ export default function WebAppShell() {
   }, [providerServices, showToast]);
 
   // Navigate handler from Header or links
-  const handleNavigate = (page: string, params: CatalogFilterParams = {}) => {
+  const handleNavigate = (page: TrungPageKey, params: CatalogFilterParams = {}) => {
     setPreviousPage(currentPage);
     setCurrentPage(page);
     if (page === "catalog") {
@@ -126,6 +193,10 @@ export default function WebAppShell() {
         query: params.query || "",
       });
     }
+    if (page === "provider-profile" && params.providerId) setSelectedProviderId(params.providerId);
+    if (page === "submit-proposal" && params.jobId) setSelectedJobId(params.jobId);
+    if (page === "proposal-review" && params.jobId) setSelectedJobId(params.jobId);
+    if (page === "review-form" && params.orderId) setSelectedOrderId(params.orderId);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -202,6 +273,12 @@ export default function WebAppShell() {
 
   return (
     <div className={`${styles.appRoot} ${styles["webapp-scope"]}`}>
+      {/* S4: offline banner — local data keeps working, user must know why */}
+      {!isOnline && (
+        <div className={styles.offlineBanner} role="status">
+          <span>Bạn đang ngoại tuyến — ứng dụng vẫn dùng được với dữ liệu đã lưu trên thiết bị này.</span>
+        </div>
+      )}
       {/* Toast queue (max 3, each auto-dismisses + manual close) */}
       {toasts.length > 0 && (
         <div className={styles.toastStack}>
@@ -230,6 +307,9 @@ export default function WebAppShell() {
           onOpenAuth={(mode: "login" | "register") => setAuthModal(mode)}
         />
       )}
+
+      {/* Trung auxiliary nav (Header mirror can't carry the 15 new links) */}
+      <TrungSubNav current={currentPage} onNavigate={handleNavigate} />
 
       {/* Main Content Router */}
       {currentPage === "home" && (
@@ -337,6 +417,82 @@ export default function WebAppShell() {
           onSaveSuccess={handleServiceFormSuccess}
           onShowToast={showToast}
         />
+      )}
+
+      {currentPage === "register" && (
+        <RegisterPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "login" && (
+        <LoginPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "profile-settings" && (
+        <ProfileSettingsPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "address-book" && (
+        <AddressBookPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "provider-onboarding" && (
+        <ProviderOnboardingPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "provider-profile" && (
+        <ProviderProfilePage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+          providerId={selectedProviderId || undefined}
+        />
+      )}
+
+      {currentPage === "job-list" && (
+        <JobListPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "job-post" && (
+        <JobPostPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "submit-proposal" && (
+        <SubmitProposalPage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+          jobId={selectedJobId || undefined}
+        />
+      )}
+
+      {currentPage === "proposal-review" && (
+        <ProposalReviewPage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+          jobId={selectedJobId || undefined}
+        />
+      )}
+
+      {currentPage === "payment-gateway" && (
+        <PaymentGatewayPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "wallet" && (
+        <WalletPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "payout-settings" && (
+        <PayoutSettingsPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "review-form" && (
+        <ReviewFormPage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+          orderId={selectedOrderId || undefined}
+        />
+      )}
+
+      {currentPage === "dispute-center" && (
+        <DisputeCenterPage onNavigate={handleNavigate} onShowToast={showToast} />
       )}
 
       {/* Footer (hidden on service-form wizard for clean focus) */}

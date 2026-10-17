@@ -51,6 +51,15 @@ export default function CatalogSearchPage({
   // F3: keep Tab cycling inside the filter drawer while open.
   const filterDrawerRef = useRef(null);
   useFocusTrap(filterDrawerRef, mobileFilterOpen);
+  // V3-trap needs focus INSIDE first: on open, move it to the close button
+  // (same pattern as the header drawer). Otherwise Tab walks the background.
+  useEffect(() => {
+    if (!mobileFilterOpen) return;
+    const closeBtn = filterDrawerRef.current
+      ? filterDrawerRef.current.querySelector("button")
+      : null;
+    if (closeBtn) closeBtn.focus();
+  }, [mobileFilterOpen]);
 
   // Resolve category display name
   const currentCategoryObj = useMemo(() => {

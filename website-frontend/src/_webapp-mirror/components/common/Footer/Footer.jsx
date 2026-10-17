@@ -61,6 +61,9 @@ export default function Footer() {
               <Shield size={15} />
               Được bảo vệ bởi Escrow
             </span>
+            <span className={styles.shortcutHint}>
+              Mẹo bàn phím: Tab di chuyển • Esc đóng nhanh
+            </span>
           </div>
 
           {COLUMNS.map((col) => (

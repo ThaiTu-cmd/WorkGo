@@ -18,13 +18,15 @@
   border-bottom: 1px solid var(--wg-border);
 }
 
-.headerContainer {
+/* Gutter-inset: scoped 0,2,0 beats global .container (0,1,0) regardless of
+   stylesheet order (Vite vs Next inject order differs) → deterministic 24px. */
+.header .headerContainer {
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-left: 16px;
-  padding-right: 16px;
+  padding-left: 24px;
+  padding-right: 24px;
   min-width: 0;
 }
 

@@ -7,7 +7,7 @@
 .contentWrapper {
   max-width: var(--container-max);
   margin: 0 auto;
-  padding: 0 clamp(16px, 2.5vw, 32px);
+  padding: 0 32px;
 }
 
 .topBar {
@@ -102,7 +102,7 @@
 
 @media (max-width: 640px) {
   .contentWrapper {
-    padding: 0 16px;
+    padding: 0 20px;
   }
   .pageTitle {
     font-size: 1.5rem;

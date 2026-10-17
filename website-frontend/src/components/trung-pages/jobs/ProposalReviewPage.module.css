@@ -1,0 +1,171 @@
+.wrap {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 32px;
+  overflow-x: clip;
+}
+
+.title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #222325;
+  overflow-wrap: break-word;
+}
+
+.sub {
+  margin-top: 6px;
+  color: #62646a;
+  font-size: 0.92rem;
+  overflow-wrap: break-word;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #222325;
+  margin-top: 20px;
+  max-width: 480px;
+}
+
+.field select {
+  min-height: 44px;
+  border: 1px solid #e4e5e7;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 1rem;
+  background: #ffffff;
+  width: 100%;
+  max-width: 100%;
+}
+
+.field select:focus-visible {
+  outline: 2px solid #1dbf73;
+  outline-offset: 1px;
+}
+
+.hint {
+  margin-top: 12px;
+  color: #62646a;
+  font-size: 0.9rem;
+  overflow-wrap: break-word;
+}
+
+.empty {
+  margin-top: 24px;
+  padding: 32px 20px;
+  text-align: center;
+  border: 1px dashed #e4e5e7;
+  border-radius: 16px;
+  color: #62646a;
+  overflow-wrap: break-word;
+}
+
+.link {
+  min-height: 44px;
+  color: #158852;
+  font-weight: 700;
+  text-decoration: underline;
+  padding: 10px 4px;
+}
+
+.list {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+}
+
+.item {
+  border: 1px solid #e4e5e7;
+  border-radius: 12px;
+  padding: 16px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.provider {
+  font-weight: 700;
+  color: #222325;
+  overflow-wrap: break-word;
+}
+
+.bid {
+  font-weight: 800;
+  color: #158852;
+}
+
+.msg {
+  color: #62646a;
+  font-size: 0.9rem;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.status {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.status[data-status="ACCEPTED"] {
+  color: #158852;
+}
+
+.status[data-status="REJECTED"] {
+  color: #b91c1c;
+}
+
+.status[data-status="PENDING"] {
+  color: #b45309;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.primary {
+  min-height: 44px;
+  border-radius: 10px;
+  background: #1dbf73;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 10px 16px;
+}
+
+.primary:hover {
+  background: #19a463;
+}
+
+.primary:disabled {
+  opacity: 0.5;
+}
+
+.primary:focus-visible,
+.ghost:focus-visible {
+  outline: 2px solid #158852;
+  outline-offset: 2px;
+}
+
+.ghost {
+  min-height: 44px;
+  border: 1px solid #e4e5e7;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 600;
+  background: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .wrap {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}

@@ -69,6 +69,19 @@
   }
 }
 
+/* S4: offline banner — fixed top strip, keeps page usable underneath. */
+.offlineBanner {
+  position: sticky;
+  top: 0;
+  z-index: 3001;
+  background-color: #b45309;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 8px 16px;
+}
+
 .toastIcon {
   color: var(--wg-primary);
   flex-shrink: 0;
@@ -174,12 +187,24 @@
   }
 }
 
-/* Tailwind's .container has no gutter; give web-app pages breathing room. */
-.webapp-scope :global(.container) {
+/* Edge-gutter restore: mirror `container` divs (Header/Hero/Sections/Footer/
+   Catalog) lost web-app reset.css on the website (poison-chain ban), and
+   Tailwind's own `.container` only sets max-width — no side padding.
+   Scoped under .webapp-scope so the host site is untouched; unlayered author
+   CSS beats Tailwind's layered `.container` unconditionally.
+   Excludes the header's own container (it already has deterministic 24px). */
+.webapp-scope :global(.container:not([class*="headerContainer"])) {
   width: 100%;
-  max-width: var(--container-max);
+  max-width: 1320px;
   margin-left: auto;
   margin-right: auto;
-  padding-left: clamp(16px, 2.5vw, 32px);
-  padding-right: clamp(16px, 2.5vw, 32px);
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
+@media (max-width: 768px) {
+  .webapp-scope :global(.container:not([class*="headerContainer"])) {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
 }

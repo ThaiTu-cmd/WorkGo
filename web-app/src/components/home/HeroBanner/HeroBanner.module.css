@@ -36,7 +36,7 @@
 
 .headline {
   font-family: var(--font-heading);
-  font-size: 3.2rem;
+  font-size: 2.75rem;
   font-weight: 800;
   line-height: 1.18;
   letter-spacing: -0.03em;
@@ -48,13 +48,13 @@
 
 @media (max-width: 900px) {
   .headline {
-    font-size: 2.3rem;
+    font-size: 2.05rem;
   }
 }
 
 @media (max-width: 600px) {
   .headline {
-    font-size: 1.85rem;
+    font-size: 1.65rem;
   }
 }
 

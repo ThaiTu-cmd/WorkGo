@@ -13,6 +13,25 @@
   overflow-x: clip;
 }
 
+/* pageScope — UI fix: re-point --header-height lên cả stack cố định
+   (offline + header + subnav) để mọi calc(var(--header-height)+N) của
+   trang mirror tự dư. Flex column giữ .main{flex:1} và chặn hiện tượng
+   shrink-wrap 650px của các root trang có `margin: 0 auto` (auto margin
+   ở trục cross của flex item tắt align-items: stretch). */
+.pageScope {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  --header-height: var(--top-stack);
+}
+
+/* offsetScope — wrapper block cho các trang KHÔNG tự offset bằng
+   --header-height: detail, my-services, service-form + 15 trung-pages. */
+.offsetScope {
+  padding-top: var(--header-height);
+}
+
 /* F6: toast queue stack — positioning moved here from .toastNotification
    (same geometry as web-app mirror). */
 .toastStack {
@@ -173,7 +192,24 @@
   --transition-smooth: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 
   --container-max: 1320px;
+
+  /* UI fix cycle (2026-10-17): top-stack contract — Header (fixed) + SubNav
+     (fixed) + offline banner publish their real heights as one stack so every
+     page offset, hero padding and sticky sidebar clears all three. */
+  --base-header-height: 76px; /* chiều cao Header khi hiển thị (giữ 76 ở mọi vp) */
+  --subnav-height: 61px; /* TrungSubNav fixed: 8 + min-height 44 + 8 + 1 border */
+  --offline-h: 0px; /* GHI ĐÈ INLINE trên .appRoot khi banner hiện (ResizeObserver) */
+  --top-stack: calc(
+    var(--offline-h) + var(--base-header-height) + var(--subnav-height)
+  );
+
   --header-height: 76px;
+}
+
+/* service-form ẩn Header → chỉ còn subnav trong stack cố định.
+   PHẢI đứng sau .webapp-scope (cùng specificity 0,1,0 — rule sau thắng). */
+.appRootNoHeader {
+  --base-header-height: 0px;
 }
 
 @media (prefers-reduced-motion: reduce) {

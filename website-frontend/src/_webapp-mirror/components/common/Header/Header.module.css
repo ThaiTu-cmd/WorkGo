@@ -1,6 +1,6 @@
 .header {
   position: fixed;
-  top: 0;
+  top: var(--offline-h, 0px);
   left: 0;
   right: 0;
   height: var(--header-height);
@@ -27,6 +27,10 @@
   justify-content: space-between;
   padding-left: 24px;
   padding-right: 24px;
+  max-width: var(--container-max, 1320px);
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
   min-width: 0;
 }
 
@@ -78,12 +82,12 @@
   border-radius: var(--radius-full);
   padding: 4px 6px 4px 14px;
   width: 280px;
+  min-width: 0;
   box-shadow: var(--shadow-sm);
   transition: width var(--transition-base);
 }
 
 .navSearch:focus-within {
-  width: 320px;
   border-color: var(--wg-primary);
 }
 
@@ -97,6 +101,7 @@
   border: none;
   outline: none;
   width: 100%;
+  min-width: 0;
   font-size: 0.875rem;
   background: transparent;
   color: var(--wg-text);
@@ -128,7 +133,7 @@
   background-color: var(--wg-primary-hover);
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .navSearch {
     display: flex;
   }
@@ -140,32 +145,31 @@
   gap: 28px;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1100px) {
   .desktopNav {
     display: flex;
   }
 }
 
-/* C2-1 guard: Be Vietnam Pro glyphs run wider than Inter — tighten the
-   900–1100px band so header never overflows 1024px (reviewer: right=1028). */
-@media (min-width: 900px) and (max-width: 1100px) {
+/* C2-1 guard (UI fix 2026-10-17): dải 1100–1440px siết gap/cỡ chữ/search
+   để header không bao giờ tràn container 1320px (đo thật: maxRight 1061 ≤
+   1085 @1100; form 240px/input 170px @1440 — xem .team/PLAN.md §1.2). */
+@media (min-width: 1100px) and (max-width: 1440px) {
   .desktopNav {
     gap: 16px;
   }
   .navLink {
-    font-size: 0.88rem;
+    font-size: 0.9rem;
   }
   .navSearch {
     width: 240px;
-  }
-  .navSearch:focus-within {
-    width: 260px;
   }
 }
 
 .navLink {
   font-weight: 600;
   font-size: 0.95rem;
+  white-space: nowrap;
   transition: color var(--transition-fast);
   color: inherit;
   opacity: 0.92;
@@ -234,6 +238,15 @@
   flex-shrink: 1;
 }
 
+/* UI fix 2026-10-17: từ 1280px (navSearch hiện) chặn cụm action ăn flex-shrink —
+   signIn/join là flex-shrink:0 nên khi box bị co, nút bị đẩy tràn mép phải;
+   thay vào đó leftSection co lại (navSearch có min-width: 0). */
+@media (min-width: 1280px) {
+  .actionButtons {
+    flex-shrink: 0;
+  }
+}
+
 .signInBtn {
   font-weight: 600;
   font-size: 0.95rem;
@@ -299,7 +312,7 @@
   }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1100px) {
   .menuToggle {
     display: none;
   }

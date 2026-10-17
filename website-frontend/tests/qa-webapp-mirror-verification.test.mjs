@@ -110,7 +110,7 @@ test("HP-MIRROR-05: MANIFEST.json and README.mirror.md exist and are valid in th
     const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
     assert.equal(manifest.source, "web-app/src");
     assert.equal(manifest.totalFiles, 85);
-    assert.equal(manifest.totalBytes, 380313);
+    assert.equal(manifest.totalBytes, 380949);
     assert.equal(manifest.files.length, 85);
 
     const readmePath = path.join(mirrorDir, "README.mirror.md");
@@ -142,7 +142,7 @@ test("HP-MIRROR-07: .team/WEBAPP_MIRROR_MANIFEST.json aggregates both mirrors wi
   assert.equal(meta.android.totalFiles, 78);
   assert.equal(meta.android.totalBytes, 347359);
   assert.equal(meta.website.totalFiles, 85);
-  assert.equal(meta.website.totalBytes, 380311);
+  assert.equal(meta.website.totalBytes, 380949);
 });
 
 test("EC-MIRROR-01: Baseline configuration files remain strictly untouched (Zero Overwrite)", () => {

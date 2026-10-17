@@ -127,6 +127,32 @@ export default function WebAppShell() {
       window.removeEventListener("offline", goOffline);
     };
   }, []);
+
+  const appRootRef = useRef<HTMLDivElement>(null);
+  const offlineBannerRef = useRef<HTMLDivElement>(null);
+
+  // UI fix: công bố chiều cao thật của banner offline thành --offline-h để
+  // Header (top: var(--offline-h,0px)), TrungSubNav và .offsetScope cùng
+  // tụt xuống dưới banner. Inline style + ResizeObserver → không setState,
+  // không vi phạm react-hooks/set-state-in-effect.
+  useEffect(() => {
+    const root = appRootRef.current;
+    if (!root) return;
+    const banner = offlineBannerRef.current;
+    if (!banner) {
+      root.style.removeProperty("--offline-h");
+      return;
+    }
+    const sync = () => root.style.setProperty("--offline-h", `${banner.offsetHeight}px`);
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(banner);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--offline-h");
+    };
+  }, [isOnline]);
+
   const [serviceFormMode, setServiceFormMode] = useState<"create" | "edit">("create");
   const [editServiceId, setEditServiceId] = useState<string | null>(null);
   const [catalogFilters, setCatalogFilters] = useState({
@@ -264,10 +290,13 @@ export default function WebAppShell() {
   };
 
   return (
-    <div className={`${styles.appRoot} ${styles["webapp-scope"]}`}>
+    <div
+      ref={appRootRef}
+      className={`${styles.appRoot} ${styles["webapp-scope"]}${currentPage === "service-form" ? ` ${styles.appRootNoHeader}` : ""}`}
+    >
       {/* S4: offline banner — local data keeps working, user must know why */}
       {!isOnline && (
-        <div className={styles.offlineBanner} role="status">
+        <div ref={offlineBannerRef} data-offline-banner className={styles.offlineBanner} role="status">
           <span>Bạn đang ngoại tuyến — ứng dụng vẫn dùng được với dữ liệu đã lưu trên thiết bị này.</span>
         </div>
       )}
@@ -304,159 +333,197 @@ export default function WebAppShell() {
       <TrungSubNav current={currentPage} onNavigate={handleNavigate} />
 
       {/* Main Content Router */}
-      {currentPage === "home" && (
-        <main className={styles.main}>
-          {/* 1. Hero Banner with Central Search */}
-          <HeroBanner onSearch={handleHeroSearch} />
+      <div className={styles.pageScope}>
+        {currentPage === "home" && (
+          <main className={styles.main}>
+            {/* 1. Hero Banner with Central Search */}
+            <HeroBanner onSearch={handleHeroSearch} />
 
-          {/* 2. Trusted By enterprise logos */}
-          <TrustedBy />
+            {/* 2. Trusted By enterprise logos */}
+            <TrustedBy />
 
-          {/* 3. Featured Categories Grid */}
-          <FeaturedCategories onSelectCategory={handleSelectCategory} />
+            {/* 3. Featured Categories Grid */}
+            <FeaturedCategories onSelectCategory={handleSelectCategory} />
 
-          {/* 4. Popular Services Carousel (mirror ignores onViewAll; navigation via select) */}
-          <PopularServices onSelectService={handleSelectService} />
+            {/* 4. Popular Services Carousel (mirror ignores onViewAll; navigation via select) */}
+            <PopularServices onSelectService={handleSelectService} />
 
-          {/* 5. Value Proposition (Escrow & Packages) */}
-          <ValueProposition />
+            {/* 5. Value Proposition (Escrow & Packages) */}
+            <ValueProposition />
 
-          {/* 6. How It Works (4 steps) */}
-          <HowItWorks />
+            {/* 6. How It Works (4 steps) */}
+            <HowItWorks />
 
-          {/* 7. Dual Call-to-Action */}
-          <DualCTA onOpenAuth={(mode: "login" | "register") => setAuthModal(mode)} />
-        </main>
-      )}
+            {/* 7. Dual Call-to-Action */}
+            <DualCTA onOpenAuth={(mode: "login" | "register") => setAuthModal(mode)} />
+          </main>
+        )}
 
-      {currentPage === "catalog" && (
-        /* Catalog Search Page */
-        <CatalogSearchPage
-          key={`${catalogFilters.category}-${catalogFilters.executionType}-${catalogFilters.query}`}
-          initialCategory={catalogFilters.category}
-          initialExecutionType={catalogFilters.executionType}
-          initialSearchQuery={catalogFilters.query}
-          onSelectService={handleSelectService}
-          onGoHome={() => handleNavigate("home")}
-        />
-      )}
+        {currentPage === "catalog" && (
+          /* Catalog Search Page */
+          <CatalogSearchPage
+            key={`${catalogFilters.category}-${catalogFilters.executionType}-${catalogFilters.query}`}
+            initialCategory={catalogFilters.category}
+            initialExecutionType={catalogFilters.executionType}
+            initialSearchQuery={catalogFilters.query}
+            onSelectService={handleSelectService}
+            onGoHome={() => handleNavigate("home")}
+          />
+        )}
 
-      {currentPage === "detail" && (
-        /* Service Detail Page */
-        <ServiceDetailPage
-          key={selectedServiceId}
-          serviceId={selectedServiceId}
-          onGoBack={() => setCurrentPage(previousPage || "catalog")}
-          onSelectCategory={handleSelectCategory}
-          onGoHome={() => handleNavigate("home")}
-          onShowToast={showToast}
-        />
-      )}
+        {currentPage === "detail" && (
+          /* Service Detail Page */
+          <div className={styles.offsetScope}>
+            <ServiceDetailPage
+              key={selectedServiceId}
+              serviceId={selectedServiceId}
+              onGoBack={() => setCurrentPage(previousPage || "catalog")}
+              onSelectCategory={handleSelectCategory}
+              onGoHome={() => handleNavigate("home")}
+              onShowToast={showToast}
+            />
+          </div>
+        )}
 
-      {currentPage === "my-services" && (
-        /* Provider My Services Page */
-        <MyServicesPage
-          services={providerServices}
-          onUpdateServices={setProviderServices}
-          onSelectService={handleSelectService}
-          onGoHome={() => handleNavigate("home")}
-          onShowToast={showToast}
-          onOpenCreateForm={handleOpenCreateForm}
-          onOpenEditForm={handleOpenEditForm}
-        />
-      )}
+        {currentPage === "my-services" && (
+          /* Provider My Services Page */
+          <div className={styles.offsetScope}>
+            <MyServicesPage
+              services={providerServices}
+              onUpdateServices={setProviderServices}
+              onSelectService={handleSelectService}
+              onGoHome={() => handleNavigate("home")}
+              onShowToast={showToast}
+              onOpenCreateForm={handleOpenCreateForm}
+              onOpenEditForm={handleOpenEditForm}
+            />
+          </div>
+        )}
 
-      {currentPage === "service-form" && (
-        /* Provider Multi-step Service Form Wizard */
-        <ServiceFormPage
-          mode={serviceFormMode}
-          // Mirror defaults serviceId=null so tsc narrows the prop; at runtime
-          // it accepts a string (used in .find for edit prefill, as App.jsx does).
-          serviceId={editServiceId as unknown as null}
-          onCancel={() => {
-            setCurrentPage("my-services");
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-          onSaveSuccess={handleServiceFormSuccess}
-          onShowToast={showToast}
-        />
-      )}
+        {currentPage === "service-form" && (
+          /* Provider Multi-step Service Form Wizard */
+          <div className={styles.offsetScope}>
+            <ServiceFormPage
+              mode={serviceFormMode}
+              // Mirror defaults serviceId=null so tsc narrows the prop; at runtime
+              // it accepts a string (used in .find for edit prefill, as App.jsx does).
+              serviceId={editServiceId as unknown as null}
+              onCancel={() => {
+                setCurrentPage("my-services");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              onSaveSuccess={handleServiceFormSuccess}
+              onShowToast={showToast}
+            />
+          </div>
+        )}
 
-      {currentPage === "register" && (
-        <RegisterPage onNavigate={handleNavigate} onShowToast={showToast} />
-      )}
+        {currentPage === "register" && (
+          <div className={styles.offsetScope}>
+            <RegisterPage onNavigate={handleNavigate} onShowToast={showToast} />
+          </div>
+        )}
 
-      {currentPage === "login" && (
-        <LoginPage onNavigate={handleNavigate} onShowToast={showToast} />
-      )}
+        {currentPage === "login" && (
+          <div className={styles.offsetScope}>
+            <LoginPage onNavigate={handleNavigate} onShowToast={showToast} />
+          </div>
+        )}
 
-      {currentPage === "profile-settings" && (
-        <ProfileSettingsPage onNavigate={handleNavigate} onShowToast={showToast} />
-      )}
+        {currentPage === "profile-settings" && (
+          <div className={styles.offsetScope}>
+            <ProfileSettingsPage onNavigate={handleNavigate} onShowToast={showToast} />
+          </div>
+        )}
 
-      {currentPage === "address-book" && (
-        <AddressBookPage onNavigate={handleNavigate} onShowToast={showToast} />
-      )}
+        {currentPage === "address-book" && (
+          <div className={styles.offsetScope}>
+            <AddressBookPage onNavigate={handleNavigate} onShowToast={showToast} />
+          </div>
+        )}
 
-      {currentPage === "provider-onboarding" && (
-        <ProviderOnboardingPage onNavigate={handleNavigate} onShowToast={showToast} />
-      )}
+        {currentPage === "provider-onboarding" && (
+          <div className={styles.offsetScope}>
+            <ProviderOnboardingPage onNavigate={handleNavigate} onShowToast={showToast} />
+          </div>
+        )}
 
-      {currentPage === "provider-profile" && (
-        <ProviderProfilePage
-          onNavigate={handleNavigate}
-          onShowToast={showToast}
-          providerId={selectedProviderId || undefined}
-        />
-      )}
+        {currentPage === "provider-profile" && (
+          <div className={styles.offsetScope}>
+            <ProviderProfilePage
+              onNavigate={handleNavigate}
+              onShowToast={showToast}
+              providerId={selectedProviderId || undefined}
+            />
+          </div>
+        )}
 
-      {currentPage === "job-list" && (
-        <JobListPage onNavigate={handleNavigate} onShowToast={showToast} />
-      )}
+        {currentPage === "job-list" && (
+          <div className={styles.offsetScope}>
+            <JobListPage onNavigate={handleNavigate} onShowToast={showToast} />
+          </div>
+        )}
 
-      {currentPage === "job-post" && (
-        <JobPostPage onNavigate={handleNavigate} onShowToast={showToast} />
-      )}
+        {currentPage === "job-post" && (
+          <div className={styles.offsetScope}>
+            <JobPostPage onNavigate={handleNavigate} onShowToast={showToast} />
+          </div>
+        )}
 
-      {currentPage === "submit-proposal" && (
-        <SubmitProposalPage
-          onNavigate={handleNavigate}
-          onShowToast={showToast}
-          jobId={selectedJobId || undefined}
-        />
-      )}
+        {currentPage === "submit-proposal" && (
+          <div className={styles.offsetScope}>
+            <SubmitProposalPage
+              onNavigate={handleNavigate}
+              onShowToast={showToast}
+              jobId={selectedJobId || undefined}
+            />
+          </div>
+        )}
 
-      {currentPage === "proposal-review" && (
-        <ProposalReviewPage
-          onNavigate={handleNavigate}
-          onShowToast={showToast}
-          jobId={selectedJobId || undefined}
-        />
-      )}
+        {currentPage === "proposal-review" && (
+          <div className={styles.offsetScope}>
+            <ProposalReviewPage
+              onNavigate={handleNavigate}
+              onShowToast={showToast}
+              jobId={selectedJobId || undefined}
+            />
+          </div>
+        )}
 
-      {currentPage === "payment-gateway" && (
-        <PaymentGatewayPage onNavigate={handleNavigate} onShowToast={showToast} />
-      )}
+        {currentPage === "payment-gateway" && (
+          <div className={styles.offsetScope}>
+            <PaymentGatewayPage onNavigate={handleNavigate} onShowToast={showToast} />
+          </div>
+        )}
 
-      {currentPage === "wallet" && (
-        <WalletPage onNavigate={handleNavigate} onShowToast={showToast} />
-      )}
+        {currentPage === "wallet" && (
+          <div className={styles.offsetScope}>
+            <WalletPage onNavigate={handleNavigate} onShowToast={showToast} />
+          </div>
+        )}
 
-      {currentPage === "payout-settings" && (
-        <PayoutSettingsPage onNavigate={handleNavigate} onShowToast={showToast} />
-      )}
+        {currentPage === "payout-settings" && (
+          <div className={styles.offsetScope}>
+            <PayoutSettingsPage onNavigate={handleNavigate} onShowToast={showToast} />
+          </div>
+        )}
 
-      {currentPage === "review-form" && (
-        <ReviewFormPage
-          onNavigate={handleNavigate}
-          onShowToast={showToast}
-          orderId={selectedOrderId || undefined}
-        />
-      )}
+        {currentPage === "review-form" && (
+          <div className={styles.offsetScope}>
+            <ReviewFormPage
+              onNavigate={handleNavigate}
+              onShowToast={showToast}
+              orderId={selectedOrderId || undefined}
+            />
+          </div>
+        )}
 
-      {currentPage === "dispute-center" && (
-        <DisputeCenterPage onNavigate={handleNavigate} onShowToast={showToast} />
-      )}
+        {currentPage === "dispute-center" && (
+          <div className={styles.offsetScope}>
+            <DisputeCenterPage onNavigate={handleNavigate} onShowToast={showToast} />
+          </div>
+        )}
+      </div>
 
       {/* Footer (hidden on service-form wizard for clean focus) */}
       {currentPage !== "service-form" && <Footer />}

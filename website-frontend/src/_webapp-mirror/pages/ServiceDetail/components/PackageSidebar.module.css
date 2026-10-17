@@ -98,7 +98,7 @@
   font-size: 1.45rem;
   font-weight: 800;
   color: #059669;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: var(--font-heading);
   white-space: nowrap;
 }
 
@@ -266,7 +266,7 @@
   font-weight: 700;
   color: #059669;
   white-space: nowrap;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: var(--font-heading);
 }
 
 /* Checkout Footer */
@@ -295,7 +295,7 @@
   font-size: 1.55rem;
   font-weight: 800;
   color: #059669;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: var(--font-heading);
 }
 
 .btnOrder {

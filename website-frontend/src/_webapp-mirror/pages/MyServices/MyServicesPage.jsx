@@ -3,13 +3,13 @@ import {
   initialProviderServices,
   persistProviderServices,
 } from './providerServicesStore';
-import StatsCards from './components/StatsCards/StatsCards';
 import ServicesToolbar from './components/ServicesToolbar/ServicesToolbar';
 import ServicesTable from './components/ServicesTable/ServicesTable';
 import CreateServiceModal from './components/CreateServiceModal/CreateServiceModal';
 import { 
   ArrowLeft,
-  ShieldCheck
+  ShieldCheck,
+  CalendarClock
 } from 'lucide-react';
 import styles from './MyServicesPage.module.css';
 
@@ -19,6 +19,7 @@ export default function MyServicesPage({
   onShowToast,
   onOpenCreateForm,
   onOpenEditForm,
+  onOpenAvailability,
   services: externalServices,
   onUpdateServices,
 }) {
@@ -218,14 +219,18 @@ export default function MyServicesPage({
 
         <div className={styles.pageHeader}>
           <div>
-            <h1 className={styles.pageTitle}>Danh mục Dịch vụ đang bán</h1>
+            <h1 className={styles.pageTitle}>Quản lý dịch vụ</h1>
             <p className={styles.pageSubtitle}>
               Theo dõi tình trạng hiển thị, mức giá, số lượt xem và hiệu suất các gói dịch vụ bạn cung cấp trên WorkGo.
             </p>
           </div>
+          {onOpenAvailability && (
+            <button type="button" className={styles.availabilityBtn} onClick={onOpenAvailability}>
+              <CalendarClock size={16} /> Lịch rảnh
+            </button>
+          )}
         </div>
 
-        <StatsCards services={services} />
 
         <ServicesToolbar
           activeTab={activeTab}

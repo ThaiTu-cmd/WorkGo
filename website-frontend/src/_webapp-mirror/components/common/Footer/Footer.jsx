@@ -2,78 +2,83 @@ import React from 'react';
 import { Globe, Shield } from 'lucide-react';
 import styles from './Footer.module.css';
 
+const COLUMNS = [
+  {
+    title: 'Danh mục dịch vụ',
+    links: [
+      ['#categories', 'Lập trình & Công nghệ'],
+      ['#categories', 'Thiết kế đồ họa & UI/UX'],
+      ['#categories', 'Sửa chữa Điện nước'],
+      ['#categories', 'Vệ sinh & Dọn dẹp'],
+      ['#categories', 'Viết lách & Dịch thuật'],
+      ['#categories', 'Marketing & Quảng cáo'],
+    ],
+  },
+  {
+    title: 'Dành cho Khách hàng',
+    links: [
+      ['#how-it-works', 'Cách thức đặt dịch vụ'],
+      ['#why-workgo', 'Bảo chứng Ký quỹ (Escrow)'],
+      ['#cta', 'Đăng tin tuyển dụng'],
+      ['#', 'Chính sách hoàn tiền'],
+      ['#', 'Câu hỏi thường gặp (FAQ)'],
+    ],
+  },
+  {
+    title: 'Dành cho Chuyên gia',
+    links: [
+      ['#cta', 'Trở thành Chuyên gia'],
+      ['#', 'Tiêu chuẩn xác thực'],
+      ['#', 'Quy định gói dịch vụ'],
+      ['#', 'Rút tiền & Thanh toán'],
+      ['#', 'Cộng đồng Freelancer'],
+    ],
+  },
+  {
+    title: 'Về WorkGo',
+    links: [
+      ['#', 'Giới thiệu nền tảng'],
+      ['#', 'Cơ hội nghề nghiệp'],
+      ['#', 'Điều khoản sử dụng'],
+      ['#', 'Chính sách bảo mật'],
+      ['#', 'Liên hệ & Trợ giúp 24/7'],
+    ],
+  },
+];
+
 export default function Footer() {
   return (
     <footer className={styles.footer}>
       <div className="container">
-        {/* Main Footer Links Columns */}
-        <div className={styles.columnsGrid}>
-          {/* Col 1 */}
-          <div className={styles.col}>
-            <h4 className={styles.colTitle}>Danh mục dịch vụ</h4>
-            <ul className={styles.linkList}>
-              <li><a href="#categories">Lập trình & Công nghệ</a></li>
-              <li><a href="#categories">Thiết kế đồ họa & UI/UX</a></li>
-              <li><a href="#categories">Sửa chữa Điện nước</a></li>
-              <li><a href="#categories">Vệ sinh & Dọn dẹp</a></li>
-              <li><a href="#categories">Viết lách & Dịch thuật</a></li>
-              <li><a href="#categories">Vận chuyển & Giao nhận</a></li>
-              <li><a href="#categories">Marketing & Quảng cáo</a></li>
-            </ul>
-          </div>
-
-          {/* Col 2 */}
-          <div className={styles.col}>
-            <h4 className={styles.colTitle}>Dành cho Khách hàng</h4>
-            <ul className={styles.linkList}>
-              <li><a href="#how-it-works">Cách thức đặt dịch vụ</a></li>
-              <li><a href="#why-workgo">Bảo chứng Ký quỹ (Escrow)</a></li>
-              <li><a href="#cta">Đăng tin tuyển dụng (Post Job)</a></li>
-              <li><a href="#">Chính sách hoàn tiền & tranh chấp</a></li>
-              <li><a href="#">Quy chuẩn nghiệm thu công việc</a></li>
-              <li><a href="#">Câu hỏi thường gặp (FAQ)</a></li>
-            </ul>
-          </div>
-
-          {/* Col 3 */}
-          <div className={styles.col}>
-            <h4 className={styles.colTitle}>Dành cho Chuyên gia</h4>
-            <ul className={styles.linkList}>
-              <li><a href="#cta">Đăng ký trở thành Chuyên gia</a></li>
-              <li><a href="#">Tiêu chuẩn xác thực (Verification)</a></li>
-              <li><a href="#">Quy định tạo gói dịch vụ (Packages)</a></li>
-              <li><a href="#">Rút tiền & Tài khoản thanh toán</a></li>
-              <li><a href="#">Cộng đồng Freelancer WorkGo</a></li>
-              <li><a href="#">Bảo vệ quyền tác giả & sở hữu</a></li>
-            </ul>
-          </div>
-
-          {/* Col 4 */}
-          <div className={styles.col}>
-            <h4 className={styles.colTitle}>Về WorkGo</h4>
-            <ul className={styles.linkList}>
-              <li><a href="#">Giới thiệu nền tảng</a></li>
-              <li><a href="#">Cơ hội nghề nghiệp</a></li>
-              <li><a href="#">Báo chí & Truyền thông</a></li>
-              <li><a href="#">Điều khoản sử dụng</a></li>
-              <li><a href="#">Chính sách bảo mật dữ liệu</a></li>
-              <li><a href="#">Liên hệ & Trợ giúp 24/7</a></li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Bottom Bar */}
-        <div className={styles.bottomBar}>
-          <div className={styles.leftBottom}>
-            <div className={styles.brandRow}>
-              <div className={styles.footerLogoIcon}>W</div>
-              <span className={styles.footerLogoText}>WorkGo</span>
-            </div>
-            <span className={styles.copyright}>
-              © 2026 WorkGo Marketplace Inc. Nền tảng kết nối dịch vụ chuyên nghiệp hàng đầu.
+        <div className={styles.topGrid}>
+          {/* Brand column */}
+          <div className={styles.brandCol}>
+            <span className={styles.footerLogo}>WorkGo</span>
+            <p className={styles.brandDesc}>
+              Nền tảng kết nối khách hàng với chuyên gia và freelancer uy tín — thanh toán an toàn qua ký quỹ.
+            </p>
+            <span className={styles.escrowBadge}>
+              <Shield size={15} />
+              Được bảo vệ bởi Escrow
             </span>
           </div>
 
+          {COLUMNS.map((col) => (
+            <div key={col.title} className={styles.col}>
+              <h4 className={styles.colTitle}>{col.title}</h4>
+              <ul className={styles.linkList}>
+                {col.links.map(([href, label]) => (
+                  <li key={label}><a href={href}>{label}</a></li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className={styles.bottomBar}>
+          <span className={styles.copyright}>
+            © 2026 WorkGo Marketplace Inc. Bảo lưu mọi quyền.
+          </span>
           <div className={styles.rightBottom}>
             <div className={styles.localeItem}>
               <Globe size={16} />
@@ -81,10 +86,6 @@ export default function Footer() {
             </div>
             <div className={styles.localeItem}>
               <span>₫ VND</span>
-            </div>
-            <div className={styles.localeItem}>
-              <Shield size={16} />
-              <span>Được bảo vệ bởi Escrow</span>
             </div>
           </div>
         </div>

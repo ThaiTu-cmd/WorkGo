@@ -15,6 +15,9 @@ import CatalogSearchPage from "@/_webapp-mirror/pages/CatalogSearch/CatalogSearc
 import ServiceDetailPage from "@/_webapp-mirror/pages/ServiceDetail/ServiceDetailPage";
 import MyServicesPage from "@/_webapp-mirror/pages/MyServices/MyServicesPage";
 import ServiceFormPage from "@/_webapp-mirror/pages/ServiceForm/ServiceFormPage";
+import AvailabilityPage from "@/_webapp-mirror/pages/Availability/AvailabilityPage";
+import CheckoutPage from "@/_webapp-mirror/pages/Checkout/CheckoutPage";
+import OrderDashboardPage from "@/_webapp-mirror/pages/OrderDashboard/OrderDashboardPage";
 import { mockProviderServices } from "@/_webapp-mirror/data/mockProviderServices";
 import {
   initialProviderServices,
@@ -51,9 +54,11 @@ type ProviderService = (typeof mockProviderServices)[number] | SavedService;
 // through turbopack.resolveAlias to engine-backed shims; without the alias
 // it falls back to the mirror's own web-app mocks.
 export default function WebAppShell() {
-  const [currentPage, setCurrentPage] = useState("home"); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form'
+  const [currentPage, setCurrentPage] = useState("home"); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form' | 'availability' | 'checkout' | 'orders'
   const [previousPage, setPreviousPage] = useState("home");
   const [selectedServiceId, setSelectedServiceId] = useState("svc-1");
+  // { service, pkg, addons } handed over by ServiceDetailPage "Tiếp tục đặt hàng".
+  const [checkoutOrder, setCheckoutOrder] = useState<Record<string, unknown> | null>(null);
   // C2-5: same persistence contract as web-app MyServicesPage — the
   // persisted snapshot wins on reload, bundled mocks are the fallback.
   // (Without this, the shell would feed the stale mock list and the
@@ -273,7 +278,27 @@ export default function WebAppShell() {
           onSelectCategory={handleSelectCategory}
           onGoHome={() => handleNavigate("home")}
           onShowToast={showToast}
+          onCheckout={(order: Record<string, unknown>) => {
+            setCheckoutOrder(order);
+            handleNavigate("checkout");
+          }}
         />
+      )}
+
+      {currentPage === "checkout" && (
+        /* Checkout: Order Snapshot + payment gateway (mock) */
+        <CheckoutPage
+          order={checkoutOrder}
+          onGoBack={() => setCurrentPage("detail")}
+          onShowToast={showToast}
+          onDone={() => handleNavigate("home")}
+          onViewOrders={() => handleNavigate("orders")}
+        />
+      )}
+
+      {currentPage === "orders" && (
+        /* Client / Provider order dashboard */
+        <OrderDashboardPage onGoHome={() => handleNavigate("home")} onShowToast={showToast} />
       )}
 
       {currentPage === "my-services" && (
@@ -286,6 +311,15 @@ export default function WebAppShell() {
           onShowToast={showToast}
           onOpenCreateForm={handleOpenCreateForm}
           onOpenEditForm={handleOpenEditForm}
+          onOpenAvailability={() => handleNavigate("availability")}
+        />
+      )}
+
+      {currentPage === "availability" && (
+        /* Provider weekly availability / booking slots */
+        <AvailabilityPage
+          onGoBack={() => handleNavigate("my-services")}
+          onShowToast={showToast}
         />
       )}
 

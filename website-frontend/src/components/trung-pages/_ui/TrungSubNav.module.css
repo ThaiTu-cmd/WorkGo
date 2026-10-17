@@ -22,6 +22,7 @@
   box-sizing: border-box;
   overflow-x: auto;
   overflow-y: hidden;
+  scroll-padding-inline: 36px;
   scrollbar-width: none; /* một scroll container duy nhất, ẩn scrollbar */
   -ms-overflow-style: none;
 }
@@ -61,5 +62,44 @@
   .inner {
     padding-left: 20px;
     padding-right: 20px;
+  }
+}
+
+/* UI cycle 2 — scroll affordance (mask mờ 2 đầu, chỉ là trang trí: pointer-events:none,
+   không xuất hiện trong accessibility tree). Vị trí mask bám đúng mép của .inner
+   (inner max-width 1320px margin auto, .bar không padding): khi bar rộng hơn 1320px
+   mask lùi vào (100% - 1320px)/2, ngược lại bám mép. */
+.bar::before,
+.bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s linear;
+}
+
+.bar::before {
+  left: max(0px, calc((100% - 1320px) / 2));
+  background: linear-gradient(to right, #ffffff 25%, rgba(255, 255, 255, 0));
+}
+
+.bar::after {
+  right: max(0px, calc((100% - 1320px) / 2));
+  background: linear-gradient(to left, #ffffff 25%, rgba(255, 255, 255, 0));
+}
+
+.bar[data-fade-left="true"]::before,
+.bar[data-fade-right="true"]::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar::before,
+  .bar::after {
+    transition: none;
   }
 }

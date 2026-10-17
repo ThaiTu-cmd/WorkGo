@@ -36,6 +36,27 @@ export function slugify(s: string): string {
     .slice(0, 80);
 }
 
+export function validateJobTitle(raw: string): string | undefined {
+  const clean = sanitizeText(raw);
+  if (clean.length < TITLE_MIN) return `Vui lòng nhập tiêu đề từ ${TITLE_MIN} đến ${TITLE_MAX} ký tự!`;
+  if (clean.length > TITLE_MAX)
+    return `Tiêu đề quá dài (${clean.length}/${TITLE_MAX} ký tự) — vui lòng rút gọn!`;
+  return undefined;
+}
+
+export function validateJobDescription(raw: string): string | undefined {
+  const clean = sanitizeText(raw);
+  return clean.length < DESC_MIN ? `Vui lòng nhập mô tả chi tiết từ ${DESC_MIN} ký tự trở lên!` : undefined;
+}
+
+export function validateJobBudget(raw: string): string | undefined {
+  const budget = Number(String(raw).replace(/[^\d]/g, ""));
+  if (!Number.isFinite(budget) || budget <= 0) return "Giá gói phải là số lớn hơn 0!";
+  if (budget < PRICE_MIN) return `Giá tối thiểu là ${PRICE_MIN.toLocaleString("vi-VN")} ₫!`;
+  if (budget > PRICE_MAX) return `Giá vượt quá ${PRICE_MAX.toLocaleString("vi-VN")} ₫ cho phép!`;
+  return undefined;
+}
+
 export default function JobPostPage({ onNavigate, onShowToast }: TrungPageProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -45,29 +66,17 @@ export default function JobPostPage({ onNavigate, onShowToast }: TrungPageProps)
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanTitle = sanitizeText(title);
-    const cleanDesc = sanitizeText(description);
-    const budget = Number(String(budgetRaw).replace(/[^\d]/g, ""));
-    const next: typeof errors = {};
-    if (cleanTitle.length < TITLE_MIN || cleanTitle.length > TITLE_MAX) {
-      next.title =
-        cleanTitle.length < TITLE_MIN
-          ? `Vui lòng nhập tiêu đề từ ${TITLE_MIN} đến ${TITLE_MAX} ký tự!`
-          : `Tiêu đề quá dài (${cleanTitle.length}/${TITLE_MAX} ký tự) — vui lòng rút gọn!`;
-    }
-    if (cleanDesc.length < DESC_MIN) {
-      next.description = `Vui lòng nhập mô tả chi tiết từ ${DESC_MIN} ký tự trở lên!`;
-    }
-    if (!Number.isFinite(budget) || budget <= 0) {
-      next.budget = "Giá gói phải là số lớn hơn 0!";
-    } else if (budget < PRICE_MIN) {
-      next.budget = `Giá tối thiểu là ${PRICE_MIN.toLocaleString("vi-VN")} ₫!`;
-    } else if (budget > PRICE_MAX) {
-      next.budget = `Giá vượt quá ${PRICE_MAX.toLocaleString("vi-VN")} ₫ cho phép!`;
-    }
+    const next: typeof errors = {
+      title: validateJobTitle(title),
+      description: validateJobDescription(description),
+      budget: validateJobBudget(budgetRaw),
+    };
     setErrors(next);
     if (next.title ?? next.description ?? next.budget) return;
 
+    const cleanTitle = sanitizeText(title);
+    const cleanDesc = sanitizeText(description);
+    const budget = Number(String(budgetRaw).replace(/[^\d]/g, ""));
     const job: Job = {
       jobId: `job-${Date.now()}`,
       title: cleanTitle,
@@ -102,22 +111,41 @@ export default function JobPostPage({ onNavigate, onShowToast }: TrungPageProps)
               type="text"
               autoFocus
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (errors.title) setErrors((prev) => ({ ...prev, title: validateJobTitle(e.target.value) }));
+              }}
+              onBlur={() => setErrors((prev) => ({ ...prev, title: validateJobTitle(title) }))}
               placeholder="VD: Thiết kế logo quán cà phê sân vườn"
               aria-invalid={errors.title ? true : undefined}
+              aria-describedby={errors.title ? "jobpost-title-error" : undefined}
             />
-            {errors.title ? <em className={styles.error}>{errors.title}</em> : null}
+            {errors.title ? (
+              <em id="jobpost-title-error" className={styles.error}>
+                {errors.title}
+              </em>
+            ) : null}
           </label>
           <label className={styles.field}>
             <span>Mô tả chi tiết (tối thiểu 20 ký tự)</span>
             <textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                if (errors.description)
+                  setErrors((prev) => ({ ...prev, description: validateJobDescription(e.target.value) }));
+              }}
+              onBlur={() => setErrors((prev) => ({ ...prev, description: validateJobDescription(description) }))}
               placeholder="Mô tả phạm vi, yêu cầu và thời gian mong muốn..."
               rows={5}
               aria-invalid={errors.description ? true : undefined}
+              aria-describedby={errors.description ? "jobpost-description-error" : undefined}
             />
-            {errors.description ? <em className={styles.error}>{errors.description}</em> : null}
+            {errors.description ? (
+              <em id="jobpost-description-error" className={styles.error}>
+                {errors.description}
+              </em>
+            ) : null}
           </label>
           <div className={styles.row}>
             <label className={styles.field}>
@@ -125,12 +153,21 @@ export default function JobPostPage({ onNavigate, onShowToast }: TrungPageProps)
               <input
                 type="text"
                 value={budgetRaw}
-                onChange={(e) => setBudgetRaw(e.target.value)}
+                onChange={(e) => {
+                  setBudgetRaw(e.target.value);
+                  if (errors.budget) setErrors((prev) => ({ ...prev, budget: validateJobBudget(e.target.value) }));
+                }}
+                onBlur={() => setErrors((prev) => ({ ...prev, budget: validateJobBudget(budgetRaw) }))}
                 placeholder="2500000"
                 inputMode="numeric"
                 aria-invalid={errors.budget ? true : undefined}
+                aria-describedby={errors.budget ? "jobpost-budget-error" : undefined}
               />
-              {errors.budget ? <em className={styles.error}>{errors.budget}</em> : null}
+              {errors.budget ? (
+                <em id="jobpost-budget-error" className={styles.error}>
+                  {errors.budget}
+                </em>
+              ) : null}
             </label>
             <label className={styles.field}>
               <span>Loại việc</span>

@@ -143,12 +143,22 @@ export default function WebAppShell() {
       root.style.removeProperty("--offline-h");
       return;
     }
-    const sync = () => root.style.setProperty("--offline-h", `${banner.offsetHeight}px`);
+    // UI cycle 2: gộp callback ResizeObserver vào 1 frame rAF — chiều cao banner
+    // có thể đổi liên tục khi reflow; ghi CSS var đồng bộ mỗi callback sẽ thrash layout.
+    let rafId = 0;
+    const sync = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
+        root.style.setProperty("--offline-h", `${banner.offsetHeight}px`);
+      });
+    };
     sync();
     const observer = new ResizeObserver(sync);
     observer.observe(banner);
     return () => {
       observer.disconnect();
+      if (rafId) cancelAnimationFrame(rafId);
       root.style.removeProperty("--offline-h");
     };
   }, [isOnline]);

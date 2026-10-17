@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Code2,
   Palette,
@@ -12,7 +12,6 @@ import {
   FolderTree,
 } from "lucide-react";
 import { mockCategories } from "../../../data/mockCategories";
-import catalogApi from "../../../api/catalogApi";
 import styles from "./FeaturedCategories.module.css";
 
 const ICON_MAP = {
@@ -28,49 +27,7 @@ const ICON_MAP = {
 };
 
 export default function FeaturedCategories({ onSelectCategory }) {
-  const [categories, setCategories] = useState(mockCategories);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchApiCategories = async () => {
-      try {
-        setLoading(true);
-        const res = await catalogApi.getRootCategories(0, 8);
-        if (
-          res &&
-          res.result &&
-          res.result.data &&
-          res.result.data.length > 0
-        ) {
-          const merged = res.result.data.map((cat, idx) => {
-            const fallback = mockCategories[idx] || mockCategories[0];
-            return {
-              categoryId: cat.categoryId,
-              name: cat.name,
-              slug: cat.slug,
-              description: cat.description || fallback.description,
-              executionType: fallback.executionType,
-              executionLabel: fallback.executionLabel,
-              iconName: fallback.iconName,
-              accentColor: fallback.accentColor,
-              serviceCount: fallback.serviceCount,
-              popularTags:
-                cat.children && cat.children.length > 0
-                  ? Array.from(cat.children).map((c) => c.name)
-                  : fallback.popularTags,
-            };
-          });
-          setCategories(merged);
-        }
-      } catch (err) {
-        // Fall back to mockCategories
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchApiCategories();
-  }, []);
+  const [categories] = useState(mockCategories);
 
   const getBadgeClass = (type) => {
     switch (type) {

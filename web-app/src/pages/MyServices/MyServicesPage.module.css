@@ -7,7 +7,7 @@
 .contentWrapper {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 32px;
 }
 
 .topBar {
@@ -102,7 +102,7 @@
 
 @media (max-width: 640px) {
   .contentWrapper {
-    padding: 0 16px;
+    padding: 0 20px;
   }
   .pageTitle {
     font-size: 1.5rem;

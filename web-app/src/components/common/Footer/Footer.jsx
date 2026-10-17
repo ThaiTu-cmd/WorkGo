@@ -72,6 +72,9 @@ export default function Footer() {
             <span className={styles.copyright}>
               © 2026 WorkGo Marketplace Inc. Nền tảng kết nối dịch vụ chuyên nghiệp hàng đầu.
             </span>
+            <span className={styles.shortcutHint}>
+              Mẹo bàn phím: Tab di chuyển • Esc đóng nhanh
+            </span>
           </div>
 
           <div className={styles.rightBottom}>

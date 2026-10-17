@@ -30,4 +30,3 @@ spring:
             - Path=${app.api-prefix}/order/**
           filters:
             - StripPrefix=2
-

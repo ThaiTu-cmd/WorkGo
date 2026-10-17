@@ -1,0 +1,210 @@
+.appRoot {
+  min-height: 100vh;
+  /* Host theme is dark by default (body text #F8FCFF); web-app UI is light-only.
+     Tailwind preflight makes inputs `color: inherit`, so without this, fields
+     with a white background render white-on-white text. */
+  color: var(--wg-text);
+  color-scheme: light;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+/* F6: toast queue stack — positioning moved here from .toastNotification
+   (same geometry as web-app mirror). */
+.toastStack {
+  position: fixed;
+  bottom: 24px;
+  right: 16px;
+  left: 16px;
+  max-width: 420px;
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 3000;
+}
+
+.toastNotification {
+  position: static;
+  background-color: var(--wg-secondary);
+  color: #ffffff;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  z-index: 3000;
+  border-left: 4px solid var(--wg-primary);
+  overflow-wrap: break-word;
+  word-break: break-word;
+  animation: toastSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 640px) {
+  .toastStack {
+    left: auto;
+  }
+}
+
+@keyframes toastSlide {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* S4: offline banner — fixed top strip, keeps page usable underneath. */
+.offlineBanner {
+  position: sticky;
+  top: 0;
+  z-index: 3001;
+  background-color: #b45309;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 8px 16px;
+}
+
+.toastIcon {
+  color: var(--wg-primary);
+  flex-shrink: 0;
+}
+
+/* F6: 44px manual dismiss per toast. */
+.toastClose {
+  margin-left: auto;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: #ffffff;
+  opacity: 0.8;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.toastClose:hover {
+  opacity: 1;
+}
+
+/* Scoped re-declaration of web-app design tokens (mirror styles/variables.css :root).
+   Scoped under .webapp-scope so bridge pages never leak tokens into the host site. */
+.webapp-scope {
+  --wg-primary: #1dbf73;
+  --wg-primary-hover: #19a463;
+  --wg-primary-active: #158852;
+  --wg-primary-light: #f0fbf5;
+  --wg-primary-glow: rgba(29, 191, 115, 0.25);
+
+  --wg-secondary: #0d1117;
+  --wg-hero-bg: #012b1d;
+  --wg-hero-gradient: linear-gradient(
+    135deg,
+    #032115 0%,
+    #063923 55%,
+    #0b4e33 100%
+  );
+  --wg-hero-banner-accent: #0f6844;
+
+  --wg-accent: #ff7640;
+  --wg-accent-hover: #e86330;
+  --wg-star: #ffb33e;
+
+  --wg-bg: #fafafa;
+  --wg-surface: #ffffff;
+  --wg-surface-alt: #f5f5f5;
+  --wg-text: #222325;
+  --wg-text-secondary: #62646a;
+  --wg-text-muted: #95979d;
+  --wg-border: #e4e5e7;
+  --wg-border-light: #efeff0;
+
+  --badge-digital-bg: #e0f2fe;
+  --badge-digital-text: #0369a1;
+  --badge-digital-border: #bae6fd;
+
+  --badge-onsite-bg: #fef3c7;
+  --badge-onsite-text: #b45309;
+  --badge-onsite-border: #fde68a;
+
+  --badge-delivery-bg: #dcfce7;
+  --badge-delivery-text: #15803d;
+  --badge-delivery-border: #bbf7d0;
+
+  --badge-appointment-bg: #f3e8ff;
+  --badge-appointment-text: #7c3aed;
+  --badge-appointment-border: #e9d5ff;
+
+  --font-sans:
+    var(--font-be-vietnam-pro), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: var(--font-sans);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.07);
+  --shadow-card-hover: 0 12px 28px rgba(0, 0, 0, 0.12);
+  --shadow-header: 0 2px 10px rgba(0, 0, 0, 0.06);
+  --shadow-search: 0 8px 30px rgba(0, 0, 0, 0.22);
+  --shadow-dropdown: 0 10px 30px rgba(0, 0, 0, 0.12);
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+
+  --container-max: 1240px;
+  --header-height: 76px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toastNotification {
+    animation: none;
+  }
+}
+
+/* Edge-gutter restore: mirror `container` divs (Header/Hero/Sections/Footer/
+   Catalog) lost web-app reset.css on the website (poison-chain ban), and
+   Tailwind's own `.container` only sets max-width — no side padding.
+   Scoped under .webapp-scope so the host site is untouched; unlayered author
+   CSS beats Tailwind's layered `.container` unconditionally.
+   Excludes the header's own container (it already has deterministic 24px). */
+.webapp-scope :global(.container:not([class*="headerContainer"])) {
+  width: 100%;
+  max-width: 1320px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
+@media (max-width: 768px) {
+  .webapp-scope :global(.container:not([class*="headerContainer"])) {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}

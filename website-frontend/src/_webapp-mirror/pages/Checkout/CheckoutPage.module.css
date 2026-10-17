@@ -1,0 +1,728 @@
+.pageContainer {
+  background-color: #f8fafc;
+  min-height: 100vh;
+  padding: calc(var(--header-height) + 24px) 0 60px 0;
+}
+
+.contentWrapper {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 clamp(16px, 2.5vw, 32px);
+}
+
+/* ---------- Top ---------- */
+.breadcrumbNav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.88rem;
+  color: var(--wg-text-secondary);
+  margin-bottom: 20px;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-sm);
+  color: #1e293b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background-color var(--transition-fast);
+}
+
+.backBtn:hover:not(:disabled) {
+  background-color: #f1f5f9;
+}
+
+.backBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sep {
+  color: #cbd5e1;
+}
+
+.current {
+  font-weight: 600;
+  color: var(--wg-text);
+}
+
+.pageTitle {
+  margin-bottom: 20px;
+  font-size: clamp(1.4rem, 2.4vw, 1.8rem);
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--wg-text);
+}
+
+/* ---------- Stepper ---------- */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--wg-text-muted);
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.stepDot {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--wg-border);
+  background-color: #ffffff;
+  font-size: 0.8rem;
+}
+
+.step_done {
+  color: var(--wg-primary-active);
+}
+
+.step_done .stepDot {
+  border-color: var(--wg-primary);
+  background-color: var(--wg-primary);
+  color: #ffffff;
+}
+
+.step_active {
+  color: var(--wg-text);
+}
+
+.step_active .stepDot {
+  border-color: var(--wg-primary);
+  color: var(--wg-primary-active);
+  box-shadow: 0 0 0 4px var(--wg-primary-glow);
+}
+
+.step_todo {
+  color: var(--wg-text-muted);
+}
+
+.stepLine {
+  flex: 1;
+  max-width: 120px;
+  height: 2px;
+  background-color: var(--wg-border);
+}
+
+.stepLineDone {
+  background-color: var(--wg-primary);
+}
+
+/* ---------- Layout ---------- */
+.checkoutGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 24px;
+  align-items: start;
+}
+
+.mainCol {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card,
+.snapshot {
+  padding: 24px;
+  background-color: var(--wg-surface);
+  border: 1px solid var(--wg-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.cardTitle {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: var(--wg-text);
+}
+
+.card > .cardTitle {
+  margin-bottom: 16px;
+}
+
+.cardSub {
+  margin: -8px 0 16px;
+  font-size: 0.88rem;
+  color: var(--wg-text-secondary);
+}
+
+.mutedText {
+  font-size: 0.86rem;
+  color: var(--wg-text-muted);
+}
+
+.statusBadge {
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background-color: #fff7ed;
+  border: 1px solid #fed7aa;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #c2410c;
+  white-space: nowrap;
+}
+
+/* ---------- Service ---------- */
+.serviceRow {
+  display: flex;
+  gap: 16px;
+}
+
+.serviceThumb {
+  width: 132px;
+  height: 88px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+
+.serviceInfo {
+  min-width: 0;
+}
+
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 6px;
+}
+
+.execBadge {
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background-color: var(--badge-digital-bg);
+  border: 1px solid var(--badge-digital-border);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--badge-digital-text);
+}
+
+.orderCode {
+  font-size: 0.78rem;
+  color: var(--wg-text-muted);
+}
+
+.serviceTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--wg-text);
+}
+
+.provider {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 0.86rem;
+  color: var(--wg-text-secondary);
+}
+
+.verified {
+  color: var(--wg-primary);
+}
+
+/* ---------- Package ---------- */
+.packageBox {
+  padding: 16px;
+  border: 1px solid var(--wg-border-light);
+  border-radius: var(--radius-md);
+  background-color: var(--wg-bg);
+}
+
+.packageHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tier {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--wg-primary-active);
+}
+
+.packageName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--wg-text);
+}
+
+.packagePrice {
+  font-size: 1.05rem;
+  white-space: nowrap;
+  color: var(--wg-text);
+}
+
+.packageMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--wg-text-secondary);
+}
+
+.packageMeta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.packageMeta svg {
+  color: var(--wg-primary-active);
+}
+
+.subTitle {
+  margin: 18px 0 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--wg-text);
+}
+
+.addonList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.addonList li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--wg-border);
+  font-size: 0.88rem;
+  color: var(--wg-text);
+}
+
+.addonList li:last-child {
+  border-bottom: none;
+}
+
+/* ---------- Gateways ---------- */
+.gatewayList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gatewayCard {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1.5px solid var(--wg-border);
+  border-radius: var(--radius-md);
+  background-color: var(--wg-surface);
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.gatewayCard:hover {
+  border-color: #b7e4cc;
+}
+
+.gatewaySelected,
+.gatewaySelected:hover {
+  border-color: var(--wg-primary);
+  background-color: var(--wg-primary-light);
+  box-shadow: 0 0 0 3px var(--wg-primary-glow);
+}
+
+.gatewayInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gatewayCard:has(.gatewayInput:focus-visible) {
+  outline: 2px solid var(--wg-primary-active);
+  outline-offset: 2px;
+}
+
+.gwLogo {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: #ffffff;
+}
+
+.gwVnpay {
+  background: linear-gradient(135deg, #005baa, #ed1c24);
+}
+
+.gwMomo {
+  background-color: #a50064;
+}
+
+.gwZalopay {
+  background-color: #0068ff;
+}
+
+.gwCard {
+  background-color: #1a1f71;
+  font-style: italic;
+}
+
+.gwBank {
+  background-color: #334155;
+}
+
+.gwText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 0.9rem;
+  color: var(--wg-text);
+}
+
+.gwText small {
+  font-size: 0.76rem;
+  color: var(--wg-text-muted);
+}
+
+.gwFee {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--wg-primary-active);
+  white-space: nowrap;
+}
+
+/* ---------- Snapshot ---------- */
+.snapshot {
+  position: sticky;
+  top: calc(var(--header-height) + 16px);
+}
+
+.lockNote {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--wg-text-muted);
+}
+
+.priceList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+.priceRow dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--wg-text-secondary);
+}
+
+.priceRow dd {
+  margin: 0;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--wg-text);
+}
+
+.priceRowMuted {
+  font-size: 0.84rem;
+}
+
+.priceRowMuted dt {
+  padding-left: 10px;
+  color: var(--wg-text-muted);
+}
+
+.priceRowSubtotal {
+  padding-top: 10px;
+  border-top: 1px solid var(--wg-border-light);
+}
+
+.priceRowSubtotal dt {
+  font-weight: 600;
+  color: var(--wg-text);
+}
+
+.tip {
+  position: relative;
+  display: inline-flex;
+  color: var(--wg-text-muted);
+  cursor: help;
+}
+
+.tip:hover::after,
+.tip:focus::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background-color: #1e293b;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #ffffff;
+  z-index: 5;
+}
+
+.totalRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 2px solid var(--wg-text);
+  font-weight: 700;
+  color: var(--wg-text);
+}
+
+.totalRow strong {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--wg-primary-active);
+}
+
+.netNote {
+  margin-top: 4px;
+  text-align: right;
+  font-size: 0.76rem;
+  color: var(--wg-text-muted);
+}
+
+.escrowBox {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0 14px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background-color: var(--wg-primary-light);
+  border: 1px solid #c7efd9;
+  font-size: 0.8rem;
+  color: #1f5f3f;
+}
+
+.escrowBox svg {
+  flex-shrink: 0;
+  color: var(--wg-primary-active);
+}
+
+.agree {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  font-size: 0.82rem;
+  color: var(--wg-text-secondary);
+  cursor: pointer;
+}
+
+.agree input {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--wg-primary);
+}
+
+.btnPay {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background-color: var(--wg-primary);
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #ffffff;
+  transition: background-color var(--transition-fast);
+}
+
+.btnPay:hover:not(:disabled) {
+  background-color: var(--wg-primary-hover);
+}
+
+.btnPay:disabled {
+  background-color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.snapshotTime {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 0.74rem;
+  color: var(--wg-text-muted);
+}
+
+/* ---------- Empty / success ---------- */
+.emptyState,
+.successCard {
+  max-width: 560px;
+  margin: 40px auto;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  background-color: var(--wg-surface);
+  border: 1px solid var(--wg-border);
+  border-radius: var(--radius-lg);
+  color: var(--wg-text-secondary);
+}
+
+.emptyState .pageTitle,
+.successCard .pageTitle {
+  margin-bottom: 0;
+}
+
+.successActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.successActions .btnPay {
+  width: auto;
+  padding: 12px 24px;
+}
+
+.btnSecondary {
+  padding: 12px 24px;
+  border: 1px solid var(--wg-border);
+  border-radius: var(--radius-md);
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--wg-text);
+}
+
+.btnSecondary:hover {
+  border-color: var(--wg-primary);
+}
+
+.successIcon {
+  color: var(--wg-primary);
+}
+
+/* ---------- Overlay ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background-color: rgba(15, 23, 42, 0.5);
+}
+
+.overlayBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 36px;
+  border-radius: var(--radius-lg);
+  background-color: var(--wg-surface);
+  font-size: 0.95rem;
+  color: var(--wg-text);
+}
+
+.spinner {
+  color: var(--wg-primary);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1024px) {
+  .checkoutGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .snapshot {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .card,
+  .snapshot {
+    padding: 16px;
+  }
+
+  .gatewayList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .serviceRow {
+    flex-direction: column;
+  }
+
+  .serviceThumb {
+    width: 100%;
+    height: 140px;
+  }
+
+  .step_done .stepLabel,
+  .step_todo .stepLabel {
+    display: none;
+  }
+}

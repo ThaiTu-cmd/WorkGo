@@ -59,11 +59,10 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
               onNavigate && onNavigate('home');
             }}
           >
-            <div className={styles.logoIcon}>
-              <span>W</span>
-            </div>
-            <span className={styles.logoText}>WorkGo</span>
-            <span className={styles.logoDot}>.</span>
+            <span className={styles.logoText}>
+              <span className={styles.logoWork}>Work</span>
+              <span className={styles.logoGo}>Go</span>
+            </span>
           </a>
 
           {/* Compact search in navbar */}
@@ -99,6 +98,13 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
             onClick={() => onNavigate && onNavigate('my-services')}
           >
             Quản lý Dịch vụ
+          </button>
+          <button
+            type="button"
+            className={`${styles.navLink} ${activePage === 'orders' ? styles.navLinkActive : ''}`}
+            onClick={() => onNavigate && onNavigate('orders')}
+          >
+            Đơn hàng
           </button>
           <a
             href="#how-it-works"
@@ -186,6 +192,26 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
               }}
             >
               🏠 Về Trang chủ
+            </button>
+            <button
+              type="button"
+              className={styles.mobileNavLink}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onNavigate && onNavigate('availability');
+              }}
+            >
+              📅 Lịch rảnh (Chuyên gia)
+            </button>
+            <button
+              type="button"
+              className={styles.mobileNavLink}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onNavigate && onNavigate('orders');
+              }}
+            >
+              📦 Đơn hàng của tôi
             </button>
             <a
               href="#how-it-works"

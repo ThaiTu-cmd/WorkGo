@@ -60,7 +60,7 @@
   font-size: 1.65rem;
   font-weight: 800;
   color: #0f172a;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: var(--font-heading);
   line-height: 1.2;
 }
 

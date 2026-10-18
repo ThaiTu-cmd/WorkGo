@@ -29,18 +29,18 @@ import java.util.List;
 @Configuration
 @Slf4j
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     IdentityService identityService;
     ObjectMapper objectMapper;
 
-    @NonFinal
     private final String[] PUBLIC_ENDPOINTS = {
-            "identity/users/registration" ,
-            "/auth/token",
-            "/auth/introspect",
-            "/auth/logout"
+            "/identity/users/registration",
+            "/identity/auth/token",
+            "/identity/auth/introspect",
+            "/identity/auth/logout",
+            "/identity/auth/refresh"
     };
 
     @Value("${app.api-prefix}")
@@ -49,7 +49,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        if(!isPublicEndpoint(exchange.getRequest())){
+        if(isPublicEndpoint(exchange.getRequest())){
             return chain.filter(exchange);
         }
 
@@ -76,8 +76,10 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     }
 
     private boolean isPublicEndpoint(ServerHttpRequest request){
+        String path = request.getURI().getPath();
+
         return Arrays.stream(PUBLIC_ENDPOINTS)
-                .anyMatch(s -> request.getURI().getPath().matches(apiPrefix + s));
+                .anyMatch(publicEndpoint -> path.equals(apiPrefix + publicEndpoint));
     }
 
     Mono<Void> unauthenticated(ServerHttpResponse response){

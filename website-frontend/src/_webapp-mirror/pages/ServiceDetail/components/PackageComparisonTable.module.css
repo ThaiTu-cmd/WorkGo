@@ -93,7 +93,7 @@
   font-size: 1.25rem;
   font-weight: 800;
   color: #059669;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: var(--font-heading);
   margin: 4px 0 6px 0;
 }
 

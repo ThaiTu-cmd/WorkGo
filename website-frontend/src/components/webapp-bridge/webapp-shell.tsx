@@ -15,6 +15,9 @@ import CatalogSearchPage from "@/_webapp-mirror/pages/CatalogSearch/CatalogSearc
 import ServiceDetailPage from "@/_webapp-mirror/pages/ServiceDetail/ServiceDetailPage";
 import MyServicesPage from "@/_webapp-mirror/pages/MyServices/MyServicesPage";
 import ServiceFormPage from "@/_webapp-mirror/pages/ServiceForm/ServiceFormPage";
+import AvailabilityPage from "@/_webapp-mirror/pages/Availability/AvailabilityPage";
+import CheckoutPage from "@/_webapp-mirror/pages/Checkout/CheckoutPage";
+import OrderDashboardPage from "@/_webapp-mirror/pages/OrderDashboard/OrderDashboardPage";
 import { mockProviderServices } from "@/_webapp-mirror/data/mockProviderServices";
 import {
   initialProviderServices,
@@ -54,6 +57,9 @@ export type TrungPageKey =
   | "detail"
   | "my-services"
   | "service-form"
+  | "availability"
+  | "checkout"
+  | "orders"
   | "register"
   | "login"
   | "profile-settings"
@@ -92,12 +98,14 @@ type ProviderService = (typeof mockProviderServices)[number] | SavedService;
 // through turbopack.resolveAlias to engine-backed shims; without the alias
 // it falls back to the mirror's own web-app mocks.
 export default function WebAppShell() {
-  const [currentPage, setCurrentPage] = useState<TrungPageKey>("home"); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form' + 15 trung-pages
+  const [currentPage, setCurrentPage] = useState<TrungPageKey>("home"); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form' | 'availability' | 'checkout' | 'orders' + 15 trung-pages
   const [previousPage, setPreviousPage] = useState<TrungPageKey>("home");
   const [selectedServiceId, setSelectedServiceId] = useState("svc-1");
   const [selectedJobId, setSelectedJobId] = useState("");
   const [selectedProviderId, setSelectedProviderId] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState("");
+  // { service, pkg, addons } handed over by ServiceDetailPage "Tiếp tục đặt hàng".
+  const [checkoutOrder, setCheckoutOrder] = useState<Record<string, unknown> | null>(null);
   // C2-5: same persistence contract as web-app MyServicesPage — the
   // persisted snapshot wins on reload, bundled mocks are the fallback.
   // (Without this, the shell would feed the stale mock list and the
@@ -127,42 +135,6 @@ export default function WebAppShell() {
       window.removeEventListener("offline", goOffline);
     };
   }, []);
-
-  const appRootRef = useRef<HTMLDivElement>(null);
-  const offlineBannerRef = useRef<HTMLDivElement>(null);
-
-  // UI fix: công bố chiều cao thật của banner offline thành --offline-h để
-  // Header (top: var(--offline-h,0px)), TrungSubNav và .offsetScope cùng
-  // tụt xuống dưới banner. Inline style + ResizeObserver → không setState,
-  // không vi phạm react-hooks/set-state-in-effect.
-  useEffect(() => {
-    const root = appRootRef.current;
-    if (!root) return;
-    const banner = offlineBannerRef.current;
-    if (!banner) {
-      root.style.removeProperty("--offline-h");
-      return;
-    }
-    // UI cycle 2: gộp callback ResizeObserver vào 1 frame rAF — chiều cao banner
-    // có thể đổi liên tục khi reflow; ghi CSS var đồng bộ mỗi callback sẽ thrash layout.
-    let rafId = 0;
-    const sync = () => {
-      if (rafId) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = 0;
-        root.style.setProperty("--offline-h", `${banner.offsetHeight}px`);
-      });
-    };
-    sync();
-    const observer = new ResizeObserver(sync);
-    observer.observe(banner);
-    return () => {
-      observer.disconnect();
-      if (rafId) cancelAnimationFrame(rafId);
-      root.style.removeProperty("--offline-h");
-    };
-  }, [isOnline]);
-
   const [serviceFormMode, setServiceFormMode] = useState<"create" | "edit">("create");
   const [editServiceId, setEditServiceId] = useState<string | null>(null);
   const [catalogFilters, setCatalogFilters] = useState({
@@ -300,13 +272,10 @@ export default function WebAppShell() {
   };
 
   return (
-    <div
-      ref={appRootRef}
-      className={`${styles.appRoot} ${styles["webapp-scope"]}${currentPage === "service-form" ? ` ${styles.appRootNoHeader}` : ""}`}
-    >
+    <div className={`${styles.appRoot} ${styles["webapp-scope"]}`}>
       {/* S4: offline banner — local data keeps working, user must know why */}
       {!isOnline && (
-        <div ref={offlineBannerRef} data-offline-banner className={styles.offlineBanner} role="status">
+        <div className={styles.offlineBanner} role="status">
           <span>Bạn đang ngoại tuyến — ứng dụng vẫn dùng được với dữ liệu đã lưu trên thiết bị này.</span>
         </div>
       )}
@@ -343,197 +312,188 @@ export default function WebAppShell() {
       <TrungSubNav current={currentPage} onNavigate={handleNavigate} />
 
       {/* Main Content Router */}
-      <div className={styles.pageScope}>
-        {currentPage === "home" && (
-          <main className={styles.main}>
-            {/* 1. Hero Banner with Central Search */}
-            <HeroBanner onSearch={handleHeroSearch} />
+      {currentPage === "home" && (
+        <main className={styles.main}>
+          {/* 1. Hero Banner with Central Search */}
+          <HeroBanner onSearch={handleHeroSearch} />
 
-            {/* 2. Trusted By enterprise logos */}
-            <TrustedBy />
+          {/* 2. Trusted By enterprise logos */}
+          <TrustedBy />
 
-            {/* 3. Featured Categories Grid */}
-            <FeaturedCategories onSelectCategory={handleSelectCategory} />
+          {/* 3. Featured Categories Grid */}
+          <FeaturedCategories onSelectCategory={handleSelectCategory} />
 
-            {/* 4. Popular Services Carousel (mirror ignores onViewAll; navigation via select) */}
-            <PopularServices onSelectService={handleSelectService} />
+          {/* 4. Popular Services Carousel (mirror ignores onViewAll; navigation via select) */}
+          <PopularServices onSelectService={handleSelectService} />
 
-            {/* 5. Value Proposition (Escrow & Packages) */}
-            <ValueProposition />
+          {/* 5. Value Proposition (Escrow & Packages) */}
+          <ValueProposition />
 
-            {/* 6. How It Works (4 steps) */}
-            <HowItWorks />
+          {/* 6. How It Works (4 steps) */}
+          <HowItWorks />
 
-            {/* 7. Dual Call-to-Action */}
-            <DualCTA onOpenAuth={(mode: "login" | "register") => setAuthModal(mode)} />
-          </main>
-        )}
+          {/* 7. Dual Call-to-Action */}
+          <DualCTA onOpenAuth={(mode: "login" | "register") => setAuthModal(mode)} />
+        </main>
+      )}
 
-        {currentPage === "catalog" && (
-          /* Catalog Search Page */
-          <CatalogSearchPage
-            key={`${catalogFilters.category}-${catalogFilters.executionType}-${catalogFilters.query}`}
-            initialCategory={catalogFilters.category}
-            initialExecutionType={catalogFilters.executionType}
-            initialSearchQuery={catalogFilters.query}
-            onSelectService={handleSelectService}
-            onGoHome={() => handleNavigate("home")}
-          />
-        )}
+      {currentPage === "catalog" && (
+        /* Catalog Search Page */
+        <CatalogSearchPage
+          key={`${catalogFilters.category}-${catalogFilters.executionType}-${catalogFilters.query}`}
+          initialCategory={catalogFilters.category}
+          initialExecutionType={catalogFilters.executionType}
+          initialSearchQuery={catalogFilters.query}
+          onSelectService={handleSelectService}
+          onGoHome={() => handleNavigate("home")}
+        />
+      )}
 
-        {currentPage === "detail" && (
-          /* Service Detail Page */
-          <div className={styles.offsetScope}>
-            <ServiceDetailPage
-              key={selectedServiceId}
-              serviceId={selectedServiceId}
-              onGoBack={() => setCurrentPage(previousPage || "catalog")}
-              onSelectCategory={handleSelectCategory}
-              onGoHome={() => handleNavigate("home")}
-              onShowToast={showToast}
-            />
-          </div>
-        )}
+      {currentPage === "detail" && (
+        /* Service Detail Page */
+        <ServiceDetailPage
+          key={selectedServiceId}
+          serviceId={selectedServiceId}
+          onGoBack={() => setCurrentPage(previousPage || "catalog")}
+          onSelectCategory={handleSelectCategory}
+          onGoHome={() => handleNavigate("home")}
+          onShowToast={showToast}
+          onCheckout={(order: Record<string, unknown>) => {
+            setCheckoutOrder(order);
+            handleNavigate("checkout");
+          }}
+        />
+      )}
 
-        {currentPage === "my-services" && (
-          /* Provider My Services Page */
-          <div className={styles.offsetScope}>
-            <MyServicesPage
-              services={providerServices}
-              onUpdateServices={setProviderServices}
-              onSelectService={handleSelectService}
-              onGoHome={() => handleNavigate("home")}
-              onShowToast={showToast}
-              onOpenCreateForm={handleOpenCreateForm}
-              onOpenEditForm={handleOpenEditForm}
-            />
-          </div>
-        )}
+      {currentPage === "checkout" && (
+        /* Checkout: Order Snapshot + payment gateway (mock) */
+        <CheckoutPage
+          order={checkoutOrder}
+          onGoBack={() => setCurrentPage("detail")}
+          onShowToast={showToast}
+          onDone={() => handleNavigate("home")}
+          onViewOrders={() => handleNavigate("orders")}
+        />
+      )}
 
-        {currentPage === "service-form" && (
-          /* Provider Multi-step Service Form Wizard */
-          <div className={styles.offsetScope}>
-            <ServiceFormPage
-              mode={serviceFormMode}
-              // Mirror defaults serviceId=null so tsc narrows the prop; at runtime
-              // it accepts a string (used in .find for edit prefill, as App.jsx does).
-              serviceId={editServiceId as unknown as null}
-              onCancel={() => {
-                setCurrentPage("my-services");
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              onSaveSuccess={handleServiceFormSuccess}
-              onShowToast={showToast}
-            />
-          </div>
-        )}
+      {currentPage === "orders" && (
+        /* Client / Provider order dashboard */
+        <OrderDashboardPage onGoHome={() => handleNavigate("home")} onShowToast={showToast} />
+      )}
 
-        {currentPage === "register" && (
-          <div className={styles.offsetScope}>
-            <RegisterPage onNavigate={handleNavigate} onShowToast={showToast} />
-          </div>
-        )}
+      {currentPage === "my-services" && (
+        /* Provider My Services Page */
+        <MyServicesPage
+          services={providerServices}
+          onUpdateServices={setProviderServices}
+          onSelectService={handleSelectService}
+          onGoHome={() => handleNavigate("home")}
+          onShowToast={showToast}
+          onOpenCreateForm={handleOpenCreateForm}
+          onOpenEditForm={handleOpenEditForm}
+          onOpenAvailability={() => handleNavigate("availability")}
+        />
+      )}
 
-        {currentPage === "login" && (
-          <div className={styles.offsetScope}>
-            <LoginPage onNavigate={handleNavigate} onShowToast={showToast} />
-          </div>
-        )}
+      {currentPage === "availability" && (
+        /* Provider weekly availability / booking slots */
+        <AvailabilityPage
+          onGoBack={() => handleNavigate("my-services")}
+          onShowToast={showToast}
+        />
+      )}
 
-        {currentPage === "profile-settings" && (
-          <div className={styles.offsetScope}>
-            <ProfileSettingsPage onNavigate={handleNavigate} onShowToast={showToast} />
-          </div>
-        )}
+      {currentPage === "service-form" && (
+        /* Provider Multi-step Service Form Wizard */
+        <ServiceFormPage
+          mode={serviceFormMode}
+          // Mirror defaults serviceId=null so tsc narrows the prop; at runtime
+          // it accepts a string (used in .find for edit prefill, as App.jsx does).
+          serviceId={editServiceId as unknown as null}
+          onCancel={() => {
+            setCurrentPage("my-services");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          onSaveSuccess={handleServiceFormSuccess}
+          onShowToast={showToast}
+        />
+      )}
 
-        {currentPage === "address-book" && (
-          <div className={styles.offsetScope}>
-            <AddressBookPage onNavigate={handleNavigate} onShowToast={showToast} />
-          </div>
-        )}
+      {currentPage === "register" && (
+        <RegisterPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
 
-        {currentPage === "provider-onboarding" && (
-          <div className={styles.offsetScope}>
-            <ProviderOnboardingPage onNavigate={handleNavigate} onShowToast={showToast} />
-          </div>
-        )}
+      {currentPage === "login" && (
+        <LoginPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
 
-        {currentPage === "provider-profile" && (
-          <div className={styles.offsetScope}>
-            <ProviderProfilePage
-              onNavigate={handleNavigate}
-              onShowToast={showToast}
-              providerId={selectedProviderId || undefined}
-            />
-          </div>
-        )}
+      {currentPage === "profile-settings" && (
+        <ProfileSettingsPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
 
-        {currentPage === "job-list" && (
-          <div className={styles.offsetScope}>
-            <JobListPage onNavigate={handleNavigate} onShowToast={showToast} />
-          </div>
-        )}
+      {currentPage === "address-book" && (
+        <AddressBookPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
 
-        {currentPage === "job-post" && (
-          <div className={styles.offsetScope}>
-            <JobPostPage onNavigate={handleNavigate} onShowToast={showToast} />
-          </div>
-        )}
+      {currentPage === "provider-onboarding" && (
+        <ProviderOnboardingPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
 
-        {currentPage === "submit-proposal" && (
-          <div className={styles.offsetScope}>
-            <SubmitProposalPage
-              onNavigate={handleNavigate}
-              onShowToast={showToast}
-              jobId={selectedJobId || undefined}
-            />
-          </div>
-        )}
+      {currentPage === "provider-profile" && (
+        <ProviderProfilePage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+          providerId={selectedProviderId || undefined}
+        />
+      )}
 
-        {currentPage === "proposal-review" && (
-          <div className={styles.offsetScope}>
-            <ProposalReviewPage
-              onNavigate={handleNavigate}
-              onShowToast={showToast}
-              jobId={selectedJobId || undefined}
-            />
-          </div>
-        )}
+      {currentPage === "job-list" && (
+        <JobListPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
 
-        {currentPage === "payment-gateway" && (
-          <div className={styles.offsetScope}>
-            <PaymentGatewayPage onNavigate={handleNavigate} onShowToast={showToast} />
-          </div>
-        )}
+      {currentPage === "job-post" && (
+        <JobPostPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
 
-        {currentPage === "wallet" && (
-          <div className={styles.offsetScope}>
-            <WalletPage onNavigate={handleNavigate} onShowToast={showToast} />
-          </div>
-        )}
+      {currentPage === "submit-proposal" && (
+        <SubmitProposalPage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+          jobId={selectedJobId || undefined}
+        />
+      )}
 
-        {currentPage === "payout-settings" && (
-          <div className={styles.offsetScope}>
-            <PayoutSettingsPage onNavigate={handleNavigate} onShowToast={showToast} />
-          </div>
-        )}
+      {currentPage === "proposal-review" && (
+        <ProposalReviewPage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+          jobId={selectedJobId || undefined}
+        />
+      )}
 
-        {currentPage === "review-form" && (
-          <div className={styles.offsetScope}>
-            <ReviewFormPage
-              onNavigate={handleNavigate}
-              onShowToast={showToast}
-              orderId={selectedOrderId || undefined}
-            />
-          </div>
-        )}
+      {currentPage === "payment-gateway" && (
+        <PaymentGatewayPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
 
-        {currentPage === "dispute-center" && (
-          <div className={styles.offsetScope}>
-            <DisputeCenterPage onNavigate={handleNavigate} onShowToast={showToast} />
-          </div>
-        )}
-      </div>
+      {currentPage === "wallet" && (
+        <WalletPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "payout-settings" && (
+        <PayoutSettingsPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+
+      {currentPage === "review-form" && (
+        <ReviewFormPage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+          orderId={selectedOrderId || undefined}
+        />
+      )}
+
+      {currentPage === "dispute-center" && (
+        <DisputeCenterPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
 
       {/* Footer (hidden on service-form wizard for clean focus) */}
       {currentPage !== "service-form" && <Footer />}

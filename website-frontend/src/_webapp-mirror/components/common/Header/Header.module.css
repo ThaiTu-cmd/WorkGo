@@ -55,23 +55,25 @@
   color: inherit;
 }
 
-.logoIcon {
-  width: 34px;
-  height: 34px;
-  background-color: var(--wg-primary);
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  font-weight: 900;
-  font-size: 1.25rem;
+.logoText {
+  display: inline-flex;
+  white-space: nowrap;
 }
 
-.logoDot {
+.logoWork {
+  color: #ffffff;
+  transition: color var(--transition-fast);
+}
+
+.logoGo {
   color: var(--wg-primary);
-  font-size: 2rem;
-  line-height: 0;
+  transition: color var(--transition-fast);
+}
+
+/* On a white header the whole wordmark turns dark green. */
+.headerScrolled .logoWork,
+.headerScrolled .logoGo {
+  color: var(--wg-primary-active);
 }
 
 .navSearch {

@@ -85,7 +85,7 @@
   align-items: center;
   justify-content: center;
   font-family: var(--font-heading);
-  font-weight: 900;
+  font-weight: 800;
   font-size: 1.4rem;
   margin-bottom: 14px;
 }
@@ -200,6 +200,12 @@
   outline: none;
   transition: border-color var(--transition-fast);
   background-color: var(--wg-surface);
+  color: var(--wg-text);
+}
+
+.inputField::placeholder {
+  color: var(--wg-text-muted);
+  opacity: 1;
 }
 
 .fieldWithIcon .inputField {

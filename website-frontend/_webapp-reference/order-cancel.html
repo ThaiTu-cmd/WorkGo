@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="WorkGo - Yêu cầu hủy đơn hàng. Chọn lý do, mô tả chi tiết và xem số tiền được hoàn từ Escrow."
+    />
+    <title>Yêu cầu hủy đơn — WorkGo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="order-cancel.css" />
+  </head>
+  <body>
+    <!-- 1. Header -->
+    <header class="header">
+      <div class="container header-container">
+        <a href="index.html" class="logo"><span class="logo-work">Work</span><span class="logo-go">Go</span></a>
+        <nav class="nav-links">
+          <a href="catalog-search.html">Danh mục dịch vụ</a>
+          <a href="my-services.html">Quản lý dịch vụ</a>
+          <a href="order-dashboard.html" class="active">Đơn hàng</a>
+        </nav>
+        <span class="avatar" aria-hidden="true">TQ</span>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="container">
+        <!-- 2. Breadcrumb -->
+        <div class="breadcrumb">
+          <a href="order-dashboard.html" class="back-btn">&larr; Đơn hàng</a>
+          <span class="sep">/</span>
+          <span>WG-20261012-1093</span>
+          <span class="sep">/</span>
+          <span class="current">Yêu cầu hủy</span>
+        </div>
+
+        <h1 class="page-title">Yêu cầu hủy đơn hàng</h1>
+        <p class="page-subtitle">
+          Đơn đang được thực hiện nên yêu cầu sẽ được gửi tới chuyên gia và WorkGo xem xét trong vòng 48 giờ.
+        </p>
+
+        <div class="cancel-grid">
+          <!-- ===== Left: form ===== -->
+          <form class="card" id="cancelForm" novalidate>
+            <fieldset class="field">
+              <legend class="field-label">Lý do hủy <span class="req">*</span></legend>
+              <div class="reason-list">
+                <label class="reason-card"><input type="radio" name="reason" value="CHANGED_MIND" /><span>Đổi ý / không còn nhu cầu</span></label>
+                <label class="reason-card"><input type="radio" name="reason" value="LATE" /><span>Chuyên gia chậm tiến độ</span></label>
+                <label class="reason-card"><input type="radio" name="reason" value="QUALITY" /><span>Chất lượng không như mô tả</span></label>
+                <label class="reason-card"><input type="radio" name="reason" value="NO_CONTACT" /><span>Không liên lạc được chuyên gia</span></label>
+                <label class="reason-card"><input type="radio" name="reason" value="WRONG_ORDER" /><span>Đặt nhầm gói / dịch vụ</span></label>
+                <label class="reason-card"><input type="radio" name="reason" value="OTHER" /><span>Lý do khác</span></label>
+              </div>
+            </fieldset>
+
+            <div class="field">
+              <label class="field-label" for="note">Mô tả chi tiết <span class="req">*</span></label>
+              <textarea
+                id="note"
+                rows="5"
+                maxlength="500"
+                placeholder="Nêu rõ vấn đề bạn gặp, mốc thời gian đã trao đổi với chuyên gia... (tối thiểu 20 ký tự)"
+                aria-describedby="noteHint noteError"
+              ></textarea>
+              <div class="field-foot">
+                <span id="noteError" class="error" hidden>Vui lòng mô tả ít nhất 20 ký tự.</span>
+                <span id="noteHint" class="counter"><span id="noteCount">0</span>/500</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Bằng chứng (tùy chọn)</span>
+              <label class="upload">
+                <input type="file" multiple accept="image/*,.pdf" />
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <path d="m17 8-5-5-5 5" />
+                  <path d="M12 3v12" />
+                </svg>
+                <span>Kéo thả hoặc <strong>chọn tệp</strong> — ảnh chụp tin nhắn, file bàn giao (PNG, JPG, PDF ≤ 5MB)</span>
+              </label>
+            </div>
+
+            <label class="confirm">
+              <input type="checkbox" id="confirm" />
+              <span>Tôi hiểu rằng khi yêu cầu được chấp nhận, đơn sẽ bị hủy và không thể khôi phục.</span>
+            </label>
+
+            <div class="form-actions">
+              <a href="order-dashboard.html" class="btn btn-outline">Quay lại</a>
+              <button type="submit" class="btn btn-danger" id="btnSubmit" disabled>Gửi yêu cầu hủy</button>
+            </div>
+          </form>
+
+          <!-- ===== Right: summary ===== -->
+          <aside class="summary">
+            <h2 class="card-title">Đơn hàng</h2>
+            <div class="order-head">
+              <span class="order-no">WG-20261012-1093</span>
+              <span class="status">Đang thực hiện</span>
+            </div>
+            <p class="svc-title">Thiết kế trọn bộ nhận diện thương hiệu &amp; Logo</p>
+            <p class="partner">Chuyên gia: <strong>Lê Hoàng Anh</strong></p>
+
+            <div class="refund">
+              <h3>Hoàn tiền dự kiến</h3>
+              <dl>
+                <div><dt>Đã thanh toán</dt><dd>3.300.000 ₫</dd></div>
+                <div><dt>Phí nền tảng (không hoàn)</dt><dd>−300.000 ₫</dd></div>
+                <div class="refund-total"><dt>Hoàn tối đa</dt><dd>3.000.000 ₫</dd></div>
+              </dl>
+              <p class="refund-note">Mức hoàn cuối cùng phụ thuộc phần việc chuyên gia đã thực hiện và kết quả đối soát.</p>
+            </div>
+
+            <ol class="timeline">
+              <li class="tl-active"><strong>Gửi yêu cầu</strong><span>Đơn được gắn trạng thái "Đang yêu cầu hủy"</span></li>
+              <li><strong>Chuyên gia phản hồi</strong><span>Trong vòng 48 giờ, quá hạn WorkGo sẽ xử lý</span></li>
+              <li><strong>Hoàn tiền từ Escrow</strong><span>Về nguồn thanh toán sau 3–5 ngày làm việc</span></li>
+            </ol>
+          </aside>
+        </div>
+
+        <!-- Success state -->
+        <section class="card success" id="success" hidden aria-live="polite">
+          <div class="success-icon" aria-hidden="true">✓</div>
+          <h2>Đã gửi yêu cầu hủy</h2>
+          <p>Chuyên gia <strong>Lê Hoàng Anh</strong> sẽ phản hồi trong 48 giờ. Bạn sẽ nhận thông báo khi yêu cầu được xử lý.</p>
+          <a href="order-dashboard.html" class="btn btn-primary">Về trang Đơn hàng</a>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const MIN = 20;
+      const form = document.getElementById('cancelForm');
+      const note = document.getElementById('note');
+      const count = document.getElementById('noteCount');
+      const err = document.getElementById('noteError');
+      const confirmBox = document.getElementById('confirm');
+      const submit = document.getElementById('btnSubmit');
+      const cards = document.querySelectorAll('.reason-card');
+      let touched = false;
+
+      const validate = () => {
+        const reason = form.querySelector('input[name=reason]:checked');
+        const noteOk = note.value.trim().length >= MIN;
+        err.hidden = !touched || noteOk;
+        note.setAttribute('aria-invalid', String(touched && !noteOk));
+        submit.disabled = !(reason && noteOk && confirmBox.checked);
+      };
+
+      cards.forEach((card) =>
+        card.querySelector('input').addEventListener('change', () => {
+          cards.forEach((c) => c.classList.toggle('selected', c.querySelector('input').checked));
+          validate();
+        })
+      );
+      note.addEventListener('input', () => {
+        count.textContent = note.value.length;
+        validate();
+      });
+      note.addEventListener('blur', () => {
+        touched = true;
+        validate();
+      });
+      confirmBox.addEventListener('change', validate);
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        document.querySelector('.cancel-grid').hidden = true;
+        document.querySelector('.page-subtitle').hidden = true;
+        document.getElementById('success').hidden = false;
+      });
+    </script>
+  </body>
+</html>

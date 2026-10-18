@@ -6,7 +6,6 @@
   box-shadow: var(--shadow-search);
   width: 100%;
   max-width: 820px;
-  overflow: hidden;
   transition: all var(--transition-base);
   border: 2px solid transparent;
 }
@@ -25,24 +24,114 @@
   cursor: pointer;
 }
 
-.filterSelect {
+.filterTrigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
-  appearance: none;
-  background: transparent;
-  border: none;
-  outline: none;
+  padding: 16px 0;
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--wg-text);
-  padding: 16px 24px 16px 0;
-  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.triggerIcon {
+  color: var(--wg-primary);
+  flex-shrink: 0;
+}
+
+.triggerLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chevronIcon {
-  position: absolute;
-  right: 14px;
-  pointer-events: none;
+  flex-shrink: 0;
   color: var(--wg-text-muted);
+  transition: transform var(--transition-fast);
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.filterMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  min-width: 240px;
+  padding: 6px;
+  text-align: left;
+  background-color: var(--wg-surface);
+  border: 1px solid var(--wg-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-dropdown);
+  animation: menuIn 0.15s ease-out;
+}
+
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filterOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--wg-text);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.optionActive {
+  background-color: var(--wg-surface-alt);
+}
+
+.optionSelected {
+  background-color: var(--wg-primary-light);
+  color: var(--wg-primary-active);
+  font-weight: 600;
+}
+
+.optionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background-color: var(--wg-surface-alt);
+  color: var(--wg-text-secondary);
+  flex-shrink: 0;
+}
+
+.optionSelected .optionIcon {
+  background-color: #ffffff;
+  color: var(--wg-primary);
+}
+
+.optionLabel {
+  flex: 1;
+}
+
+.optionCheck {
+  color: var(--wg-primary);
+  flex-shrink: 0;
 }
 
 .divider {
@@ -98,6 +187,8 @@
   transition: background-color var(--transition-fast);
   white-space: nowrap;
   flex-shrink: 0;
+  align-self: stretch;
+  border-radius: 0 calc(var(--radius-md) - 2px) calc(var(--radius-md) - 2px) 0;
 }
 
 .submitBtn:hover {
@@ -132,8 +223,7 @@
   .submitBtn {
     width: 100%;
     padding: 14px;
-    border-radius: 0;
-    height: auto; /* UI fix: hết nút 332×182 — height:100% trong column-flex */
+    border-radius: 0 0 calc(var(--radius-md) - 2px) calc(var(--radius-md) - 2px);
   }
 
   .btnIcon {

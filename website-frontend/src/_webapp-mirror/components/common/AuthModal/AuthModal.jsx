@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Lock, User, Mail, CheckCircle2, AlertCircle } from 'lucide-react';
 import styles from './AuthModal.module.css';
 import { useFocusTrap } from '../../../hooks/useFocusTrap';
+import axiosClient, { setAccessToken } from '../../../api/axiosClient';
 
 export default function AuthModal({ initialMode = 'login', onClose }) {
   const [mode, setMode] = useState(initialMode);
@@ -39,19 +40,33 @@ export default function AuthModal({ initialMode = 'login', onClose }) {
     setLoading(true);
     setFeedback(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 350));
-
     if (mode === 'login') {
-      const mockToken = `mock-token-${Date.now()}`;
-      localStorage.setItem('accessToken', mockToken);
-      setFeedback({
-        type: 'success',
-        message: `Đăng nhập thành công! Chào mừng ${formData.userName || 'bạn'} (Demo).`
-      });
-      setTimeout(() => {
-        onClose();
-      }, 1000);
+      try {
+        const res = await axiosClient.post('/identity/auth/token', {
+          userName: formData.userName,
+          password: formData.password,
+        });
+        const token = res?.result?.token;
+        if (!token) throw new Error('Phản hồi đăng nhập không có token');
+        setAccessToken(token);
+        setFeedback({
+          type: 'success',
+          message: `Đăng nhập thành công! Chào mừng ${formData.userName}.`
+        });
+        setTimeout(() => {
+          onClose();
+        }, 1000);
+      } catch (err) {
+        setFeedback({
+          type: 'error',
+          message:
+            err?.status === 401 || err?.status === 400 || err?.status === 404
+              ? 'Sai tên đăng nhập hoặc mật khẩu.'
+              : `Không đăng nhập được: ${err?.message || 'lỗi kết nối máy chủ'}`
+        });
+      }
     } else {
+      await new Promise((resolve) => setTimeout(resolve, 350));
       setFeedback({
         type: 'success',
         message: 'Đăng ký tài khoản thành công (Demo)! Bạn có thể đăng nhập ngay.'

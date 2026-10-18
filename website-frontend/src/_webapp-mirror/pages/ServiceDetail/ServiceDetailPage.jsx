@@ -25,7 +25,8 @@ export default function ServiceDetailPage({
   onGoBack,
   onSelectCategory,
   onGoHome,
-  onShowToast
+  onShowToast,
+  onCheckout
 }) {
   const service = getServiceDetail(serviceId);
 
@@ -53,6 +54,10 @@ export default function ServiceDetailPage({
   };
 
   const handleOrder = (pkg, addons, total) => {
+    if (onCheckout) {
+      onCheckout({ service, pkg, addons });
+      return;
+    }
     const formattedTotal = new Intl.NumberFormat('vi-VN').format(total) + ' ₫';
     if (onShowToast) {
       onShowToast(`Đã chọn "${pkg.name}" (${formattedTotal}) - Sẵn sàng nạp tiền vào Escrow an toàn!`);

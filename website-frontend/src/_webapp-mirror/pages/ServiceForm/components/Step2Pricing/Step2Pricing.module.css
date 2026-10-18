@@ -134,11 +134,14 @@
   font-size: 0.875rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
+  color: #1e293b;
+  background: #ffffff;
   outline: none;
 }
 
 .inputTitle:focus {
   border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
 
 .textareaDesc {
@@ -149,20 +152,51 @@
   font-size: 0.8125rem;
   height: 60px;
   resize: vertical;
+  color: #1e293b;
+  background: #ffffff;
   outline: none;
 }
 
 .textareaDesc:focus {
   border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
 
+/* Dropdown: same box as .inputTitle, custom chevron instead of the native arrow. */
 .select {
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 2.25rem 0.5rem 0.75rem;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #1e293b;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.625rem center;
+  background-size: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
   outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.select:hover:not(:focus) {
+  border-color: #94a3b8;
+}
+
+.select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.select option {
+  color: #1e293b;
+  background-color: #ffffff;
+  font-weight: 500;
 }
 
 .priceInputRow {
@@ -179,6 +213,7 @@
   font-size: 0.9375rem;
   font-weight: 700;
   color: #0f172a;
+  background: #ffffff;
   outline: none;
 }
 
@@ -270,6 +305,8 @@
   font-size: 0.8125rem;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
+  color: #1e293b;
+  background: #ffffff;
   outline: none;
 }
 

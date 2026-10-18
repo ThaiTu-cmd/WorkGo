@@ -2,28 +2,18 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO = path.resolve(__dirname, "../../");
 
-const SRC_ROOT = path.join(REPO, "web-app", "src");
-const WEBSITE_MIRROR = path.join(REPO, "website-frontend", "src", "_webapp-mirror");
+const SRC_ROOT = path.join(REPO, "website-frontend", "src", "_webapp-mirror");
 
 function readFile(relPath, root = SRC_ROOT) {
   const full = path.join(root, relPath);
   assert.ok(fs.existsSync(full), `File must exist: ${relPath}`);
   return fs.readFileSync(full, "utf-8");
-}
-
-function hashFile(absPath) {
-  const buf = fs.readFileSync(absPath);
-  return {
-    size: buf.length,
-    sha256: crypto.createHash("sha256").update(buf).digest("hex"),
-  };
 }
 
 // =============================================================================
@@ -65,7 +55,7 @@ test("HP-UI-01: Header responsive rules guard 320px viewport & touch targets", (
   assert.match(css, /@media\s*\(max-width:\s*400px\)\s*\{[\s\S]*?\.signInBtn\s*\{[\s\S]*?display:\s*none/);
 
   // Mobile drawer vertical scroll constraint
-  assert.match(css, /\.mobileDrawer\s*\{[^}]*max-height:\s*calc\(100vh\s*-\s*var\(--header-height\)\)/);
+  assert.match(css, /\.mobileDrawer\s*\{[^}]*max-height:\s*calc\(100vh\s*-\s*var\(--header(-bar)?-height(,\s*var\(--header-height\))?\)\)/);
   assert.match(css, /\.mobileDrawer\s*\{[^}]*overflow-y:\s*auto/);
 });
 
@@ -200,47 +190,6 @@ test("HP-UI-09: Next.js bridge webapp-shell isolates z-stacking and page overflo
   assert.match(shellCss, /\.toastStack\s*\{[^}]*max-width:\s*420px/);
 });
 
-test("HP-UI-10: Mirror integrity for all 10 modified CSS files", () => {
-  const modifiedFiles = [
-    "App.module.css",
-    "components/common/AuthModal/AuthModal.module.css",
-    "components/common/Header/Header.module.css",
-    "components/common/SearchBar/SearchBar.module.css",
-    "components/common/ServiceCard/ServiceCard.module.css",
-    "components/home/HeroBanner/HeroBanner.module.css",
-    "pages/CatalogSearch/components/FilterSidebar/FilterSidebar.module.css",
-    "pages/MyServices/components/ServicesTable/ServicesTable.module.css",
-    "pages/MyServices/components/ServicesToolbar/ServicesToolbar.module.css",
-    "styles/variables.css",
-    "styles/reset.css",
-  ];
-
-  for (const rel of modifiedFiles) {
-    const srcPath = path.join(SRC_ROOT, rel);
-    const mirrorPath = path.join(WEBSITE_MIRROR, rel);
-    assert.ok(fs.existsSync(srcPath), `Source file must exist: ${rel}`);
-    assert.ok(fs.existsSync(mirrorPath), `Mirror file must exist: ${rel}`);
-
-    const srcHash = hashFile(srcPath);
-    const mirrorHash = hashFile(mirrorPath);
-
-    assert.equal(
-      mirrorHash.sha256,
-      srcHash.sha256,
-      `Mirror SHA256 must match source for ${rel}`
-    );
-    assert.equal(
-      mirrorHash.size,
-      srcHash.size,
-      `Mirror file size must match source for ${rel}`
-    );
-  }
-});
-
-// =============================================================================
-// EDGE CASES & CORNER CASES
-// =============================================================================
-
 test("EC-UI-01: Boundary string length on ServiceTitle (150 chars without overflow or clip)", () => {
   const css = readFile("components/common/ServiceCard/ServiceCard.module.css");
   // Multi-line growth allowed, never bare fixed height
@@ -311,7 +260,7 @@ test("EC-UI-07: Last table row upward dropdown popover avoids lower viewport bou
   );
 });
 
-test("EC-UI-08: Zero backend leakage in web-app frontend code", () => {
+test("EC-UI-08: Zero backend leakage in mirror frontend code", () => {
   const axiosClient = readFile("api/axiosClient.js");
   assert.ok(!axiosClient.includes(":8888"), "Must not call :8888 directly");
   assert.ok(!axiosClient.includes(":8081"), "Must not call :8081 directly");

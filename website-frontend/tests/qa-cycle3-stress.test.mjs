@@ -10,12 +10,12 @@ import {
   validateDescription,
   validatePrice,
   clampPrice,
-} from "../../web-app/src/pages/ServiceForm/formValidation.js";
+} from "../src/_webapp-mirror/pages/ServiceForm/formValidation.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO = path.resolve(__dirname, "../../");
-const SRC = path.join(REPO, "web-app", "src");
+const SRC = path.join(REPO, "website-frontend", "src", "_webapp-mirror");
 
 const read = (p) => fs.readFileSync(p, "utf-8");
 
@@ -108,7 +108,7 @@ test("S3: footer bottom-bar shows the keyboard hint as plain text", () => {
 });
 
 // ---------- S5: zero console noise outside QA scripts ----------
-test("S5: no console.log/warn/error in web-app src and bridge non-mirror code", () => {
+test("S5: no console.log/warn/error in mirror src and bridge code", () => {
   const roots = [
     path.join(SRC),
     path.join(REPO, "website-frontend/src/components/webapp-bridge"),

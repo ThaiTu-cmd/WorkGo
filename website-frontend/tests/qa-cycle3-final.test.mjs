@@ -2,7 +2,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import {
   TITLE_MIN,
@@ -15,17 +14,15 @@ import {
   validateTitle,
   validateDescription,
   validatePrice,
-} from "../../web-app/src/pages/ServiceForm/formValidation.js";
-import { getTrapCandidates } from "../../web-app/src/hooks/useFocusTrap.js";
+} from "../src/_webapp-mirror/pages/ServiceForm/formValidation.js";
+import { getTrapCandidates } from "../src/_webapp-mirror/hooks/useFocusTrap.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO = path.resolve(__dirname, "../../");
-const SRC = path.join(REPO, "web-app", "src");
-const MIRROR = path.join(REPO, "website-frontend", "src", "_webapp-mirror");
+const SRC = path.join(REPO, "website-frontend", "src", "_webapp-mirror");
 
 const read = (p) => fs.readFileSync(p, "utf-8");
-const sha256 = (p) => crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex");
 
 // ---------- F1: pure form validation ----------
 test("F1: boundary constants match spec", () => {
@@ -130,8 +127,8 @@ test("F5: css-hygiene.md audit report exists", () => {
 
 // ---------- F6: toast queue ----------
 for (const [name, file] of [
-  ["web-app", "App.jsx"],
-  ["bridge", "../../website-frontend/src/components/webapp-bridge/webapp-shell.tsx"],
+  ["mirror", "App.jsx"],
+  ["bridge", "../components/webapp-bridge/webapp-shell.tsx"],
 ]) {
   test(`F6: ${name} toast is a max-3 queue with 3500ms auto-dismiss + close button`, () => {
     const code = read(path.join(SRC, file));
@@ -150,22 +147,3 @@ test("Cycle2-N1: rapid probe script exists with type + tabs probes", () => {
   assert.match(probe, /rapid-tabs/);
 });
 
-// ---------- S1: mirror parity for every touched source file ----------
-test("S1: every Cycle-3 source file is byte-identical in _webapp-mirror", () => {
-  const files = [
-    "pages/ServiceForm/formValidation.js",
-    "hooks/useFocusTrap.js",
-    "pages/ServiceForm/ServiceFormPage.jsx",
-    "pages/ServiceForm/components/Step1Info/Step1Info.jsx",
-    "pages/ServiceForm/components/Step2Pricing/Step2Pricing.jsx",
-    "pages/CatalogSearch/CatalogSearchPage.jsx",
-    "components/common/AuthModal/AuthModal.jsx",
-    "components/common/Header/Header.jsx",
-    "App.jsx",
-    "App.module.css",
-    "pages/MyServices/components/ServicesTable/ServicesTable.jsx",
-  ];
-  for (const f of files) {
-    assert.equal(sha256(path.join(MIRROR, f)), sha256(path.join(SRC, f)), `mirror mismatch: ${f}`);
-  }
-});

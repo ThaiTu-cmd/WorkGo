@@ -1,12 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import FilterSidebar from './components/FilterSidebar/FilterSidebar';
 import SearchToolbar from './components/SearchToolbar/SearchToolbar';
 import Pagination from './components/Pagination/Pagination';
 import ServiceCard from '../../components/common/ServiceCard/ServiceCard';
+import SkeletonServiceCard from '../../components/common/Skeleton/SkeletonServiceCard';
 import { mockServices } from '../../data/mockServices';
 import { mockCategories } from '../../data/mockCategories';
 import { SearchX, RotateCcw, X } from 'lucide-react';
 import styles from './CatalogSearchPage.module.css';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 export default function CatalogSearchPage({
   initialCategory = 'ALL',
@@ -25,8 +27,38 @@ export default function CatalogSearchPage({
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  // C2-3: brief skeleton shimmer while filters settle (debounced, local only).
+  const [isFiltering, setIsFiltering] = useState(false);
 
   const pageSize = 6;
+
+  useEffect(() => {
+    setIsFiltering(true);
+    const t = setTimeout(() => setIsFiltering(false), 250);
+    return () => clearTimeout(t);
+  }, [selectedCategory, selectedType, priceRange, deliveryTime, minRating, onlyVerified, searchQuery, sortBy]);
+
+  // R3: Escape closes the mobile filter drawer.
+  useEffect(() => {
+    if (!mobileFilterOpen) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setMobileFilterOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mobileFilterOpen]);
+  // F3: keep Tab cycling inside the filter drawer while open.
+  const filterDrawerRef = useRef(null);
+  useFocusTrap(filterDrawerRef, mobileFilterOpen);
+  // V3-trap needs focus INSIDE first: on open, move it to the close button
+  // (same pattern as the header drawer). Otherwise Tab walks the background.
+  useEffect(() => {
+    if (!mobileFilterOpen) return;
+    const closeBtn = filterDrawerRef.current
+      ? filterDrawerRef.current.querySelector("button")
+      : null;
+    if (closeBtn) closeBtn.focus();
+  }, [mobileFilterOpen]);
 
   // Resolve category display name
   const currentCategoryObj = useMemo(() => {
@@ -271,7 +303,11 @@ export default function CatalogSearchPage({
 
           {/* Services Grid Column */}
           <main className={styles.servicesColumn}>
-            {paginatedServices.length > 0 ? (
+            {isFiltering ? (
+              <div className={styles.servicesGrid} aria-busy="true" aria-label="Đang tải dịch vụ">
+                <SkeletonServiceCard count={pageSize} />
+              </div>
+            ) : paginatedServices.length > 0 ? (
               <>
                 <div className={styles.servicesGrid}>
                   {paginatedServices.map((service) => (
@@ -322,7 +358,7 @@ export default function CatalogSearchPage({
       {/* Mobile Drawer Filter Modal */}
       {mobileFilterOpen && (
         <div className={styles.mobileBackdrop} onClick={() => setMobileFilterOpen(false)}>
-          <div className={styles.mobileDrawer} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.mobileDrawer} ref={filterDrawerRef} onClick={(e) => e.stopPropagation()}>
             <div className={styles.drawerHeader}>
               <h3 className={styles.drawerTitle}>Bộ lọc dịch vụ</h3>
               <button

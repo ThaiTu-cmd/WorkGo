@@ -1,0 +1,146 @@
+.section {
+  padding: 80px 0;
+  background-color: var(--wg-surface);
+  border-top: 1px solid var(--wg-border-light);
+  border-bottom: 1px solid var(--wg-border-light);
+}
+
+.headerRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.badgeRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #fff1eb;
+  color: var(--wg-accent);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.flameIcon {
+  color: var(--wg-accent);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--wg-text);
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 1.05rem;
+  color: var(--wg-text-secondary);
+}
+
+.arrowControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.arrowBtn {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-full);
+  background-color: var(--wg-surface);
+  border: 1px solid var(--wg-border);
+  color: var(--wg-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+/* C2-2: effective hit-area 54px, visual stays 42px */
+.arrowBtn::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
+.arrowBtn:hover:not(:disabled) {
+  background-color: var(--wg-primary);
+  color: #ffffff;
+  border-color: var(--wg-primary);
+  transform: scale(1.05);
+}
+
+.arrowBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tabList {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.tabBtn {
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 8px 18px;
+  border-radius: var(--radius-full);
+  background-color: var(--wg-bg);
+  border: 1px solid var(--wg-border);
+  color: var(--wg-text-secondary);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.tabBtn:hover {
+  background-color: #e5e7eb;
+  color: var(--wg-text);
+}
+
+.tabActive {
+  background-color: var(--wg-text) !important;
+  color: #ffffff !important;
+  border-color: var(--wg-text) !important;
+}
+
+.servicesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+@media (min-width: 1200px) {
+  .servicesGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .servicesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .servicesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cardCol {
+  height: 100%;
+}

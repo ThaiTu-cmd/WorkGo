@@ -1,0 +1,11 @@
+{
+  "target": "website-frontend/src/_webapp-mirror",
+  "copied": 85,
+  "refCopied": 13,
+  "syncedDeleted": 0,
+  "skippedExcluded": 0,
+  "mismatches": 0,
+  "manifestPath": "website-frontend/src/_webapp-mirror/MANIFEST.json",
+  "head": "04babc0",
+  "createdAt": "2026-10-16T14:28:33.977Z"
+}

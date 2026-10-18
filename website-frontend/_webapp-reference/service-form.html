@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="WorkGo - Biểu mẫu Tạo và Chỉnh sửa Dịch vụ đa bước theo chuẩn Fiverr. Cấu hình bảng giá 3 gói, hình thức thực hiện và thư viện media."
+    />
+    <title id="pageTitle">Tạo Dịch vụ Mới — WorkGo Provider Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="service-form.css" />
+  </head>
+  <body>
+    <!-- 1. Header Navigation -->
+    <header class="header">
+      <div class="container header-container">
+        <div class="header-left">
+          <a href="index.html" class="logo">
+            <div class="logo-icon">W</div>
+            <span class="logo-text">WorkGo</span>
+            <span class="logo-dot">.</span>
+          </a>
+          <span class="header-badge" id="formModeBadge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            Kênh Chuyên gia (Provider)
+          </span>
+        </div>
+
+        <div class="header-right">
+          <button type="button" class="btn-save-draft" id="btnHeaderSaveDraft">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            Lưu bản nháp
+          </button>
+          <a href="my-services.html" class="btn-back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            Đóng & Quay lại
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. Stepper Progress Navigation -->
+    <nav class="stepper-section" aria-label="Tiến trình biểu mẫu">
+      <div class="container">
+        <div class="stepper-container">
+          <div class="stepper-line">
+            <div class="stepper-line-fill" id="stepperProgressFill"></div>
+          </div>
+
+          <!-- Step 1 Indicator -->
+          <div class="step-item active" data-step="1" id="stepIndicator1">
+            <div class="step-circle" id="stepCircle1">1</div>
+            <div class="step-content">
+              <span class="step-title">1. Thông tin cơ bản</span>
+              <span class="step-subtitle">Tiêu đề, ngành nghề, hình thức</span>
+            </div>
+          </div>
+
+          <!-- Step 2 Indicator -->
+          <div class="step-item" data-step="2" id="stepIndicator2">
+            <div class="step-circle" id="stepCircle2">2</div>
+            <div class="step-content">
+              <span class="step-title">2. Bảng giá & 3 Gói</span>
+              <span class="step-subtitle">Cơ bản, Tiêu chuẩn, Cao cấp</span>
+            </div>
+          </div>
+
+          <!-- Step 3 Indicator -->
+          <div class="step-item" data-step="3" id="stepIndicator3">
+            <div class="step-circle" id="stepCircle3">3</div>
+            <div class="step-content">
+              <span class="step-title">3. Hình ảnh & Media</span>
+              <span class="step-subtitle">Ảnh bìa, thư viện ảnh & video</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 3. Form Wizard Body Container -->
+    <main class="container">
+      <form id="serviceWizardForm">
+        <!-- ===================================================================
+             BƯỚC 1: THÔNG TIN CƠ BẢN (STEP 1: INFO)
+             =================================================================== -->
+        <section class="form-step-panel active" id="stepPanel1">
+          <div class="form-card">
+            <div class="form-card-header">
+              <h2 class="card-heading">Thông tin tổng quan dịch vụ</h2>
+              <p class="card-desc">Thiết lập tiêu đề hấp dẫn, phân loại danh mục và xác định phương thức thực hiện để tiếp cận đúng khách hàng tiềm năng.</p>
+            </div>
+
+            <!-- Service Title -->
+            <div class="form-group">
+              <div class="form-label-row">
+                <label class="form-label" for="inputTitle">
+                  Tiêu đề dịch vụ niêm yết <span class="required-mark">*</span>
+                </label>
+                <span class="char-counter" id="titleCharCount">0 / 100 ký tự</span>
+              </div>
+              <input
+                type="text"
+                class="form-input"
+                id="inputTitle"
+                placeholder="VD: Tôi sẽ thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React"
+                maxlength="100"
+                required
+              />
+              <span class="error-text" id="errorTitle" style="display: none;">Vui lòng nhập tiêu đề từ 15 đến 100 ký tự.</span>
+              <div class="form-tip-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>Mẹo chuyên gia: Tiêu đề nên bắt đầu bằng "Tôi sẽ..." hoặc nêu rõ giá trị đem lại kèm công nghệ chuyên môn giúp tăng 40% khả năng được liên hệ.</span>
+              </div>
+            </div>
+
+            <!-- Category & Specialization -->
+            <div class="form-group">
+              <div class="form-label-row">
+                <label class="form-label" for="selectCategory">
+                  Ngành nghề & Danh mục chính <span class="required-mark">*</span>
+                </label>
+              </div>
+              <select class="form-select" id="selectCategory" required>
+                <option value="lap-trinh-cong-nghe">Lập trình & Công nghệ (Web, Mobile, Backend, DevOps)</option>
+                <option value="thiet-ke-do-hoa">Thiết kế & Đồ họa (UI/UX, Logo, Branding, 3D)</option>
+                <option value="sua-chua-dien-nuoc">Sửa chữa Điện nước & Thiết bị gia đình</option>
+                <option value="ve-sinh-don-dep">Vệ sinh & Dọn dẹp (Nhà ở, Chung cư, Sofa, Văn phòng)</option>
+                <option value="van-chuyen-giao-nhan">Vận chuyển & Giao nhận hàng hóa</option>
+              </select>
+            </div>
+
+            <!-- Execution Type (Digital vs Onsite vs Delivery) -->
+            <div class="form-group">
+              <div class="form-label-row">
+                <label class="form-label">
+                  Hình thức thực hiện công việc <span class="required-mark">*</span>
+                </label>
+              </div>
+              <div class="exec-grid">
+                <label class="exec-card selected" id="execCardDigital">
+                  <input type="radio" name="execType" value="DIGITAL" checked />
+                  <div class="exec-card-header">
+                    <div class="exec-icon digital">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect width="18" height="12" x="3" y="4" rx="2"></rect>
+                        <line x1="2" x2="22" y1="20" y2="20"></line>
+                      </svg>
+                    </div>
+                    <span class="exec-title">Dịch vụ Số (Digital)</span>
+                  </div>
+                  <p class="exec-desc">Bàn giao 100% online qua nền tảng: file thiết kế, source code, tài liệu số.</p>
+                </label>
+
+                <label class="exec-card" id="execCardOnsite">
+                  <input type="radio" name="execType" value="ONSITE" />
+                  <div class="exec-card-header">
+                    <div class="exec-icon onsite">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                      </svg>
+                    </div>
+                    <span class="exec-title">Tận nơi (Onsite)</span>
+                  </div>
+                  <p class="exec-desc">Đến trực tiếp địa chỉ khách hàng để khảo sát, sửa chữa, vệ sinh hoặc thi công.</p>
+                </label>
+
+                <label class="exec-card" id="execCardDelivery">
+                  <input type="radio" name="execType" value="DELIVERY" />
+                  <div class="exec-card-header">
+                    <div class="exec-icon delivery">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path>
+                        <path d="M15 18H9"></path>
+                        <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14v10Z"></path>
+                        <circle cx="17" cy="18" r="2"></circle>
+                        <circle cx="7" cy="18" r="2"></circle>
+                      </svg>
+                    </div>
+                    <span class="exec-title">Giao nhận (Delivery)</span>
+                  </div>
+                  <p class="exec-desc">Sản xuất và đóng gói vận chuyển ấn phẩm vật lý đến tận tay người mua.</p>
+                </label>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+              <div class="form-label-row">
+                <label class="form-label" for="inputDescription">
+                  Mô tả chi tiết năng lực & Quy trình <span class="required-mark">*</span>
+                </label>
+              </div>
+              <textarea
+                class="form-textarea"
+                id="inputDescription"
+                rows="6"
+                placeholder="Mô tả chi tiết những gì khách hàng sẽ nhận được, kỹ năng thực tế của bạn, cam kết tiến độ và chính sách bảo chứng Escrow an toàn..."
+                required
+              ></textarea>
+              <span class="error-text" id="errorDescription" style="display: none;">Vui lòng nhập mô tả tối thiểu 50 ký tự.</span>
+            </div>
+
+            <!-- Search Tags -->
+            <div class="form-group">
+              <div class="form-label-row">
+                <label class="form-label">
+                  Từ khóa tìm kiếm (Search Tags)
+                </label>
+                <span class="char-counter" id="tagsCountLabel">Tối đa 5 thẻ</span>
+              </div>
+              <div class="tags-input-container" id="tagsBox">
+                <div id="tagsList" style="display: contents;"></div>
+                <input
+                  type="text"
+                  class="tag-text-input"
+                  id="tagInput"
+                  placeholder="Nhập từ khóa rồi bấm Enter (VD: React, Next.js, SEO)..."
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================================================================
+             BƯỚC 2: BẢNG GIÁ & 3 GÓI DỊCH VỤ (STEP 2: PRICING)
+             =================================================================== -->
+        <section class="form-step-panel" id="stepPanel2">
+          <div class="form-card">
+            <div class="form-card-header">
+              <h2 class="card-heading">Bảng giá & Cấu hình 3 Gói Dịch vụ</h2>
+              <p class="card-desc">Thiết kế bảng so sánh 3 gói Cơ bản, Tiêu chuẩn và Cao cấp giúp khách hàng dễ dàng đưa ra quyết định đặt đơn phù hợp với ngân sách.</p>
+            </div>
+
+            <!-- 3 Packages Comparison Table -->
+            <div class="pricing-matrix-container">
+              <table class="pricing-table">
+                <thead>
+                  <tr>
+                    <th class="col-feature-title">Hạng mục cấu hình</th>
+                    <!-- Basic -->
+                    <th class="col-pkg">
+                      <div class="pkg-col-name">Cơ bản (Basic)</div>
+                      <div class="pkg-col-sub">Khởi đầu / Dự án nhỏ</div>
+                    </th>
+                    <!-- Standard (Recommended) -->
+                    <th class="col-pkg recommended">
+                      <span class="pkg-header-badge">Khuyên dùng</span>
+                      <div class="pkg-col-name">Tiêu chuẩn (Standard)</div>
+                      <div class="pkg-col-sub">Phổ biến nhất</div>
+                    </th>
+                    <!-- Premium -->
+                    <th class="col-pkg">
+                      <div class="pkg-col-name">Cao cấp (Premium)</div>
+                      <div class="pkg-col-sub">Trọn gói chuyên sâu</div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Package Custom Title -->
+                  <tr>
+                    <td class="td-feature-name">Tên gói tùy chỉnh</td>
+                    <td>
+                      <input type="text" class="form-input pkg-input-title" id="pkgBasicTitle" value="Gói Starter" required />
+                    </td>
+                    <td>
+                      <input type="text" class="form-input pkg-input-title" id="pkgStdTitle" value="Gói Business Pro" required />
+                    </td>
+                    <td>
+                      <input type="text" class="form-input pkg-input-title" id="pkgPremTitle" value="Gói Enterprise VIP" required />
+                    </td>
+                  </tr>
+
+                  <!-- Package Description -->
+                  <tr>
+                    <td class="td-feature-name">Mô tả ngắn gọn phạm vi</td>
+                    <td>
+                      <textarea class="form-textarea pkg-textarea-desc" id="pkgBasicDesc">Giao diện Landing Page 1 trang, responsive di động chuẩn nét.</textarea>
+                    </td>
+                    <td>
+                      <textarea class="form-textarea pkg-textarea-desc" id="pkgStdDesc">Website đa trang (đến 5 trang), tích hợp CMS quản trị và chuẩn SEO.</textarea>
+                    </td>
+                    <td>
+                      <textarea class="form-textarea pkg-textarea-desc" id="pkgPremDesc">Trọn gói hệ thống webapp hoàn chỉnh, kết nối thanh toán & bảo hành 6 tháng.</textarea>
+                    </td>
+                  </tr>
+
+                  <!-- Delivery Days -->
+                  <tr>
+                    <td class="td-feature-name">Thời gian hoàn thành</td>
+                    <td>
+                      <select class="form-select" id="pkgBasicDays">
+                        <option value="1">1 ngày</option>
+                        <option value="2">2 ngày</option>
+                        <option value="3" selected>3 ngày</option>
+                        <option value="5">5 ngày</option>
+                        <option value="7">7 ngày</option>
+                      </select>
+                    </td>
+                    <td>
+                      <select class="form-select" id="pkgStdDays">
+                        <option value="3">3 ngày</option>
+                        <option value="5" selected>5 ngày</option>
+                        <option value="7">7 ngày</option>
+                        <option value="10">10 ngày</option>
+                      </select>
+                    </td>
+                    <td>
+                      <select class="form-select" id="pkgPremDays">
+                        <option value="7">7 ngày</option>
+                        <option value="10" selected>10 ngày</option>
+                        <option value="14">14 ngày</option>
+                        <option value="21">21 ngày</option>
+                      </select>
+                    </td>
+                  </tr>
+
+                  <!-- Revisions -->
+                  <tr>
+                    <td class="td-feature-name">Số lần chỉnh sửa</td>
+                    <td>
+                      <select class="form-select" id="pkgBasicRev">
+                        <option value="1 lần">1 lần</option>
+                        <option value="2 lần" selected>2 lần</option>
+                        <option value="3 lần">3 lần</option>
+                      </select>
+                    </td>
+                    <td>
+                      <select class="form-select" id="pkgStdRev">
+                        <option value="3 lần">3 lần</option>
+                        <option value="5 lần" selected>5 lần</option>
+                        <option value="Không giới hạn">Không giới hạn</option>
+                      </select>
+                    </td>
+                    <td>
+                      <select class="form-select" id="pkgPremRev">
+                        <option value="5 lần">5 lần</option>
+                        <option value="Không giới hạn" selected>Không giới hạn</option>
+                      </select>
+                    </td>
+                  </tr>
+
+                  <!-- Dynamic Feature 1 -->
+                  <tr>
+                    <td class="td-feature-name" id="featName1">
+                      Tối ưu Responsive & Tốc độ
+                      <span class="feature-subtext" id="featSub1">Tương thích mọi thiết bị di động</span>
+                    </td>
+                    <td class="cell-center"><input type="checkbox" class="feature-checkbox" id="f1_b" checked /></td>
+                    <td class="cell-center"><input type="checkbox" class="feature-checkbox" id="f1_s" checked /></td>
+                    <td class="cell-center"><input type="checkbox" class="feature-checkbox" id="f1_p" checked /></td>
+                  </tr>
+
+                  <!-- Dynamic Feature 2 -->
+                  <tr>
+                    <td class="td-feature-name" id="featName2">
+                      Tích hợp hệ quản trị CMS
+                      <span class="feature-subtext" id="featSub2">Tự quản lý bài viết / sản phẩm</span>
+                    </td>
+                    <td class="cell-center"><input type="checkbox" class="feature-checkbox" id="f2_b" /></td>
+                    <td class="cell-center"><input type="checkbox" class="feature-checkbox" id="f2_s" checked /></td>
+                    <td class="cell-center"><input type="checkbox" class="feature-checkbox" id="f2_p" checked /></td>
+                  </tr>
+
+                  <!-- Dynamic Feature 3 -->
+                  <tr>
+                    <td class="td-feature-name" id="featName3">
+                      Bàn giao Source Code / Vật tư chuẩn
+                      <span class="feature-subtext" id="featSub3">Mã nguồn sạch, tài liệu hướng dẫn</span>
+                    </td>
+                    <td class="cell-center"><input type="checkbox" class="feature-checkbox" id="f3_b" /></td>
+                    <td class="cell-center"><input type="checkbox" class="feature-checkbox" id="f3_s" /></td>
+                    <td class="cell-center"><input type="checkbox" class="feature-checkbox" id="f3_p" checked /></td>
+                  </tr>
+
+                  <!-- Dynamic Feature 4 -->
+                  <tr>
+                    <td class="td-feature-name" id="featName4">
+                      Bảo hành kỹ thuật
+                      <span class="feature-subtext" id="featSub4">Hỗ trợ xử lý lỗi phát sinh</span>
+                    </td>
+                    <td class="cell-center"><span style="font-size: 0.8125rem; color: var(--slate-muted);">7 ngày</span></td>
+                    <td class="cell-center"><span style="font-size: 0.8125rem; color: var(--primary-dark); font-weight: 600;">30 ngày</span></td>
+                    <td class="cell-center"><span style="font-size: 0.8125rem; color: var(--navy); font-weight: 700;">6 tháng</span></td>
+                  </tr>
+
+                  <!-- Package Price -->
+                  <tr style="background: var(--bg-page);">
+                    <td class="td-feature-name" style="vertical-align: middle;">
+                      <strong>Mức giá niêm yết (VNĐ) *</strong>
+                    </td>
+                    <td>
+                      <div class="pkg-price-input-row">
+                        <input type="number" class="form-input" id="pkgBasicPrice" value="2500000" min="50000" step="50000" required />
+                        <span class="currency-symbol">₫</span>
+                      </div>
+                    </td>
+                    <td style="background: #f0fdf4;">
+                      <div class="pkg-price-input-row">
+                        <input type="number" class="form-input" id="pkgStdPrice" value="5000000" min="50000" step="50000" required />
+                        <span class="currency-symbol">₫</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="pkg-price-input-row">
+                        <input type="number" class="form-input" id="pkgPremPrice" value="8500000" min="50000" step="50000" required />
+                        <span class="currency-symbol">₫</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Add-on Upsells -->
+            <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--navy); margin-bottom: 0.75rem;">
+              Dịch vụ gia tăng (Add-on Services / Upsells)
+            </h3>
+            <p style="font-size: 0.8125rem; color: var(--slate-muted); margin-bottom: 1rem;">
+              Cung cấp các tùy chọn nâng cấp để khách hàng chọn thêm trong lúc thanh toán đơn hàng.
+            </p>
+
+            <div class="addons-grid">
+              <div class="addon-card">
+                <input type="checkbox" class="addon-check" id="addonCheckFast" checked />
+                <div class="addon-content">
+                  <div class="addon-title">Giao hàng hỏa tốc (Rút ngắn 40% thời gian)</div>
+                  <div class="addon-desc">Ưu tiên tập trung hoàn thiện dự án của bạn trước tiên trong lịch trình.</div>
+                  <div class="addon-price-wrap">
+                    <input type="number" class="addon-price-input" id="addonPriceFast" value="800000" step="50000" />
+                    <span class="currency-symbol">VNĐ</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="addon-card">
+                <input type="checkbox" class="addon-check" id="addonCheckSource" checked />
+                <div class="addon-content">
+                  <div class="addon-title">Bàn giao trọn bộ File gốc & Source Code</div>
+                  <div class="addon-desc">Bao gồm toàn bộ file thiết kế Figma gốc và mã nguồn sạch chuẩn repository.</div>
+                  <div class="addon-price-wrap">
+                    <input type="number" class="addon-price-input" id="addonPriceSource" value="600000" step="50000" />
+                    <span class="currency-symbol">VNĐ</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================================================================
+             BƯỚC 3: HÌNH ẢNH & MEDIA (STEP 3: MEDIA)
+             =================================================================== -->
+        <section class="form-step-panel" id="stepPanel3">
+          <div class="form-card">
+            <div class="form-card-header">
+              <h2 class="card-heading">Thư viện Hình ảnh & Xuất bản Dịch vụ</h2>
+              <p class="card-desc">Ảnh bìa chất lượng cao tạo ấn tượng đầu tiên quyết định khách hàng có bấm vào xem hay không.</p>
+            </div>
+
+            <div class="media-layout-grid">
+              <!-- Left: Upload Inputs -->
+              <div class="media-inputs-col">
+                <div class="form-group">
+                  <label class="form-label" for="inputCoverUrl">
+                    URL Ảnh bìa chính (Cover Image) <span class="required-mark">*</span>
+                  </label>
+                  <input
+                    type="url"
+                    class="form-input"
+                    id="inputCoverUrl"
+                    value="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80"
+                    placeholder="https://example.com/image.jpg"
+                    required
+                  />
+                  <span class="error-text" id="errorCoverUrl" style="display: none;">Vui lòng nhập đường dẫn URL ảnh hợp lệ.</span>
+                  
+                  <div class="cover-preview-box">
+                    <img
+                      src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80"
+                      alt="Xem trước ảnh bìa"
+                      class="cover-preview-img"
+                      id="imgCoverPreview"
+                    />
+                    <span class="cover-badge-tag">Ảnh bìa chính (16:9)</span>
+                  </div>
+                </div>
+
+                <!-- Gallery Thumbnails -->
+                <div class="form-group">
+                  <label class="form-label">
+                    Bộ sưu tập dự án thực tế (Gallery)
+                  </label>
+                  <p style="font-size: 0.75rem; color: var(--slate-muted); margin-bottom: 0.5rem;">
+                    Thêm các ảnh thực tế mô phỏng kết quả để tăng độ uy tín với khách hàng.
+                  </p>
+                  <div class="gallery-grid">
+                    <div class="gallery-slot">
+                      <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&auto=format&fit=crop&q=80" alt="Gallery 1" />
+                    </div>
+                    <div class="gallery-slot">
+                      <img src="https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=400&auto=format&fit=crop&q=80" alt="Gallery 2" />
+                    </div>
+                    <div class="gallery-slot" id="btnAddGallerySlot">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                      </svg>
+                      <span>+ Thêm ảnh</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Video Link -->
+                <div class="form-group">
+                  <label class="form-label" for="inputVideoUrl">
+                    Liên kết Video giới thiệu / Demo (Tùy chọn)
+                  </label>
+                  <input
+                    type="url"
+                    class="form-input"
+                    id="inputVideoUrl"
+                    placeholder="https://youtube.com/watch?v=..."
+                  />
+                </div>
+              </div>
+
+              <!-- Right: Live Marketplace Card Preview -->
+              <div class="media-preview-col">
+                <div class="live-preview-container">
+                  <div class="preview-badge-row">
+                    <span class="live-badge">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                      Xem trước Card Marketplace
+                    </span>
+                    <span style="font-size: 0.75rem; color: var(--slate-muted);">Hiển thị thực tế</span>
+                  </div>
+
+                  <div class="mock-card">
+                    <img
+                      src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80"
+                      alt="Ảnh card"
+                      class="mock-card-img"
+                      id="mockCardImg"
+                    />
+                    <div class="mock-card-body">
+                      <div class="mock-card-provider">
+                        <img
+                          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
+                          alt="Avatar"
+                          class="mock-avatar"
+                        />
+                        <span class="mock-pname">Trần Minh Quang (Top Rated)</span>
+                      </div>
+                      <h4 class="mock-title" id="mockCardTitle">
+                        Tôi sẽ thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React
+                      </h4>
+                      <div class="mock-rating">★ 5.0 (0 đánh giá) • Mới ra mắt</div>
+                      <div class="mock-footer">
+                        <span class="mock-price-label">Khởi điểm từ</span>
+                        <span class="mock-price-val" id="mockCardPrice">2.500.000 ₫</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </form>
+    </main>
+
+    <!-- 4. Sticky Bottom Action Bar -->
+    <footer class="sticky-bottom-bar">
+      <div class="container action-bar-container">
+        <div class="action-left">
+          <button type="button" class="btn-wizard-prev" id="btnPrevStep" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Quay lại
+          </button>
+        </div>
+
+        <div class="action-right">
+          <button type="button" class="btn-wizard-preview" id="btnLivePreviewModal">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            Xem trước
+          </button>
+
+          <button type="button" class="btn-wizard-next" id="btnNextStep">
+            <span>Tiếp tục bước kế tiếp</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+
+          <button type="button" class="btn-wizard-publish" id="btnPublishService" style="display: none;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span id="btnPublishText">Đăng dịch vụ ngay</span>
+          </button>
+        </div>
+      </div>
+    </footer>
+
+    <!-- 5. Toast Feedback Box -->
+    <div class="toast" id="toastBox">
+      <svg class="toast-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <span id="toastMsg">Thao tác thành công</span>
+    </div>
+
+    <!-- 6. Client JavaScript Execution Script -->
+    <script>
+      (function () {
+        // Initial Mock Database for Pre-filling in Edit Mode
+        const mockDatabase = {
+          "svc-1": {
+            title: "Thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React / Next.js",
+            categorySlug: "lap-trinh-cong-nghe",
+            executionType: "DIGITAL",
+            description: "Xây dựng website chuẩn SEO tối ưu tốc độ và UI/UX responsive toàn diện với kiến trúc Component sạch sẽ, tích hợp CMS hiện đại và bảo mật dữ liệu khách hàng tuyệt đối.",
+            tags: ["React", "NextJS", "UI/UX", "SEO", "Responsive"],
+            packages: {
+              basic: { title: "Gói Starter", desc: "Landing page 1 trang chuẩn di động", days: 3, rev: "2 lần", price: 2500000 },
+              standard: { title: "Gói Business Pro", desc: "Website đa trang (đến 5 trang) kèm CMS", days: 5, rev: "5 lần", price: 5000000 },
+              premium: { title: "Gói Enterprise VIP", desc: "Trọn gói e-commerce hoặc webapp", days: 10, rev: "Không giới hạn", price: 8500000 }
+            },
+            coverImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80"
+          },
+          "svc-p2": {
+            title: "Phát triển ứng dụng di động React Native đa nền tảng iOS & Android",
+            categorySlug: "lap-trinh-cong-nghe",
+            executionType: "DIGITAL",
+            description: "Lập trình ứng dụng mượt mà 60fps, tích hợp thanh toán VnPay/MoMo và push notification thời gian thực.",
+            tags: ["ReactNative", "MobileApp", "iOS", "Android", "API"],
+            packages: {
+              basic: { title: "Gói MVP", desc: "App 3 màn hình cơ bản", days: 7, rev: "2 lần", price: 5000000 },
+              standard: { title: "Gói Hoàn chỉnh", desc: "App đầy đủ backend và auth", days: 14, rev: "5 lần", price: 10000000 },
+              premium: { title: "Gói Store Deploy", desc: "Đưa lên AppStore và PlayStore", days: 21, rev: "Không giới hạn", price: 15000000 }
+            },
+            coverImage: "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=600&auto=format&fit=crop&q=80"
+          },
+          "svc-p5": {
+            title: "Khảo sát, lắp đặt & bảo dưỡng hệ thống camera an ninh AI tại nhà",
+            categorySlug: "sua-chua-dien-nuoc",
+            executionType: "ONSITE",
+            description: "Lắp đặt camera có AI nhận diện khuôn mặt, đi dây âm tường thẩm mỹ cao, kiểm tra tín hiệu và bảo hành 12 tháng tận nơi.",
+            tags: ["Camera", "AnNinh", "DienNuoc", "TaiNha"],
+            packages: {
+              basic: { title: "Lắp đặt 1-2 mắt", desc: "Khảo sát và lắp đặt cơ bản", days: 1, rev: "1 lần", price: 850000 },
+              standard: { title: "Hệ thống 4 mắt", desc: "Bao gồm đầu ghi và dây dẫn", days: 2, rev: "2 lần", price: 1800000 },
+              premium: { title: "Trọn gói AI 8 mắt", desc: "Hệ thống cao cấp chống trộm", days: 3, rev: "Không giới hạn", price: 2800000 }
+            },
+            coverImage: "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=600&auto=format&fit=crop&q=80"
+          }
+        };
+
+        // State
+        let currentStep = 1;
+        let isEditMode = false;
+        let editingServiceId = null;
+        let tagsList = ["React", "NextJS", "Website"];
+
+        // Query Param Parsing
+        const urlParams = new URLSearchParams(window.location.search);
+        const modeParam = urlParams.get("mode");
+        const idParam = urlParams.get("id");
+
+        if (modeParam === "edit" || (idParam && mockDatabase[idParam])) {
+          isEditMode = true;
+          editingServiceId = idParam || "svc-1";
+        }
+
+        // DOM Elements
+        const pageTitle = document.getElementById("pageTitle");
+        const formModeBadge = document.getElementById("formModeBadge");
+        const btnPublishText = document.getElementById("btnPublishText");
+        const inputTitle = document.getElementById("inputTitle");
+        const titleCharCount = document.getElementById("titleCharCount");
+        const selectCategory = document.getElementById("selectCategory");
+        const inputDescription = document.getElementById("inputDescription");
+        const tagInput = document.getElementById("tagInput");
+        const tagsContainer = document.getElementById("tagsList");
+        const inputCoverUrl = document.getElementById("inputCoverUrl");
+        const imgCoverPreview = document.getElementById("imgCoverPreview");
+        const mockCardImg = document.getElementById("mockCardImg");
+        const mockCardTitle = document.getElementById("mockCardTitle");
+        const mockCardPrice = document.getElementById("mockCardPrice");
+        const btnPrevStep = document.getElementById("btnPrevStep");
+        const btnNextStep = document.getElementById("btnNextStep");
+        const btnPublishService = document.getElementById("btnPublishService");
+        const stepperProgressFill = document.getElementById("stepperProgressFill");
+
+        // Toast Helper
+        function showToast(message) {
+          const toast = document.getElementById("toastBox");
+          document.getElementById("toastMsg").textContent = message;
+          toast.classList.add("show");
+          setTimeout(() => toast.classList.remove("show"), 3200);
+        }
+
+        // Format Currency
+        function formatVND(num) {
+          return new Intl.NumberFormat("vi-VN").format(num) + " ₫";
+        }
+
+        // Render Tag Chips
+        function renderTags() {
+          tagsContainer.innerHTML = tagsList.map((tag, idx) => `
+            <span class="tag-chip">
+              #${tag}
+              <span class="tag-chip-remove" data-idx="${idx}" title="Xóa thẻ">&times;</span>
+            </span>
+          `).join("");
+
+          document.querySelectorAll(".tag-chip-remove").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+              const idx = parseInt(e.target.getAttribute("data-idx"), 10);
+              tagsList.splice(idx, 1);
+              renderTags();
+            });
+          });
+        }
+
+        // Pre-fill form if Edit Mode
+        if (isEditMode && mockDatabase[editingServiceId]) {
+          const s = mockDatabase[editingServiceId];
+          pageTitle.textContent = `Chỉnh sửa: ${s.title} — WorkGo`;
+          formModeBadge.innerHTML = `✏️ Đang chỉnh sửa: <strong>${editingServiceId}</strong>`;
+          btnPublishText.textContent = "Cập nhật thay đổi";
+
+          inputTitle.value = s.title;
+          selectCategory.value = s.categorySlug;
+          inputDescription.value = s.description;
+          tagsList = [...s.tags];
+
+          // Execution Radio
+          const radio = document.querySelector(`input[name="execType"][value="${s.executionType}"]`);
+          if (radio) {
+            radio.checked = true;
+            document.querySelectorAll(".exec-card").forEach(c => c.classList.remove("selected"));
+            radio.closest(".exec-card").classList.add("selected");
+          }
+
+          // Packages
+          if (s.packages) {
+            document.getElementById("pkgBasicTitle").value = s.packages.basic.title;
+            document.getElementById("pkgBasicDesc").value = s.packages.basic.desc;
+            document.getElementById("pkgBasicDays").value = s.packages.basic.days;
+            document.getElementById("pkgBasicRev").value = s.packages.basic.rev;
+            document.getElementById("pkgBasicPrice").value = s.packages.basic.price;
+
+            document.getElementById("pkgStdTitle").value = s.packages.standard.title;
+            document.getElementById("pkgStdDesc").value = s.packages.standard.desc;
+            document.getElementById("pkgStdDays").value = s.packages.standard.days;
+            document.getElementById("pkgStdRev").value = s.packages.standard.rev;
+            document.getElementById("pkgStdPrice").value = s.packages.standard.price;
+
+            document.getElementById("pkgPremTitle").value = s.packages.premium.title;
+            document.getElementById("pkgPremDesc").value = s.packages.premium.desc;
+            document.getElementById("pkgPremDays").value = s.packages.premium.days;
+            document.getElementById("pkgPremRev").value = s.packages.premium.rev;
+            document.getElementById("pkgPremPrice").value = s.packages.premium.price;
+          }
+
+          // Cover Image
+          if (s.coverImage) {
+            inputCoverUrl.value = s.coverImage;
+            imgCoverPreview.src = s.coverImage;
+            mockCardImg.src = s.coverImage;
+          }
+        }
+
+        renderTags();
+
+        // Title Input Event & Live Card Update
+        function updateTitleDisplay() {
+          const len = inputTitle.value.length;
+          titleCharCount.textContent = `${len} / 100 ký tự`;
+          if (len > 80) titleCharCount.classList.add("warning");
+          else titleCharCount.classList.remove("warning");
+
+          mockCardTitle.textContent = inputTitle.value || "Tên dịch vụ của bạn sẽ xuất hiện tại đây...";
+        }
+        inputTitle.addEventListener("input", updateTitleDisplay);
+        updateTitleDisplay();
+
+        // Price Input Event & Live Card Update
+        function updatePriceDisplay() {
+          const p = Number(document.getElementById("pkgBasicPrice").value) || 2500000;
+          mockCardPrice.textContent = formatVND(p);
+        }
+        document.getElementById("pkgBasicPrice").addEventListener("input", updatePriceDisplay);
+        updatePriceDisplay();
+
+        // Execution Radio Selection Event
+        document.querySelectorAll("input[name=\"execType\"]").forEach(radio => {
+          radio.addEventListener("change", () => {
+            document.querySelectorAll(".exec-card").forEach(c => c.classList.remove("selected"));
+            radio.closest(".exec-card").classList.add("selected");
+            updateDynamicFeatures(radio.value);
+          });
+        });
+
+        // Update Dynamic Features by Execution Type
+        function updateDynamicFeatures(type) {
+          if (type === "ONSITE") {
+            document.getElementById("featName1").innerHTML = `Thời gian tiếp cận tận nơi <span class="feature-subtext">Khảo sát & có mặt theo hẹn</span>`;
+            document.getElementById("featName2").innerHTML = `Vật tư chính hãng đi kèm <span class="feature-subtext">Linh kiện có tem bảo hành</span>`;
+            document.getElementById("featName3").innerHTML = `Dọn dẹp sau thi công <span class="feature-subtext">Vệ sinh sạch sẽ hiện trường</span>`;
+          } else {
+            document.getElementById("featName1").innerHTML = `Tối ưu Responsive & Tốc độ <span class="feature-subtext">Tương thích mọi thiết bị di động</span>`;
+            document.getElementById("featName2").innerHTML = `Tích hợp hệ quản trị CMS <span class="feature-subtext">Tự quản lý bài viết / sản phẩm</span>`;
+            document.getElementById("featName3").innerHTML = `Bàn giao Source Code / Tài liệu <span class="feature-subtext">Mã nguồn sạch, tài liệu hướng dẫn</span>`;
+          }
+        }
+
+        // Tag Input Keypress
+        tagInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === ",") {
+            e.preventDefault();
+            const val = tagInput.value.trim().replace(/^#/, "");
+            if (val && !tagsList.includes(val) && tagsList.length < 5) {
+              tagsList.push(val);
+              tagInput.value = "";
+              renderTags();
+            }
+          }
+        });
+
+        // Cover URL Input Event
+        inputCoverUrl.addEventListener("input", () => {
+          const url = inputCoverUrl.value.trim();
+          if (url) {
+            imgCoverPreview.src = url;
+            mockCardImg.src = url;
+          }
+        });
+
+        // Step Navigation Logic
+        function goToStep(step) {
+          if (step < 1 || step > 3) return;
+
+          // Validate current step before proceeding forward
+          if (step > currentStep) {
+            if (currentStep === 1) {
+              if (inputTitle.value.trim().length < 15) {
+                document.getElementById("errorTitle").style.display = "block";
+                inputTitle.focus();
+                showToast("Vui lòng nhập tiêu đề dịch vụ tối thiểu 15 ký tự!");
+                return;
+              }
+              document.getElementById("errorTitle").style.display = "none";
+
+              if (inputDescription.value.trim().length < 30) {
+                document.getElementById("errorDescription").style.display = "block";
+                inputDescription.focus();
+                showToast("Vui lòng nhập mô tả chi tiết năng lực!");
+                return;
+              }
+              document.getElementById("errorDescription").style.display = "none";
+            }
+          }
+
+          currentStep = step;
+
+          // Update Panels
+          document.querySelectorAll(".form-step-panel").forEach((p, idx) => {
+            p.classList.toggle("active", idx + 1 === currentStep);
+          });
+
+          // Update Stepper Indicators
+          for (let i = 1; i <= 3; i++) {
+            const ind = document.getElementById(`stepIndicator${i}`);
+            const circle = document.getElementById(`stepCircle${i}`);
+            ind.classList.remove("active", "completed");
+
+            if (i < currentStep) {
+              ind.classList.add("completed");
+              circle.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+            } else if (i === currentStep) {
+              ind.classList.add("active");
+              circle.textContent = i;
+            } else {
+              circle.textContent = i;
+            }
+          }
+
+          // Stepper Progress Line
+          const percent = ((currentStep - 1) / 2) * 100;
+          stepperProgressFill.style.width = `${percent}%`;
+
+          // Update Bottom Buttons
+          btnPrevStep.disabled = currentStep === 1;
+
+          if (currentStep === 3) {
+            btnNextStep.style.display = "none";
+            btnPublishService.style.display = "inline-flex";
+          } else {
+            btnNextStep.style.display = "inline-flex";
+            btnPublishService.style.display = "none";
+          }
+
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        // Stepper Direct Clicking
+        document.querySelectorAll(".step-item").forEach(item => {
+          item.addEventListener("click", () => {
+            const targetStep = parseInt(item.getAttribute("data-step"), 10);
+            if (targetStep <= currentStep || targetStep === currentStep + 1) {
+              goToStep(targetStep);
+            }
+          });
+        });
+
+        // Next / Prev Buttons
+        btnNextStep.addEventListener("click", () => goToStep(currentStep + 1));
+        btnPrevStep.addEventListener("click", () => goToStep(currentStep - 1));
+
+        // Save Draft Action
+        function handleSaveDraft() {
+          showToast("Đã lưu bản nháp dịch vụ thành công!");
+          setTimeout(() => {
+            window.location.href = "my-services.html";
+          }, 1000);
+        }
+        document.getElementById("btnHeaderSaveDraft").addEventListener("click", handleSaveDraft);
+
+        // Publish Action
+        btnPublishService.addEventListener("click", () => {
+          const actionWord = isEditMode ? "cập nhật" : "đăng niêm yết";
+          showToast(`Đã ${actionWord} thành công dịch vụ "${inputTitle.value.trim()}"!`);
+          setTimeout(() => {
+            window.location.href = "my-services.html";
+          }, 1200);
+        });
+
+        // Live Preview Modal
+        document.getElementById("btnLivePreviewModal").addEventListener("click", () => {
+          showToast("Đang mở bản xem trước giao diện chi tiết...");
+          setTimeout(() => {
+            window.open("service-detail.html", "_blank");
+          }, 600);
+        });
+      })();
+    </script>
+  </body>
+</html>
+

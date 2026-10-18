@@ -1,0 +1,563 @@
+- generic [ref=f10e2]:
+  - banner [ref=f10e3]:
+    - generic [ref=f10e4]:
+      - link "W WorkGo ." [ref=f10e6] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=f10e7]: W
+        - generic [ref=f10e9]: WorkGo
+        - generic: .
+      - navigation [ref=f10e10]:
+        - button "Danh mục dịch vụ" [ref=f10e11]
+        - button "Quản lý Dịch vụ" [ref=f10e12]
+        - link "Quy trình" [ref=f10e13] [cursor=pointer]:
+          - /url: "#how-it-works"
+        - link "Tại sao chọn WorkGo" [ref=f10e14] [cursor=pointer]:
+          - /url: "#why-workgo"
+        - button "Kênh Chuyên gia" [ref=f10e15]
+      - generic [ref=f10e19]:
+        - button "Đăng nhập" [ref=f10e20]
+        - button "Đăng ký" [ref=f10e21]
+  - main [ref=f10e22]:
+    - generic [ref=f10e24]:
+      - generic [ref=f10e25]:
+        - heading "Tìm kiếm chuyên gia & dịch vụ hoàn hảo cho mọi nhu cầu công việc" [level=1] [ref=f10e26]
+        - paragraph [ref=f10e27]: Kết nối tin cậy giữa Khách hàng và Chuyên gia. Mua bán dịch vụ Online, đặt lịch tại nhà (Onsite) và Giao nhận với cơ chế thanh toán đảm bảo an toàn tuyệt đối.
+        - generic [ref=f10e29]:
+          - combobox "Chọn hình thức thực hiện" [ref=f10e31] [cursor=pointer]:
+            - option "Tất cả hình thức" [selected]
+            - option "🌐 Dịch vụ Online (Digital)"
+            - option "🏠 Dịch vụ Tại nhà (Onsite)"
+            - option "🚚 Giao nhận (Delivery)"
+            - option "📅 Đặt lịch hẹn (Appointment)"
+          - 'textbox "Bạn đang cần dịch vụ gì? (VD: Thiết kế logo, Lập trình website, Sửa điện nước...)" [ref=f10e37]'
+          - button "Tìm kiếm" [ref=f10e38]
+        - generic [ref=f10e40]:
+          - generic [ref=f10e41]: "Tìm kiếm phổ biến:"
+          - generic [ref=f10e42]:
+            - button "Thiết kế Logo" [ref=f10e43]
+            - button "Lập trình Website" [ref=f10e44]
+            - button "Sửa điện nước" [ref=f10e45]
+            - button "Dọn dẹp nhà" [ref=f10e46]
+            - button "Giao hàng hỏa tốc" [ref=f10e47]
+            - button "Figma UI/UX" [ref=f10e48]
+      - generic [ref=f10e49]:
+        - generic [ref=f10e54]:
+          - strong [ref=f10e55]: Bảo chứng Ký quỹ (Escrow)
+          - generic [ref=f10e56]: Chỉ giải ngân khi bạn đã hài lòng
+        - generic [ref=f10e61]:
+          - strong [ref=f10e62]: Chuyên gia đã kiểm duyệt
+          - generic [ref=f10e63]: Hồ sơ & năng lực xác minh kỹ càng
+        - generic [ref=f10e67]:
+          - strong [ref=f10e68]: Nhận việc & phản hồi nhanh
+          - generic [ref=f10e69]: Báo giá và phản hồi trong 15 phút
+    - generic [ref=f10e71]:
+      - generic [ref=f10e72]: "Được tin dùng bởi hơn 10.000+ cá nhân & doanh nghiệp:"
+      - generic [ref=f10e73]:
+        - generic "VNG Corporation" [ref=f10e74] [cursor=pointer]: VNG
+        - generic "FPT Software" [ref=f10e75] [cursor=pointer]: FPT
+        - generic "Viettel Solutions" [ref=f10e76] [cursor=pointer]: Viettel
+        - generic "VinFast Eco" [ref=f10e77] [cursor=pointer]: VinFast
+        - generic "Tiki Now" [ref=f10e78] [cursor=pointer]: Tiki
+        - generic "Shopee Pro" [ref=f10e79] [cursor=pointer]: Shopee
+    - generic [ref=f10e81]:
+      - generic [ref=f10e82]:
+        - generic [ref=f10e83]:
+          - heading "Danh mục dịch vụ nổi bật" [level=2] [ref=f10e84]
+          - paragraph [ref=f10e85]: Hàng trăm lĩnh vực chuyên môn sẵn sàng phục vụ nhu cầu cá nhân & doanh nghiệp
+        - link "Xem tất cả danh mục" [ref=f10e86] [cursor=pointer]:
+          - /url: "#all-categories"
+      - generic [ref=f10e90]:
+        - generic [ref=f10e91] [cursor=pointer]:
+          - generic [ref=f10e92]: Online / Digital
+          - heading "Lập trình & Công nghệ" [level=3] [ref=f10e99]
+          - paragraph [ref=f10e100]: Thiết kế website, phát triển ứng dụng di động, API backend, giải pháp AI & dữ liệu.
+          - generic [ref=f10e101]:
+            - generic [ref=f10e102]: React / Next.js
+            - generic [ref=f10e103]: Spring Boot
+            - generic [ref=f10e104]: App Mobile
+          - generic [ref=f10e105]:
+            - generic [ref=f10e106]: 185+ dịch vụ
+            - generic [ref=f10e107]: Khám phá
+        - generic [ref=f10e111] [cursor=pointer]:
+          - generic [ref=f10e112]: Online / Digital
+          - heading "Thiết kế & Đồ họa" [level=3] [ref=f10e121]
+          - paragraph [ref=f10e122]: Thiết kế logo, nhận diện thương hiệu, UI/UX website & ứng dụng, mô hình 3D.
+          - generic [ref=f10e123]:
+            - generic [ref=f10e124]: Logo & Brand
+            - generic [ref=f10e125]: Figma UI/UX
+            - generic [ref=f10e126]: Banner Ads
+          - generic [ref=f10e127]:
+            - generic [ref=f10e128]: 240+ dịch vụ
+            - generic [ref=f10e129]: Khám phá
+        - generic [ref=f10e133] [cursor=pointer]:
+          - generic [ref=f10e134]: Tại nhà / Onsite
+          - heading "Sửa chữa Điện nước" [level=3] [ref=f10e139]
+          - paragraph [ref=f10e140]: Thợ điện gia dụng, xử lý sự cố đường ống nước, bảo trì máy lạnh, điện lạnh tại nhà.
+          - generic [ref=f10e141]:
+            - generic [ref=f10e142]: Thợ sửa điện
+            - generic [ref=f10e143]: Ống nước rò rỉ
+            - generic [ref=f10e144]: Vệ sinh máy lạnh
+          - generic [ref=f10e145]:
+            - generic [ref=f10e146]: 142+ dịch vụ
+            - generic [ref=f10e147]: Khám phá
+        - generic [ref=f10e151] [cursor=pointer]:
+          - generic [ref=f10e152]: Tại nhà / Onsite
+          - heading "Vệ sinh & Dọn dẹp" [level=3] [ref=f10e158]
+          - paragraph [ref=f10e159]: Dọn dẹp nhà ở theo giờ, tổng vệ sinh công trình sau xây dựng, giặt nệm sofa tại chỗ.
+          - generic [ref=f10e160]:
+            - generic [ref=f10e161]: Dọn nhà theo giờ
+            - generic [ref=f10e162]: Giặt ghế sofa
+            - generic [ref=f10e163]: Vệ sinh văn phòng
+          - generic [ref=f10e164]:
+            - generic [ref=f10e165]: 98+ dịch vụ
+            - generic [ref=f10e166]: Khám phá
+        - generic [ref=f10e170] [cursor=pointer]:
+          - generic [ref=f10e171]: Online / Digital
+          - heading "Viết lách & Dịch thuật" [level=3] [ref=f10e176]
+          - paragraph [ref=f10e177]: Sáng tạo nội dung SEO, bài PR doanh nghiệp, dịch thuật Anh - Việt, biên tập sách.
+          - generic [ref=f10e178]:
+            - generic [ref=f10e179]: Bài viết chuẩn SEO
+            - generic [ref=f10e180]: Dịch thuật công chứng
+            - generic [ref=f10e181]: Kịch bản Video
+          - generic [ref=f10e182]:
+            - generic [ref=f10e183]: 116+ dịch vụ
+            - generic [ref=f10e184]: Khám phá
+        - generic [ref=f10e188] [cursor=pointer]:
+          - generic [ref=f10e189]: Giao nhận / Delivery
+          - heading "Vận chuyển & Giao nhận" [level=3] [ref=f10e197]
+          - paragraph [ref=f10e198]: Giao tài liệu hỏa tốc nội thành, chuyển phát hàng hóa nhỏ lẻ, chuyển nhà trọn gói.
+          - generic [ref=f10e199]:
+            - generic [ref=f10e200]: Giao tài liệu hỏa tốc
+            - generic [ref=f10e201]: Ship hàng nội thành
+            - generic [ref=f10e202]: Chuyển trọ giá rẻ
+          - generic [ref=f10e203]:
+            - generic [ref=f10e204]: 75+ dịch vụ
+            - generic [ref=f10e205]: Khám phá
+        - generic [ref=f10e209] [cursor=pointer]:
+          - generic [ref=f10e210]: Online / Digital
+          - heading "Marketing & Quảng cáo" [level=3] [ref=f10e216]
+          - paragraph [ref=f10e217]: Quản trị Fanpage, chạy quảng cáo Facebook/Google Ads, chiến dịch TikTok, tối ưu SEO.
+          - generic [ref=f10e218]:
+            - generic [ref=f10e219]: Google Ads
+            - generic [ref=f10e220]: TikTok Ads
+            - generic [ref=f10e221]: Quản trị Fanpage
+          - generic [ref=f10e222]:
+            - generic [ref=f10e223]: 130+ dịch vụ
+            - generic [ref=f10e224]: Khám phá
+        - generic [ref=f10e228] [cursor=pointer]:
+          - generic [ref=f10e229]: Lịch hẹn / Appointment
+          - heading "Gia sư & Đào tạo" [level=3] [ref=f10e235]
+          - paragraph [ref=f10e236]: Dạy kèm 1-1 trực tuyến hoặc tại nhà, luyện thi IELTS/TOEIC, kỹ năng tin học & lập trình.
+          - generic [ref=f10e237]:
+            - generic [ref=f10e238]: Gia sư IELTS
+            - generic [ref=f10e239]: Toán - Lý - Hóa
+            - generic [ref=f10e240]: Lập trình cơ bản
+          - generic [ref=f10e241]:
+            - generic [ref=f10e242]: 88+ dịch vụ
+            - generic [ref=f10e243]: Khám phá
+    - generic [ref=f10e248]:
+      - generic [ref=f10e249]:
+        - generic [ref=f10e250]:
+          - generic [ref=f10e251]: Thịnh hành trên WorkGo
+          - heading "Dịch vụ chuyên nghiệp được yêu thích" [level=2] [ref=f10e255]
+          - paragraph [ref=f10e256]: Lựa chọn từ các Chuyên gia có điểm đánh giá cao và hoàn thành hàng trăm đơn hàng
+        - generic [ref=f10e257]:
+          - button "Previous services" [disabled] [ref=f10e258]
+          - button "Next services" [ref=f10e261]
+      - generic [ref=f10e264]:
+        - button "Tất cả dịch vụ" [ref=f10e265]
+        - button "🌐 Online / Digital" [ref=f10e266]
+        - button "🏠 Tại nhà / Onsite" [ref=f10e267]
+        - button "🚚 Giao nhận" [ref=f10e268]
+      - generic [ref=f10e269]:
+        - generic [ref=f10e271] [cursor=pointer]:
+          - generic [ref=f10e272]:
+            - img "Thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React / Next.js" [ref=f10e273]
+            - generic [ref=f10e274]: Online
+            - button "Lưu dịch vụ" [ref=f10e275]
+          - generic [ref=f10e278]:
+            - generic [ref=f10e279]:
+              - img "Trần Minh Quang" [ref=f10e280]
+              - generic [ref=f10e281]:
+                - generic [ref=f10e282]: Trần Minh Quang
+                - generic [ref=f10e287]: Chuyên gia Pro
+            - heading "Thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React / Next.js" [level=3] [ref=f10e288]
+            - generic [ref=f10e289]:
+              - generic [ref=f10e292]: "5.0"
+              - generic [ref=f10e293]: (164)
+            - generic [ref=f10e295]:
+              - generic [ref=f10e296]: 5 ngày
+              - generic [ref=f10e301]:
+                - generic [ref=f10e302]: Khởi điểm
+                - generic [ref=f10e303]: 2.500.000 ₫
+        - generic [ref=f10e305] [cursor=pointer]:
+          - generic [ref=f10e306]:
+            - img "Thiết kế trọn bộ nhận diện thương hiệu & Logo công ty phong cách tối giản" [ref=f10e307]
+            - generic [ref=f10e308]: Online
+            - button "Lưu dịch vụ" [ref=f10e309]
+          - generic [ref=f10e312]:
+            - generic [ref=f10e313]:
+              - img "Lê Hoàng Anh" [ref=f10e314]
+              - generic [ref=f10e315]:
+                - generic [ref=f10e316]: Lê Hoàng Anh
+                - generic [ref=f10e321]: Verified Designer
+            - heading "Thiết kế trọn bộ nhận diện thương hiệu & Logo công ty phong cách tối giản" [level=3] [ref=f10e322]
+            - generic [ref=f10e323]:
+              - generic [ref=f10e326]: "5.0"
+              - generic [ref=f10e327]: (289)
+            - generic [ref=f10e329]:
+              - generic [ref=f10e330]: 3 ngày
+              - generic [ref=f10e335]:
+                - generic [ref=f10e336]: Khởi điểm
+                - generic [ref=f10e337]: 1.200.000 ₫
+        - generic [ref=f10e339] [cursor=pointer]:
+          - generic [ref=f10e340]:
+            - img "Sửa chữa điện nước, xử lý chập cháy & rò rỉ đường ống khẩn cấp tại nhà" [ref=f10e341]
+            - generic [ref=f10e342]: Tại nhà
+            - button "Lưu dịch vụ" [ref=f10e343]
+          - generic [ref=f10e346]:
+            - generic [ref=f10e347]:
+              - img "Nguyễn Văn Tuấn" [ref=f10e348]
+              - generic [ref=f10e349]:
+                - generic [ref=f10e350]: Nguyễn Văn Tuấn
+                - generic [ref=f10e355]: Thợ 10+ năm kinh nghiệm
+            - heading "Sửa chữa điện nước, xử lý chập cháy & rò rỉ đường ống khẩn cấp tại nhà" [level=3] [ref=f10e356]
+            - generic [ref=f10e357]:
+              - generic [ref=f10e360]: "4.9"
+              - generic [ref=f10e361]: (215)
+            - generic [ref=f10e363]:
+              - generic [ref=f10e364]: 1 ngày
+              - generic [ref=f10e369]:
+                - generic [ref=f10e370]: Khởi điểm
+                - generic [ref=f10e371]: 250.000 ₫
+        - generic [ref=f10e373] [cursor=pointer]:
+          - generic [ref=f10e374]:
+            - img "Tổng vệ sinh nhà ở, căn hộ chung cư & giặt sofa nệm khử khuẩn bằng hơi nước" [ref=f10e375]
+            - generic [ref=f10e376]: Tại nhà
+            - button "Lưu dịch vụ" [ref=f10e377]
+          - generic [ref=f10e380]:
+            - generic [ref=f10e381]:
+              - img "Đội Vệ Sinh Sạch 24H" [ref=f10e382]
+              - generic [ref=f10e383]:
+                - generic [ref=f10e384]: Đội Vệ Sinh Sạch 24H
+                - generic [ref=f10e389]: Đội ngũ chuyên nghiệp
+            - heading "Tổng vệ sinh nhà ở, căn hộ chung cư & giặt sofa nệm khử khuẩn bằng hơi nước" [level=3] [ref=f10e390]
+            - generic [ref=f10e391]:
+              - generic [ref=f10e394]: "4.9"
+              - generic [ref=f10e395]: (142)
+            - generic [ref=f10e397]:
+              - generic [ref=f10e398]: 1 ngày
+              - generic [ref=f10e403]:
+                - generic [ref=f10e404]: Khởi điểm
+                - generic [ref=f10e405]: 450.000 ₫
+        - generic [ref=f10e407] [cursor=pointer]:
+          - generic [ref=f10e408]:
+            - img "Thiết kế giao diện Mobile App & Dashboard bằng Figma với Design System hoàn chỉnh" [ref=f10e409]
+            - generic [ref=f10e410]: Online
+            - button "Lưu dịch vụ" [ref=f10e411]
+          - generic [ref=f10e414]:
+            - generic [ref=f10e415]:
+              - img "Phạm Thu Trang" [ref=f10e416]
+              - generic [ref=f10e417]:
+                - generic [ref=f10e418]: Phạm Thu Trang
+                - generic [ref=f10e423]: Senior UI/UX Designer
+            - heading "Thiết kế giao diện Mobile App & Dashboard bằng Figma với Design System hoàn chỉnh" [level=3] [ref=f10e424]
+            - generic [ref=f10e425]:
+              - generic [ref=f10e428]: "5.0"
+              - generic [ref=f10e429]: (97)
+            - generic [ref=f10e431]:
+              - generic [ref=f10e432]: 7 ngày
+              - generic [ref=f10e437]:
+                - generic [ref=f10e438]: Khởi điểm
+                - generic [ref=f10e439]: 3.200.000 ₫
+        - generic [ref=f10e441] [cursor=pointer]:
+          - generic [ref=f10e442]:
+            - img "Giao tài liệu hỏa tốc nội thành, giao hồ sơ pháp lý & bưu kiện cam kết bảo mật" [ref=f10e443]
+            - generic [ref=f10e444]: Giao nhận
+            - button "Lưu dịch vụ" [ref=f10e445]
+          - generic [ref=f10e448]:
+            - generic [ref=f10e449]:
+              - img "Vũ Đăng Khoa" [ref=f10e450]
+              - generic [ref=f10e451]:
+                - generic [ref=f10e452]: Vũ Đăng Khoa
+                - generic [ref=f10e457]: Giao siêu tốc 60p
+            - heading "Giao tài liệu hỏa tốc nội thành, giao hồ sơ pháp lý & bưu kiện cam kết bảo mật" [level=3] [ref=f10e458]
+            - generic [ref=f10e459]:
+              - generic [ref=f10e462]: "5.0"
+              - generic [ref=f10e463]: (310)
+            - generic [ref=f10e465]:
+              - generic [ref=f10e466]: 1 ngày
+              - generic [ref=f10e471]:
+                - generic [ref=f10e472]: Khởi điểm
+                - generic [ref=f10e473]: 50.000 ₫
+        - generic [ref=f10e475] [cursor=pointer]:
+          - generic [ref=f10e476]:
+            - img "Lập trình Backend RESTful API & Microservices bảo mật cao bằng Spring Boot" [ref=f10e477]
+            - generic [ref=f10e478]: Online
+            - button "Lưu dịch vụ" [ref=f10e479]
+          - generic [ref=f10e482]:
+            - generic [ref=f10e483]:
+              - img "Đặng Quang Huy" [ref=f10e484]
+              - generic [ref=f10e485]:
+                - generic [ref=f10e486]: Đặng Quang Huy
+                - generic [ref=f10e491]: Senior Java Engineer
+            - heading "Lập trình Backend RESTful API & Microservices bảo mật cao bằng Spring Boot" [level=3] [ref=f10e492]
+            - generic [ref=f10e493]:
+              - generic [ref=f10e496]: "5.0"
+              - generic [ref=f10e497]: (112)
+            - generic [ref=f10e499]:
+              - generic [ref=f10e500]: 7 ngày
+              - generic [ref=f10e505]:
+                - generic [ref=f10e506]: Khởi điểm
+                - generic [ref=f10e507]: 4.000.000 ₫
+        - generic [ref=f10e509] [cursor=pointer]:
+          - generic [ref=f10e510]:
+            - img "Viết bài chuẩn SEO tiếng Việt chất lượng cao cho Website & Blog chuyên ngành" [ref=f10e511]
+            - generic [ref=f10e512]: Online
+            - button "Lưu dịch vụ" [ref=f10e513]
+          - generic [ref=f10e516]:
+            - generic [ref=f10e517]:
+              - img "Nguyễn Thảo My" [ref=f10e518]
+              - generic [ref=f10e519]:
+                - generic [ref=f10e520]: Nguyễn Thảo My
+                - generic [ref=f10e525]: Chuyên gia Content
+            - heading "Viết bài chuẩn SEO tiếng Việt chất lượng cao cho Website & Blog chuyên ngành" [level=3] [ref=f10e526]
+            - generic [ref=f10e527]:
+              - generic [ref=f10e530]: "4.9"
+              - generic [ref=f10e531]: (184)
+            - generic [ref=f10e533]:
+              - generic [ref=f10e534]: 2 ngày
+              - generic [ref=f10e539]:
+                - generic [ref=f10e540]: Khởi điểm
+                - generic [ref=f10e541]: 350.000 ₫
+        - generic [ref=f10e543] [cursor=pointer]:
+          - generic [ref=f10e544]:
+            - img "Tối ưu hóa chiến dịch quảng cáo Facebook Ads & TikTok Ads chuyển đổi cao" [ref=f10e545]
+            - generic [ref=f10e546]: Online
+            - button "Lưu dịch vụ" [ref=f10e547]
+          - generic [ref=f10e550]:
+            - generic [ref=f10e551]:
+              - img "Hoàng Gia Bảo" [ref=f10e552]
+              - generic [ref=f10e553]:
+                - generic [ref=f10e554]: Hoàng Gia Bảo
+                - generic [ref=f10e559]: Performance Marketer
+            - heading "Tối ưu hóa chiến dịch quảng cáo Facebook Ads & TikTok Ads chuyển đổi cao" [level=3] [ref=f10e560]
+            - generic [ref=f10e561]:
+              - generic [ref=f10e564]: "4.8"
+              - generic [ref=f10e565]: (95)
+            - generic [ref=f10e567]:
+              - generic [ref=f10e568]: 3 ngày
+              - generic [ref=f10e573]:
+                - generic [ref=f10e574]: Khởi điểm
+                - generic [ref=f10e575]: 1.800.000 ₫
+        - generic [ref=f10e577] [cursor=pointer]:
+          - generic [ref=f10e578]:
+            - img "Gia sư kèm 1-1 Luyện thi IELTS cấp tốc Online hoặc tại nhà cam kết mục tiêu" [ref=f10e579]
+            - generic [ref=f10e580]: Lịch hẹn
+            - button "Lưu dịch vụ" [ref=f10e581]
+          - generic [ref=f10e584]:
+            - generic [ref=f10e585]:
+              - img "ThS. Mai Phương" [ref=f10e586]
+              - generic [ref=f10e587]:
+                - generic [ref=f10e588]: ThS. Mai Phương
+                - generic [ref=f10e593]: IELTS 8.5 Teacher
+            - heading "Gia sư kèm 1-1 Luyện thi IELTS cấp tốc Online hoặc tại nhà cam kết mục tiêu" [level=3] [ref=f10e594]
+            - generic [ref=f10e595]:
+              - generic [ref=f10e598]: "5.0"
+              - generic [ref=f10e599]: (78)
+            - generic [ref=f10e601]:
+              - generic [ref=f10e602]: 1 ngày
+              - generic [ref=f10e607]:
+                - generic [ref=f10e608]: Khởi điểm
+                - generic [ref=f10e609]: 600.000 ₫
+        - generic [ref=f10e611] [cursor=pointer]:
+          - generic [ref=f10e612]:
+            - img "Vệ sinh, bơm gas và bảo trì máy lạnh điều hòa dân dụng tận nơi nhanh 30 phút" [ref=f10e613]
+            - generic [ref=f10e614]: Tại nhà
+            - button "Lưu dịch vụ" [ref=f10e615]
+          - generic [ref=f10e618]:
+            - generic [ref=f10e619]:
+              - img "Cơ Điện Lạnh Minh Phát" [ref=f10e620]
+              - generic [ref=f10e621]:
+                - generic [ref=f10e622]: Cơ Điện Lạnh Minh Phát
+                - generic [ref=f10e627]: Kỹ thuật viên lành nghề
+            - heading "Vệ sinh, bơm gas và bảo trì máy lạnh điều hòa dân dụng tận nơi nhanh 30 phút" [level=3] [ref=f10e628]
+            - generic [ref=f10e629]:
+              - generic [ref=f10e632]: "4.9"
+              - generic [ref=f10e633]: (176)
+            - generic [ref=f10e635]:
+              - generic [ref=f10e636]: 1 ngày
+              - generic [ref=f10e641]:
+                - generic [ref=f10e642]: Khởi điểm
+                - generic [ref=f10e643]: 180.000 ₫
+        - generic [ref=f10e645] [cursor=pointer]:
+          - generic [ref=f10e646]:
+            - img "Dịch vụ chuyển phòng trọ, dọn nhà trọn gói bằng xe tải nhỏ nội thành tiết kiệm" [ref=f10e647]
+            - generic [ref=f10e648]: Giao nhận
+            - button "Lưu dịch vụ" [ref=f10e649]
+          - generic [ref=f10e652]:
+            - generic [ref=f10e653]:
+              - img "Vận Tải An Tâm 247" [ref=f10e654]
+              - generic [ref=f10e655]:
+                - generic [ref=f10e656]: Vận Tải An Tâm 247
+                - generic [ref=f10e661]: Đội xe chuyên dụng
+            - heading "Dịch vụ chuyển phòng trọ, dọn nhà trọn gói bằng xe tải nhỏ nội thành tiết kiệm" [level=3] [ref=f10e662]
+            - generic [ref=f10e663]:
+              - generic [ref=f10e666]: "4.9"
+              - generic [ref=f10e667]: (88)
+            - generic [ref=f10e669]:
+              - generic [ref=f10e670]: 1 ngày
+              - generic [ref=f10e675]:
+                - generic [ref=f10e676]: Khởi điểm
+                - generic [ref=f10e677]: 550.000 ₫
+    - generic [ref=f10e679]:
+      - generic [ref=f10e680]:
+        - generic [ref=f10e681]: GIÁ TRỊ CỐT LÕI TẠI WORKGO
+        - heading "Một sàn dịch vụ được xây dựng vì sự tin tưởng" [level=2] [ref=f10e682]
+        - paragraph [ref=f10e683]: Chúng tôi loại bỏ rủi ro khi thuê freelancer và thợ dịch vụ bằng công nghệ và quy trình bảo vệ quyền lợi tối đa cho cả hai bên.
+      - generic [ref=f10e684]:
+        - generic [ref=f10e685]:
+          - heading "Bảo chứng Ký quỹ (Escrow)" [level=3] [ref=f10e690]
+          - paragraph [ref=f10e691]: Khoản thanh toán được giữ an toàn tại tài khoản bảo chứng. Chỉ giải ngân cho Chuyên gia khi bạn đã kiểm tra và xác nhận nghiệm thu đạt yêu cầu.
+        - generic [ref=f10e692]:
+          - heading "Minh bạch Gói dịch vụ (Packages)" [level=3] [ref=f10e699]
+          - paragraph [ref=f10e700]: Mọi dịch vụ phân chia rõ ràng các gói Basic, Standard, Premium và tiện ích Add-on. Không lo phát sinh chi phí ngầm ngoài thỏa thuận.
+        - generic [ref=f10e701]:
+          - heading "Linh hoạt 2 chiều giao dịch" [level=3] [ref=f10e708]
+          - paragraph [ref=f10e709]: Tự do chọn mua dịch vụ niêm yết sẵn có từ Chuyên gia hoặc Đăng yêu cầu công việc để nhận nhiều Proposal báo giá cạnh tranh.
+        - generic [ref=f10e710]:
+          - heading "Hỗ trợ & Trọng tài công tâm" [level=3] [ref=f10e714]
+          - paragraph [ref=f10e715]: Hệ thống đánh giá Review thực tế sau mỗi đơn hàng, tin nhắn trao đổi bảo mật và đội ngũ hỗ trợ giải quyết tranh chấp nhanh chóng 24/7.
+    - generic [ref=f10e717]:
+      - generic [ref=f10e718]:
+        - generic [ref=f10e719]: DỄ DÀNG & AN TÂM
+        - heading "Cách thức hoạt động trên WorkGo" [level=2] [ref=f10e720]
+        - paragraph [ref=f10e721]: Trải nghiệm mua bán dịch vụ chuyên nghiệp, an toàn và nhanh gọn chỉ với 4 bước
+      - generic [ref=f10e722]:
+        - generic [ref=f10e723]:
+          - generic [ref=f10e724]: "01"
+          - heading "Tìm kiếm hoặc Đăng việc" [level=3] [ref=f10e730]
+          - paragraph [ref=f10e731]: Khám phá hàng nghìn dịch vụ có sẵn hoặc đăng mô tả công việc của bạn lên hệ thống để nhận báo giá từ nhiều chuyên gia.
+        - generic [ref=f10e732]:
+          - generic [ref=f10e733]: "02"
+          - heading "Trao đổi & Chọn gói" [level=3] [ref=f10e738]
+          - paragraph [ref=f10e739]: Nhắn tin trực tiếp với Chuyên gia, so sánh các gói Basic / Standard / Premium hoặc duyệt các Proposal báo giá chi tiết.
+        - generic [ref=f10e740]:
+          - generic [ref=f10e741]: "03"
+          - heading "Xác nhận & Ký quỹ an toàn" [level=3] [ref=f10e746]
+          - paragraph [ref=f10e747]: Tạo đơn hàng và thanh toán. Số tiền của bạn được giữ an toàn trong tài khoản bảo chứng (Escrow) trong suốt quá trình thực hiện.
+        - generic [ref=f10e748]:
+          - generic [ref=f10e749]: "04"
+          - heading "Nghiệm thu & Giải ngân" [level=3] [ref=f10e755]
+          - paragraph [ref=f10e756]: Kiểm tra chất lượng dịch vụ khi hoàn thành. Chỉ khi bạn hoàn toàn ưng ý, hệ thống mới giải ngân tiền cho Chuyên gia và để lại đánh giá.
+    - generic [ref=f10e759]:
+      - generic [ref=f10e760]:
+        - generic [ref=f10e761]: DÀNH CHO KHÁCH HÀNG
+        - heading "Cần hoàn thành công việc nhanh chóng?" [level=3] [ref=f10e767]
+        - paragraph [ref=f10e768]: Đăng tin tuyển chọn chuyên gia hoàn toàn miễn phí. Nhận nhiều báo giá cạnh tranh chỉ sau ít phút và chủ động chọn người phù hợp nhất.
+        - button "Đăng yêu cầu công việc" [ref=f10e769]
+      - generic [ref=f10e773]:
+        - generic [ref=f10e774]: DÀNH CHO CHUYÊN GIA / FREELANCER
+        - heading "Bạn có kỹ năng chuyên môn xuất sắc?" [level=3] [ref=f10e781]
+        - paragraph [ref=f10e782]: Gia nhập cộng đồng Chuyên gia WorkGo. Đăng bán dịch vụ, tiếp cận hàng nghìn khách hàng tiềm năng và gia tăng thu nhập với cơ chế bảo chứng thanh toán.
+        - button "Trở thành Chuyên gia WorkGo" [ref=f10e783]
+  - contentinfo [ref=f10e787]:
+    - generic [ref=f10e788]:
+      - generic [ref=f10e789]:
+        - generic [ref=f10e790]:
+          - heading "Danh mục dịch vụ" [level=4] [ref=f10e791]
+          - list [ref=f10e792]:
+            - listitem [ref=f10e793]:
+              - link "Lập trình & Công nghệ" [ref=f10e794] [cursor=pointer]:
+                - /url: "#categories"
+            - listitem [ref=f10e795]:
+              - link "Thiết kế đồ họa & UI/UX" [ref=f10e796] [cursor=pointer]:
+                - /url: "#categories"
+            - listitem [ref=f10e797]:
+              - link "Sửa chữa Điện nước" [ref=f10e798] [cursor=pointer]:
+                - /url: "#categories"
+            - listitem [ref=f10e799]:
+              - link "Vệ sinh & Dọn dẹp" [ref=f10e800] [cursor=pointer]:
+                - /url: "#categories"
+            - listitem [ref=f10e801]:
+              - link "Viết lách & Dịch thuật" [ref=f10e802] [cursor=pointer]:
+                - /url: "#categories"
+            - listitem [ref=f10e803]:
+              - link "Vận chuyển & Giao nhận" [ref=f10e804] [cursor=pointer]:
+                - /url: "#categories"
+            - listitem [ref=f10e805]:
+              - link "Marketing & Quảng cáo" [ref=f10e806] [cursor=pointer]:
+                - /url: "#categories"
+        - generic [ref=f10e807]:
+          - heading "Dành cho Khách hàng" [level=4] [ref=f10e808]
+          - list [ref=f10e809]:
+            - listitem [ref=f10e810]:
+              - link "Cách thức đặt dịch vụ" [ref=f10e811] [cursor=pointer]:
+                - /url: "#how-it-works"
+            - listitem [ref=f10e812]:
+              - link "Bảo chứng Ký quỹ (Escrow)" [ref=f10e813] [cursor=pointer]:
+                - /url: "#why-workgo"
+            - listitem [ref=f10e814]:
+              - link "Đăng tin tuyển dụng (Post Job)" [ref=f10e815] [cursor=pointer]:
+                - /url: "#cta"
+            - listitem [ref=f10e816]:
+              - link "Chính sách hoàn tiền & tranh chấp" [ref=f10e817] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f10e818]:
+              - link "Quy chuẩn nghiệm thu công việc" [ref=f10e819] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f10e820]:
+              - link "Câu hỏi thường gặp (FAQ)" [ref=f10e821] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=f10e822]:
+          - heading "Dành cho Chuyên gia" [level=4] [ref=f10e823]
+          - list [ref=f10e824]:
+            - listitem [ref=f10e825]:
+              - link "Đăng ký trở thành Chuyên gia" [ref=f10e826] [cursor=pointer]:
+                - /url: "#cta"
+            - listitem [ref=f10e827]:
+              - link "Tiêu chuẩn xác thực (Verification)" [ref=f10e828] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f10e829]:
+              - link "Quy định tạo gói dịch vụ (Packages)" [ref=f10e830] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f10e831]:
+              - link "Rút tiền & Tài khoản thanh toán" [ref=f10e832] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f10e833]:
+              - link "Cộng đồng Freelancer WorkGo" [ref=f10e834] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f10e835]:
+              - link "Bảo vệ quyền tác giả & sở hữu" [ref=f10e836] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=f10e837]:
+          - heading "Về WorkGo" [level=4] [ref=f10e838]
+          - list [ref=f10e839]:
+            - listitem [ref=f10e840]:
+              - link "Giới thiệu nền tảng" [ref=f10e841] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f10e842]:
+              - link "Cơ hội nghề nghiệp" [ref=f10e843] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f10e844]:
+              - link "Báo chí & Truyền thông" [ref=f10e845] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f10e846]:
+              - link "Điều khoản sử dụng" [ref=f10e847] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f10e848]:
+              - link "Chính sách bảo mật dữ liệu" [ref=f10e849] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f10e850]:
+              - link "Liên hệ & Trợ giúp 24/7" [ref=f10e851] [cursor=pointer]:
+                - /url: "#"
+      - generic [ref=f10e852]:
+        - generic [ref=f10e853]:
+          - generic [ref=f10e854]:
+            - generic [ref=f10e855]: W
+            - generic [ref=f10e856]: WorkGo
+          - generic [ref=f10e857]: © 2026 WorkGo Marketplace Inc. Nền tảng kết nối dịch vụ chuyên nghiệp hàng đầu.
+        - generic [ref=f10e858]:
+          - generic [ref=f10e859] [cursor=pointer]: Tiếng Việt
+          - generic [ref=f10e864] [cursor=pointer]: ₫ VND
+          - generic [ref=f10e866] [cursor=pointer]: Được bảo vệ bởi Escrow

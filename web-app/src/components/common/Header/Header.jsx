@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, Search, Sparkles } from 'lucide-react';
 import styles from './Header.module.css';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 
 export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [miniSearchQuery, setMiniSearchQuery] = useState('');
+  const drawerRef = useRef(null);
+  // F3: keep Tab cycling inside the drawer while open.
+  useFocusTrap(drawerRef, mobileMenuOpen);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,6 +24,20 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [activePage]);
+
+  // R3: Escape closes the mobile drawer; focus moves into it on open.
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setMobileMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    if (drawerRef.current) {
+      const first = drawerRef.current.querySelector('button, a');
+      if (first) first.focus();
+    }
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mobileMenuOpen]);
 
   const handleMiniSearchSubmit = (e) => {
     e.preventDefault();
@@ -147,7 +165,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
 
       {/* Mobile Drawer Navigation */}
       {mobileMenuOpen && (
-        <div className={styles.mobileDrawer}>
+        <div className={styles.mobileDrawer} ref={drawerRef}>
           <div className={styles.mobileDrawerContent}>
             <button
               type="button"

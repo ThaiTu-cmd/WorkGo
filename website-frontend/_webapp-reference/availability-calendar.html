@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="WorkGo - Quản lý Lịch rảnh của Chuyên gia. Thiết lập khung giờ nhận lịch hằng tuần và theo dõi Booking Slot."
+    />
+    <title>Lịch rảnh — WorkGo Provider Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="availability-calendar.css" />
+  </head>
+  <body>
+    <!-- 1. Header -->
+    <header class="header">
+      <div class="container header-container">
+        <a href="index.html" class="logo"><span class="logo-work">Work</span><span class="logo-go">Go</span></a>
+        <nav class="nav-links">
+          <a href="catalog-search.html">Danh mục dịch vụ</a>
+          <a href="my-services.html">Quản lý dịch vụ</a>
+          <a href="availability-calendar.html" class="active">Lịch rảnh</a>
+        </nav>
+        <div class="header-actions">
+          <span class="avatar" aria-hidden="true">TQ</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="container">
+        <!-- 2. Breadcrumb -->
+        <div class="breadcrumb">
+          <a href="my-services.html" class="back-btn">&larr; Quản lý dịch vụ</a>
+          <span class="sep">/</span>
+          <span>Kênh Chuyên gia</span>
+          <span class="sep">/</span>
+          <span class="current">Lịch rảnh</span>
+        </div>
+
+        <!-- 3. Page header -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Lịch rảnh</h1>
+            <p class="page-subtitle">
+              Thiết lập khung giờ nhận lịch hằng tuần. Hệ thống chia mỗi khung thành các Booking Slot để khách đặt.
+            </p>
+          </div>
+          <label class="service-picker">
+            <span>Dịch vụ</span>
+            <select>
+              <option>Lập trình Landing Page</option>
+              <option>Thiết kế Logo Doanh Nghiệp</option>
+              <option>Viết 10 bài chuẩn SEO</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="summary">
+          <span><strong>4</strong> khung giờ</span>
+          <span><strong>20</strong> giờ rảnh / tuần</span>
+          <span class="live">Dữ liệu máy chủ</span>
+        </div>
+
+        <div class="layout">
+          <!-- 4. Week grid: 06:00–22:00, 48px per hour -->
+          <section class="card grid-card">
+            <div class="grid-scroller">
+              <div class="week-grid">
+                <div class="time-col">
+                  <div class="day-head"></div>
+                  <div class="time-body">
+                    <span style="top: 0">06:00</span>
+                    <span style="top: 96px">08:00</span>
+                    <span style="top: 192px">10:00</span>
+                    <span style="top: 288px">12:00</span>
+                    <span style="top: 384px">14:00</span>
+                    <span style="top: 480px">16:00</span>
+                    <span style="top: 576px">18:00</span>
+                    <span style="top: 672px">20:00</span>
+                  </div>
+                </div>
+
+                <div class="day-col">
+                  <div class="day-head"><b>Thứ 2</b><small>8h rảnh</small></div>
+                  <div class="day-body">
+                    <button class="rule" style="top: 96px; height: 192px; --slot: 48px">
+                      <b>08:00 – 12:00</b><small>60 phút/slot</small>
+                    </button>
+                    <button class="rule selected" style="top: 336px; height: 192px; --slot: 48px">
+                      <b>13:00 – 17:00</b><small>60 phút/slot</small>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="day-col">
+                  <div class="day-head"><b>Thứ 3</b><small>9h rảnh</small></div>
+                  <div class="day-body">
+                    <button class="rule" style="top: 96px; height: 432px; --slot: 24px">
+                      <b>08:00 – 17:00</b><small>30 phút/slot</small>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="day-col">
+                  <div class="day-head"><b>Thứ 4</b><small>Nghỉ</small></div>
+                  <div class="day-body"></div>
+                </div>
+
+                <div class="day-col">
+                  <div class="day-head"><b>Thứ 5</b><small>3h rảnh</small></div>
+                  <div class="day-body">
+                    <button class="rule" style="top: 576px; height: 144px; --slot: 72px">
+                      <b>18:00 – 21:00</b><small>90 phút/slot</small>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="day-col">
+                  <div class="day-head"><b>Thứ 6</b><small>Nghỉ</small></div>
+                  <div class="day-body"></div>
+                </div>
+
+                <div class="day-col">
+                  <div class="day-head"><b>Thứ 7</b><small>Tạm tắt</small></div>
+                  <div class="day-body">
+                    <button class="rule inactive" style="top: 96px; height: 192px; --slot: 96px">
+                      <b>08:00 – 12:00</b><small>120 phút/slot · Tạm tắt</small>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="day-col">
+                  <div class="day-head"><b>Chủ nhật</b><small>Nghỉ</small></div>
+                  <div class="day-body"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <aside class="side">
+            <!-- 5. Rule form -->
+            <form class="card panel">
+              <h2>Sửa khung giờ</h2>
+              <div class="field">
+                <span>Ngày trong tuần</span>
+                <div class="day-picker">
+                  <button type="button" class="chip active">T2</button>
+                  <button type="button" class="chip">T3</button>
+                  <button type="button" class="chip">T4</button>
+                  <button type="button" class="chip">T5</button>
+                  <button type="button" class="chip">T6</button>
+                  <button type="button" class="chip">T7</button>
+                  <button type="button" class="chip">CN</button>
+                </div>
+              </div>
+              <div class="field-row">
+                <label class="field"><span>Bắt đầu</span><input type="time" value="13:00" /></label>
+                <label class="field"><span>Kết thúc</span><input type="time" value="17:00" /></label>
+              </div>
+              <label class="field">
+                <span>Độ dài mỗi slot</span>
+                <select>
+                  <option>15 phút</option>
+                  <option>30 phút</option>
+                  <option>45 phút</option>
+                  <option selected>60 phút</option>
+                  <option>90 phút</option>
+                  <option>120 phút</option>
+                </select>
+              </label>
+              <label class="toggle"><input type="checkbox" checked /> Đang mở nhận lịch</label>
+              <div class="actions">
+                <button type="submit" class="btn-primary">Lưu thay đổi</button>
+                <button type="button" class="btn-danger">Xoá</button>
+              </div>
+            </form>
+
+            <!-- 6. Booking slots -->
+            <section class="card panel">
+              <h2>Booking Slot sắp tới</h2>
+              <div class="legend">
+                <span class="badge available">Còn trống</span>
+                <span class="badge held">Đang giữ</span>
+                <span class="badge booked">Đã đặt</span>
+              </div>
+              <p class="slot-day">Thứ hai, 19/10</p>
+              <ul class="slot-list">
+                <li>08:00 – 09:00 <span class="badge booked">Đã đặt</span></li>
+                <li>09:00 – 10:00 <span class="badge held">Đang giữ</span></li>
+                <li>10:00 – 11:00 <span class="badge available">Còn trống</span></li>
+              </ul>
+              <p class="slot-day">Thứ ba, 20/10</p>
+              <ul class="slot-list">
+                <li>08:00 – 08:30 <span class="badge available">Còn trống</span></li>
+                <li>08:30 – 09:00 <span class="badge booked">Đã đặt</span></li>
+              </ul>
+            </section>
+          </aside>
+        </div>
+      </div>
+    </main>
+
+    <!-- 7. Footer -->
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span class="logo footer-logo">WorkGo</span>
+        <span class="copyright">© 2026 WorkGo Marketplace Inc. Bảo lưu mọi quyền.</span>
+      </div>
+    </footer>
+  </body>
+</html>

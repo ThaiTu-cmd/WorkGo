@@ -1,21 +1,21 @@
-import axios from 'axios';
+// MOCK MODE — backend chưa xong. Muốn live: git checkout <file> từ HEAD cũ.
 
-const axiosClient = axios.create({
-  baseURL: '/api/v1',
-  timeout: 5000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+const delay = (ms = 80) => new Promise((resolve) => setTimeout(resolve, ms));
 
-axiosClient.interceptors.response.use(
-  (response) => {
-    return response.data;
+const axiosClient = {
+  get: async (url, config) => {
+    void url;
+    void config;
+    await delay(80);
+    return { result: { data: [] } };
   },
-  (error) => {
-    console.warn('[API Client Notice] Service unavailable, falling back to cached/mock data.', error.message);
-    return Promise.reject(error);
-  }
-);
+  post: async (url, data, config) => {
+    void url;
+    void data;
+    void config;
+    await delay(80);
+    return { result: { token: `mock-token-${Date.now()}` } };
+  },
+};
 
 export default axiosClient;

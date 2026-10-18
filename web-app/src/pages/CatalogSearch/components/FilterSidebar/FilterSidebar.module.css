@@ -274,10 +274,13 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .priceInput {
   width: 100%;
+  min-width: 0;
+  flex: 1;
   padding: 8px 10px;
   border: 1px solid var(--wg-border);
   border-radius: var(--radius-sm);
@@ -324,4 +327,19 @@
   gap: 6px;
   font-size: 0.88rem;
   font-weight: 500;
+}
+
+/* H8 guard: short viewports / mobile drawer mode — no nested-scroll trap */
+@media (max-width: 900px) {
+  .sidebar {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+@media (max-height: 700px) {
+  .sidebar {
+    max-height: none;
+  }
 }

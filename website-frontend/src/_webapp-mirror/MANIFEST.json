@@ -1,0 +1,434 @@
+{
+  "source": "web-app/src",
+  "destMirror": "website-frontend/src/_webapp-mirror",
+  "createdAt": "2026-10-16T14:28:33.975Z",
+  "files": [
+    {
+      "relative": "api/axiosClient.js",
+      "size": 518,
+      "sha256": "83526624d00a484ae2ef132b8a98fd33892e1e726f59adc7cff34e062030b9f9"
+    },
+    {
+      "relative": "api/catalogApi.js",
+      "size": 1248,
+      "sha256": "7f5f59a6016ab0301a4721c68b5f0e93e4a7a2eb55ad416d25aca3e1cfc6d38f"
+    },
+    {
+      "relative": "App.jsx",
+      "size": 12090,
+      "sha256": "94d96607e40620538c7639faacea408e3180075f37fe2d05f2479b216c5699b5"
+    },
+    {
+      "relative": "App.module.css",
+      "size": 2239,
+      "sha256": "d3891440e21e309d69b42f77619d6ba3b5be1919570b4406b8d89c4ff888b866"
+    },
+    {
+      "relative": "components/common/AuthModal/AuthModal.jsx",
+      "size": 8052,
+      "sha256": "66b199c8d4988e24a6a614452eab8ee0c2111be6676e605fa07aaac92f6f0401"
+    },
+    {
+      "relative": "components/common/AuthModal/AuthModal.module.css",
+      "size": 4802,
+      "sha256": "e30a6e93d0c94a351bbdee7b8e740c93c6f1acd07e2d04c7a70b7f00dc7b7d19"
+    },
+    {
+      "relative": "components/common/Footer/Footer.jsx",
+      "size": 4356,
+      "sha256": "f3e2dc66c1acf152b2de51a7d951602c4f7463cd4e98a514bcf90e43b60e1ace"
+    },
+    {
+      "relative": "components/common/Footer/Footer.module.css",
+      "size": 2353,
+      "sha256": "7d6e1d54b686e171b5a2237c9155c25da3042068654eb5497c3f142a4cb7e585"
+    },
+    {
+      "relative": "components/common/Header/Header.jsx",
+      "size": 8082,
+      "sha256": "2c366dc91149757d514f3a1124d5bc7002ac156b87892afdb854d554abc4b5b4"
+    },
+    {
+      "relative": "components/common/Header/Header.module.css",
+      "size": 6741,
+      "sha256": "395e5003df717760a7c70698ebe798e2e3acff98f063c68899aaa57e3dc24112"
+    },
+    {
+      "relative": "components/common/SearchBar/SearchBar.jsx",
+      "size": 2065,
+      "sha256": "500d3a7c05d1714862fc8379c0f93d1e7d17044b54ce25fc3c1b4d4be90528b9"
+    },
+    {
+      "relative": "components/common/SearchBar/SearchBar.module.css",
+      "size": 2499,
+      "sha256": "a06e7e59be7b49d29ba8851b1fb0a6dd374c02288605acdc37cb048bbdf6a5e0"
+    },
+    {
+      "relative": "components/common/ServiceCard/ServiceCard.jsx",
+      "size": 4192,
+      "sha256": "6267ea8cd4b9c3b62bd2fae8413e08a66675c33db457409b8ef2b6a4d0f4b95c"
+    },
+    {
+      "relative": "components/common/ServiceCard/ServiceCard.module.css",
+      "size": 4904,
+      "sha256": "7cd7f02ef4f5c07bce9b847bd72eb6e9a1603ac1841a84aad346246b9a144138"
+    },
+    {
+      "relative": "components/common/Skeleton/SkeletonServiceCard.jsx",
+      "size": 1787,
+      "sha256": "be21a22e472d2ecb26c41bcc578f2c30edbe02d0cfc129acc94a343d1279a7dc"
+    },
+    {
+      "relative": "components/common/Skeleton/SkeletonServiceCard.module.css",
+      "size": 2096,
+      "sha256": "66d37395e500e0e44ec63942a6f18262675b757c10cbe68b9ede9ba8dec447dc"
+    },
+    {
+      "relative": "components/common/Skeleton/SkeletonTable.jsx",
+      "size": 3149,
+      "sha256": "145d3bfa8d58b552e7ac6dd7333458256c54ec33e9238c5cdd4e40874a5af96f"
+    },
+    {
+      "relative": "components/common/Skeleton/SkeletonTable.module.css",
+      "size": 1522,
+      "sha256": "91653c8e6549c8bd624f2dc2028128e2f01031384d8cb4e5149d299a27060ace"
+    },
+    {
+      "relative": "components/home/DualCTA/DualCTA.jsx",
+      "size": 2644,
+      "sha256": "410bdedf569f27d9d39551ca576b2824e3356a05183c51b1e240abeda87804b4"
+    },
+    {
+      "relative": "components/home/DualCTA/DualCTA.module.css",
+      "size": 2365,
+      "sha256": "e7d77c56b808224d1a91b7a539eca705c18c4b6837d25645fa2c4b750c0a911a"
+    },
+    {
+      "relative": "components/home/FeaturedCategories/FeaturedCategories.jsx",
+      "size": 3933,
+      "sha256": "a3c0adfd735e834e049897390e30b817c6c7f9393a1db480725d5eb0d97b7fc8"
+    },
+    {
+      "relative": "components/home/FeaturedCategories/FeaturedCategories.module.css",
+      "size": 4104,
+      "sha256": "6f49c5a8cca9960037e345adb67d8205c267efe36ceea01a55eb864beb65b032"
+    },
+    {
+      "relative": "components/home/HeroBanner/HeroBanner.jsx",
+      "size": 3403,
+      "sha256": "fa3225b8c151d60435f4bf0e5d8dbe21ab6414990b9fd3f8cf13b935b8865459"
+    },
+    {
+      "relative": "components/home/HeroBanner/HeroBanner.module.css",
+      "size": 3358,
+      "sha256": "e64fed1f9885cedec37986277d75ce31347e17354386615979e7f31f574182c7"
+    },
+    {
+      "relative": "components/home/HowItWorks/HowItWorks.jsx",
+      "size": 2651,
+      "sha256": "39f26bffb09f523828d95f62e06e3cfdb9bb2e1fd8cf2db1edf3c1dbdef8eddb"
+    },
+    {
+      "relative": "components/home/HowItWorks/HowItWorks.module.css",
+      "size": 2284,
+      "sha256": "6e7ccdd10efe2e8fbcce79ca3e6bea73e2e1aada721c69ab84971472894a400f"
+    },
+    {
+      "relative": "components/home/PopularServices/PopularServices.jsx",
+      "size": 3605,
+      "sha256": "d4e5a7d6a5a7f58592651b691ba90b88693a96e3374761f7ba28af582535f334"
+    },
+    {
+      "relative": "components/home/PopularServices/PopularServices.module.css",
+      "size": 2784,
+      "sha256": "dba8f4f3c517c1dfbbbeac2b12c284d2944723b2df1812ddca33ae5f186ef018"
+    },
+    {
+      "relative": "components/home/TrustedBy/TrustedBy.jsx",
+      "size": 1099,
+      "sha256": "79f58f03df14d5d50bfbc735864f15c5a7c9567377e51353dc46958b146b7b38"
+    },
+    {
+      "relative": "components/home/TrustedBy/TrustedBy.module.css",
+      "size": 902,
+      "sha256": "d6e40b318e5276be09e88c8053c5c7734df3e07855ccdd59d5cc22b927215b76"
+    },
+    {
+      "relative": "components/home/ValueProposition/ValueProposition.jsx",
+      "size": 2866,
+      "sha256": "95c6f14d9e88bbb6f14cd2f9c9396c4db86cd1d905117fa6413968d58e0b2f45"
+    },
+    {
+      "relative": "components/home/ValueProposition/ValueProposition.module.css",
+      "size": 1718,
+      "sha256": "0972b699c9875fd1ac89227c0da9ba81e5c64df3ee76b0e19aafc96ef602f660"
+    },
+    {
+      "relative": "data/mockCategories.js",
+      "size": 3978,
+      "sha256": "8853f9fb0368fceb9cb7f0e5d05fca5779ac5a73deed1b28cd859a8896fe23a0"
+    },
+    {
+      "relative": "data/mockProviderServices.js",
+      "size": 4855,
+      "sha256": "a9e8bd5cafa7bfd0a22c4caf1040e5e75b7d29dae9468b5049799118427569ae"
+    },
+    {
+      "relative": "data/mockServices.js",
+      "size": 23630,
+      "sha256": "ede237964b994b31f86b3c2fc704bc9877ce4a39e4eb108bf46b07c88dcf5eea"
+    },
+    {
+      "relative": "hooks/useFocusTrap.js",
+      "size": 1668,
+      "sha256": "88c21b5072843dfb4c1ee98f7a5485fa0edb30602efaabcdc1d29c08069a65e1"
+    },
+    {
+      "relative": "main.jsx",
+      "size": 291,
+      "sha256": "f6df1eac3d5b37f36eeb7ca06cb3110ed5a7bf2d5845fcbd776fad0215249553"
+    },
+    {
+      "relative": "pages/CatalogSearch/CatalogSearchPage.jsx",
+      "size": 15306,
+      "sha256": "83b522cf6492d11bc916fa9f9d7f10c1480e67809a1f90fba89a5de23edb27ca"
+    },
+    {
+      "relative": "pages/CatalogSearch/CatalogSearchPage.module.css",
+      "size": 4017,
+      "sha256": "636e38c8bed4895731cfdde4f7d1d03a158f186ef13309958c3b630055bf081c"
+    },
+    {
+      "relative": "pages/CatalogSearch/components/FilterSidebar/FilterSidebar.jsx",
+      "size": 11984,
+      "sha256": "2b2e89a93603a1a4425d8df2d09ef9fa751dada0408f13af0b286ecde64caf55"
+    },
+    {
+      "relative": "pages/CatalogSearch/components/FilterSidebar/FilterSidebar.module.css",
+      "size": 6589,
+      "sha256": "cbb7f86ef00e26801c6abd681411a26fb5d3e1d423b4badcc50a232c292bb0da"
+    },
+    {
+      "relative": "pages/CatalogSearch/components/Pagination/Pagination.jsx",
+      "size": 1405,
+      "sha256": "20098e0638c6c589fd946cb85c9b5c4fc29f140c35bccbe98bfc4c562e6911e1"
+    },
+    {
+      "relative": "pages/CatalogSearch/components/Pagination/Pagination.module.css",
+      "size": 1353,
+      "sha256": "d4a35bffc9bde4a65c406896757510e39edbac1c677db48eb50e822152e51217"
+    },
+    {
+      "relative": "pages/CatalogSearch/components/SearchToolbar/SearchToolbar.jsx",
+      "size": 3865,
+      "sha256": "7ea6216bc5128d6329685ae1bc0ea289128158470874687c79dabcc0ae3dcb27"
+    },
+    {
+      "relative": "pages/CatalogSearch/components/SearchToolbar/SearchToolbar.module.css",
+      "size": 3725,
+      "sha256": "ce574cd4493d03f1bab412d9d50a0648197e1b835beb4b9f4ccae637a19ba042"
+    },
+    {
+      "relative": "pages/MyServices/components/CreateServiceModal/CreateServiceModal.jsx",
+      "size": 6676,
+      "sha256": "c559c8edc3e0115343b79376c4a2969658d5368f1b06f6f2d0792c4f2b68dca2"
+    },
+    {
+      "relative": "pages/MyServices/components/CreateServiceModal/CreateServiceModal.module.css",
+      "size": 3271,
+      "sha256": "0cfc655e01fad8a3a4ae8bfdbaf77bad4569b621433463aaf0ec79157a09b4d5"
+    },
+    {
+      "relative": "pages/MyServices/components/ServicesTable/ServicesTable.jsx",
+      "size": 12294,
+      "sha256": "b896aba727c899852fce90d8d5d8320b6a0e8d7747591b895d55b64074072a8d"
+    },
+    {
+      "relative": "pages/MyServices/components/ServicesTable/ServicesTable.module.css",
+      "size": 8344,
+      "sha256": "0fba3375c82122c305f66dadca35bd639ed972ceb11f139ace360e407942e5cd"
+    },
+    {
+      "relative": "pages/MyServices/components/ServicesToolbar/ServicesToolbar.jsx",
+      "size": 2797,
+      "sha256": "24dfc1d4739936fa228374f1b1f68fecae359afd41ff4fd60d1208f8d94c9e5a"
+    },
+    {
+      "relative": "pages/MyServices/components/ServicesToolbar/ServicesToolbar.module.css",
+      "size": 3409,
+      "sha256": "d01f5cf349f3891fb5d7072bbaf4927b8e9446a4172a3aa562c5d36fcf881852"
+    },
+    {
+      "relative": "pages/MyServices/components/StatsCards/StatsCards.jsx",
+      "size": 2766,
+      "sha256": "b0ba20c402ac3598bb4648f96cc5bc1a1bbf389a684d0be3980ff9a2aa96e970"
+    },
+    {
+      "relative": "pages/MyServices/components/StatsCards/StatsCards.module.css",
+      "size": 2141,
+      "sha256": "ccb359cc37838d89ca25334fc059c10c47fa75df8dc1052396b5d5820aceb0d1"
+    },
+    {
+      "relative": "pages/MyServices/components/StatusBadge/StatusBadge.jsx",
+      "size": 1443,
+      "sha256": "de3668a293c0628a7ae94392c8de659ff0c120fa0d4da977035cc61b7335ccc5"
+    },
+    {
+      "relative": "pages/MyServices/components/StatusBadge/StatusBadge.module.css",
+      "size": 1285,
+      "sha256": "7f354a9e6d9d7363542d1efd20d88b1fc1d9884f6a4880b140d2c4ea6580bff7"
+    },
+    {
+      "relative": "pages/MyServices/MyServicesPage.jsx",
+      "size": 9773,
+      "sha256": "1154d9d7f9c9eff654fd771058d9303794620db5f3f674952afc6429a15fe385"
+    },
+    {
+      "relative": "pages/MyServices/MyServicesPage.module.css",
+      "size": 1773,
+      "sha256": "83431f84c8ef31d2a88efe7fa48b52d2d16407372b51eb6d0c73c869fe3fa7e3"
+    },
+    {
+      "relative": "pages/MyServices/providerServicesStore.js",
+      "size": 2775,
+      "sha256": "114ae9245bb2312414e531ceffd5a5a7e213adc3f77186658d57b37d7f684962"
+    },
+    {
+      "relative": "pages/ServiceDetail/components/FaqAccordion.jsx",
+      "size": 1649,
+      "sha256": "5e9b7d468ed02b3823caf7b91f37b96fd42b2498ab114fdadc6a986edb056fd3"
+    },
+    {
+      "relative": "pages/ServiceDetail/components/FaqAccordion.module.css",
+      "size": 1253,
+      "sha256": "e35d37888a3fbe0621493697325311ac9c01534f4d7e27ae644008aa8e0d29fc"
+    },
+    {
+      "relative": "pages/ServiceDetail/components/MediaGallery.jsx",
+      "size": 2536,
+      "sha256": "8494f89a70a2bd7cd187ad6dcdcdd4180bdadae16270034c5dfa20920a0f0eae"
+    },
+    {
+      "relative": "pages/ServiceDetail/components/MediaGallery.module.css",
+      "size": 2430,
+      "sha256": "dcf8581a2d331b2b7f4ea99a339f59b0357e5c6efa4bc3f367db2c1450dfb7e2"
+    },
+    {
+      "relative": "pages/ServiceDetail/components/PackageComparisonTable.jsx",
+      "size": 5428,
+      "sha256": "7222bfb5e22210ac7dfae13b897e2e3ae865fa60de560b3c6a2312caee7bf2d6"
+    },
+    {
+      "relative": "pages/ServiceDetail/components/PackageComparisonTable.module.css",
+      "size": 3084,
+      "sha256": "8891fc91c65f35156d8069623dd60229a0f5d81fc1a5f8adfcfa3d3ff1509039"
+    },
+    {
+      "relative": "pages/ServiceDetail/components/PackageSidebar.jsx",
+      "size": 6440,
+      "sha256": "9f6b3e3b28b6c99a7b9f6ad914754100b502ac11aed883b0bba3b23c2d5dddec"
+    },
+    {
+      "relative": "pages/ServiceDetail/components/PackageSidebar.module.css",
+      "size": 6295,
+      "sha256": "47dafe76525a947a660b334c2c32a6bcaf8dc8181b917f8bad263f965f9c7b57"
+    },
+    {
+      "relative": "pages/ServiceDetail/components/ProviderCard.jsx",
+      "size": 4028,
+      "sha256": "21abcae59729e0a3ab93a94e0f2308e2a43a2e04fd8f8cbf8b981d8aafe8fb12"
+    },
+    {
+      "relative": "pages/ServiceDetail/components/ProviderCard.module.css",
+      "size": 3313,
+      "sha256": "9663744918a475daa99dc01242634c9a1ea8febf8c6f8ff7be4360b7fc2e63ef"
+    },
+    {
+      "relative": "pages/ServiceDetail/components/ReviewsSection.jsx",
+      "size": 4869,
+      "sha256": "6d9ddf48b64a46a5b6b015fa7fb5b0a4a10ba10cfc87811921336bebeb4ada87"
+    },
+    {
+      "relative": "pages/ServiceDetail/components/ReviewsSection.module.css",
+      "size": 4053,
+      "sha256": "2574d9421daaaeed22960f051857ac8e80a82cf95db81d0fe8dac92d79350ae2"
+    },
+    {
+      "relative": "pages/ServiceDetail/ServiceDetailPage.jsx",
+      "size": 11547,
+      "sha256": "ef858c6263446b19384b6acfab9dcf6cc58b091ca73a01fefeb1116fa8619209"
+    },
+    {
+      "relative": "pages/ServiceDetail/ServiceDetailPage.module.css",
+      "size": 5806,
+      "sha256": "f14bb81243a7d0eef4ccee0590228facb857fc2e317c21424c8ceb68b32cddd7"
+    },
+    {
+      "relative": "pages/ServiceForm/components/FormStepper/FormStepper.jsx",
+      "size": 2053,
+      "sha256": "e567664da98701dec683e26e866c4d78912635a33acd16c3e3decb10ee9213a2"
+    },
+    {
+      "relative": "pages/ServiceForm/components/FormStepper/FormStepper.module.css",
+      "size": 2036,
+      "sha256": "6b7e378ea411940b16a161d4a2ed2b1f94af815c75c7dbd01217af2d9af9e62c"
+    },
+    {
+      "relative": "pages/ServiceForm/components/Step1Info/Step1Info.jsx",
+      "size": 9584,
+      "sha256": "2127f2c323b10645b6461f183032e1c206ecd300b4852a683733286c343fe4a7"
+    },
+    {
+      "relative": "pages/ServiceForm/components/Step1Info/Step1Info.module.css",
+      "size": 4204,
+      "sha256": "cb1f4aadd7654b96d404b5099c90284e5857c8de80fc0bf65f46d5b5c423e550"
+    },
+    {
+      "relative": "pages/ServiceForm/components/Step2Pricing/Step2Pricing.jsx",
+      "size": 14920,
+      "sha256": "f75855bf7d7c76b1ea243b6b3eb7b7fa60925062b82672d8a366b26a6273693f"
+    },
+    {
+      "relative": "pages/ServiceForm/components/Step2Pricing/Step2Pricing.module.css",
+      "size": 4685,
+      "sha256": "f2a7f0bf7e4d1e38ebdf6c16e5895c4777e394d4faf065b1d1763e698d8cd280"
+    },
+    {
+      "relative": "pages/ServiceForm/components/Step3Media/Step3Media.jsx",
+      "size": 5537,
+      "sha256": "074d83a06000146168d3ec47b59f31f3add9b4cd1011348a803db13d94e913ad"
+    },
+    {
+      "relative": "pages/ServiceForm/components/Step3Media/Step3Media.module.css",
+      "size": 4158,
+      "sha256": "66fabd59c6932dc5873be8ad4a0667a8dedfe6743b4d749d7976ee43d935bf47"
+    },
+    {
+      "relative": "pages/ServiceForm/formValidation.js",
+      "size": 1651,
+      "sha256": "1554efe88ecc13cee2d9f83c48d50c5cf637163ba88c5e091a644194a0bfd65e"
+    },
+    {
+      "relative": "pages/ServiceForm/ServiceFormPage.jsx",
+      "size": 9656,
+      "sha256": "bf5b3a9877bcef3af5a5b6902fc352a841a6dd4c7eddd580c94a06f67f0e6a48"
+    },
+    {
+      "relative": "pages/ServiceForm/ServiceFormPage.module.css",
+      "size": 3380,
+      "sha256": "a80217207934bfb6f84f5a0c481c92af00c37ba55cec1af75d86b08b476db38c"
+    },
+    {
+      "relative": "styles/reset.css",
+      "size": 1652,
+      "sha256": "00d6b10eba8d7f489400afca26bd7ef0a4798a1c05de4b6f9b43641e633329cf"
+    },
+    {
+      "relative": "styles/variables.css",
+      "size": 2242,
+      "sha256": "8e5ed7869821543a4c2484043171900f3fdf47589522c733f937fc8f539b17c1"
+    }
+  ],
+  "totalFiles": 85,
+  "totalBytes": 380313
+}

@@ -1,7 +1,6 @@
 {
   "common": {
     "appName": "WorkGo",
-    "mockData": "Mock data",
     "save": "Save changes",
     "cancel": "Cancel",
     "delete": "Delete",
@@ -240,7 +239,10 @@
     "hotCategories": "Popular categories",
     "jobsAvailable": "jobs actively hiring",
     "saveJob": "Save job",
-    "savedJob": "Saved"
+    "savedJob": "Saved",
+    "quickFilterLabel": "Quick filter by category",
+    "quickFilterAll": "All",
+    "featuredLabel": "Try featured jobs:"
   },
   "jobForm": {
     "createTitle": "Post a New Job",
@@ -260,8 +262,8 @@
     "attachments": "Attachments (Max 10MB)",
     "saveDraft": "Save Draft",
     "publish": "Publish Job",
-    "createSuccess": "Job posted successfully! (Mock)",
-    "updateSuccess": "Job post updated successfully! (Mock)"
+    "createSuccess": "Job posted successfully!",
+    "updateSuccess": "Job post updated successfully!"
   },
   "proposal": {
     "drawerTitle": "Submit Proposal",
@@ -275,7 +277,12 @@
     "terms": "Additional Terms (optional)",
     "submit": "Confirm & Submit Proposal",
     "submitSuccess": "Proposal submitted successfully!",
-    "alreadySubmitted": "You have already submitted a proposal for this post."
+    "alreadySubmitted": "You have already submitted a proposal for this post.",
+    "bidAmount": "Proposed Bid Amount",
+    "coverLetter": "Cover Letter & Solution",
+    "clientOnly": "Only Provider accounts can submit proposals",
+    "duplicate": "You have already submitted a proposal for this post",
+    "priceExceeds": "Bid amount cannot exceed maximum budget"
   },
   "applications": {
     "title": "Manage Job Proposals",
@@ -324,7 +331,7 @@
     "amountPlaceholder": "Minimum 1,000 ₫",
     "payNow": "Pay Now",
     "processing": "Processing transaction...",
-    "success": "Deposit transaction successful! (Mock)",
+    "success": "Deposit transaction successful!",
     "failed": "Payment failed. Please try again."
   },
   "payout": {
@@ -337,7 +344,7 @@
     "defaultAccount": "Set as default account",
     "addBtn": "Add Payout Account",
     "savedAccounts": "Linked Payout Accounts",
-    "addSuccess": "Payout account added successfully! (Mock)"
+    "addSuccess": "Payout account added successfully!"
   },
   "review": {
     "modalTitle": "Review Service Quality",
@@ -472,6 +479,156 @@
       "solutions": "Solutions",
       "company": "Company",
       "legal": "Legal"
+    },
+    "fiverr": {
+      "header": {
+        "skipToContent": "Skip to main content",
+        "brandLabel": "WorkGo — back to home",
+        "searchLabel": "Search for a service",
+        "searchSubmitLabel": "Search",
+        "searchEmptyHint": "Type a keyword, e.g. logo design",
+        "openMenuLabel": "Open menu",
+        "closeMenuLabel": "Close menu",
+        "drawerLabel": "Main navigation menu",
+        "languageLabel": "Choose language"
+      },
+      "search": {
+        "clearLabel": "Clear search",
+        "recentLabel": "Recent searches",
+        "clearHistory": "Clear history",
+        "resultsCount": "{n} suggestions found"
+      },
+      "trending": {
+        "regionLabel": "Trending categories"
+      },
+      "hero": {
+        "searchLabel": "What service are you looking for?",
+        "searchSubmitLabel": "Search",
+        "searchEmptyHint": "Type a keyword, e.g. logo design",
+        "suggestionsLabel": "Trending searches",
+        "pauseLabel": "Pause background video",
+        "playLabel": "Play background video",
+        "backgroundAlt": "Particle ocean background",
+        "chipsLabel": "Suggested services"
+      },
+      "categories": {
+        "regionLabel": "Service categories",
+        "toggleMoreLabel": "Show more categories"
+      },
+      "popular": {
+        "regionLabel": "Popular services",
+        "fromPrice": "From",
+        "verifiedBadge": "Verified"
+      },
+      "valueProps": {
+        "regionLabel": "Why WorkGo"
+      },
+      "panels": {
+        "regionLabel": "Featured solutions",
+        "imageAlt": "Service illustration"
+      },
+      "guides": {
+        "regionLabel": "Guides",
+        "imageAlt": "Guide illustration"
+      },
+      "testimonials": {
+        "regionLabel": "Community reviews",
+        "verifiedBadge": "Verified"
+      },
+      "cta": {
+        "regionLabel": "Call to action"
+      },
+      "footer": {
+        "regionLabel": "Footer",
+        "socialLabel": "WorkGo social channels",
+        "languageLabel": "Language",
+        "currencyLabel": "Currency",
+        "builtWith": "Independent talent marketplace"
+      },
+      "carousel": {
+        "prevLabel": "Show previous items",
+        "nextLabel": "Show next items"
+      }
     }
+  },
+  "info": {
+    "breadcrumbHome": "Home",
+    "backToHome": "Back to home",
+    "toc": "On this page",
+    "ctaTitle": "Ready to get started with WorkGo?",
+    "ctaPrimary": "Join for free",
+    "ctaSecondary": "Explore jobs",
+    "about": {
+      "title": "About WorkGo",
+      "desc": "The leading marketplace connecting independent professionals and modern businesses in Vietnam"
+    },
+    "pricing": {
+      "title": "Transparent Pricing",
+      "desc": "Clear fees, no hidden costs, optimized for both clients and independent partners"
+    },
+    "pro": {
+      "title": "WorkGo Pro",
+      "desc": "Comprehensive enterprise solution for vetted top-tier talent and AI automation"
+    },
+    "guides": {
+      "title": "Guides & Knowledge",
+      "desc": "Practical insights to accelerate your freelance career and scale project delivery"
+    },
+    "help": {
+      "title": "Help Center",
+      "desc": "24/7 answers, payment guidance, refund protection, and community support"
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "desc": "Legal terms and participation guidelines for the WorkGo platform"
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "desc": "Our commitment to safeguarding personal data and financial transaction security"
+    },
+    "trustSafety": {
+      "title": "Trust & Safety",
+      "desc": "Dual-sided escrow protection, transparent milestone agreements, and fair dispute mediation"
+    }
+  },
+  "saved": {
+    "title": "Saved Jobs",
+    "empty": "No saved jobs yet",
+    "save": "Save Job",
+    "unsave": "Unsave Job",
+    "undo": "Undo"
+  },
+  "share": {
+    "title": "Share Job",
+    "copied": "Link copied to clipboard",
+    "failed": "Failed to copy link"
+  },
+  "draft": {
+    "restored": "Draft restored",
+    "cleared": "Draft cleared"
+  },
+  "location": {
+    "filter": "Work Location",
+    "all": "All Locations",
+    "placeholder": "Select province / city"
+  },
+  "toast": {
+    "saved": "Job saved",
+    "unsaved": "Job unsaved",
+    "copied": "Link copied",
+    "submitted": "Proposal submitted successfully",
+    "offline": "You are offline",
+    "online": "Back online"
+  },
+  "offline": {
+    "banner": "You are offline. Please check your internet connection.",
+    "retry": "Retry"
+  },
+  "myPosts": {
+    "title": "Manage My Posts",
+    "empty": "No posts yet",
+    "close": "Close Post",
+    "closeConfirm": "Are you sure you want to close this job post?",
+    "stats": "Post Statistics"
   }
 }

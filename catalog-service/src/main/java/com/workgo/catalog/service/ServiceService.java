@@ -7,6 +7,8 @@ import com.workgo.catalog.dto.response.ServiceCreationResponse;
 import com.workgo.catalog.dto.response.ServiceResponse;
 import com.workgo.catalog.entity.Category;
 import com.workgo.catalog.entity.Service;
+import com.workgo.catalog.enumeration.ExecutionType;
+import com.workgo.catalog.enumeration.ServiceStatus;
 import com.workgo.catalog.exception.AppException;
 import com.workgo.catalog.exception.ErrorCode;
 import com.workgo.catalog.mapper.ServiceMapper;
@@ -16,12 +18,14 @@ import com.workgo.catalog.utils.TokenUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -135,4 +139,33 @@ public class ServiceService {
         serviceRepository.save(service);
     }
 
+    public PageResponse<ServiceResponse> getServices(UUID categoryId,
+                                                     ExecutionType executionType,
+                                                     BigDecimal minPrice,
+                                                     BigDecimal maxPrice,
+                                                     int page,
+                                                     int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        Page<Service> pageData = serviceRepository
+                .findAllByStatusAndCategory_CategoryIdAndExecutionTypeAndBasePriceBetween(
+                        ServiceStatus.PUBLISHED,
+                        categoryId,
+                        executionType,
+                        minPrice,
+                        maxPrice,
+                        pageable
+                );
+
+        return PageResponse.<ServiceResponse>builder()
+                .currentPage(page)
+                .pageSize(pageData.getSize())
+                .totalElements(pageData.getTotalElements())
+                .totalPages(pageData.getTotalPages())
+                .data(pageData.stream()
+                        .map(serviceMapper::toServiceResponse)
+                        .toList())
+                .build();
+    }
 }

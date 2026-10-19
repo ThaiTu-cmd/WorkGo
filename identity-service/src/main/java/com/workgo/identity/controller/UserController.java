@@ -81,6 +81,17 @@ public class UserController {
                 .build();
     }
 
+    @PutMapping("/myInfo")
+    ApiResponse<UserResponse> updateMyInfo(
+            @RequestBody UserUpdateRequest request
+    ) {
+        return ApiResponse.<UserResponse>builder()
+                .code(ErrorCode.SUCCESS.getCode())
+                .message(ErrorCode.SUCCESS.getMessage())
+                .result(userService.updateMyInfo(request))
+                .build();
+    }
+
     @DeleteMapping("/{userId}")
     public ApiResponse<Void> deleteUser(
             @PathVariable UUID userId

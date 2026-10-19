@@ -1,12 +1,9 @@
 package com.workgo.order.utils;
 
 
+import com.workgo.order.entity.Order;
 import com.workgo.order.exception.AppException;
 import com.workgo.order.exception.ErrorCode;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
@@ -68,4 +65,22 @@ public class TokenUtils {
                 .getAuthentication()
                 .getPrincipal();
     }
+
+    public void assertParticipant(Order order) {
+
+        UUID userId = getCurrentUserId();
+
+        if (userId.equals(order.getClientId())) {
+            return;
+        }
+
+        UUID providerId = getCurrentProviderIdOrNull();
+
+        if (providerId != null && providerId.equals(order.getProviderId())) {
+            return;
+        }
+
+        throw new AppException(ErrorCode.ORDER_NOT_FOUND);
+    }
+
 }

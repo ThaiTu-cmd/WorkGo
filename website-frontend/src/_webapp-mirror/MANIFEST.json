@@ -1,7 +1,7 @@
 {
   "source": "web-app/src",
   "destMirror": "website-frontend/src/_webapp-mirror",
-  "createdAt": "2026-10-16T14:28:33.975Z",
+  "createdAt": "2026-10-17T07:31:14.007Z",
   "files": [
     {
       "relative": "api/axiosClient.js",
@@ -50,8 +50,8 @@
     },
     {
       "relative": "components/common/Header/Header.module.css",
-      "size": 6741,
-      "sha256": "395e5003df717760a7c70698ebe798e2e3acff98f063c68899aaa57e3dc24112"
+      "size": 7290,
+      "sha256": "d5b5ab630035aadf0ce58a780ea6bcb701345d4fa2481665ae7ab76e4166d022"
     },
     {
       "relative": "components/common/SearchBar/SearchBar.jsx",
@@ -60,8 +60,8 @@
     },
     {
       "relative": "components/common/SearchBar/SearchBar.module.css",
-      "size": 2499,
-      "sha256": "a06e7e59be7b49d29ba8851b1fb0a6dd374c02288605acdc37cb048bbdf6a5e0"
+      "size": 2586,
+      "sha256": "7fcada0c05ac1df8dea52fa8313a67ea2f565e770cd71c296ea7afde23b492c3"
     },
     {
       "relative": "components/common/ServiceCard/ServiceCard.jsx",
@@ -430,5 +430,5 @@
     }
   ],
   "totalFiles": 85,
-  "totalBytes": 380313
+  "totalBytes": 380949
 }

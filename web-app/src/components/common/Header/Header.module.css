@@ -8,6 +8,7 @@
   transition: all var(--transition-base);
   background-color: transparent;
   color: #ffffff;
+  --header-gutter: 24px;
 }
 
 .headerScrolled {
@@ -39,7 +40,7 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
-  flex-shrink: 0;
+  flex-shrink: 1;
 }
 
 .logo {
@@ -85,7 +86,7 @@
   padding: 4px 6px 4px 14px;
   width: 280px;
   min-width: 0;
-  flex-shrink: 0;
+  flex-shrink: 1;
   box-shadow: var(--shadow-sm);
   transition: width var(--transition-base);
 }
@@ -129,7 +130,7 @@
 .navSearchBtn::after {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -8px;
 }
 
 .navSearchBtn:hover {
@@ -139,6 +140,17 @@
 @media (min-width: 1280px) {
   .navSearch {
     display: flex;
+    min-width: 200px;
+  }
+  .leftSection {
+    min-width: 316px;
+  }
+  .header {
+    --header-gutter: 16px;
+  }
+  .header .headerContainer {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }
 
@@ -158,6 +170,31 @@
    để header không bao giờ tràn container 1320px (đo thật: maxRight 1061 ≤
    1085 @1100; form 240px/input 170px @1440 — xem .team/PLAN.md §1.2). */
 @media (min-width: 1100px) and (max-width: 1440px) {
+  .desktopNav {
+    gap: 16px;
+  }
+  .navLink {
+    font-size: 0.9rem;
+  }
+  .navSearch {
+    width: 240px;
+  }
+  .desktopNav .navIconButton {
+    height: 38px;
+    padding: 0 6px;
+    gap: 5px;
+  }
+  .desktopNav .navLabel {
+    font-size: 0.81rem;
+  }
+  .actionButtons {
+    gap: 8px;
+  }
+}
+
+/* Fix 2026-10-19: nối tiếp dải 1100–1440 để 1441+ không quay về metric đầy đủ.
+   Container website 1240px chỉ còn ~1208px khả dụng; metric compact ~1176px. */
+@media (min-width: 1441px) {
   .desktopNav {
     gap: 16px;
   }
@@ -576,12 +613,16 @@
   }
 }
 
-/* The panel anchors under the header on mobile; from 1100px it becomes a
-   right-anchored dropdown so it never covers the search field. */
+/* Mới: neo theo mép phải container (không theo viewport).
+   Ở màn ≥ container-max: (100% - max)/2 + gutter = khoảng lề + gutter.
+   Ở màn hẹp hơn container-max: max() giữ gutter. */
 @media (min-width: 1100px) {
   .menuPanel {
     left: auto;
-    right: 24px;
+    right: max(
+      var(--header-gutter, 24px),
+      calc((100% - var(--container-max, 1320px)) / 2 + var(--header-gutter, 24px))
+    );
     width: 300px;
     max-width: calc(100vw - 48px);
     border-radius: 0 0 var(--radius-md) var(--radius-md);
@@ -600,7 +641,7 @@
   font-weight: 600;
   font-size: 0.88rem;
   border: 1px solid rgba(16, 185, 129, 0.25);
-  max-width: 140px;
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

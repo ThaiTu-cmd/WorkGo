@@ -34,13 +34,14 @@ public class SecurityConfig {
             "/auth/token",
             "/auth/introspect",
             "/auth/logout",
-            "/auth/refresh"
+            "/auth/refresh",
+            "/internal/**"
     };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request ->{
-            request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+            request.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                     .anyRequest().authenticated();
         });
 

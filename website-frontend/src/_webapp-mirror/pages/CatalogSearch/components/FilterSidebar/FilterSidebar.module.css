@@ -343,3 +343,13 @@
     max-height: none;
   }
 }
+
+.catNotice {
+  margin: 4px 0 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background-color: var(--wg-surface-alt);
+  color: var(--wg-text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}

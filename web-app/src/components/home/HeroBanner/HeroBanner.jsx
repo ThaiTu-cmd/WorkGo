@@ -18,24 +18,24 @@ export default function HeroBanner({ onSearch }) {
       <div className={`container ${styles.heroContainer}`}>
         <div className={styles.heroContent}>
           {/* Main Headline */}
-          <h1 className={styles.headline}>
+          <h1 className={`${styles.headline} reveal`}>
             Tìm kiếm chuyên gia & dịch vụ hoàn hảo cho mọi nhu cầu công việc
           </h1>
 
           {/* Subtitle */}
-          <p className={styles.subtitle}>
+          <p className={`${styles.subtitle} reveal reveal-delay-1`}>
             Kết nối tin cậy giữa Khách hàng và Chuyên gia. Mua bán dịch vụ
             Online, đặt lịch tại nhà (Onsite) và Giao nhận với cơ chế thanh toán
             đảm bảo an toàn tuyệt đối.
           </p>
 
           {/* Central Search Component */}
-          <div className={styles.searchWrapper}>
+          <div className={`${styles.searchWrapper} reveal reveal-delay-2`}>
             <SearchBar onSearch={onSearch} />
           </div>
 
           {/* Popular Trending Tags */}
-          <div className={styles.trendingWrap}>
+          <div className={`${styles.trendingWrap} reveal reveal-delay-3`}>
             <span className={styles.trendingLabel}>Tìm kiếm phổ biến:</span>
             <div className={styles.tagList}>
               {trendingTags.map((tag, idx) => (
@@ -56,7 +56,7 @@ export default function HeroBanner({ onSearch }) {
         </div>
 
         {/* Value Trust Badges at bottom of Hero */}
-        <div className={styles.trustBanner}>
+        <div className={`${styles.trustBanner} reveal reveal-delay-4`}>
           <div className={styles.trustItem}>
             <ShieldCheck size={22} className={styles.trustIcon} />
             <div className={styles.trustText}>

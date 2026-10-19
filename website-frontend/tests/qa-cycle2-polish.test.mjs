@@ -14,13 +14,13 @@ const MIRROR = path.join(REPO, "website-frontend", "src", "_webapp-mirror");
 const read = (p) => fs.readFileSync(p, "utf-8");
 const sha256 = (p) => crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex");
 
-// ---------- C2-1: 1024px band guard ----------
-test("C2-1: header has 900-1100px band tightening (gap + font + search width)", () => {
+// ---------- C2-1: 1100px band guard (UI fix 2026-10-17: 900→1100, 1100→1440) ----------
+test("C2-1: header has 1100-1440px band tightening (gap + font + search width)", () => {
   const css = read(path.join(SRC, "components/common/Header/Header.module.css"));
-  assert.match(css, /@media\s*\(min-width:\s*900px\)\s*and\s*\(max-width:\s*1100px\)/);
-  const band = css.slice(css.indexOf("@media (min-width: 900px) and (max-width: 1100px)"));
+  assert.match(css, /@media\s*\(min-width:\s*1100px\)\s*and\s*\(max-width:\s*1440px\)/);
+  const band = css.slice(css.indexOf("@media (min-width: 1100px) and (max-width: 1440px)"));
   assert.match(band, /\.desktopNav\s*\{[^}]*gap:\s*16px/);
-  assert.match(band, /\.navLink\s*\{[^}]*font-size:\s*0\.88rem/);
+  assert.match(band, /\.navLink\s*\{[^}]*font-size:\s*0\.9rem/);
   assert.match(band, /\.navSearch\s*\{[^}]*width:\s*240px/);
 });
 

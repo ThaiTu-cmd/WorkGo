@@ -12,10 +12,11 @@ import {
   Grid,
   Sparkles
 } from 'lucide-react';
-import { mockCategories } from '../../../../data/mockCategories';
 import styles from './FilterSidebar.module.css';
 
 export default function FilterSidebar({
+  categories = [],
+  categoriesStatus,
   selectedCategory,
   onSelectCategory,
   selectedType,
@@ -118,7 +119,14 @@ export default function FilterSidebar({
               <span className={styles.catName}>Tất cả danh mục</span>
             </button>
 
-            {mockCategories.map((cat) => (
+            {categoriesStatus === 'needs-login' && (
+              <p className={styles.catNotice}>Đăng nhập để tải danh mục từ máy chủ. Đang hiển thị dữ liệu mẫu.</p>
+            )}
+            {categoriesStatus === 'error' && (
+              <p className={styles.catNotice}>Không kết nối được máy chủ. Đang hiển thị dữ liệu mẫu.</p>
+            )}
+
+            {categories.map((cat) => (
               <button
                 key={cat.categoryId}
                 type="button"
@@ -126,7 +134,9 @@ export default function FilterSidebar({
                 onClick={() => onSelectCategory(cat.slug)}
               >
                 <span className={styles.catName}>{cat.name}</span>
-                <span className={styles.catCount}>{cat.serviceCount}</span>
+                {cat.serviceCount != null && (
+                  <span className={styles.catCount}>{cat.serviceCount}</span>
+                )}
               </button>
             ))}
           </div>

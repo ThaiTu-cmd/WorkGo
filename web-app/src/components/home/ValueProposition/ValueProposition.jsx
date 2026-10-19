@@ -34,7 +34,7 @@ export default function ValueProposition() {
     <section className={styles.section} id="why-workgo">
       <div className="container">
         {/* Header */}
-        <div className={styles.header}>
+        <div className={`${styles.header} reveal`}>
           <span className={styles.tagline}>GIÁ TRỊ CỐT LÕI TẠI WORKGO</span>
           <h2 className={styles.title}>
             Một sàn dịch vụ được xây dựng vì sự tin tưởng
@@ -50,7 +50,7 @@ export default function ValueProposition() {
           {values.map((val, idx) => {
             const Icon = val.icon;
             return (
-              <div key={idx} className={styles.card}>
+              <div key={idx} className={`${styles.card} reveal reveal-delay-${idx + 1}`}>
                 <div
                   className={styles.iconBox}
                   style={{

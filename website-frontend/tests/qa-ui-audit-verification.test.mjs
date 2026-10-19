@@ -33,8 +33,8 @@ function hashFile(absPath) {
 test("HP-UI-01: Header responsive rules guard 320px viewport & touch targets", () => {
   const css = readFile("components/common/Header/Header.module.css");
 
-  // Mobile container guards
-  assert.match(css, /\.headerContainer\s*\{[^}]*padding-left:\s*16px/);
+  // Mobile container guards (gutter-inset: 16px -> 24px, min-width:0 kept)
+  assert.match(css, /\.headerContainer\s*\{[^}]*padding-left:\s*24px/);
   assert.match(css, /\.headerContainer\s*\{[^}]*min-width:\s*0/);
 
   // Left section & logo shrinkage

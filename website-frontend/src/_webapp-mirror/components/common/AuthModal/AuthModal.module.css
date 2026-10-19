@@ -238,6 +238,33 @@
   border-top: 1px solid var(--wg-border-light);
 }
 
+.demoBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 16px;
+}
+
+.demoFillBtn {
+  background-color: var(--wg-primary);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.demoFillBtn:hover {
+  background-color: var(--wg-primary-hover);
+}
+
 .helperText {
   font-size: 0.88rem;
   color: var(--wg-text-secondary);

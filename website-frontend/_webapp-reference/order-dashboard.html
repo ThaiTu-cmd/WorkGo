@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="WorkGo - Quản lý đơn hàng. Theo dõi các Order đang xử lý với vai trò Khách hàng hoặc Chuyên gia, cập nhật tiến độ và nghiệm thu."
+    />
+    <title>Quản lý đơn hàng — WorkGo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="order-dashboard.css" />
+  </head>
+  <body>
+    <!-- 1. Header -->
+    <header class="header">
+      <div class="container header-container">
+        <a href="index.html" class="logo"><span class="logo-work">Work</span><span class="logo-go">Go</span></a>
+        <nav class="nav-links">
+          <a href="catalog-search.html">Danh mục dịch vụ</a>
+          <a href="my-services.html">Quản lý dịch vụ</a>
+          <a href="order-dashboard.html" class="active">Đơn hàng</a>
+        </nav>
+        <span class="avatar" aria-hidden="true">TQ</span>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="container">
+        <!-- 2. Breadcrumb -->
+        <div class="breadcrumb">
+          <a href="index.html" class="back-btn">&larr; Trang chủ</a>
+          <span class="sep">/</span>
+          <span>Tài khoản</span>
+          <span class="sep">/</span>
+          <span class="current">Đơn hàng</span>
+        </div>
+
+        <!-- 3. Page header + role toggle -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Quản lý đơn hàng</h1>
+            <p class="page-subtitle">Theo dõi tiến độ, bàn giao và nghiệm thu các đơn hàng đang được giữ Escrow.</p>
+          </div>
+          <div class="role-toggle" role="tablist" aria-label="Vai trò">
+            <button type="button" class="role-btn active" data-role="CLIENT" role="tab" aria-selected="true">Đơn tôi mua</button>
+            <button type="button" class="role-btn" data-role="PROVIDER" role="tab" aria-selected="false">Đơn tôi nhận</button>
+          </div>
+        </div>
+
+        <!-- 4. Stats -->
+        <section class="stats">
+          <div class="stat-card">
+            <span class="stat-label">Đang xử lý</span>
+            <strong class="stat-value">4</strong>
+            <span class="stat-hint">Đã xác nhận / đang thực hiện</span>
+          </div>
+          <div class="stat-card warn">
+            <span class="stat-label">Chờ nghiệm thu</span>
+            <strong class="stat-value">1</strong>
+            <span class="stat-hint">Tự hoàn tất sau 72 giờ</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Hoàn tất tháng này</span>
+            <strong class="stat-value">6</strong>
+            <span class="stat-hint">+2 so với tháng trước</span>
+          </div>
+          <div class="stat-card accent">
+            <span class="stat-label">Escrow đang giữ</span>
+            <strong class="stat-value">18.150.000 ₫</strong>
+            <span class="stat-hint">Giải ngân khi nghiệm thu</span>
+          </div>
+        </section>
+
+        <!-- 5. Table card -->
+        <section class="table-card">
+          <div class="toolbar">
+            <div class="status-tabs" role="tablist" aria-label="Lọc trạng thái">
+              <button type="button" class="tab active" data-filter="ACTIVE">Đang xử lý <span>5</span></button>
+              <button type="button" class="tab" data-filter="PENDING_PAYMENT">Chờ thanh toán <span>1</span></button>
+              <button type="button" class="tab" data-filter="IN_PROGRESS">Đang thực hiện <span>2</span></button>
+              <button type="button" class="tab" data-filter="DELIVERED">Đã bàn giao <span>1</span></button>
+              <button type="button" class="tab" data-filter="COMPLETED">Hoàn tất <span>1</span></button>
+              <button type="button" class="tab" data-filter="CANCELLED">Đã hủy <span>1</span></button>
+            </div>
+            <label class="search">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+              <input type="search" placeholder="Tìm mã đơn, tên dịch vụ..." aria-label="Tìm đơn hàng" />
+            </label>
+          </div>
+
+          <div class="table-wrap">
+            <table class="orders-table">
+              <thead>
+                <tr>
+                  <th>Mã đơn</th>
+                  <th>Dịch vụ</th>
+                  <th class="col-partner">Chuyên gia</th>
+                  <th class="num">Tổng tiền</th>
+                  <th>Trạng thái</th>
+                  <th>Mốc thời gian</th>
+                  <th class="actions-col">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-status="DELIVERED">
+                  <td data-label="Mã đơn"><span class="order-no">WG-20261015-4821</span><small>Đặt 08/10/2026</small></td>
+                  <td data-label="Dịch vụ">
+                    <span class="svc-title">Thiết kế website doanh nghiệp chuẩn SEO bằng Next.js</span>
+                    <span class="exec exec-digital">Digital</span>
+                  </td>
+                  <td data-label="Chuyên gia">Trần Minh Quang</td>
+                  <td data-label="Tổng tiền" class="num"><strong>6.050.000 ₫</strong></td>
+                  <td data-label="Trạng thái">
+                    <span class="status st-delivered">Đã bàn giao</span>
+                    <span class="pay paid">Đã thanh toán</span>
+                  </td>
+                  <td data-label="Mốc thời gian"><span class="due warn">Tự hoàn tất sau 2 ngày</span></td>
+                  <td data-label="Thao tác" class="actions">
+                    <button type="button" class="btn btn-primary">Nghiệm thu</button>
+                    <button type="button" class="btn btn-outline">Yêu cầu sửa</button>
+                  </td>
+                </tr>
+                <tr data-status="IN_PROGRESS">
+                  <td data-label="Mã đơn"><span class="order-no">WG-20261012-1093</span><small>Đặt 12/10/2026</small></td>
+                  <td data-label="Dịch vụ">
+                    <span class="svc-title">Thiết kế trọn bộ nhận diện thương hiệu &amp; Logo</span>
+                    <span class="exec exec-digital">Digital</span>
+                  </td>
+                  <td data-label="Chuyên gia">Lê Hoàng Anh</td>
+                  <td data-label="Tổng tiền" class="num"><strong>3.300.000 ₫</strong></td>
+                  <td data-label="Trạng thái">
+                    <span class="status st-progress">Đang thực hiện</span>
+                    <span class="pay paid">Đã thanh toán</span>
+                  </td>
+                  <td data-label="Mốc thời gian"><span class="due">Hạn giao 19/10/2026</span></td>
+                  <td data-label="Thao tác" class="actions">
+                    <button type="button" class="btn btn-ghost">Chi tiết</button>
+                  </td>
+                </tr>
+                <tr data-status="IN_PROGRESS">
+                  <td data-label="Mã đơn"><span class="order-no">WG-20261014-7740</span><small>Đặt 14/10/2026</small></td>
+                  <td data-label="Dịch vụ">
+                    <span class="svc-title">Sửa chữa điện nước, xử lý rò rỉ đường ống tại nhà</span>
+                    <span class="exec exec-onsite">Onsite</span>
+                  </td>
+                  <td data-label="Chuyên gia">Nguyễn Văn Tuấn</td>
+                  <td data-label="Tổng tiền" class="num"><strong>880.000 ₫</strong></td>
+                  <td data-label="Trạng thái">
+                    <span class="status st-progress">Đang thực hiện</span>
+                    <span class="pay paid">Đã thanh toán</span>
+                  </td>
+                  <td data-label="Mốc thời gian"><span class="due">Lịch hẹn 18/10, 09:00</span></td>
+                  <td data-label="Thao tác" class="actions">
+                    <button type="button" class="btn btn-ghost">Chi tiết</button>
+                  </td>
+                </tr>
+                <tr data-status="CONFIRMED">
+                  <td data-label="Mã đơn"><span class="order-no">WG-20261016-2214</span><small>Đặt 16/10/2026</small></td>
+                  <td data-label="Dịch vụ">
+                    <span class="svc-title">Viết 10 bài chuẩn SEO cho Website &amp; Blog</span>
+                    <span class="exec exec-digital">Digital</span>
+                  </td>
+                  <td data-label="Chuyên gia">Phạm Thu Hà</td>
+                  <td data-label="Tổng tiền" class="num"><strong>1.650.000 ₫</strong></td>
+                  <td data-label="Trạng thái">
+                    <span class="status st-confirmed">Đã xác nhận</span>
+                    <span class="pay paid">Đã thanh toán</span>
+                  </td>
+                  <td data-label="Mốc thời gian"><span class="due">Chờ chuyên gia bắt đầu</span></td>
+                  <td data-label="Thao tác" class="actions">
+                    <button type="button" class="btn btn-danger">Hủy</button>
+                  </td>
+                </tr>
+                <tr data-status="PENDING_PAYMENT">
+                  <td data-label="Mã đơn"><span class="order-no">WG-20261017-0042</span><small>Đặt 17/10/2026</small></td>
+                  <td data-label="Dịch vụ">
+                    <span class="svc-title">Gia sư kèm 1-1 luyện thi IELTS cấp tốc</span>
+                    <span class="exec exec-appointment">Appointment</span>
+                  </td>
+                  <td data-label="Chuyên gia">ThS. Mai Phương</td>
+                  <td data-label="Tổng tiền" class="num"><strong>660.000 ₫</strong></td>
+                  <td data-label="Trạng thái">
+                    <span class="status st-pending">Chờ thanh toán</span>
+                    <span class="pay unpaid">Chưa thanh toán</span>
+                  </td>
+                  <td data-label="Mốc thời gian"><span class="due warn">Giữ chỗ đến 18:00 hôm nay</span></td>
+                  <td data-label="Thao tác" class="actions">
+                    <button type="button" class="btn btn-primary">Thanh toán</button>
+                    <button type="button" class="btn btn-danger">Hủy</button>
+                  </td>
+                </tr>
+                <tr data-status="COMPLETED" hidden>
+                  <td data-label="Mã đơn"><span class="order-no">WG-20261002-5518</span><small>Đặt 02/10/2026</small></td>
+                  <td data-label="Dịch vụ">
+                    <span class="svc-title">Vệ sinh, bơm gas và bảo trì máy lạnh tận nơi</span>
+                    <span class="exec exec-onsite">Onsite</span>
+                  </td>
+                  <td data-label="Chuyên gia">Đỗ Quốc Bảo</td>
+                  <td data-label="Tổng tiền" class="num"><strong>385.000 ₫</strong></td>
+                  <td data-label="Trạng thái">
+                    <span class="status st-completed">Hoàn tất</span>
+                    <span class="pay paid">Đã giải ngân</span>
+                  </td>
+                  <td data-label="Mốc thời gian"><span class="due">Hoàn tất 05/10/2026</span></td>
+                  <td data-label="Thao tác" class="actions">
+                    <button type="button" class="btn btn-ghost">Chi tiết</button>
+                  </td>
+                </tr>
+                <tr data-status="CANCELLED" hidden>
+                  <td data-label="Mã đơn"><span class="order-no">WG-20260928-3307</span><small>Đặt 28/09/2026</small></td>
+                  <td data-label="Dịch vụ">
+                    <span class="svc-title">Giao hàng hỏa tốc nội thành trong 2 giờ</span>
+                    <span class="exec exec-delivery">Delivery</span>
+                  </td>
+                  <td data-label="Chuyên gia">Hoàng Nam Express</td>
+                  <td data-label="Tổng tiền" class="num"><strong>165.000 ₫</strong></td>
+                  <td data-label="Trạng thái">
+                    <span class="status st-cancelled">Đã hủy</span>
+                    <span class="pay refunded">Đã hoàn tiền</span>
+                  </td>
+                  <td data-label="Mốc thời gian"><span class="due">Hủy 28/09/2026</span></td>
+                  <td data-label="Thao tác" class="actions">
+                    <button type="button" class="btn btn-ghost">Chi tiết</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination">
+            <span>Hiển thị 1–5 trên 7 đơn</span>
+            <div class="pages">
+              <button type="button" class="page-btn" disabled>&lsaquo;</button>
+              <button type="button" class="page-btn active">1</button>
+              <button type="button" class="page-btn">2</button>
+              <button type="button" class="page-btn">&rsaquo;</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const ACTIVE = ['PENDING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS', 'DELIVERED'];
+      const rows = document.querySelectorAll('.orders-table tbody tr');
+      const tabs = document.querySelectorAll('.status-tabs .tab');
+      const search = document.querySelector('.search input');
+      let filter = 'ACTIVE';
+
+      const apply = () => {
+        const q = search.value.trim().toLowerCase();
+        rows.forEach((row) => {
+          const st = row.dataset.status;
+          const okStatus = filter === 'ACTIVE' ? ACTIVE.includes(st) : st === filter;
+          const okQuery = !q || row.textContent.toLowerCase().includes(q);
+          row.hidden = !(okStatus && okQuery);
+        });
+      };
+
+      tabs.forEach((tab) =>
+        tab.addEventListener('click', () => {
+          tabs.forEach((t) => t.classList.remove('active'));
+          tab.classList.add('active');
+          filter = tab.dataset.filter;
+          apply();
+        })
+      );
+      search.addEventListener('input', apply);
+
+      // Role toggle only swaps the partner column label in this static mock.
+      document.querySelectorAll('.role-btn').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.role-btn').forEach((b) => {
+            b.classList.toggle('active', b === btn);
+            b.setAttribute('aria-selected', String(b === btn));
+          });
+          document.querySelector('.col-partner').textContent =
+            btn.dataset.role === 'CLIENT' ? 'Chuyên gia' : 'Khách hàng';
+        })
+      );
+    </script>
+  </body>
+</html>

@@ -43,14 +43,38 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres-order:
+    image: postgres:16-alpine
+    container_name: order-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${ORDER_DB:-order_db}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    ports:
+      - "${ORDER_DB_PORT:-5435}:5432"
+    volumes:
+      - order_pgdata:/var/lib/postgresql/data
+    networks:
+      - order-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${ORDER_DB:-order_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   identity_pgdata:
     driver: local
   catalog_pgdata:
+    driver: local
+  order_pgdata:
     driver: local
 
 networks:
   identity-net:
     driver: bridge
   catalog-net:
+    driver: bridge
+  order-net:
     driver: bridge

@@ -32,6 +32,21 @@ export default function App() {
 
   // Write-through: toggle/bulk/duplicate/delete/form-success all land here.
   // R2: on write failure the store keeps a session in-memory copy; toast once.
+  // S4: offline state for the banner (M3) — refreshed on online/offline events.
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
+  // R2: on write failure the store keeps a session in-memory copy; toast once.
   const persistFailedRef = useRef(false);
   useEffect(() => {
     if (persistProviderServices(providerServices) === false) {
@@ -162,6 +177,12 @@ export default function App() {
 
   return (
     <div className={styles.appRoot}>
+      {/* S4: offline banner — local data keeps working, user must know why */}
+      {!isOnline && (
+        <div className={styles.offlineBanner} role="status">
+          <span>Bạn đang ngoại tuyến — ứng dụng vẫn dùng được với dữ liệu đã lưu trên thiết bị này.</span>
+        </div>
+      )}
       {/* Toast queue (max 3, each auto-dismisses + manual close) */}
       {toasts.length > 0 && (
         <div className={styles.toastStack}>

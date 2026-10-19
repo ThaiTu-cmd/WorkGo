@@ -5,7 +5,7 @@ import Pagination from './components/Pagination/Pagination';
 import ServiceCard from '../../components/common/ServiceCard/ServiceCard';
 import SkeletonServiceCard from '../../components/common/Skeleton/SkeletonServiceCard';
 import { mockServices } from '../../data/mockServices';
-import { mockCategories } from '../../data/mockCategories';
+import { useCatalogCategories } from '../../hooks/useCatalogCategories';
 import { SearchX, RotateCcw, X } from 'lucide-react';
 import styles from './CatalogSearchPage.module.css';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
@@ -31,6 +31,7 @@ export default function CatalogSearchPage({
   const [isFiltering, setIsFiltering] = useState(false);
 
   const pageSize = 6;
+  const { categories, status: categoriesStatus } = useCatalogCategories();
 
   useEffect(() => {
     setIsFiltering(true);
@@ -50,12 +51,21 @@ export default function CatalogSearchPage({
   // F3: keep Tab cycling inside the filter drawer while open.
   const filterDrawerRef = useRef(null);
   useFocusTrap(filterDrawerRef, mobileFilterOpen);
+  // V3-trap needs focus INSIDE first: on open, move it to the close button
+  // (same pattern as the header drawer). Otherwise Tab walks the background.
+  useEffect(() => {
+    if (!mobileFilterOpen) return;
+    const closeBtn = filterDrawerRef.current
+      ? filterDrawerRef.current.querySelector("button")
+      : null;
+    if (closeBtn) closeBtn.focus();
+  }, [mobileFilterOpen]);
 
   // Resolve category display name
   const currentCategoryObj = useMemo(() => {
     if (selectedCategory === 'ALL') return null;
-    return mockCategories.find((c) => c.slug === selectedCategory);
-  }, [selectedCategory]);
+    return categories.find((c) => c.slug === selectedCategory);
+  }, [selectedCategory, categories]);
 
   const categoryName = currentCategoryObj ? currentCategoryObj.name : 'Tất cả danh mục';
 
@@ -257,6 +267,8 @@ export default function CatalogSearchPage({
           {/* Desktop Filter Sidebar */}
           <div className={styles.sidebarColumn}>
             <FilterSidebar
+              categories={categories}
+              categoriesStatus={categoriesStatus}
               selectedCategory={selectedCategory}
               onSelectCategory={(cat) => {
                 setSelectedCategory(cat);
@@ -364,6 +376,8 @@ export default function CatalogSearchPage({
 
             <div className={styles.drawerBody}>
               <FilterSidebar
+                categories={categories}
+                categoriesStatus={categoriesStatus}
                 selectedCategory={selectedCategory}
                 onSelectCategory={(cat) => {
                   setSelectedCategory(cat);

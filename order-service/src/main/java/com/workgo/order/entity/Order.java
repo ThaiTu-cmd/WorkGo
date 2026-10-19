@@ -111,7 +111,7 @@ public class Order {
 
     @Builder.Default
     @OneToMany(mappedBy = "order")
-    HashSet<OrderStatusHistory> orderStatusHistory = new HashSet<>();
+    Set<OrderStatusHistory> orderStatusHistory = new HashSet<>();
 
     @Column(name = "source_id")
     UUID sourceId;

@@ -6,6 +6,7 @@ import com.workgo.catalog.dto.request.ServiceCreationRequest;
 import com.workgo.catalog.dto.request.ServiceUpdateRequest;
 import com.workgo.catalog.dto.response.ServiceCreationResponse;
 import com.workgo.catalog.dto.response.ServiceResponse;
+import com.workgo.catalog.enumeration.ExecutionType;
 import com.workgo.catalog.exception.ErrorCode;
 import com.workgo.catalog.service.ServiceService;
 import lombok.AccessLevel;
@@ -14,6 +15,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @RestController
@@ -60,6 +62,23 @@ public class ServiceController {
                 .build();
     }
 
+    @GetMapping
+    ApiResponse<PageResponse<ServiceResponse>> getServices(
+            @RequestParam(value = "categoryId", required = false) UUID categoryId,
+            @RequestParam(value = "executionType", required = false) ExecutionType executionType,
+            @RequestParam(value = "minPrice", required = false)BigDecimal minPrice,
+            @RequestParam(value = "maxPrice", required = false) BigDecimal maxPrice,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+            ){
+        return ApiResponse.<PageResponse<ServiceResponse>>builder()
+                .code(ErrorCode.SUCCESS.getCode())
+                .message(ErrorCode.SUCCESS.getMessage())
+                .result(serviceService.getServices(categoryId, executionType, minPrice, maxPrice, page, size))
+                .build();
+    }
+
+
     @PutMapping("/{serviceId}")
     @PreAuthorize("hasAnyRole('PROVIDER')")
     ApiResponse<ServiceResponse> updateService(
@@ -72,6 +91,7 @@ public class ServiceController {
                 .result(serviceService.updateService(serviceId, request))
                 .build();
     }
+
 
     @DeleteMapping("/{serviceId}")
     @PreAuthorize("hasAnyRole('PROVIDER')")

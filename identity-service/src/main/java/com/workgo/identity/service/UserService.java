@@ -142,6 +142,21 @@ public class UserService {
         return userMapper.toUserResponse(userRepository.save(user));
     }
 
+    public UserResponse updateMyInfo(UserUpdateRequest request) {
+
+        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User user = userRepository.findByUserName(userName);
+        if (user == null) throw new AppException(ErrorCode.USER_NOT_EXISTED);
+
+        if (request.getFirstName() != null) user.setFirstName(request.getFirstName());
+        if (request.getLastName() != null) user.setLastName(request.getLastName());
+        if (request.getEmail() != null) user.setEmail(request.getEmail());
+        if (request.getPhone() != null) user.setPhone(request.getPhone());
+        if (request.getAvatarUrl() != null) user.setAvatarUrl(request.getAvatarUrl());
+
+        return userMapper.toUserResponse(userRepository.save(user));
+    }
 
     public void deleteUser(UUID userId){
         User user = userRepository.findById(userId)

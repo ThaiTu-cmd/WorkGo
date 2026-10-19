@@ -12,6 +12,7 @@ import org.mapstruct.MappingTarget;
 public interface AddOnMapper {
 
     @Mapping(target = "service", source = "service.serviceId")
+    @Mapping(target = "addOnId", source = "addOnId")
     AddOnResponse toAddOnResponse(AddOn addOn);
 
     void updateAddOn(@MappingTarget AddOn addOn, AddOnUpdateRequest request);

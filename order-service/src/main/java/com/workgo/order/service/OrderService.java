@@ -55,6 +55,7 @@ public class OrderService {
     OrderStatusHistoryRepository orderStatusHistoryRepository;
     OrderItemRepository orderItemRepository;
     OrderItemMapper orderItemMapper;
+    ExecutionService executionService;
     TokenUtils tokenUtils;
 
     @NonFinal
@@ -130,7 +131,9 @@ public class OrderService {
 
         orderItemRepository.saveAll(orderItems);
 
-        //TODO (M3): handler.create(order, request) -> EXECUTION + DIGITAL_EXECUTION/ONSITE_EXECUTION
+        //tao digital/ onsite execution tuy loai executiontype cua order
+        executionService.createFor(order, request, packageResponse);
+
         //TODO (M6): ONSITE -> catalogClient.holdSlot(request.getBookingSlotId(), order.getOrderId())
         //TODO (B6): luu OrderSnapshot trong cung transaction nay
 

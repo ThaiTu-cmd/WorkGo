@@ -12,7 +12,7 @@ import {
   CreditCard,
 } from 'lucide-react';
 import styles from './CheckoutPage.module.css';
-import { orderApi } from '../../api/orderApi';
+import { orderApi, isOrderable, NOT_ORDERABLE_MESSAGE } from '../../api/orderApi';
 
 // Mirrors order-service `order.platform-fee-rate` (application.yaml).
 const PLATFORM_FEE_RATE = 0.1;
@@ -54,7 +54,9 @@ function buildPricingSnapshot(pkg, addons) {
     subtotal,
     platformFeeRate: PLATFORM_FEE_RATE,
     platformFee,
-    totalAmount: subtotal + platformFee,
+    // Same as order-service: the client pays the listed price; the platform
+    // fee comes out of the provider's share.
+    totalAmount: subtotal,
     providerNetAmount: subtotal - platformFee,
     currency: 'VND',
   };
@@ -109,8 +111,10 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
 
   // Creates the order; payment-service is not routed by the gateway yet,
   // so the order stays PENDING_PAYMENT (see BACKEND_GAPS.md).
+  const orderable = isOrderable(service.executionType);
+
   const handlePay = async () => {
-    if (!agreed || phase !== 'review') return;
+    if (!agreed || phase !== 'review' || !orderable) return;
     setPhase('creating');
     try {
       const res = await orderApi.createOrder({
@@ -328,12 +332,12 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
                   </div>
                   <div className={styles.priceRow}>
                     <dt>
-                      Phí nền tảng ({Math.round(pricing.platformFeeRate * 100)}%)
+                      Phí nền tảng ({Math.round(pricing.platformFeeRate * 100)}%, trừ vào phần chuyên gia)
                       <span
                         className={styles.tip}
                         tabIndex={0}
-                        data-tip="Phí duy trì Escrow, hỗ trợ khiếu nại và bảo vệ giao dịch"
-                        aria-label="Phí duy trì Escrow, hỗ trợ khiếu nại và bảo vệ giao dịch"
+                        data-tip="Phí duy trì Escrow, hỗ trợ khiếu nại và bảo vệ giao dịch — khách không phải trả thêm"
+                        aria-label="Phí duy trì Escrow, hỗ trợ khiếu nại và bảo vệ giao dịch — khách không phải trả thêm"
                       >
                         <HelpCircle size={14} />
                       </span>
@@ -363,10 +367,16 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
                   <span>Tôi đồng ý với Điều khoản dịch vụ và Chính sách Escrow của WorkGo.</span>
                 </label>
 
+                {!orderable && (
+                  <p className={styles.notOrderable} role="alert">
+                    {NOT_ORDERABLE_MESSAGE}
+                  </p>
+                )}
+
                 <button
                   type="button"
                   className={styles.btnPay}
-                  disabled={!agreed || phase !== 'review'}
+                  disabled={!agreed || phase !== 'review' || !orderable}
                   onClick={handlePay}
                 >
                   Đặt hàng {formatPrice(pricing.totalAmount)}

@@ -8,7 +8,10 @@ import {
   toMyServiceRow,
   toPackages,
   splitFullName,
+  toRowStatus,
+  toServiceCard,
   toServiceDetail,
+  toServiceStatus,
 } from "../src/_webapp-mirror/api/adapters.js";
 
 test("adapters: pageItems reads wrapped and bare PageResponse", () => {
@@ -90,4 +93,59 @@ test("authApi: Vietnamese full name splits into last/first name and back", () =>
   assert.deepEqual(splitFullName("An"), { firstName: "An", lastName: "" });
   assert.equal(joinFullName({ firstName: "An", lastName: "Nguyễn Văn" }), "Nguyễn Văn An");
   assert.equal(joinFullName({ userName: "an123" }), "an123");
+});
+
+test("adapters: toServiceCard maps list item with category and provider", () => {
+  const card = toServiceCard(
+    {
+      serviceId: "s1",
+      providerId: "pv",
+      categoryId: "c1",
+      title: "Thiết kế logo",
+      executionType: "DIGITAL",
+      basePrice: 1000000,
+      avgRating: 4.5,
+      reviewCount: 3,
+      orderCount: 7,
+      createdAt: "2026-10-19T00:00:00Z",
+    },
+    {
+      category: { name: "Thiết kế Đồ họa", slug: "thiet-ke-do-hoa" },
+      provider: { providerProfileId: "pv", businessName: "Văn A Studio", verificationStatus: "VERIFIED" },
+    }
+  );
+  assert.equal(card.categorySlug, "thiet-ke-do-hoa");
+  assert.equal(card.provider.name, "Văn A Studio");
+  assert.equal(card.provider.isVerified, true);
+  assert.equal(card.basePrice, 1000000);
+  assert.equal(card.orderCount, 7);
+  assert.match(card.coverImage, /^data:image\/svg\+xml/);
+  // Unknown provider/category still renders.
+  const bare = toServiceCard({ serviceId: "s2", title: "X", basePrice: null });
+  assert.equal(bare.provider.name, "Nhà cung cấp");
+  assert.equal(bare.basePrice, 0);
+});
+
+test("adapters: service detail shows rating only once there are reviews", () => {
+  const rated = toServiceDetail({ service: { serviceId: "s1", avgRating: 4.8, reviewCount: 12, orderCount: 30 } });
+  assert.equal(rated.avgRating, 4.8);
+  assert.equal(rated.reviewCount, 12);
+  assert.equal(rated.orderCount, 30);
+  const fresh = toServiceDetail({ service: { serviceId: "s2", avgRating: 0, reviewCount: 0 } });
+  assert.equal(fresh.avgRating, null);
+});
+
+test("adapters: My Services row carries order count and rating", () => {
+  const row = toMyServiceRow({ serviceId: "s1", title: "A", status: "PAUSED", orderCount: 5, avgRating: 4.2, reviewCount: 2 });
+  assert.equal(row.ordersCount, 5);
+  assert.equal(row.avgRating, 4.2);
+  assert.equal(row.reviewCount, 2);
+  assert.equal(row.status, "PAUSED");
+});
+
+test("adapters: row status and catalog ServiceStatus convert both ways", () => {
+  assert.equal(toRowStatus("PUBLISHED"), "ACTIVE");
+  assert.equal(toRowStatus("DRAFT"), "DRAFT");
+  assert.equal(toServiceStatus("ACTIVE"), "PUBLISHED");
+  assert.equal(toServiceStatus("PAUSED"), "PAUSED");
 });

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useServiceDetail } from '../../hooks/useServiceDetail';
+import { isOrderable, NOT_ORDERABLE_MESSAGE } from '../../api/orderApi';
 import MediaGallery from './components/MediaGallery';
 import PackageSidebar from './components/PackageSidebar';
 import PackageComparisonTable from './components/PackageComparisonTable';
@@ -293,7 +294,7 @@ export default function ServiceDetailPage({
             <FaqAccordion faqs={service.faqs} />
 
             {/* 6. Reviews & Rating Breakdown */}
-            {service.reviewCount > 0 && (
+            {service.reviews.length > 0 && (
               <ReviewsSection
                 reviews={service.reviews}
                 avgRating={service.avgRating}
@@ -304,6 +305,11 @@ export default function ServiceDetailPage({
 
           {/* RIGHT COLUMN: Sticky Order Box */}
           <div className={styles.rightColumn}>
+            {!isOrderable(service.executionType) && (
+              <p className={styles.notOrderable} role="note">
+                {NOT_ORDERABLE_MESSAGE}
+              </p>
+            )}
             <PackageSidebar
               packages={service.packages}
               selectedPackageId={selectedPackageId}

@@ -18,8 +18,7 @@ const STATE_MESSAGES = {
   error: 'Không tải được danh sách dịch vụ từ máy chủ.',
 };
 
-// Live list from catalog-service. Status toggles / duplicates are not offered:
-// ServiceUpdateRequest has no status field yet (BACKEND_GAPS.md).
+// Live list from catalog-service. Duplicating is not offered (no copy endpoint).
 export default function MyServicesPage({
   onSelectService,
   onGoHome,
@@ -30,7 +29,7 @@ export default function MyServicesPage({
   onOpenProviderOnboarding,
 }) {
   // Loads on mount, so returning here after the service form shows the saved changes.
-  const { status, services, reload, deleteService } = useMyServices();
+  const { status, services, reload, deleteService, setStatus } = useMyServices();
 
   const [activeTab, setActiveTab] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -82,6 +81,40 @@ export default function MyServicesPage({
       setSelectedIds(filteredServices.map((s) => s.serviceId));
     }
   };
+
+  const handleToggleStatus = async (serviceId) => {
+    const s = services.find((item) => item.serviceId === serviceId);
+    if (!s) return;
+    const next = s.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+    try {
+      await setStatus(serviceId, next);
+      if (onShowToast) {
+        onShowToast(next === 'ACTIVE' ? `Đã mở bán dịch vụ "${s.title}"` : `Đã tạm ngưng nhận đơn cho "${s.title}"`);
+      }
+    } catch (err) {
+      if (onShowToast) onShowToast(`Không đổi được trạng thái: ${err?.message || 'lỗi kết nối máy chủ'}`);
+    }
+  };
+
+  // R6: bulk Activate/Pause confirm like bulk Delete.
+  const setManyStatus = async (rowStatus, verb) => {
+    if (!window.confirm(`${verb} ${selectedIds.length} dịch vụ đã chọn?`)) return;
+    const ids = [...selectedIds];
+    const results = await Promise.allSettled(ids.map((id) => setStatus(id, rowStatus)));
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    if (onShowToast) {
+      onShowToast(
+        failed
+          ? `${verb} ${ids.length - failed}/${ids.length} dịch vụ, ${failed} dịch vụ lỗi`
+          : `Đã ${verb.toLowerCase()} ${ids.length} dịch vụ`
+      );
+    }
+    setSelectedIds([]);
+  };
+
+  const handleBulkActivate = () => setManyStatus('ACTIVE', 'Kích hoạt');
+
+  const handleBulkPause = () => setManyStatus('PAUSED', 'Tạm ngưng');
 
   const removeMany = async (ids) => {
     const results = await Promise.allSettled(ids.map((id) => deleteService(id)));
@@ -184,7 +217,10 @@ export default function MyServicesPage({
               ? onOpenEditForm(s.serviceId)
               : onShowToast && onShowToast(`Mở chỉnh sửa cho "${s.title}"`)
           }
+          onToggleStatus={handleToggleStatus}
           onDeleteService={handleDeleteService}
+          onBulkActivate={handleBulkActivate}
+          onBulkPause={handleBulkPause}
           onBulkDelete={handleBulkDelete}
           onClearFilters={handleClearFilters}
           onCreateService={() => onOpenCreateForm && onOpenCreateForm()}

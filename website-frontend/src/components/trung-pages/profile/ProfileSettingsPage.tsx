@@ -41,9 +41,8 @@ export default function ProfileSettingsPage({ onNavigate, onShowToast }: TrungPa
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
-  const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; phone?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; phone?: string }>({});
 
   useEffect(() => {
     if (!token) return undefined;
@@ -76,24 +75,17 @@ export default function ProfileSettingsPage({ onNavigate, onShowToast }: TrungPa
     const next: typeof errors = {};
     if (cleanName.length < 2) next.name = "Vui lòng nhập tên từ 2 ký tự!";
     if (!/^0\d{9}$/.test(cleanPhone)) next.phone = "Số điện thoại phải 10 số, bắt đầu bằng 0!";
-    if (password.length < 6) next.password = "Nhập mật khẩu hiện tại để xác nhận (tối thiểu 6 ký tự)!";
     setErrors(next);
-    if (next.name ?? next.phone ?? next.password) return;
+    if (next.name ?? next.phone) return;
 
-    // PUT /users/{id} overwrites every field and re-hashes `password`,
-    // so send the full record plus the current password (see BACKEND_GAPS.md).
     setSaving(true);
     try {
-      const res = await authApi.updateUser(me.userId, {
+      const res = await authApi.updateMyInfo({
         ...splitFullName(cleanName),
-        userName: me.userName,
-        email: me.email ?? null,
         phone: cleanPhone,
         avatarUrl: cleanAvatar || null,
-        password,
       });
       if (res?.result) setMe(res.result);
-      setPassword("");
       onShowToast("Đã lưu hồ sơ của bạn!");
     } catch (err) {
       onShowToast(`Không lưu được hồ sơ: ${(err as Error)?.message || "lỗi kết nối máy chủ"}`);
@@ -184,17 +176,6 @@ export default function ProfileSettingsPage({ onNavigate, onShowToast }: TrungPa
               aria-invalid={errors.phone ? true : undefined}
             />
             {errors.phone ? <em className={styles.error}>{errors.phone}</em> : null}
-          </label>
-          <label className={styles.field}>
-            <span>Mật khẩu hiện tại (để xác nhận)</span>
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              aria-invalid={errors.password ? true : undefined}
-            />
-            {errors.password ? <em className={styles.error}>{errors.password}</em> : null}
           </label>
           <button type="submit" className={styles.submit} disabled={saving}>
             {saving ? "Đang lưu..." : "Lưu hồ sơ"}

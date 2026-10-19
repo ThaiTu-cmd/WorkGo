@@ -28,7 +28,9 @@ export const authApi = {
 
   getMyInfo: () => axiosClient.get('/identity/users/myInfo'),
 
-  updateUser: (userId, body) => axiosClient.put(`/identity/users/${userId}`, body),
+  // Partial update of the signed-in user (user taken from the token):
+  // body { firstName, lastName, email, phone, avatarUrl } — null fields are left as is.
+  updateMyInfo: (body) => axiosClient.put('/identity/users/myInfo', body),
 };
 
 export default authApi;

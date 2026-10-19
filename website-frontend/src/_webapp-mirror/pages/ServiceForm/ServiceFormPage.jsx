@@ -23,7 +23,7 @@ import FormStepper from './components/FormStepper/FormStepper';
 import Step1Info from './components/Step1Info/Step1Info';
 import Step2Pricing from './components/Step2Pricing/Step2Pricing';
 import Step3Media from './components/Step3Media/Step3Media';
-import { ArrowLeft, Check, FilePlus2, PencilLine } from 'lucide-react';
+import { ArrowLeft, Check, FilePlus2, PencilLine, Save } from 'lucide-react';
 import styles from './ServiceFormPage.module.css';
 import {
   validateTitle,
@@ -84,6 +84,8 @@ export default function ServiceFormPage({
   const [saving, setSaving] = useState(false);
   // PackageResponse ids by tier, so an edit updates the existing packages.
   const [packageIds, setPackageIds] = useState({});
+  // catalog ServiceStatus of the service being edited (kept on save).
+  const [existingStatus, setExistingStatus] = useState(null);
 
   useEffect(() => {
     if (!isEdit) return undefined;
@@ -112,6 +114,7 @@ export default function ServiceFormPage({
           };
         };
         setPackageIds(Object.fromEntries(Object.entries(byTier).map(([k, p]) => [k, p.id])));
+        setExistingStatus(existing.status || null);
         setFormData({
           ...defaultFormData,
           title: existing.title || '',
@@ -183,9 +186,10 @@ export default function ServiceFormPage({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // catalog-service has no service status on create/update yet (BACKEND_GAPS.md),
-  // so "draft" and "publish" both save the same record.
-  const handleSave = async () => {
+  // targetStatus: 'DRAFT' | 'PUBLISHED' when creating; on edit the current status
+  // is kept. New services are always created as DRAFT, so publishing is a
+  // follow-up status update. Only PUBLISHED services can be ordered.
+  const handleSave = async (targetStatus = 'PUBLISHED') => {
     if (saving) return;
     if (!validateStep(1) || !validateStep(currentStep)) {
       if (onShowToast) onShowToast('Vui lòng kiểm tra lại thông tin các bước!');
@@ -202,18 +206,17 @@ export default function ServiceFormPage({
       slug: toSlug(cleanTitle),
       description: cleanDescription,
       currency: 'VND',
+      basePrice: clampPrice(formData.packages.basic.price),
     };
 
     setSaving(true);
     try {
       let id = serviceId;
       if (isEdit) {
-        await catalogApi.updateService(serviceId, serviceBody);
+        // The update mapper writes nulls too: always send the status back.
+        await catalogApi.updateService(serviceId, { ...serviceBody, status: existingStatus || 'DRAFT' });
       } else {
-        const res = await catalogApi.createService({
-          ...serviceBody,
-          basePrice: clampPrice(formData.packages.basic.price),
-        });
+        const res = await catalogApi.createService(serviceBody);
         id = res?.result?.serviceId;
         if (!id) throw new Error('Máy chủ không trả về mã dịch vụ');
       }
@@ -234,6 +237,10 @@ export default function ServiceFormPage({
 
       if (!isEdit && formData.coverImage?.trim()) {
         await catalogApi.createMedia(id, { url: formData.coverImage.trim(), mediaType: 'IMAGE', cover: true });
+      }
+
+      if (!isEdit && targetStatus === 'PUBLISHED') {
+        await catalogApi.setServiceStatus(id, 'PUBLISHED');
       }
 
       if (onSaveSuccess) onSaveSuccess({ serviceId: id, title: cleanTitle }, isEdit);
@@ -324,6 +331,17 @@ export default function ServiceFormPage({
           </div>
 
           <div className={styles.actionRight}>
+            {!isEdit && (
+              <button
+                type="button"
+                className={styles.btnSaveDraft}
+                onClick={() => handleSave('DRAFT')}
+                disabled={saving}
+              >
+                <Save size={16} /> Lưu bản nháp
+              </button>
+            )}
+
             {currentStep < 3 ? (
               <button
                 type="button"
@@ -336,7 +354,7 @@ export default function ServiceFormPage({
               <button
                 type="button"
                 className={styles.btnPublish}
-                onClick={handleSave}
+                onClick={() => handleSave('PUBLISHED')}
                 disabled={saving}
               >
                 <Check size={18} strokeWidth={2.5} />

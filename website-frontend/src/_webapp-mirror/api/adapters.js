@@ -39,8 +39,8 @@ export const toPackages = (packages = []) =>
       features: [],
     }));
 
-// Add-ons without an id can't be ordered (catalog currently returns addOnId: null,
-// see BACKEND_GAPS.md), so they are left out rather than sent as null.
+// Add-ons without an id can't be ordered (older catalog builds returned
+// addOnId: null), so they are left out rather than sent as null.
 export const toAddons = (addons = []) =>
   addons
     .filter((a) => a.addOnId && (!a.status || a.status === 'ACTIVE'))
@@ -74,6 +74,30 @@ export const toProvider = (profile) => {
   };
 };
 
+// ServiceResponse (list endpoint) → ServiceCard item used by CatalogSearch and
+// PopularServices. `provider` is the ProviderProfileResponse when known.
+export const toServiceCard = (dto, { category = null, provider = null } = {}) => {
+  const providerView = toProvider(provider);
+  return {
+    serviceId: dto.serviceId,
+    providerId: dto.providerId,
+    categoryId: dto.categoryId,
+    categorySlug: category?.slug ?? null,
+    categoryName: category?.name ?? '',
+    title: dto.title,
+    slug: dto.slug,
+    executionType: dto.executionType,
+    coverImage: initialAvatar(dto.title),
+    provider: providerView,
+    avgRating: toNumber(dto.avgRating),
+    reviewCount: toNumber(dto.reviewCount),
+    orderCount: toNumber(dto.orderCount),
+    basePrice: toNumber(dto.basePrice),
+    deliveryDays: null,
+    createdAt: dto.createdAt,
+  };
+};
+
 // ServiceResponse + related lists → ServiceDetailPage `service` object.
 export const toServiceDetail = ({ service, packages = [], addons = [], medias = [], provider = null, category = null }) => {
   const providerView = toProvider(provider);
@@ -94,8 +118,10 @@ export const toServiceDetail = ({ service, packages = [], addons = [], medias = 
     coverImage: mediaList[0]?.url ?? null,
     basePrice: pkgs[0]?.price ?? toNumber(service.basePrice),
     provider: providerView,
-    avgRating: null,
-    reviewCount: 0,
+    // 0 rating with no reviews means "not rated yet" → hide the stars.
+    avgRating: toNumber(service.reviewCount) > 0 ? toNumber(service.avgRating) : null,
+    reviewCount: toNumber(service.reviewCount),
+    orderCount: toNumber(service.orderCount),
     ordersInQueue: null,
     mediaList,
     packages: pkgs,
@@ -115,6 +141,9 @@ const formatVnd = (n) => `${new Intl.NumberFormat('vi-VN').format(n)} ₫`;
 
 // catalog ServiceStatus (DRAFT | PUBLISHED | PAUSED | ARCHIVED) → MyServices tabs.
 const ROW_STATUS = { PUBLISHED: 'ACTIVE', ARCHIVED: 'PAUSED' };
+export const toRowStatus = (serviceStatus) => ROW_STATUS[serviceStatus] ?? serviceStatus;
+// MyServices tab status → catalog ServiceStatus.
+export const toServiceStatus = (rowStatus) => (rowStatus === 'ACTIVE' ? 'PUBLISHED' : rowStatus);
 
 // ServiceResponse (+ optional packages) → MyServices table row.
 export const toMyServiceRow = (service, packages = [], category = null) => {
@@ -132,15 +161,15 @@ export const toMyServiceRow = (service, packages = [], category = null) => {
     categoryName: category?.name ?? '',
     categorySlug: category?.slug ?? '',
     executionType: service.executionType,
-    status: ROW_STATUS[service.status] ?? service.status,
+    status: toRowStatus(service.status),
     coverImage: initialAvatar(service.title),
     basePrice: min,
     priceRange,
     packagesCount: packages.length,
     impressions: null,
-    ordersCount: null,
-    avgRating: null,
-    reviewCount: 0,
+    ordersCount: toNumber(service.orderCount),
+    avgRating: toNumber(service.avgRating),
+    reviewCount: toNumber(service.reviewCount),
     createdAt: service.createdAt,
   };
 };

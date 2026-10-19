@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { catalogApi } from '../api/catalogApi';
 import { getAccessToken } from '../api/axiosClient';
-import { pageItems, toMyServiceRow } from '../api/adapters';
+import { pageItems, toMyServiceRow, toRowStatus, toServiceStatus } from '../api/adapters';
 
 // The signed-in provider's services (GET /catalog/services/my-services),
 // each joined with its packages (price range) and category name.
@@ -46,7 +46,36 @@ export function useMyServices() {
     setState((s) => ({ ...s, services: s.services.filter((x) => x.serviceId !== serviceId) }));
   }, []);
 
-  return { ...state, reload: load, deleteService };
+  // rowStatus: 'ACTIVE' | 'PAUSED' | 'DRAFT'. Optimistic; rolls back on failure.
+  const setStatus = useCallback(async (serviceId, rowStatus) => {
+    let previous;
+    setState((s) => ({
+      ...s,
+      services: s.services.map((x) => {
+        if (x.serviceId !== serviceId) return x;
+        previous = x.status;
+        return { ...x, status: rowStatus };
+      }),
+    }));
+    try {
+      const res = await catalogApi.setServiceStatus(serviceId, toServiceStatus(rowStatus));
+      const saved = res?.result?.status;
+      if (saved) {
+        setState((s) => ({
+          ...s,
+          services: s.services.map((x) => (x.serviceId === serviceId ? { ...x, status: toRowStatus(saved) } : x)),
+        }));
+      }
+    } catch (err) {
+      setState((s) => ({
+        ...s,
+        services: s.services.map((x) => (x.serviceId === serviceId ? { ...x, status: previous } : x)),
+      }));
+      throw err;
+    }
+  }, []);
+
+  return { ...state, reload: load, deleteService, setStatus };
 }
 
 export default useMyServices;

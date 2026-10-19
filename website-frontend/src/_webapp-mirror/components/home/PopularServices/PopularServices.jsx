@@ -1,14 +1,20 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useServiceList } from "../../../hooks/useServiceList";
 import ServiceCard from "../../common/ServiceCard/ServiceCard";
 import { ChevronLeft, ChevronRight, Flame, Globe, House, Truck } from "lucide-react";
 import styles from "./PopularServices.module.css";
 
-// No public "popular services" endpoint in catalog-service yet (BACKEND_GAPS.md #1).
-const LISTED_SERVICES = [];
+const POPULAR_LIMIT = 8;
 
 export default function PopularServices({ onSelectService }) {
   const [activeTab, setActiveTab] = useState("ALL");
   const [startIndex, setStartIndex] = useState(0);
+  const { services, status } = useServiceList();
+  // Most-ordered PUBLISHED services first.
+  const popular = useMemo(
+    () => [...services].sort((a, b) => b.orderCount - a.orderCount).slice(0, POPULAR_LIMIT),
+    [services]
+  );
 
   const filterTabs = [
     { key: "ALL", label: "Tất cả" },
@@ -19,8 +25,8 @@ export default function PopularServices({ onSelectService }) {
 
   const filteredServices =
     activeTab === "ALL"
-      ? LISTED_SERVICES
-      : LISTED_SERVICES.filter((s) => s.executionType === activeTab);
+      ? popular
+      : popular.filter((s) => s.executionType === activeTab);
 
   const visibleCount = 4;
   const maxStart = Math.max(0, filteredServices.length - visibleCount);
@@ -92,7 +98,15 @@ export default function PopularServices({ onSelectService }) {
 
         {/* Services Grid/Carousel View */}
         {filteredServices.length === 0 && (
-          <p className={styles.subtitle}>Chưa có dữ liệu dịch vụ để hiển thị.</p>
+          <p className={styles.subtitle}>
+            {status === "loading"
+              ? "Đang tải dịch vụ..."
+              : status === "needs-login"
+                ? "Đăng nhập để xem các dịch vụ trên WorkGo."
+                : status === "error"
+                  ? "Không tải được dịch vụ từ máy chủ."
+                  : "Chưa có dịch vụ nào ở mục này."}
+          </p>
         )}
         <div className={styles.servicesGrid}>
           {filteredServices.map((service) => (

@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Info, Loader2, Search, Package } from 'lucide-react';
 import { useMyOrders } from '../../hooks/useMyOrders';
 import OrderStatusBadge from './components/OrderStatusBadge';
+import OrderExecutionInfo from './components/OrderExecutionInfo';
 import OrderCancelPage from '../OrderCancel/OrderCancelPage';
 import styles from './OrderDashboardPage.module.css';
 
@@ -435,6 +436,7 @@ export default function OrderDashboardPage({ onGoHome, onShowToast }) {
                                     <dd>{formatDateTime(o.orderStatus === 'CANCELLED' ? o.cancelledAt : o.completedAt)}</dd>
                                   </div>
                                 </dl>
+                                {isLive && <OrderExecutionInfo orderId={o.orderId} />}
                                 {(o.cancelRequest || o.cancelReason) && (
                                   <div className={styles.cancelInfo}>
                                     <strong>

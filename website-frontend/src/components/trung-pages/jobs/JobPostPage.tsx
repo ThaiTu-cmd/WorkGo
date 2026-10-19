@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FilePlus2 } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { JOB_TYPES, mockJobs, type Job, type JobType } from "../_mocks/mockJobs";
 import { KEYS } from "../_stores/keys";
@@ -93,7 +94,9 @@ export default function JobPostPage({ onNavigate, onShowToast }: TrungPageProps)
   return (
     <main className={styles.wrap}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Đăng việc làm</h1>
+        <h1 className={styles.title}>
+          <FilePlus2 size={24} className={styles.titleIcon} aria-hidden="true" /> Đăng việc làm
+        </h1>
         <p className={styles.sub}>Mô tả việc cần làm, provider sẽ gửi đề xuất cho bạn.</p>
         <form onSubmit={submit} noValidate className={styles.form}>
           <label className={styles.field}>

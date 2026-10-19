@@ -1,5 +1,5 @@
 import React from 'react';
-import { SlidersHorizontal, ChevronRight, X, ArrowUpDown } from 'lucide-react';
+import { SlidersHorizontal, ChevronRight, X, ArrowUpDown, LayoutGrid } from 'lucide-react';
 import styles from './SearchToolbar.module.css';
 
 export default function SearchToolbar({
@@ -44,6 +44,7 @@ export default function SearchToolbar({
       <div className={styles.mainBar}>
         <div className={styles.leftInfo}>
           <h1 className={styles.pageTitle}>
+            <LayoutGrid size={26} className={styles.titleIcon} aria-hidden="true" />
             {categoryName === 'Tất cả danh mục' ? 'Khám phá tất cả dịch vụ' : categoryName}
           </h1>
           <span className={styles.resultCount} aria-live="polite" aria-atomic="true">

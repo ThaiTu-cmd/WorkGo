@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
+import { LogIn } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
-import { KEYS } from "../_stores/keys";
+import { authApi } from "../../webapp-bridge/backend";
 import { loginSchema } from "./authValidation";
 import styles from "./LoginPage.module.css";
 
@@ -12,25 +13,34 @@ export type TrungPageProps = {
 };
 
 export default function LoginPage({ onNavigate, onShowToast }: TrungPageProps) {
-  const emailRef = useRef<HTMLInputElement>(null);
-  const [email, setEmail] = useState("");
+  const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ userName?: string; password?: string; form?: string }>({});
+  const [submitting, setSubmitting] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = loginSchema.safeParse({ email, password });
+    const parsed = loginSchema.safeParse({ userName, password });
     if (!parsed.success) {
       const flat = parsed.error.flatten().fieldErrors;
-      setErrors({ email: flat.email?.[0], password: flat.password?.[0] });
+      setErrors({ userName: flat.userName?.[0], password: flat.password?.[0] });
       return;
     }
     setErrors({});
+    setSubmitting(true);
     try {
-      window.localStorage.setItem(KEYS.authToken, `mock-token-${Date.now()}`);
-    } catch {
-      onShowToast("Bộ nhớ trình duyệt bị đầy hoặc bị chặn — thay đổi chỉ được giữ trong phiên này.");
+      await authApi.login(parsed.data.userName, parsed.data.password);
+    } catch (err) {
+      const status = (err as { status?: number })?.status;
+      setErrors({
+        form:
+          status === 401 || status === 404
+            ? "Sai tên đăng nhập hoặc mật khẩu."
+            : (err as Error)?.message || "Không kết nối được máy chủ. Vui lòng thử lại.",
+      });
       return;
+    } finally {
+      setSubmitting(false);
     }
     onShowToast("Đăng nhập thành công!");
     onNavigate("home");
@@ -39,22 +49,23 @@ export default function LoginPage({ onNavigate, onShowToast }: TrungPageProps) {
   return (
     <main className={styles.wrap}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Đăng nhập WorkGo</h1>
+        <h1 className={styles.title}>
+          <LogIn size={24} className={styles.titleIcon} aria-hidden="true" /> Đăng nhập WorkGo
+        </h1>
         <p className={styles.sub}>Chào mừng bạn quay trở lại sàn dịch vụ WorkGo.</p>
         <form onSubmit={submit} noValidate className={styles.form}>
           <label className={styles.field}>
-            <span>Email</span>
+            <span>Tên đăng nhập</span>
             <input
-              ref={emailRef}
-              type="email"
+              type="text"
               autoFocus
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="ban@example.com"
-              aria-invalid={errors.email ? true : undefined}
+              autoComplete="username"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              placeholder="nguyenvana"
+              aria-invalid={errors.userName ? true : undefined}
             />
-            {errors.email ? <em className={styles.error}>{errors.email}</em> : null}
+            {errors.userName ? <em className={styles.error}>{errors.userName}</em> : null}
           </label>
           <label className={styles.field}>
             <span>Mật khẩu</span>
@@ -68,8 +79,13 @@ export default function LoginPage({ onNavigate, onShowToast }: TrungPageProps) {
             />
             {errors.password ? <em className={styles.error}>{errors.password}</em> : null}
           </label>
-          <button type="submit" className={styles.submit}>
-            Đăng nhập
+          {errors.form ? (
+            <em className={styles.error} role="alert">
+              {errors.form}
+            </em>
+          ) : null}
+          <button type="submit" className={styles.submit} disabled={submitting}>
+            {submitting ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
         </form>
         <p className={styles.swap}>

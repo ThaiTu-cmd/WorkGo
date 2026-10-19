@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Send } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { mockJobs, type Job } from "../_mocks/mockJobs";
 import { mockProposals, type Proposal } from "../_mocks/mockProposals";
@@ -102,7 +103,9 @@ export default function SubmitProposalPage({ onNavigate, onShowToast, jobId }: T
   return (
     <main className={styles.wrap}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Gửi đề xuất</h1>
+        <h1 className={styles.title}>
+          <Send size={24} className={styles.titleIcon} aria-hidden="true" /> Gửi đề xuất
+        </h1>
         <p className={styles.sub}>Chào giá và thuyết phục client chọn bạn thực hiện việc này.</p>
         <form onSubmit={submit} noValidate className={styles.form}>
           <label className={styles.field}>

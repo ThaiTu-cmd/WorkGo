@@ -125,20 +125,24 @@ export default function ServicesTable({
             Đã chọn <strong>{selectedIds.length}</strong> dịch vụ
           </div>
           <div className={styles.bulkButtons}>
-            <button
-              type="button"
-              className={styles.bulkBtn}
-              onClick={onBulkActivate}
-            >
-              Kích hoạt hàng loạt
-            </button>
-            <button
-              type="button"
-              className={styles.bulkBtn}
-              onClick={onBulkPause}
-            >
-              Tạm ngưng hàng loạt
-            </button>
+            {onBulkActivate && (
+              <button
+                type="button"
+                className={styles.bulkBtn}
+                onClick={onBulkActivate}
+              >
+                Kích hoạt hàng loạt
+              </button>
+            )}
+            {onBulkPause && (
+              <button
+                type="button"
+                className={styles.bulkBtn}
+                onClick={onBulkPause}
+              >
+                Tạm ngưng hàng loạt
+              </button>
+            )}
             <button
               type="button"
               className={`${styles.bulkBtn} ${styles.bulkDeleteBtn}`}
@@ -221,20 +225,24 @@ export default function ServicesTable({
                 <td className={styles.tdPrice}>
                   <div className={styles.priceCell}>
                     <span className={styles.priceRange}>{service.priceRange || 'Theo gói'}</span>
-                    <span className={styles.pkgCountBadge}>{service.packagesCount || 3} gói dịch vụ</span>
+                    <span className={styles.pkgCountBadge}>{service.packagesCount ?? 0} gói dịch vụ</span>
                   </div>
                 </td>
 
                 <td className={styles.tdStats}>
                   <div className={styles.statsCell}>
-                    <div className={styles.statLine}>
-                      <Eye size={13} className={styles.statIcon} title="Lượt hiển thị" />
-                      <span>{new Intl.NumberFormat('vi-VN').format(service.impressions || 0)} lượt xem</span>
-                    </div>
-                    <div className={styles.statLine}>
-                      <ShoppingBag size={13} className={styles.statIcon} title="Đơn hàng tích lũy" />
-                      <span><strong>{service.ordersCount || 0}</strong> đơn hàng</span>
-                    </div>
+                    {service.impressions != null && (
+                      <div className={styles.statLine}>
+                        <Eye size={13} className={styles.statIcon} title="Lượt hiển thị" />
+                        <span>{new Intl.NumberFormat('vi-VN').format(service.impressions)} lượt xem</span>
+                      </div>
+                    )}
+                    {service.ordersCount != null && (
+                      <div className={styles.statLine}>
+                        <ShoppingBag size={13} className={styles.statIcon} title="Đơn hàng tích lũy" />
+                        <span><strong>{service.ordersCount}</strong> đơn hàng</span>
+                      </div>
+                    )}
                     {service.avgRating > 0 && (
                       <div className={styles.ratingLine}>
                         <Star size={13} className={styles.starIcon} />
@@ -253,8 +261,8 @@ export default function ServicesTable({
                     <input
                       type="checkbox"
                       checked={isActive}
-                      onChange={() => onToggleStatus(service.serviceId)}
-                      disabled={service.status === 'PENDING'}
+                      onChange={() => onToggleStatus && onToggleStatus(service.serviceId)}
+                      disabled={!onToggleStatus || service.status === 'PENDING'}
                     />
                     <span className={styles.slider} />
                   </label>
@@ -291,17 +299,19 @@ export default function ServicesTable({
 
                       {isMenuOpen && (
                         <div className={styles.dropdownMenu}>
-                          <button
-                            type="button"
-                            className={styles.dropdownItem}
-                            onClick={() => {
-                              onDuplicateService(service);
-                              setActiveMenuId(null);
-                            }}
-                          >
-                            <Copy size={14} />
-                            <span>Nhân bản dịch vụ</span>
-                          </button>
+                          {onDuplicateService && (
+                            <button
+                              type="button"
+                              className={styles.dropdownItem}
+                              onClick={() => {
+                                onDuplicateService(service);
+                                setActiveMenuId(null);
+                              }}
+                            >
+                              <Copy size={14} />
+                              <span>Nhân bản dịch vụ</span>
+                            </button>
+                          )}
                           <button
                             type="button"
                             className={`${styles.dropdownItem} ${styles.dropdownItemDelete}`}

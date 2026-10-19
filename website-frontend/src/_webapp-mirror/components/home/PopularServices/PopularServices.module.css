@@ -95,6 +95,9 @@
 }
 
 .tabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 600;
   font-size: 0.9rem;
   padding: 8px 18px;

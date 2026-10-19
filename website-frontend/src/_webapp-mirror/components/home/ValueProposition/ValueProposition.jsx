@@ -7,26 +7,26 @@ export default function ValueProposition() {
     {
       icon: ShieldCheck,
       color: "#10b981",
-      title: "Bảo chứng Ký quỹ (Escrow)",
-      desc: "Khoản thanh toán được giữ an toàn tại tài khoản bảo chứng. Chỉ giải ngân cho Chuyên gia khi bạn đã kiểm tra và xác nhận nghiệm thu đạt yêu cầu.",
+      title: "Ký quỹ Escrow",
+      desc: "Tiền được giữ an toàn, chỉ giải ngân khi bạn nghiệm thu.",
     },
     {
       icon: PackageCheck,
       color: "#3b82f6",
-      title: "Minh bạch Gói dịch vụ (Packages)",
-      desc: "Mọi dịch vụ phân chia rõ ràng các gói Basic, Standard, Premium và tiện ích Add-on. Không lo phát sinh chi phí ngầm ngoài thỏa thuận.",
+      title: "Gói minh bạch",
+      desc: "Gói Basic, Standard, Premium rõ ràng — không phí ẩn.",
     },
     {
       icon: Repeat,
       color: "#8b5cf6",
-      title: "Linh hoạt 2 chiều giao dịch",
-      desc: "Tự do chọn mua dịch vụ niêm yết sẵn có từ Chuyên gia hoặc Đăng yêu cầu công việc để nhận nhiều Proposal báo giá cạnh tranh.",
+      title: "Giao dịch 2 chiều",
+      desc: "Mua dịch vụ có sẵn hoặc đăng việc để nhận báo giá.",
     },
     {
       icon: Headphones,
       color: "#f59e0b",
-      title: "Hỗ trợ & Trọng tài công tâm",
-      desc: "Hệ thống đánh giá Review thực tế sau mỗi đơn hàng, tin nhắn trao đổi bảo mật và đội ngũ hỗ trợ giải quyết tranh chấp nhanh chóng 24/7.",
+      title: "Hỗ trợ 24/7",
+      desc: "Đánh giá thực tế và hỗ trợ giải quyết tranh chấp nhanh chóng.",
     },
   ];
 
@@ -35,13 +35,10 @@ export default function ValueProposition() {
       <div className="container">
         {/* Header */}
         <div className={styles.header}>
-          <span className={styles.tagline}>GIÁ TRỊ CỐT LÕI TẠI WORKGO</span>
-          <h2 className={styles.title}>
-            Một sàn dịch vụ được xây dựng vì sự tin tưởng
-          </h2>
+          <span className={styles.tagline}>GIÁ TRỊ CỐT LÕI</span>
+          <h2 className={styles.title}>Xây dựng trên sự tin tưởng</h2>
           <p className={styles.subtitle}>
-            Chúng tôi loại bỏ rủi ro khi thuê freelancer và thợ dịch vụ bằng
-            công nghệ và quy trình bảo vệ quyền lợi tối đa cho cả hai bên.
+            Bảo vệ quyền lợi cho cả khách hàng và chuyên gia.
           </p>
         </div>
 

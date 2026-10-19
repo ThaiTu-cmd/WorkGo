@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ShieldAlert } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { mockDisputes, type Dispute, type DisputeKind, type DisputeStatus } from "../_mocks/mockDisputes";
 import { KEYS } from "../_stores/keys";
@@ -89,7 +90,9 @@ export default function DisputeCenterPage({ onShowToast }: TrungPageProps) {
 
   return (
     <main className={styles.wrap}>
-      <h1 className={styles.title}>Trung tâm tranh chấp & báo cáo</h1>
+      <h1 className={styles.title}>
+        <ShieldAlert size={24} className={styles.titleIcon} aria-hidden="true" /> Trung tâm tranh chấp & báo cáo
+      </h1>
       <p className={styles.sub}>Gửi báo cáo vi phạm hoặc yêu cầu hòa giải tranh chấp đơn hàng.</p>
 
       <form onSubmit={submit} noValidate className={styles.form}>

@@ -18,12 +18,6 @@ import ServiceFormPage from "@/_webapp-mirror/pages/ServiceForm/ServiceFormPage"
 import AvailabilityPage from "@/_webapp-mirror/pages/Availability/AvailabilityPage";
 import CheckoutPage from "@/_webapp-mirror/pages/Checkout/CheckoutPage";
 import OrderDashboardPage from "@/_webapp-mirror/pages/OrderDashboard/OrderDashboardPage";
-import { mockProviderServices } from "@/_webapp-mirror/data/mockProviderServices";
-import {
-  initialProviderServices,
-  persistProviderServices,
-} from "@/_webapp-mirror/pages/MyServices/providerServicesStore";
-import TrungSubNav from "../trung-pages/_ui/TrungSubNav";
 import RegisterPage from "../trung-pages/auth/RegisterPage";
 import LoginPage from "../trung-pages/auth/LoginPage";
 import ProfileSettingsPage from "../trung-pages/profile/ProfileSettingsPage";
@@ -76,6 +70,24 @@ export type TrungPageKey =
   | "review-form"
   | "dispute-center";
 
+const TRUNG_PAGE_KEYS = new Set<TrungPageKey>([
+  "register",
+  "login",
+  "profile-settings",
+  "provider-onboarding",
+  "address-book",
+  "provider-profile",
+  "job-list",
+  "job-post",
+  "submit-proposal",
+  "proposal-review",
+  "payment-gateway",
+  "wallet",
+  "payout-settings",
+  "review-form",
+  "dispute-center",
+]);
+
 type CategorySelection = {
   slug: string;
   executionType?: string;
@@ -91,7 +103,6 @@ type SavedService = {
   title: string;
 };
 
-type ProviderService = (typeof mockProviderServices)[number] | SavedService;
 
 // Port 1:1 of web-app/src/App.jsx state machine (minus App.module.css,
 // which carries the Turbopack-impure `main` selector). Data import resolves
@@ -100,21 +111,12 @@ type ProviderService = (typeof mockProviderServices)[number] | SavedService;
 export default function WebAppShell() {
   const [currentPage, setCurrentPage] = useState<TrungPageKey>("home"); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form' | 'availability' | 'checkout' | 'orders' + 15 trung-pages
   const [previousPage, setPreviousPage] = useState<TrungPageKey>("home");
-  const [selectedServiceId, setSelectedServiceId] = useState("svc-1");
+  const [selectedServiceId, setSelectedServiceId] = useState("");
   const [selectedJobId, setSelectedJobId] = useState("");
   const [selectedProviderId, setSelectedProviderId] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState("");
   // { service, pkg, addons } handed over by ServiceDetailPage "Tiếp tục đặt hàng".
   const [checkoutOrder, setCheckoutOrder] = useState<Record<string, unknown> | null>(null);
-  // C2-5: same persistence contract as web-app MyServicesPage — the
-  // persisted snapshot wins on reload, bundled mocks are the fallback.
-  // (Without this, the shell would feed the stale mock list and the
-  // mirrored page would overwrite the snapshot on mount.)
-  const [providerServices, setProviderServices] = useState<ProviderService[]>(
-    () => initialProviderServices() as ProviderService[]
-  );
-
-  // Write-through: form create/edit flows land here first.
   // S4: offline state for the banner (M3) — refreshed on online/offline events.
   // SSR-safe: initial true matches server HTML (no banner); the real
   // navigator.onLine value syncs on mount to avoid hydration mismatch
@@ -168,19 +170,6 @@ export default function WebAppShell() {
     setToasts((prev) => [...prev.slice(-2), { id, message }]);
     toastTimersRef.current[id] = setTimeout(() => dismissToast(id), 3500);
   }, []);
-
-  // R2 (parity with web-app): toast once when the write fails (quota/private-mode).
-  const persistFailedRef = useRef(false);
-  useEffect(() => {
-    if (persistProviderServices(providerServices) === false) {
-      if (!persistFailedRef.current) {
-        persistFailedRef.current = true;
-        showToast('Bộ nhớ trình duyệt bị đầy hoặc bị chặn — thay đổi chỉ được giữ trong phiên này.');
-      }
-    } else {
-      persistFailedRef.current = false;
-    }
-  }, [providerServices, showToast]);
 
   // Navigate handler from Header or links
   const handleNavigate = (page: TrungPageKey, params: CatalogFilterParams = {}) => {
@@ -256,12 +245,6 @@ export default function WebAppShell() {
   };
 
   const handleServiceFormSuccess = (savedService: SavedService, isEdit: boolean) => {
-    setProviderServices((prev) => {
-      if (isEdit) {
-        return prev.map((s) => (s.serviceId === savedService.serviceId ? { ...s, ...savedService } : s));
-      }
-      return [savedService, ...prev];
-    });
     showToast(
       isEdit
         ? `Đã cập nhật dịch vụ "${savedService.title}"!`
@@ -276,7 +259,7 @@ export default function WebAppShell() {
       {/* S4: offline banner — local data keeps working, user must know why */}
       {!isOnline && (
         <div className={styles.offlineBanner} role="status">
-          <span>Bạn đang ngoại tuyến — ứng dụng vẫn dùng được với dữ liệu đã lưu trên thiết bị này.</span>
+          <span>Bạn đang ngoại tuyến — cần kết nối mạng để tải và lưu dữ liệu.</span>
         </div>
       )}
       {/* Toast queue (max 3, each auto-dismisses + manual close) */}
@@ -307,9 +290,6 @@ export default function WebAppShell() {
           onOpenAuth={(mode: "login" | "register") => setAuthModal(mode)}
         />
       )}
-
-      {/* Trung auxiliary nav (Header mirror can't carry the 15 new links) */}
-      <TrungSubNav current={currentPage} onNavigate={handleNavigate} />
 
       {/* Main Content Router */}
       {currentPage === "home" && (
@@ -384,14 +364,13 @@ export default function WebAppShell() {
       {currentPage === "my-services" && (
         /* Provider My Services Page */
         <MyServicesPage
-          services={providerServices}
-          onUpdateServices={setProviderServices}
           onSelectService={handleSelectService}
           onGoHome={() => handleNavigate("home")}
           onShowToast={showToast}
           onOpenCreateForm={handleOpenCreateForm}
           onOpenEditForm={handleOpenEditForm}
           onOpenAvailability={() => handleNavigate("availability")}
+          onOpenProviderOnboarding={() => handleNavigate("provider-onboarding")}
         />
       )}
 
@@ -419,6 +398,9 @@ export default function WebAppShell() {
         />
       )}
 
+      {/* Trung pages sit under the fixed header; this wrapper reserves its height. */}
+      {TRUNG_PAGE_KEYS.has(currentPage) && (
+      <div className={styles.trungPage}>
       {currentPage === "register" && (
         <RegisterPage onNavigate={handleNavigate} onShowToast={showToast} />
       )}
@@ -493,6 +475,8 @@ export default function WebAppShell() {
 
       {currentPage === "dispute-center" && (
         <DisputeCenterPage onNavigate={handleNavigate} onShowToast={showToast} />
+      )}
+      </div>
       )}
 
       {/* Footer (hidden on service-form wizard for clean focus) */}

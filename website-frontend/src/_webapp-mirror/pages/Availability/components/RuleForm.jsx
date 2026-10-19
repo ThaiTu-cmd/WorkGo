@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Trash2, Save, Plus, X } from 'lucide-react';
-import { WEEK_DAYS } from '../../../data/mockAvailability';
+import { WEEK_DAYS } from '../../../api/availabilityApi';
 import { timeToMinutes } from '../../../api/availabilityApi';
 import styles from '../AvailabilityPage.module.css';
 

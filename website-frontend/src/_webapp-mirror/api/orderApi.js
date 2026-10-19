@@ -7,6 +7,9 @@ export const orderApi = {
     axiosClient.get('/order/orders', { params: { roleName, page, size } }),
 
   getOrder: (orderId) => axiosClient.get(`/order/orders/${orderId}`),
+
+  // body: { serviceId, packageId, addonIds } — pricing is computed server-side.
+  createOrder: (body) => axiosClient.post('/order/orders', body),
 };
 
 export default orderApi;

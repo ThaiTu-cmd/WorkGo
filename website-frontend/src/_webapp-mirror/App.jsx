@@ -14,21 +14,13 @@ import MyServicesPage from './pages/MyServices/MyServicesPage';
 // R5: split rarely-opened heavy views out of the initial bundle.
 const AuthModal = React.lazy(() => import('./components/common/AuthModal/AuthModal'));
 const ServiceFormPage = React.lazy(() => import('./pages/ServiceForm/ServiceFormPage'));
-import {
-  initialProviderServices,
-  persistProviderServices,
-} from './pages/MyServices/providerServicesStore';
 import { Info } from 'lucide-react';
 import styles from './App.module.css';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home'); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form'
   const [previousPage, setPreviousPage] = useState('home');
-  const [selectedServiceId, setSelectedServiceId] = useState('svc-1');
-  // C2-5: persisted snapshot wins on reload; bundled mocks are fallback.
-  // (MyServicesPage edits funnel through onUpdateServices into this state,
-  // so persistence must live here — otherwise reload restores the mock.)
-  const [providerServices, setProviderServices] = useState(initialProviderServices);
+  const [selectedServiceId, setSelectedServiceId] = useState('');
 
   // Write-through: toggle/bulk/duplicate/delete/form-success all land here.
   // R2: on write failure the store keeps a session in-memory copy; toast once.
@@ -46,20 +38,6 @@ export default function App() {
       window.removeEventListener('offline', goOffline);
     };
   }, []);
-  // R2: on write failure the store keeps a session in-memory copy; toast once.
-  const persistFailedRef = useRef(false);
-  useEffect(() => {
-    if (persistProviderServices(providerServices) === false) {
-      if (!persistFailedRef.current) {
-        persistFailedRef.current = true;
-        showToast('Bộ nhớ trình duyệt bị đầy hoặc bị chặn — thay đổi chỉ được giữ trong phiên này.');
-      }
-    } else {
-      persistFailedRef.current = false;
-    }
-    // showToast identity changes per render; depending on it would re-toast.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [providerServices]);
   const [serviceFormMode, setServiceFormMode] = useState('create'); // 'create' | 'edit'
   const [editServiceId, setEditServiceId] = useState(null);
   const [catalogFilters, setCatalogFilters] = useState({
@@ -164,12 +142,6 @@ export default function App() {
   };
 
   const handleServiceFormSuccess = (savedService, isEdit) => {
-    setProviderServices((prev) => {
-      if (isEdit) {
-        return prev.map((s) => (s.serviceId === savedService.serviceId ? { ...s, ...savedService } : s));
-      }
-      return [savedService, ...prev];
-    });
     showToast(isEdit ? `Đã cập nhật dịch vụ "${savedService.title}"!` : `Đã tạo thành công dịch vụ mới "${savedService.title}"!`);
     setCurrentPage('my-services');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -180,7 +152,7 @@ export default function App() {
       {/* S4: offline banner — local data keeps working, user must know why */}
       {!isOnline && (
         <div className={styles.offlineBanner} role="status">
-          <span>Bạn đang ngoại tuyến — ứng dụng vẫn dùng được với dữ liệu đã lưu trên thiết bị này.</span>
+          <span>Bạn đang ngoại tuyến — cần kết nối mạng để tải và lưu dữ liệu.</span>
         </div>
       )}
       {/* Toast queue (max 3, each auto-dismisses + manual close) */}
@@ -268,8 +240,6 @@ export default function App() {
       {currentPage === 'my-services' && (
         /* Provider My Services Page */
         <MyServicesPage
-          services={providerServices}
-          onUpdateServices={setProviderServices}
           onSelectService={handleSelectService}
           onGoHome={() => handleNavigate('home')}
           onShowToast={showToast}

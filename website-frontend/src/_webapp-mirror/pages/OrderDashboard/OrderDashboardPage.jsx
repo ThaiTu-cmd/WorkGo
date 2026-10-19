@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Info, Loader2, Search } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Info, Loader2, Search, Package } from 'lucide-react';
 import { useMyOrders } from '../../hooks/useMyOrders';
 import OrderStatusBadge from './components/OrderStatusBadge';
 import OrderCancelPage from '../OrderCancel/OrderCancelPage';
 import styles from './OrderDashboardPage.module.css';
 
 const NOTICES = {
-  'needs-login': 'Bạn chưa đăng nhập — đang hiển thị đơn hàng mẫu, thao tác chỉ thay đổi trên giao diện.',
-  error: 'Không kết nối được order-service — đang hiển thị đơn hàng mẫu.',
+  'needs-login': 'Đăng nhập để xem đơn hàng của bạn.',
+  error: 'Không kết nối được order-service — chưa tải được đơn hàng.',
 };
 
 const ACTIVE_STATUSES = ['PENDING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS', 'DELIVERED'];
@@ -226,7 +226,9 @@ export default function OrderDashboardPage({ onGoHome, onShowToast }) {
         {/* Header + role toggle */}
         <div className={styles.pageHeader}>
           <div>
-            <h1 className={styles.pageTitle}>Quản lý đơn hàng</h1>
+            <h1 className={styles.pageTitle}>
+              <Package size={26} className={styles.titleIcon} aria-hidden="true" /> Quản lý đơn hàng
+            </h1>
             <p className={styles.pageSubtitle}>
               Theo dõi tiến độ, bàn giao và nghiệm thu các đơn hàng đang được giữ Escrow.
             </p>

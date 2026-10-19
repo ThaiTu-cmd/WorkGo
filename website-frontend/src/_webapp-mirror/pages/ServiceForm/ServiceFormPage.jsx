@@ -1,10 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { mockProviderServices } from '../../data/mockProviderServices';
+import { catalogApi } from '../../api/catalogApi';
+import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
+import { pageItems, toMediaList, toPackages } from '../../api/adapters';
+
+const TIER_KEYS = { BASIC: 'basic', STANDARD: 'standard', PREMIUM: 'premium' };
+
+// '3 lần' → 3; 'Không giới hạn' → null (unlimited).
+const parseRevisions = (rev) => {
+  const n = parseInt(String(rev ?? ''), 10);
+  return Number.isFinite(n) ? n : null;
+};
+
+const toSlug = (text) =>
+  text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/gi, 'd')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
 import FormStepper from './components/FormStepper/FormStepper';
 import Step1Info from './components/Step1Info/Step1Info';
 import Step2Pricing from './components/Step2Pricing/Step2Pricing';
 import Step3Media from './components/Step3Media/Step3Media';
-import { ArrowLeft, Check, Save } from 'lucide-react';
+import { ArrowLeft, Check, FilePlus2, PencilLine } from 'lucide-react';
 import styles from './ServiceFormPage.module.css';
 import {
   validateTitle,
@@ -25,8 +44,9 @@ export default function ServiceFormPage({
 
   const defaultFormData = {
     title: '',
-    categorySlug: 'lap-trinh-cong-nghe',
-    categoryName: 'Lập trình & Công nghệ (Web, Mobile, DevOps)',
+    categoryId: '',
+    categorySlug: '',
+    categoryName: '',
     executionType: 'DIGITAL',
     description: '',
     tags: ['React', 'NextJS', 'Website'],
@@ -53,7 +73,7 @@ export default function ServiceFormPage({
         price: 8500000,
       },
     },
-    coverImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80',
+    coverImage: '',
     videoUrl: '',
   };
 
@@ -61,45 +81,55 @@ export default function ServiceFormPage({
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState({});
 
+  const [saving, setSaving] = useState(false);
+  // PackageResponse ids by tier, so an edit updates the existing packages.
+  const [packageIds, setPackageIds] = useState({});
+
   useEffect(() => {
-    if (isEdit) {
-      const existing = mockProviderServices.find((s) => s.serviceId === serviceId);
-      if (existing) {
+    if (!isEdit) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [serviceRes, packagesRes, mediasRes] = await Promise.all([
+          catalogApi.getService(serviceId),
+          catalogApi.getPackages(serviceId).catch(() => null),
+          catalogApi.getMedias(serviceId).catch(() => null),
+        ]);
+        const existing = serviceRes?.result;
+        if (cancelled || !existing) return;
+        const pkgs = toPackages(pageItems(packagesRes));
+        const byTier = Object.fromEntries(pkgs.map((p) => [TIER_KEYS[p.tier], p]));
+        const cover = toMediaList(pageItems(mediasRes))[0]?.url;
+        const fromPkg = (key) => {
+          const p = byTier[key];
+          if (!p) return defaultFormData.packages[key];
+          return {
+            title: p.name,
+            desc: p.description,
+            days: p.deliveryDays ?? defaultFormData.packages[key].days,
+            rev: p.revisionLimit ? `${p.revisionLimit} lần` : 'Không giới hạn',
+            price: p.price,
+          };
+        };
+        setPackageIds(Object.fromEntries(Object.entries(byTier).map(([k, p]) => [k, p.id])));
         setFormData({
+          ...defaultFormData,
           title: existing.title || '',
-          categorySlug: existing.categorySlug || 'lap-trinh-cong-nghe',
-          categoryName: existing.categoryName || 'Lập trình & Công nghệ',
+          categoryId: existing.categoryId || '',
           executionType: existing.executionType || 'DIGITAL',
-          description: existing.description || 'Dịch vụ chuyên nghiệp chất lượng cao, cam kết bàn giao đúng tiến độ và bảo chứng Escrow an toàn.',
-          tags: ['React', 'CleanCode', 'Responsive'],
-          packages: {
-            basic: {
-              title: 'Gói Starter',
-              desc: 'Landing Page 1 trang chuẩn di động',
-              days: 3,
-              rev: '2 lần',
-              price: existing.basePrice || 2500000,
-            },
-            standard: {
-              title: 'Gói Business Pro',
-              desc: 'Website đa trang (đến 5 trang) kèm CMS',
-              days: 5,
-              rev: '5 lần',
-              price: (existing.basePrice || 2500000) * 2,
-            },
-            premium: {
-              title: 'Gói Enterprise VIP',
-              desc: 'Trọn gói webapp hoàn chỉnh & thanh toán',
-              days: 10,
-              rev: 'Không giới hạn',
-              price: (existing.basePrice || 2500000) * 3,
-            },
-          },
-          coverImage: existing.coverImage || defaultFormData.coverImage,
-          videoUrl: '',
+          description: existing.description || '',
+          packages: { basic: fromPkg('basic'), standard: fromPkg('standard'), premium: fromPkg('premium') },
+          coverImage: cover || '',
         });
+      } catch (err) {
+        if (!cancelled && onShowToast) onShowToast(`Không tải được dịch vụ: ${err?.message || 'lỗi kết nối'}`);
       }
-    }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // defaultFormData is rebuilt every render; only the target service matters here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit, serviceId]);
 
   const handleFieldChange = (field, value) => {
@@ -123,6 +153,7 @@ export default function ServiceFormPage({
       if (titleErr) errs.title = titleErr;
       const descErr = validateDescription(formData.description);
       if (descErr) errs.description = descErr;
+      if (!formData.categoryId) errs.categoryId = 'Vui lòng chọn danh mục!';
     }
     if (step === 2) {
       const priceErr = validatePrice(formData.packages?.basic?.price);
@@ -152,7 +183,10 @@ export default function ServiceFormPage({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSave = (status = 'ACTIVE') => {
+  // catalog-service has no service status on create/update yet (BACKEND_GAPS.md),
+  // so "draft" and "publish" both save the same record.
+  const handleSave = async () => {
+    if (saving) return;
     if (!validateStep(1) || !validateStep(currentStep)) {
       if (onShowToast) onShowToast('Vui lòng kiểm tra lại thông tin các bước!');
       return;
@@ -161,28 +195,58 @@ export default function ServiceFormPage({
     // F1: save sanitized values only (slug from the sanitized title).
     const cleanTitle = sanitizeText(formData.title);
     const cleanDescription = sanitizeText(formData.description);
-    const savedService = {
-      serviceId: isEdit ? serviceId : `svc-${Date.now()}`,
-      title: cleanTitle,
-      slug: cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-      categorySlug: formData.categorySlug,
-      categoryName: formData.categoryName,
+    const serviceBody = {
+      categoryId: formData.categoryId,
       executionType: formData.executionType,
-      coverImage: formData.coverImage,
-      status: status,
-      basePrice: clampPrice(formData.packages.basic.price),
-      priceRange: `${new Intl.NumberFormat('vi-VN').format(clampPrice(formData.packages.basic.price))} ₫ – ${new Intl.NumberFormat('vi-VN').format(clampPrice(formData.packages.premium.price))} ₫`,
-      packagesCount: 3,
-      impressions: isEdit ? 4820 : 1,
-      ordersCount: isEdit ? 42 : 0,
-      avgRating: isEdit ? 4.98 : 0,
-      reviewCount: isEdit ? 38 : 0,
+      title: cleanTitle,
+      slug: toSlug(cleanTitle),
       description: cleanDescription,
-      createdAt: isEdit ? '2026-02-15' : new Date().toISOString(),
+      currency: 'VND',
     };
 
-    if (onSaveSuccess) {
-      onSaveSuccess(savedService, isEdit);
+    setSaving(true);
+    try {
+      let id = serviceId;
+      if (isEdit) {
+        await catalogApi.updateService(serviceId, serviceBody);
+      } else {
+        const res = await catalogApi.createService({
+          ...serviceBody,
+          basePrice: clampPrice(formData.packages.basic.price),
+        });
+        id = res?.result?.serviceId;
+        if (!id) throw new Error('Máy chủ không trả về mã dịch vụ');
+      }
+
+      for (const key of ['basic', 'standard', 'premium']) {
+        const p = formData.packages[key];
+        const body = {
+          name: sanitizeText(p.title),
+          description: sanitizeText(p.desc),
+          price: clampPrice(p.price),
+          currency: 'VND',
+          deliveryDay: Number(p.days) || null,
+          revisionLimit: parseRevisions(p.rev),
+        };
+        if (packageIds[key]) await catalogApi.updatePackage(packageIds[key], body);
+        else await catalogApi.createPackage(id, body);
+      }
+
+      if (!isEdit && formData.coverImage?.trim()) {
+        await catalogApi.createMedia(id, { url: formData.coverImage.trim(), mediaType: 'IMAGE', cover: true });
+      }
+
+      if (onSaveSuccess) onSaveSuccess({ serviceId: id, title: cleanTitle }, isEdit);
+    } catch (err) {
+      if (onShowToast) {
+        onShowToast(
+          err?.status === 403
+            ? NOT_PROVIDER_MESSAGE
+            : `Không lưu được dịch vụ: ${err?.message || 'lỗi kết nối máy chủ'}`
+        );
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -196,6 +260,9 @@ export default function ServiceFormPage({
               <ArrowLeft size={16} /> Quay lại
             </button>
             <h1 className={styles.topBarTitle}>
+              {isEdit
+                ? <PencilLine size={20} className={styles.titleIcon} aria-hidden="true" />
+                : <FilePlus2 size={20} className={styles.titleIcon} aria-hidden="true" />}
               {isEdit ? 'Chỉnh sửa Dịch vụ' : 'Tạo Dịch vụ Mới'}
             </h1>
           </div>
@@ -257,14 +324,6 @@ export default function ServiceFormPage({
           </div>
 
           <div className={styles.actionRight}>
-            <button
-              type="button"
-              className={styles.btnSaveDraft}
-              onClick={() => handleSave('DRAFT')}
-            >
-              <Save size={16} /> Lưu bản nháp
-            </button>
-
             {currentStep < 3 ? (
               <button
                 type="button"
@@ -277,10 +336,11 @@ export default function ServiceFormPage({
               <button
                 type="button"
                 className={styles.btnPublish}
-                onClick={() => handleSave('ACTIVE')}
+                onClick={handleSave}
+                disabled={saving}
               >
                 <Check size={18} strokeWidth={2.5} />
-                {isEdit ? 'Cập nhật thay đổi' : 'Đăng dịch vụ ngay'}
+                {saving ? 'Đang lưu...' : isEdit ? 'Cập nhật thay đổi' : 'Đăng dịch vụ ngay'}
               </button>
             )}
           </div>

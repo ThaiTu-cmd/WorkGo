@@ -1,13 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, Search, Sparkles } from 'lucide-react';
+import {
+  Menu,
+  X,
+  Search,
+  Sparkles,
+  LayoutGrid,
+  Package,
+  Workflow,
+  LogIn,
+  UserPlus,
+  House,
+  CalendarClock,
+  LogOut,
+} from 'lucide-react';
 import styles from './Header.module.css';
 import { useFocusTrap } from '../../../hooks/useFocusTrap';
+import { useAuthToken } from '../../../hooks/useAuthToken';
+import { authApi } from '../../../api/authApi';
+import AccountMenu, { ACCOUNT_GROUPS } from './AccountMenu';
 
 export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [miniSearchQuery, setMiniSearchQuery] = useState('');
   const drawerRef = useRef(null);
+  const isLoggedIn = Boolean(useAuthToken());
   // F3: keep Tab cycling inside the drawer while open.
   useFocusTrap(drawerRef, mobileMenuOpen);
 
@@ -37,6 +54,22 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
       if (first) first.focus();
     }
     return () => window.removeEventListener('keydown', onKey);
+  }, [mobileMenuOpen]);
+
+  // The drawer is mobile-only: close it once the viewport widens to the
+  // desktop nav breakpoint (matches the 900px media query in the CSS).
+  useEffect(() => {
+    if (!mobileMenuOpen) return undefined;
+    const mq = window.matchMedia('(min-width: 900px)');
+    if (mq.matches) {
+      setMobileMenuOpen(false);
+      return undefined;
+    }
+    const onChange = (e) => {
+      if (e.matches) setMobileMenuOpen(false);
+    };
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
   }, [mobileMenuOpen]);
 
   const handleMiniSearchSubmit = (e) => {
@@ -90,20 +123,15 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
             className={`${styles.navLink} ${activePage === 'catalog' ? styles.navLinkActive : ''}`}
             onClick={() => onNavigate && onNavigate('catalog')}
           >
-            Danh mục dịch vụ
-          </button>
-          <button
-            type="button"
-            className={`${styles.navLink} ${activePage === 'my-services' ? styles.navLinkActive : ''}`}
-            onClick={() => onNavigate && onNavigate('my-services')}
-          >
-            Quản lý Dịch vụ
+            <LayoutGrid size={18} aria-hidden="true" />
+            Danh mục
           </button>
           <button
             type="button"
             className={`${styles.navLink} ${activePage === 'orders' ? styles.navLinkActive : ''}`}
             onClick={() => onNavigate && onNavigate('orders')}
           >
+            <Package size={18} aria-hidden="true" />
             Đơn hàng
           </button>
           <a
@@ -116,46 +144,43 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
               }
             }}
           >
+            <Workflow size={18} aria-hidden="true" />
             Quy trình
-          </a>
-          <a
-            href="#why-workgo"
-            className={styles.navLink}
-            onClick={(e) => {
-              if (activePage !== 'home') {
-                e.preventDefault();
-                onNavigate && onNavigate('home');
-              }
-            }}
-          >
-            Tại sao chọn WorkGo
           </a>
           <button
             type="button"
-            className={`${styles.navLink} ${styles.highlightLink}`}
+            className={`${styles.navLink} ${styles.highlightLink} ${activePage === 'my-services' ? styles.navLinkActive : ''}`}
             onClick={() => onNavigate && onNavigate('my-services')}
           >
-            <Sparkles size={16} className={styles.highlightIcon} />
-            Kênh Chuyên gia
+            <Sparkles size={18} className={styles.highlightIcon} aria-hidden="true" />
+            Provider
           </button>
         </nav>
 
         {/* Action Buttons */}
         <div className={styles.actionButtons}>
-          <button
-            type="button"
-            className={styles.signInBtn}
-            onClick={() => onOpenAuth && onOpenAuth('login')}
-          >
-            Đăng nhập
-          </button>
-          <button
-            type="button"
-            className={styles.joinBtn}
-            onClick={() => onOpenAuth && onOpenAuth('register')}
-          >
-            Đăng ký
-          </button>
+          {isLoggedIn ? (
+            <AccountMenu onNavigate={onNavigate} activePage={activePage} />
+          ) : (
+            <>
+              <button
+                type="button"
+                className={styles.signInBtn}
+                onClick={() => onOpenAuth && onOpenAuth('login')}
+              >
+                <LogIn size={18} aria-hidden="true" />
+                Đăng nhập
+              </button>
+              <button
+                type="button"
+                className={styles.joinBtn}
+                onClick={() => onOpenAuth && onOpenAuth('register')}
+              >
+                <UserPlus size={18} aria-hidden="true" />
+                Đăng ký
+              </button>
+            </>
+          )}
 
           {/* Mobile Menu Toggle Button */}
           <button
@@ -173,90 +198,105 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
       {mobileMenuOpen && (
         <div className={styles.mobileDrawer} ref={drawerRef}>
           <div className={styles.mobileDrawerContent}>
-            <button
-              type="button"
-              className={styles.mobileNavLink}
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onNavigate && onNavigate('catalog');
-              }}
-            >
-              🔍 Khám phá danh mục dịch vụ
-            </button>
-            <button
-              type="button"
-              className={styles.mobileNavLink}
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onNavigate && onNavigate('home');
-              }}
-            >
-              🏠 Về Trang chủ
-            </button>
-            <button
-              type="button"
-              className={styles.mobileNavLink}
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onNavigate && onNavigate('availability');
-              }}
-            >
-              📅 Lịch rảnh (Chuyên gia)
-            </button>
-            <button
-              type="button"
-              className={styles.mobileNavLink}
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onNavigate && onNavigate('orders');
-              }}
-            >
-              📦 Đơn hàng của tôi
-            </button>
+            {[
+              { key: 'catalog', icon: LayoutGrid, label: 'Danh mục' },
+              { key: 'home', icon: House, label: 'Trang chủ' },
+              { key: 'availability', icon: CalendarClock, label: 'Lịch rảnh' },
+              { key: 'orders', icon: Package, label: 'Đơn hàng' },
+            ].map(({ key, icon: Icon, label }) => (
+              <button
+                key={key}
+                type="button"
+                className={styles.mobileNavLink}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onNavigate && onNavigate(key);
+                }}
+              >
+                <Icon size={18} aria-hidden="true" />
+                {label}
+              </button>
+            ))}
             <a
               href="#how-it-works"
               className={styles.mobileNavLink}
               onClick={() => setMobileMenuOpen(false)}
             >
-              Cách thức hoạt động
-            </a>
-            <a
-              href="#why-workgo"
-              className={styles.mobileNavLink}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Bảo chứng Ký quỹ (Escrow)
+              <Workflow size={18} aria-hidden="true" />
+              Quy trình
             </a>
             <a
               href="#cta"
               className={styles.mobileNavLink}
               onClick={() => setMobileMenuOpen(false)}
             >
-              Đăng ký bán dịch vụ (Provider)
+              <Sparkles size={18} aria-hidden="true" />
+              Trở thành Provider
             </a>
 
-            <div className={styles.mobileActions}>
-              <button
-                type="button"
-                className={styles.mobileSignInBtn}
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenAuth && onOpenAuth('login');
-                }}
-              >
-                Đăng nhập
-              </button>
-              <button
-                type="button"
-                className={styles.mobileJoinBtn}
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenAuth && onOpenAuth('register');
-                }}
-              >
-                Tạo tài khoản miễn phí
-              </button>
-            </div>
+            {isLoggedIn ? (
+              <>
+                {ACCOUNT_GROUPS.map((group) => (
+                  <div key={group.title} className={styles.mobileGroup}>
+                    <p className={styles.mobileGroupTitle}>{group.title}</p>
+                    {/* "Đơn hàng của tôi" is already listed above in the drawer. */}
+                    {group.items.filter((item) => item.key !== 'orders').map((item) => (
+                      <button
+                        key={item.key}
+                        type="button"
+                        className={styles.mobileNavLink}
+                        aria-current={item.key === activePage ? 'page' : undefined}
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          onNavigate && onNavigate(item.key);
+                        }}
+                      >
+                        <item.icon size={18} aria-hidden="true" />
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                ))}
+                <div className={styles.mobileActions}>
+                  <button
+                    type="button"
+                    className={styles.mobileSignInBtn}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      authApi.logout();
+                    }}
+                  >
+                    <LogOut size={18} aria-hidden="true" />
+                    Đăng xuất
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className={styles.mobileActions}>
+                <button
+                  type="button"
+                  className={styles.mobileSignInBtn}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenAuth && onOpenAuth('login');
+                  }}
+                >
+                  <LogIn size={18} aria-hidden="true" />
+                  Đăng nhập
+                </button>
+                <button
+                  type="button"
+                  className={styles.mobileJoinBtn}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenAuth && onOpenAuth('register');
+                  }}
+                >
+                  <UserPlus size={18} aria-hidden="true" />
+                  Đăng ký miễn phí
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

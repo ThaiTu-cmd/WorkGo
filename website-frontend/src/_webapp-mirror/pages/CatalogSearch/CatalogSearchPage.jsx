@@ -4,11 +4,15 @@ import SearchToolbar from './components/SearchToolbar/SearchToolbar';
 import Pagination from './components/Pagination/Pagination';
 import ServiceCard from '../../components/common/ServiceCard/ServiceCard';
 import SkeletonServiceCard from '../../components/common/Skeleton/SkeletonServiceCard';
-import { mockServices } from '../../data/mockServices';
+import { getAccessToken } from '../../api/axiosClient';
 import { useCatalogCategories } from '../../hooks/useCatalogCategories';
 import { SearchX, RotateCcw, X } from 'lucide-react';
 import styles from './CatalogSearchPage.module.css';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+
+// catalog-service has no public list/search endpoint yet (BACKEND_GAPS.md #1),
+// so there is nothing to list; filters stay wired for when it lands.
+const LISTED_SERVICES = [];
 
 export default function CatalogSearchPage({
   initialCategory = 'ALL',
@@ -71,7 +75,7 @@ export default function CatalogSearchPage({
 
   // Real-time multi-criteria filtering
   const filteredServices = useMemo(() => {
-    return mockServices.filter((service) => {
+    return LISTED_SERVICES.filter((service) => {
       // 1. Category filter
       if (selectedCategory !== 'ALL' && service.categorySlug !== selectedCategory) {
         return false;
@@ -340,18 +344,22 @@ export default function CatalogSearchPage({
                 <div className={styles.emptyIconBox}>
                   <SearchX size={48} className={styles.emptyIcon} />
                 </div>
-                <h3 className={styles.emptyTitle}>Không tìm thấy dịch vụ phù hợp</h3>
+                <h3 className={styles.emptyTitle}>Chưa có dữ liệu dịch vụ</h3>
                 <p className={styles.emptyDesc}>
-                  Không có dịch vụ nào khớp với tiêu chí lọc hiện tại. Hãy thử nới lỏng khoảng giá, thay đổi hình thức hoặc xóa bộ lọc để khám phá thêm.
+                  {getAccessToken()
+                    ? 'Hệ thống chưa hỗ trợ tìm kiếm dịch vụ. Danh sách sẽ hiển thị khi máy chủ cung cấp API tìm kiếm.'
+                    : 'Đăng nhập để duyệt danh mục dịch vụ trên WorkGo.'}
                 </p>
-                <button
-                  type="button"
-                  className={styles.emptyResetBtn}
-                  onClick={handleResetFilters}
-                >
-                  <RotateCcw size={16} />
-                  <span>Xóa tất cả bộ lọc</span>
-                </button>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    className={styles.emptyResetBtn}
+                    onClick={handleResetFilters}
+                  >
+                    <RotateCcw size={16} />
+                    <span>Xóa tất cả bộ lọc</span>
+                  </button>
+                )}
               </div>
             )}
           </main>

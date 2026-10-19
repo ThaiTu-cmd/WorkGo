@@ -148,22 +148,16 @@ test("trung-pages: all mock data sets exist and are structured properly", () => 
     "mockProposals.ts",
     "mockWallet.ts",
     "mockDisputes.ts",
-    "mockProviders.ts",
-    "mockAddresses.ts",
-    "mockProfile.ts",
     "mockPayout.ts",
     "mockReviews.ts",
   ]) {
     assert.ok(fs.existsSync(path.join(TRUNG, "_mocks", m)), `missing mock file ${m}`);
   }
 
-  const addresses = read(path.join(TRUNG, "_mocks/mockAddresses.ts"));
-  assert.ok(addresses.includes("Landmark"), "mockAddresses must have Landmark address");
-  assert.ok(addresses.includes("isDefault: true"), "mockAddresses must have default address");
-
-  const profile = read(path.join(TRUNG, "_mocks/mockProfile.ts"));
-  assert.ok(profile.includes("Trần Hữu Trung"), "mockProfile must have member name");
-  assert.ok(profile.includes("0901234567"), "mockProfile must have valid phone");
+  // Profile, addresses and provider profile come from identity-service now.
+  for (const gone of ["mockProviders.ts", "mockAddresses.ts", "mockProfile.ts"]) {
+    assert.ok(!fs.existsSync(path.join(TRUNG, "_mocks", gone)), `${gone} must be removed`);
+  }
 
   const payout = read(path.join(TRUNG, "_mocks/mockPayout.ts"));
   assert.ok(payout.includes("Vietcombank"), "mockPayout must have bank name");

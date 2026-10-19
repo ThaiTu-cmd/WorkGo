@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getServiceDetail } from '../../data/mockServices';
+import { useServiceDetail } from '../../hooks/useServiceDetail';
 import MediaGallery from './components/MediaGallery';
 import PackageSidebar from './components/PackageSidebar';
 import PackageComparisonTable from './components/PackageComparisonTable';
@@ -28,24 +28,22 @@ export default function ServiceDetailPage({
   onShowToast,
   onCheckout
 }) {
-  const service = getServiceDetail(serviceId);
+  const { status, service } = useServiceDetail(serviceId);
 
-  // Default to Standard package if available, else first package
-  const [selectedPackageId, setSelectedPackageId] = useState(
-    service.packages[1]?.id || service.packages[0]?.id
-  );
-  const [selectedAddonIds, setSelectedAddonIds] = useState([]);
+  const [pickedPackageId, setSelectedPackageId] = useState(null);
+  const [pickedAddonIds, setSelectedAddonIds] = useState([]);
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    // Reset or update when serviceId changes
-    const detail = getServiceDetail(serviceId);
-    if (detail && detail.packages && detail.packages.length > 0) {
-      setSelectedPackageId(detail.packages[1]?.id || detail.packages[0]?.id);
-      setSelectedAddonIds([]);
-    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [serviceId]);
+
+  // Picks only count for the loaded service; otherwise default to Standard, else first package.
+  const packages = service?.packages ?? [];
+  const selectedPackageId = packages.some((p) => p.id === pickedPackageId)
+    ? pickedPackageId
+    : packages[1]?.id || packages[0]?.id || null;
+  const selectedAddonIds = pickedAddonIds.filter((id) => (service?.addons ?? []).some((a) => a.id === id));
 
   const handleToggleAddon = (addonId) => {
     setSelectedAddonIds((prev) =>
@@ -83,6 +81,29 @@ export default function ServiceDetailPage({
       onShowToast(!isSaved ? 'Đã lưu dịch vụ vào danh sách yêu thích' : 'Đã xóa khỏi danh sách yêu thích');
     }
   };
+
+  if (status !== 'ready' || !service) {
+    const message = {
+      loading: 'Đang tải thông tin dịch vụ...',
+      'needs-login': 'Đăng nhập để xem chi tiết dịch vụ.',
+      'not-found': 'Không tìm thấy dịch vụ này.',
+      error: 'Không tải được dịch vụ. Kiểm tra kết nối tới máy chủ rồi thử lại.',
+    }[status];
+    return (
+      <div className={styles.pageContainer}>
+        <div className={styles.contentWrapper}>
+          <div className={styles.topBar}>
+            <button type="button" className={styles.backBtn} onClick={onGoBack} title="Quay lại">
+              <ArrowLeft size={16} /> Quay lại
+            </button>
+          </div>
+          <p className={styles.serviceTitle} role={status === 'error' ? 'alert' : 'status'}>
+            {message}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const getExecutionTypeBadge = (type) => {
     switch (type) {
@@ -179,19 +200,23 @@ export default function ServiceDetailPage({
               </div>
             </div>
 
-            <span className={styles.barDivider}>|</span>
+            {service.avgRating != null && (
+              <>
+                <span className={styles.barDivider}>|</span>
+                <div className={styles.ratingBox}>
+                  <Star size={16} className={styles.starIcon} />
+                  <strong className={styles.ratingScore}>{service.avgRating}</strong>
+                  <span className={styles.ratingReviews}>({service.reviewCount} đánh giá)</span>
+                </div>
+              </>
+            )}
 
-            <div className={styles.ratingBox}>
-              <Star size={16} className={styles.starIcon} />
-              <strong className={styles.ratingScore}>{service.avgRating}</strong>
-              <span className={styles.ratingReviews}>({service.reviewCount} đánh giá)</span>
-            </div>
-
-            <span className={styles.barDivider}>|</span>
-
-            <div className={styles.ordersQueue}>
-              {service.ordersInQueue || 3} đơn hàng đang xử lý
-            </div>
+            {service.ordersInQueue != null && (
+              <>
+                <span className={styles.barDivider}>|</span>
+                <div className={styles.ordersQueue}>{service.ordersInQueue} đơn hàng đang xử lý</div>
+              </>
+            )}
           </div>
         </div>
 
@@ -206,12 +231,13 @@ export default function ServiceDetailPage({
             <section className={styles.descriptionSection}>
               <h2 className={styles.blockTitle}>Mô tả chi tiết dịch vụ</h2>
               <div className={styles.richText}>
-                <p>
-                  Chào bạn! Tôi là <strong>{service.provider.name}</strong>, cung cấp dịch vụ chuyên nghiệp với tiêu chuẩn chất lượng cao nhất trên nền tảng WorkGo.
-                </p>
-                <p>
-                  Dịch vụ <em>"{service.title}"</em> được thiết kế nhằm mang lại hiệu quả vượt trội cho khách hàng cá nhân và doanh nghiệp, tối ưu hóa thời gian và đảm bảo sản phẩm bàn giao đạt chuẩn hoàn hảo.
-                </p>
+                {service.description ? (
+                  service.description
+                    .split(/\n{2,}/)
+                    .map((para, i) => <p key={i}>{para}</p>)
+                ) : (
+                  <p>Nhà cung cấp chưa thêm mô tả cho dịch vụ này.</p>
+                )}
 
                 <h3>Quy trình làm việc minh bạch 4 bước:</h3>
                 <ol className={styles.stepsList}>
@@ -267,11 +293,13 @@ export default function ServiceDetailPage({
             <FaqAccordion faqs={service.faqs} />
 
             {/* 6. Reviews & Rating Breakdown */}
-            <ReviewsSection
-              reviews={service.reviews}
-              avgRating={service.avgRating}
-              reviewCount={service.reviewCount}
-            />
+            {service.reviewCount > 0 && (
+              <ReviewsSection
+                reviews={service.reviews}
+                avgRating={service.avgRating}
+                reviewCount={service.reviewCount}
+              />
+            )}
           </div>
 
           {/* RIGHT COLUMN: Sticky Order Box */}

@@ -19,14 +19,12 @@ export default function HeroBanner({ onSearch }) {
         <div className={styles.heroContent}>
           {/* Main Headline */}
           <h1 className={styles.headline}>
-            Tìm kiếm chuyên gia & dịch vụ hoàn hảo cho mọi nhu cầu công việc
+            Tìm chuyên gia & dịch vụ cho mọi nhu cầu
           </h1>
 
           {/* Subtitle */}
           <p className={styles.subtitle}>
-            Kết nối tin cậy giữa Khách hàng và Chuyên gia. Mua bán dịch vụ
-            Online, đặt lịch tại nhà (Onsite) và Giao nhận với cơ chế thanh toán
-            đảm bảo an toàn tuyệt đối.
+            Dịch vụ online, tại nhà và giao nhận — thanh toán ký quỹ an toàn.
           </p>
 
           {/* Central Search Component */}
@@ -36,7 +34,7 @@ export default function HeroBanner({ onSearch }) {
 
           {/* Popular Trending Tags */}
           <div className={styles.trendingWrap}>
-            <span className={styles.trendingLabel}>Tìm kiếm phổ biến:</span>
+            <span className={styles.trendingLabel}>Phổ biến:</span>
             <div className={styles.tagList}>
               {trendingTags.map((tag, idx) => (
                 <button
@@ -60,24 +58,24 @@ export default function HeroBanner({ onSearch }) {
           <div className={styles.trustItem}>
             <ShieldCheck size={22} className={styles.trustIcon} />
             <div className={styles.trustText}>
-              <strong>Bảo chứng Ký quỹ (Escrow)</strong>
-              <span>Chỉ giải ngân khi bạn đã hài lòng</span>
+              <strong>Ký quỹ Escrow</strong>
+              <span>Hài lòng mới giải ngân</span>
             </div>
           </div>
 
           <div className={styles.trustItem}>
             <Award size={22} className={styles.trustIcon} />
             <div className={styles.trustText}>
-              <strong>Chuyên gia đã kiểm duyệt</strong>
-              <span>Hồ sơ & năng lực xác minh kỹ càng</span>
+              <strong>Chuyên gia đã duyệt</strong>
+              <span>Hồ sơ xác minh</span>
             </div>
           </div>
 
           <div className={styles.trustItem}>
             <Zap size={22} className={styles.trustIcon} />
             <div className={styles.trustText}>
-              <strong>Nhận việc & phản hồi nhanh</strong>
-              <span>Báo giá và phản hồi trong 15 phút</span>
+              <strong>Phản hồi nhanh</strong>
+              <span>Trong 15 phút</span>
             </div>
           </div>
         </div>

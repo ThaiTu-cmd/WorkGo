@@ -48,7 +48,7 @@ export default function FeaturedCategories({ onSelectCategory }) {
     <section className={styles.section} id="categories">
       <div className="container">
         {/* Section Header */}
-        <div className={styles.sectionHeader}>
+        <div className={`${styles.sectionHeader} reveal`}>
           <div>
             <h2 className={styles.sectionTitle}>Danh mục dịch vụ nổi bật</h2>
             <p className={styles.sectionSubtitle}>
@@ -64,13 +64,13 @@ export default function FeaturedCategories({ onSelectCategory }) {
 
         {/* Categories Grid */}
         <div className={styles.categoryGrid}>
-          {categories.map((cat) => {
+          {categories.map((cat, idx) => {
             const IconComponent = ICON_MAP[cat.iconName] || ICON_MAP.Default;
 
             return (
               <div
                 key={cat.categoryId}
-                className={styles.categoryCard}
+                className={`${styles.categoryCard} reveal reveal-delay-${(idx % 4) + 1}`}
                 onClick={() => onSelectCategory && onSelectCategory(cat)}
               >
                 {/* Top header inside card */}

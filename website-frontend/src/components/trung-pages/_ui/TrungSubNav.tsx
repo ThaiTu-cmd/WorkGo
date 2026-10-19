@@ -7,6 +7,8 @@ import styles from "./TrungSubNav.module.css";
 export type TrungSubNavProps = {
   current: string;
   onNavigate: (page: TrungPageKey, params?: CatalogFilterParams) => void;
+  /** Cycle 4: hide the Đăng nhập / Đăng ký entries once the user is signed in. */
+  isAuthenticated?: boolean;
 };
 
 const LINKS: Array<{ key: TrungPageKey; label: string }> = [
@@ -27,9 +29,15 @@ const LINKS: Array<{ key: TrungPageKey; label: string }> = [
   { key: "dispute-center", label: "Tranh chấp" },
 ];
 
-export default function TrungSubNav({ current, onNavigate }: TrungSubNavProps) {
+// Cycle 4: the two auth entry points disappear from the auxiliary nav once a
+// session exists (the header account group takes over). LINKS stays complete so
+// the route table is still the single source of truth for every trung page.
+const AUTH_LINK_KEYS = ["register", "login"];
+
+export default function TrungSubNav({ current, onNavigate, isAuthenticated = false }: TrungSubNavProps) {
   const barRef = useRef<HTMLElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
+  const links = isAuthenticated ? LINKS.filter((l) => !AUTH_LINK_KEYS.includes(l.key)) : LINKS;
 
   // UI cycle 2 — scroll affordance: phát trạng thái tràn 2 đầu qua data-attribute
   // trên .bar (KHÔNG setState → không vi phạm react-hooks/set-state-in-effect;
@@ -81,7 +89,7 @@ export default function TrungSubNav({ current, onNavigate }: TrungSubNavProps) {
   return (
     <nav ref={barRef} className={styles.bar} aria-label="Điều hướng bổ sung WorkGo">
       <div ref={innerRef} className={styles.inner} onKeyDown={onKeyDown}>
-        {LINKS.map((l) => (
+        {links.map((l) => (
           <button
             key={l.key}
             type="button"

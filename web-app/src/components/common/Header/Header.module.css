@@ -39,7 +39,7 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
-  flex-shrink: 1;
+  flex-shrink: 0;
 }
 
 .logo {
@@ -55,23 +55,25 @@
   color: inherit;
 }
 
-.logoIcon {
-  width: 34px;
-  height: 34px;
-  background-color: var(--wg-primary);
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  font-weight: 900;
-  font-size: 1.25rem;
+.logoText {
+  display: inline-flex;
+  white-space: nowrap;
 }
 
-.logoDot {
+.logoWork {
+  color: #ffffff;
+  transition: color var(--transition-fast);
+}
+
+.logoGo {
   color: var(--wg-primary);
-  font-size: 2rem;
-  line-height: 0;
+  transition: color var(--transition-fast);
+}
+
+/* On a white header the whole wordmark turns dark green. */
+.headerScrolled .logoWork,
+.headerScrolled .logoGo {
+  color: var(--wg-primary-active);
 }
 
 .navSearch {
@@ -83,6 +85,7 @@
   padding: 4px 6px 4px 14px;
   width: 280px;
   min-width: 0;
+  flex-shrink: 0;
   box-shadow: var(--shadow-sm);
   transition: width var(--transition-base);
 }
@@ -126,7 +129,7 @@
 .navSearchBtn::after {
   content: "";
   position: absolute;
-  inset: -8px;
+  inset: 0;
 }
 
 .navSearchBtn:hover {
@@ -164,6 +167,17 @@
   .navSearch {
     width: 240px;
   }
+  .desktopNav .navIconButton {
+    height: 38px;
+    padding: 0 6px;
+    gap: 5px;
+  }
+  .desktopNav .navLabel {
+    font-size: 0.81rem;
+  }
+  .actionButtons {
+    gap: 8px;
+  }
 }
 
 .navLink {
@@ -180,19 +194,136 @@
   color: var(--wg-primary);
 }
 
+.navIconButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius-md, 10px);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  cursor: pointer;
+  color: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.18s ease,
+              border-color 0.18s ease,
+              box-shadow 0.18s ease,
+              color 0.18s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.navIconButton:hover {
+  background-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.navIconButton:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.headerScrolled .navIconButton {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: var(--wg-border);
+  color: var(--wg-text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.headerScrolled .navIconButton:hover {
+  background-color: #ffffff;
+  border-color: var(--wg-primary);
+  color: var(--wg-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(22, 119, 255, 0.12);
+}
+
+.navLabel {
+  display: inline-block;
+  line-height: 1;
+  font-weight: 600;
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+.navIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.navIconButton:hover .navIcon {
+  transform: scale(1.1);
+}
+
+.navTooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background-color: #0f172a;
+  color: #ffffff;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  z-index: 1050;
+}
+
+.navTooltip::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0 4px 4px 4px;
+  border-style: solid;
+  border-color: transparent transparent #0f172a transparent;
+}
+
+.navIconButton:hover .navTooltip,
+.navIconButton:focus-visible .navTooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
 .navLinkActive {
   color: var(--wg-primary) !important;
   opacity: 1 !important;
+  background-color: rgba(16, 185, 129, 0.16) !important;
+  border-color: rgba(16, 185, 129, 0.45) !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
   position: relative;
 }
 
 .navLinkActive::after {
   content: '';
   position: absolute;
-  bottom: -6px;
-  left: 0;
-  right: 0;
-  height: 2px;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 3px;
   background-color: var(--wg-primary);
   border-radius: var(--radius-full);
 }
@@ -338,35 +469,226 @@
   gap: 16px;
 }
 
-.mobileNavLink {
-  font-size: 1.05rem;
-  font-weight: 600;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--wg-border-light);
+/* ---------------------------------------------------------------------------
+   Cycle 4 — consolidated header dropdown.
+   The panel reuses .mobileDrawer as its shell and is ALWAYS mounted; it is
+   removed from the a11y tree / tab order with display:none while closed.
+   --------------------------------------------------------------------------- */
+
+.menuPanel {
+  display: none;
 }
 
-.mobileActions {
+.menuPanelOpen {
+  display: block;
+}
+
+.menuPanelContent {
+  gap: 4px;
+  padding: 12px;
+}
+
+.menuGroupLabel {
+  margin: 8px 0 2px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wg-text-muted);
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;
+  color: inherit;
+  overflow-wrap: break-word;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.menuItem:hover,
+.menuItem:focus-visible {
+  background-color: var(--wg-primary-light);
+  color: var(--wg-primary-active);
+}
+
+.menuAccount {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 12px;
+  gap: 2px;
+  padding: 8px 12px;
+  overflow-wrap: break-word;
 }
 
-.mobileSignInBtn {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--wg-border);
+.menuAccountName {
+  font-weight: 700;
+  color: var(--wg-text);
+}
+
+.menuAccountEmail {
+  font-size: 0.8rem;
+  color: var(--wg-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.menuLogout {
+  color: #dc2626;
+}
+
+.menuLogout:hover,
+.menuLogout:focus-visible {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
+/* Desktop trigger: hidden by default, shown from 1100px up (menuToggle takes over below). */
+.menuTrigger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 12px;
   border-radius: var(--radius-sm);
   font-weight: 600;
-  text-align: center;
+  font-size: 0.95rem;
+  color: inherit;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
-.mobileJoinBtn {
+.menuTrigger:hover {
+  background-color: var(--wg-surface-alt);
+  color: var(--wg-primary);
+}
+
+@media (min-width: 1100px) {
+  .menuTrigger {
+    display: inline-flex;
+  }
+}
+
+/* The panel anchors under the header on mobile; from 1100px it becomes a
+   right-anchored dropdown so it never covers the search field. */
+@media (min-width: 1100px) {
+  .menuPanel {
+    left: auto;
+    right: 24px;
+    width: 300px;
+    max-width: calc(100vw - 48px);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    border-bottom-width: 2px;
+  }
+}
+
+.userBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  font-weight: 600;
+  font-size: 0.88rem;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerScrolled .userBadge {
+  background-color: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+.userDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+  flex-shrink: 0;
+}
+
+.userName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobileNavLinksOnly {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+@media (min-width: 1100px) {
+  .mobileNavLinksOnly {
+    display: none;
+  }
+}
+
+.demoCard {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.demoTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #166534;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 4px;
+}
+
+.demoText {
+  font-size: 0.82rem;
+  color: #15803d;
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.demoQuickBtn {
   width: 100%;
-  padding: 12px;
   background-color: var(--wg-primary);
-  color: white;
-  border-radius: var(--radius-sm);
+  color: #ffffff;
+  font-size: 0.82rem;
   font-weight: 600;
-  text-align: center;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  border: none;
+  transition: background-color var(--transition-fast);
+}
+
+.demoQuickBtn:hover {
+  background-color: var(--wg-primary-hover);
+}
+
+/* The account buttons reuse .signInBtn/.joinBtn so the pins on those classes
+   stay load-bearing, but the 400px rule that hides them must not hide the
+   panel entries (0,2,0 beats the 0,1,0 media rule). */
+.menuPanel .signInBtn,
+.menuPanel .joinBtn {
+  display: inline-flex;
+  width: 100%;
+  margin-top: 4px;
 }

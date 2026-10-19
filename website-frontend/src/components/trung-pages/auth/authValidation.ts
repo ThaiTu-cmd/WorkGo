@@ -29,8 +29,18 @@ export const registerSchema = z.object({
   password: passwordSchema,
 });
 
+export const loginIdentifierSchema = z
+  .string()
+  .transform((v) => stripHtml(v))
+  .pipe(
+    z.string().min(1, "Vui lòng nhập tài khoản hoặc email!").refine(
+      (val) => val.toLowerCase() === "admin" || z.string().email().safeParse(val).success,
+      { message: "Vui lòng nhập email hợp lệ hoặc tài khoản admin!" }
+    )
+  );
+
 export const loginSchema = z.object({
-  email: emailSchema,
+  email: loginIdentifierSchema,
   password: passwordSchema,
 });
 

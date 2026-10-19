@@ -5,7 +5,7 @@
 }
 
 .contentWrapper {
-  max-width: 1280px;
+  max-width: var(--container-max);
   margin: 0 auto;
   padding: 0 32px;
 }
@@ -169,7 +169,7 @@
   color: #0f172a;
   line-height: 1.35;
   margin: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: var(--font-heading);
 }
 
 /* Provider Mini Bar */

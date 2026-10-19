@@ -40,7 +40,8 @@ public enum ErrorCode {
 
     ORDER_ADDON_NOT_FOUND(2017, "Addon not found", HttpStatus.NOT_FOUND),
     ORDER_ADDON_NOT_AVAILABLE(2018, "Addon is not available for ordering", HttpStatus.BAD_REQUEST),
-    ORDER_ITEM_TOTAL_MISMATCH(2019, "Order items total does not match subtotal", HttpStatus.INTERNAL_SERVER_ERROR)
+    ORDER_ITEM_TOTAL_MISMATCH(2019, "Order items total does not match subtotal", HttpStatus.INTERNAL_SERVER_ERROR),
+    ORDER_EXECUTION_NOT_FOUND(2020, "Execution not found for this order", HttpStatus.NOT_FOUND),
 
 ;
     private int code;

@@ -2,39 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Lock, User, Mail, CheckCircle2, AlertCircle } from 'lucide-react';
 import styles from './AuthModal.module.css';
 import { useFocusTrap } from '../../../hooks/useFocusTrap';
+import axiosClient, { setAccessToken } from '../../../api/axiosClient';
+import { authApi } from '../../../api/authApi';
 
-// Cycle 4 — mock-only auth contract. Kept inline (instead of importing
-// trung-pages/_stores/auth.ts) so this file stays byte-identical in
-// web-app/src and website-frontend/src/_webapp-mirror.
-const AUTH_TOKEN_KEY = 'accessToken';
-const AUTH_USER_KEY = 'workgo_auth_user';
-const AUTH_EVENT = 'workgo-auth-changed';
-const DEMO_HINT_ID = 'auth-demo-hint';
-// F-17 / debt D4: EC-TRUNG-15 copy, verbatim — shown when the session cannot be
-// persisted (localStorage blocked or quota-full) instead of failing silently.
-const QUOTA_TOAST =
-  'Bộ nhớ trình duyệt bị đầy hoặc bị chặn — thay đổi chỉ được giữ trong phiên này.';
-
-const EMAIL_RE = /^\S+@\S+\.\S+$/;
-
-/**
- * @param onSuccess  ({ name, email }) => boolean | void  — host hook (the
- *   website shell persists through the shared auth store and reports whether the
- *   session was actually stored; `false` = storage blocked/full). Without the
- *   hook we persist inline so the standalone web-app keeps working.
- */
-export default function AuthModal({ initialMode = 'login', onClose, onSuccess }) {
+export default function AuthModal({ initialMode = 'login', onClose }) {
   const [mode, setMode] = useState(initialMode);
   const [formData, setFormData] = useState({
     userName: '',
     password: '',
     firstName: '',
     lastName: '',
-    email: ''
+    email: '',
+    role: 'CLIENT'
   });
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
-  const [errors, setErrors] = useState({});
   const closeBtnRef = useRef(null);
   const trapRef = useRef(null);
   // F3: keep Tab cycling inside the dialog.
@@ -50,96 +32,63 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const validateField = (field, values) => {
-    const value = String(values[field] || '').trim();
-    if (field === 'userName') return value ? undefined : 'Vui lòng nhập tên tài khoản.';
-    if (field === 'password') {
-      if (!value) return 'Vui lòng nhập mật khẩu.';
-      return value.length < 6 ? 'Mật khẩu tối thiểu 6 ký tự.' : undefined;
-    }
-    if (field === 'lastName') return value ? undefined : 'Vui lòng nhập họ.';
-    if (field === 'firstName') return value ? undefined : 'Vui lòng nhập tên.';
-    if (field === 'email') return EMAIL_RE.test(value) ? undefined : 'Email chưa đúng định dạng.';
-    return undefined;
-  };
-
-  const fieldsForMode = () =>
-    mode === 'login' ? ['userName', 'password'] : ['lastName', 'firstName', 'userName', 'email', 'password'];
-
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    // BUG-4 (cycle 4): an existing error clears as soon as the user fixes it.
-    setErrors((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev));
-  };
-
-  const handleBlur = (e) => {
-    const { name } = e.target;
-    setErrors((prev) => ({ ...prev, [name]: validateField(name, formData) }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const found = {};
-    fieldsForMode().forEach((field) => {
-      found[field] = validateField(field, formData);
-    });
-    setErrors(found);
-    if (fieldsForMode().some((field) => found[field])) {
-      setFeedback({ type: 'error', message: 'Vui lòng kiểm tra lại các trường được đánh dấu.' });
-      return;
-    }
-
     setLoading(true);
     setFeedback(null);
-    await new Promise((resolve) => setTimeout(resolve, 350));
 
-    const isDemoAdmin = formData.userName.trim().toLowerCase() === 'admin';
-    const fullName = isDemoAdmin
-      ? 'admin'
-      : [formData.lastName, formData.firstName]
-          .map((part) => part.trim())
-          .filter(Boolean)
-          .join(' ');
-    const user = {
-      name: fullName || formData.userName.trim(),
-      email: isDemoAdmin ? 'admin@workgo.vn' : (formData.email.trim() || `${formData.userName.trim()}@workgo.demo`)
-    };
-
-    // F-17 / debt D4: never fail silently — both persistence paths report
-    // whether the session was actually stored, and the user is told when it was
-    // not (the session then lives only for this tab).
-    let persisted = true;
-    if (onSuccess) {
-      persisted = onSuccess(user) !== false;
+    if (mode === 'login') {
+      try {
+        const res = await axiosClient.post('/identity/auth/token', {
+          userName: formData.userName,
+          password: formData.password,
+        });
+        const token = res?.result?.token;
+        if (!token) throw new Error('Phản hồi đăng nhập không có token');
+        setAccessToken(token);
+        setFeedback({
+          type: 'success',
+          message: `Đăng nhập thành công! Chào mừng ${formData.userName}.`
+        });
+        setTimeout(() => {
+          onClose();
+        }, 1000);
+      } catch (err) {
+        setFeedback({
+          type: 'error',
+          message:
+            err?.status === 401 || err?.status === 400 || err?.status === 404
+              ? 'Sai tên đăng nhập hoặc mật khẩu.'
+              : `Không đăng nhập được: ${err?.message || 'lỗi kết nối máy chủ'}`
+        });
+      }
     } else {
       try {
-        localStorage.setItem(AUTH_TOKEN_KEY, `mock-token-${Date.now()}`);
-        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
-      } catch {
-        // storage blocked — the session lives only for this tab
-        persisted = false;
+        // identity-service has no role field on registration (see BACKEND_GAPS.md).
+        await authApi.register({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          userName: formData.userName,
+          password: formData.password,
+          email: formData.email,
+        });
+        setFeedback({
+          type: 'success',
+          message: 'Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay.'
+        });
+        setTimeout(() => setMode('login'), 1000);
+      } catch (err) {
+        setFeedback({
+          type: 'error',
+          message: `Không đăng ký được: ${err?.message || 'lỗi kết nối máy chủ'}`
+        });
       }
-      window.dispatchEvent(new Event(AUTH_EVENT));
     }
-
-    if (!persisted) {
-      setFeedback({ type: 'error', message: QUOTA_TOAST });
-      setLoading(false);
-      return;
-    }
-
-    setFeedback({
-      type: 'success',
-      message:
-        mode === 'login'
-          ? `Đăng nhập thành công! Chào mừng ${user.name} (Demo).`
-          : `Đăng ký thành công (Demo)! Bạn đã được đăng nhập với tên ${user.name}.`
-    });
     setLoading(false);
-    setTimeout(() => {
-      onClose();
-    }, 1000);
   };
 
   return (
@@ -170,14 +119,14 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
           <button
             type="button"
             className={`${styles.tabBtn} ${mode === 'login' ? styles.tabActive : ''}`}
-            onClick={() => { setMode('login'); setFeedback(null); setErrors({}); }}
+            onClick={() => { setMode('login'); setFeedback(null); }}
           >
             Đăng nhập
           </button>
           <button
             type="button"
             className={`${styles.tabBtn} ${mode === 'register' ? styles.tabActive : ''}`}
-            onClick={() => { setMode('register'); setFeedback(null); setErrors({}); }}
+            onClick={() => { setMode('register'); setFeedback(null); }}
           >
             Đăng ký
           </button>
@@ -191,27 +140,8 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
           </div>
         )}
 
-        {/* Demo hint (mock data only) */}
-        <div className={styles.demoBox}>
-          <p id={DEMO_HINT_ID} className={styles.helperText}>
-            Tài khoản demo: <strong>admin</strong> | Mật khẩu: <strong>123456</strong>
-          </p>
-          {mode === 'login' && (
-            <button
-              type="button"
-              className={styles.demoFillBtn}
-              onClick={() => {
-                setFormData((prev) => ({ ...prev, userName: 'admin', password: '123456' }));
-                setErrors({});
-              }}
-            >
-              Điền nhanh
-            </button>
-          )}
-        </div>
-
         {/* Form */}
-        <form onSubmit={handleSubmit} className={styles.authForm} noValidate>
+        <form onSubmit={handleSubmit} className={styles.authForm}>
           {mode === 'register' && (
             <div className={styles.nameRow}>
               <div className={styles.inputGroup}>
@@ -219,30 +149,24 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
                 <input
                   type="text"
                   name="lastName"
+                  required
                   placeholder="Nguyễn"
                   value={formData.lastName}
                   onChange={handleChange}
-                  onBlur={handleBlur}
                   className={styles.inputField}
-                  aria-invalid={errors.lastName ? true : undefined}
-                  aria-describedby={errors.lastName ? 'auth-lastName-error' : DEMO_HINT_ID}
                 />
-                {errors.lastName ? <em id="auth-lastName-error" className={styles.feedbackError}>{errors.lastName}</em> : null}
               </div>
               <div className={styles.inputGroup}>
                 <label className={styles.inputLabel}>Tên</label>
                 <input
                   type="text"
                   name="firstName"
+                  required
                   placeholder="Văn A"
                   value={formData.firstName}
                   onChange={handleChange}
-                  onBlur={handleBlur}
                   className={styles.inputField}
-                  aria-invalid={errors.firstName ? true : undefined}
-                  aria-describedby={errors.firstName ? 'auth-firstName-error' : DEMO_HINT_ID}
                 />
-                {errors.firstName ? <em id="auth-firstName-error" className={styles.feedbackError}>{errors.firstName}</em> : null}
               </div>
             </div>
           )}
@@ -254,16 +178,13 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
               <input
                 type="text"
                 name="userName"
+                required
                 placeholder="VD: admin hoặc nguyenvana"
                 value={formData.userName}
                 onChange={handleChange}
-                onBlur={handleBlur}
                 className={styles.inputField}
-                aria-invalid={errors.userName ? true : undefined}
-                aria-describedby={errors.userName ? 'auth-userName-error' : DEMO_HINT_ID}
               />
             </div>
-            {errors.userName ? <em id="auth-userName-error" className={styles.feedbackError}>{errors.userName}</em> : null}
           </div>
 
           {mode === 'register' && (
@@ -274,16 +195,13 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
                 <input
                   type="email"
                   name="email"
+                  required
                   placeholder="name@example.com"
                   value={formData.email}
                   onChange={handleChange}
-                  onBlur={handleBlur}
                   className={styles.inputField}
-                  aria-invalid={errors.email ? true : undefined}
-                  aria-describedby={errors.email ? 'auth-email-error' : DEMO_HINT_ID}
                 />
               </div>
-              {errors.email ? <em id="auth-email-error" className={styles.feedbackError}>{errors.email}</em> : null}
             </div>
           )}
 
@@ -294,16 +212,13 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
               <input
                 type="password"
                 name="password"
+                required
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={handleChange}
-                onBlur={handleBlur}
                 className={styles.inputField}
-                aria-invalid={errors.password ? true : undefined}
-                aria-describedby={errors.password ? 'auth-password-error' : DEMO_HINT_ID}
               />
             </div>
-            {errors.password ? <em id="auth-password-error" className={styles.feedbackError}>{errors.password}</em> : null}
           </div>
 
           <button type="submit" className={styles.submitBtn} disabled={loading}>
@@ -321,7 +236,6 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
               onClick={() => {
                 setMode(mode === 'login' ? 'register' : 'login');
                 setFeedback(null);
-                setErrors({});
               }}
             >
               {mode === 'login' ? 'Đăng ký ngay' : 'Đăng nhập'}

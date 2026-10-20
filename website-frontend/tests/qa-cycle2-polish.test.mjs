@@ -106,10 +106,10 @@ test("C2-4: MyServicesPage wires onClearFilters/onCreateService (full reset)", (
   assert.match(jsx, /setSelectedCategory\('ALL'\)/);
 });
 
-test("C2-5: bridge shell shares the same key and lazy-init", () => {
+test("C2-5: My Services loads provider services from catalog-service", () => {
   const shell = read(path.join(REPO, "website-frontend/src/components/webapp-bridge/webapp-shell.tsx"));
-  assert.match(shell, /providerServicesStore/);
-  assert.match(shell, /initialProviderServices\(\)/);
-  assert.match(shell, /persistProviderServices\(providerServices\)/);
+  assert.doesNotMatch(shell, /providerServicesStore|mockProviderServices/);
+  const page = read(path.join(REPO, "website-frontend/src/_webapp-mirror/pages/MyServices/MyServicesPage.jsx"));
+  assert.match(page, /useMyServices\(\)/);
 });
 

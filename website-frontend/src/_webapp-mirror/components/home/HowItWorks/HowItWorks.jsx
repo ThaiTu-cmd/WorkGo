@@ -8,25 +8,25 @@ export default function HowItWorks() {
       stepNumber: "01",
       icon: Search,
       title: "Tìm kiếm hoặc Đăng việc",
-      desc: "Khám phá hàng nghìn dịch vụ có sẵn hoặc đăng mô tả công việc của bạn lên hệ thống để nhận báo giá từ nhiều chuyên gia.",
+      desc: "Chọn dịch vụ có sẵn hoặc đăng việc để nhận báo giá.",
     },
     {
       stepNumber: "02",
       icon: MessageSquare,
       title: "Trao đổi & Chọn gói",
-      desc: "Nhắn tin trực tiếp với Chuyên gia, so sánh các gói Basic / Standard / Premium hoặc duyệt các Proposal báo giá chi tiết.",
+      desc: "Nhắn tin với Chuyên gia và so sánh các gói.",
     },
     {
       stepNumber: "03",
       icon: CreditCard,
       title: "Xác nhận & Ký quỹ an toàn",
-      desc: "Tạo đơn hàng và thanh toán. Số tiền của bạn được giữ an toàn trong tài khoản bảo chứng (Escrow) trong suốt quá trình thực hiện.",
+      desc: "Thanh toán được giữ an toàn trong Escrow.",
     },
     {
       stepNumber: "04",
       icon: CheckCircle2,
       title: "Nghiệm thu & Giải ngân",
-      desc: "Kiểm tra chất lượng dịch vụ khi hoàn thành. Chỉ khi bạn hoàn toàn ưng ý, hệ thống mới giải ngân tiền cho Chuyên gia và để lại đánh giá.",
+      desc: "Hài lòng mới giải ngân và để lại đánh giá.",
     },
   ];
 
@@ -37,10 +37,7 @@ export default function HowItWorks() {
         <div className={`${styles.header} reveal`}>
           <span className={styles.tagline}>DỄ DÀNG & AN TÂM</span>
           <h2 className={styles.title}>Cách thức hoạt động trên WorkGo</h2>
-          <p className={styles.subtitle}>
-            Trải nghiệm mua bán dịch vụ chuyên nghiệp, an toàn và nhanh gọn chỉ
-            với 4 bước
-          </p>
+          <p className={styles.subtitle}>4 bước đơn giản, an toàn</p>
         </div>
 
         {/* 4 Steps Row */}

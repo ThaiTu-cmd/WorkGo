@@ -56,6 +56,9 @@
 }
 
 .pageTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--font-heading);
   font-size: 1.85rem;
   font-weight: 800;
@@ -198,4 +201,9 @@
 .chipRemoveBtn:hover {
   background-color: #ef4444;
   color: #ffffff;
+}
+
+.titleIcon {
+  flex-shrink: 0;
+  color: var(--wg-primary);
 }

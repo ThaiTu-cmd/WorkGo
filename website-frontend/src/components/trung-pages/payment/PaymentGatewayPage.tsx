@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CreditCard } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { KEYS } from "../_stores/keys";
 import { mockWallet, type WalletState } from "../_mocks/mockWallet";
@@ -69,7 +70,9 @@ export default function PaymentGatewayPage({ onNavigate, onShowToast }: TrungPag
   return (
     <main className={styles.wrap}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Nạp tiền / Thanh toán</h1>
+        <h1 className={styles.title}>
+          <CreditCard size={24} className={styles.titleIcon} aria-hidden="true" /> Nạp tiền / Thanh toán
+        </h1>
         <p className={styles.sub}>Bản demo giao diện, không kết nối cổng thanh toán thật.</p>
         <div className={styles.tabs} role="tablist" aria-label="Chọn cổng thanh toán">
           {(["STRIPE", "VNPAY", "MOMO"] as const).map((t) => (

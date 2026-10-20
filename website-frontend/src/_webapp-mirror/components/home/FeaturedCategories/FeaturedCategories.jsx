@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Code2,
   Palette,
@@ -11,7 +11,7 @@ import {
   ArrowRight,
   FolderTree,
 } from "lucide-react";
-import { mockCategories } from "../../../data/mockCategories";
+import { useCatalogCategories } from "../../../hooks/useCatalogCategories";
 import styles from "./FeaturedCategories.module.css";
 
 const ICON_MAP = {
@@ -26,8 +26,11 @@ const ICON_MAP = {
   Default: FolderTree,
 };
 
+const DEFAULT_ACCENT = "#1dbf73";
+
 export default function FeaturedCategories({ onSelectCategory }) {
-  const [categories] = useState(mockCategories);
+  // Root categories from catalog-service (CategoryResponse: name, slug, description, children).
+  const { categories, status } = useCatalogCategories();
 
   const getBadgeClass = (type) => {
     switch (type) {
@@ -50,22 +53,35 @@ export default function FeaturedCategories({ onSelectCategory }) {
         {/* Section Header */}
         <div className={`${styles.sectionHeader} reveal`}>
           <div>
-            <h2 className={styles.sectionTitle}>Danh mục dịch vụ nổi bật</h2>
+            <h2 className={styles.sectionTitle}>Danh mục nổi bật</h2>
             <p className={styles.sectionSubtitle}>
-              Hàng trăm lĩnh vực chuyên môn sẵn sàng phục vụ nhu cầu cá nhân &
-              doanh nghiệp
+              Hàng trăm lĩnh vực cho cá nhân & doanh nghiệp
             </p>
           </div>
           <a href="#all-categories" className={styles.viewAllLink}>
-            <span>Xem tất cả danh mục</span>
+            <span>Xem tất cả</span>
             <ArrowRight size={16} />
           </a>
         </div>
+
+        {categories.length === 0 && (
+          <p className={styles.sectionSubtitle}>
+            {status === "loading"
+              ? "Đang tải danh mục..."
+              : status === "needs-login"
+                ? "Đăng nhập để xem danh mục dịch vụ."
+                : status === "error"
+                  ? "Không tải được danh mục từ máy chủ."
+                  : "Chưa có danh mục nào."}
+          </p>
+        )}
 
         {/* Categories Grid */}
         <div className={styles.categoryGrid}>
           {categories.map((cat, idx) => {
             const IconComponent = ICON_MAP[cat.iconName] || ICON_MAP.Default;
+            const accent = cat.accentColor || DEFAULT_ACCENT;
+            const tags = cat.popularTags || [...(cat.children || [])].map((c) => c.name);
 
             return (
               <div
@@ -78,17 +94,19 @@ export default function FeaturedCategories({ onSelectCategory }) {
                   <div
                     className={styles.iconBox}
                     style={{
-                      backgroundColor: `${cat.accentColor}18`,
-                      color: cat.accentColor,
+                      backgroundColor: `${accent}18`,
+                      color: accent,
                     }}
                   >
                     <IconComponent size={26} />
                   </div>
-                  <span
-                    className={`${styles.typeBadge} ${getBadgeClass(cat.executionType)}`}
-                  >
-                    {cat.executionLabel}
-                  </span>
+                  {cat.executionLabel && (
+                    <span
+                      className={`${styles.typeBadge} ${getBadgeClass(cat.executionType)}`}
+                    >
+                      {cat.executionLabel}
+                    </span>
+                  )}
                 </div>
 
                 {/* Category name & description */}
@@ -97,7 +115,7 @@ export default function FeaturedCategories({ onSelectCategory }) {
 
                 {/* Subcategory / Popular Tags */}
                 <div className={styles.tagWrap}>
-                  {cat.popularTags?.slice(0, 3).map((tag, tIdx) => (
+                  {tags.slice(0, 3).map((tag, tIdx) => (
                     <span key={tIdx} className={styles.tagItem}>
                       {tag}
                     </span>
@@ -107,7 +125,7 @@ export default function FeaturedCategories({ onSelectCategory }) {
                 {/* Card footer */}
                 <div className={styles.cardFooter}>
                   <span className={styles.countText}>
-                    {cat.serviceCount}+ dịch vụ
+                    {cat.serviceCount != null ? `${cat.serviceCount}+ dịch vụ` : ""}
                   </span>
                   <span className={styles.exploreBtn}>
                     <span>Khám phá</span>

@@ -23,24 +23,32 @@ export const nameSchema = z
   .transform((v) => sanitizeText(v))
   .pipe(z.string().min(2, "Vui lòng nhập tên từ 2 ký tự!"));
 
+export const userNameSchema = z
+  .string()
+  .transform((v) => stripHtml(v).trim())
+  .pipe(
+    z
+      .string()
+      .min(3, "Tên đăng nhập tối thiểu 3 ký tự!")
+      .regex(/^[A-Za-z0-9._-]+$/, "Tên đăng nhập chỉ gồm chữ, số, dấu . _ -")
+  );
+
+export const phoneSchema = z
+  .string()
+  .transform((v) => stripHtml(v).replace(/\s+/g, ""))
+  .pipe(z.string().regex(/^0\d{9}$/, "Số điện thoại gồm 10 số, bắt đầu bằng 0!"));
+
 export const registerSchema = z.object({
   name: nameSchema,
+  userName: userNameSchema,
   email: emailSchema,
+  phone: phoneSchema,
   password: passwordSchema,
 });
 
-export const loginIdentifierSchema = z
-  .string()
-  .transform((v) => stripHtml(v))
-  .pipe(
-    z.string().min(1, "Vui lòng nhập tài khoản hoặc email!").refine(
-      (val) => val.toLowerCase() === "admin" || z.string().email().safeParse(val).success,
-      { message: "Vui lòng nhập email hợp lệ hoặc tài khoản admin!" }
-    )
-  );
-
+// identity-service authenticates by userName (POST /auth/token).
 export const loginSchema = z.object({
-  email: loginIdentifierSchema,
+  userName: userNameSchema,
   password: passwordSchema,
 });
 

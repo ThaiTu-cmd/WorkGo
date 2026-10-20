@@ -1,18 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  initialProviderServices,
-  persistProviderServices,
-} from './providerServicesStore';
+import React, { useState } from 'react';
+import { useMyServices } from '../../hooks/useMyServices';
+import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
 import ServicesToolbar from './components/ServicesToolbar/ServicesToolbar';
 import ServicesTable from './components/ServicesTable/ServicesTable';
-import CreateServiceModal from './components/CreateServiceModal/CreateServiceModal';
-import { 
+import {
   ArrowLeft,
   ShieldCheck,
-  CalendarClock
+  CalendarClock,
+  Store,
 } from 'lucide-react';
 import styles from './MyServicesPage.module.css';
 
+const STATE_MESSAGES = {
+  loading: 'Đang tải danh sách dịch vụ...',
+  'needs-login': 'Đăng nhập bằng tài khoản Chuyên gia để quản lý dịch vụ.',
+  forbidden: NOT_PROVIDER_MESSAGE,
+  error: 'Không tải được danh sách dịch vụ từ máy chủ.',
+};
+
+// Live list from catalog-service. Duplicating is not offered (no copy endpoint).
 export default function MyServicesPage({
   onSelectService,
   onGoHome,
@@ -20,45 +26,15 @@ export default function MyServicesPage({
   onOpenCreateForm,
   onOpenEditForm,
   onOpenAvailability,
-  services: externalServices,
-  onUpdateServices,
+  onOpenProviderOnboarding,
 }) {
-  // C2-5: persisted snapshot wins on reload; mocks are the fallback.
-  const [internalServices, setInternalServices] = useState(initialProviderServices);
-  const services = externalServices || internalServices;
-  const setServices = (newValOrFn) => {
-    if (onUpdateServices) {
-      if (typeof newValOrFn === 'function') {
-        onUpdateServices((prev) => newValOrFn(prev || services));
-      } else {
-        onUpdateServices(newValOrFn);
-      }
-    } else {
-      setInternalServices(newValOrFn);
-    }
-  };
+  // Loads on mount, so returning here after the service form shows the saved changes.
+  const { status, services, reload, deleteService, setStatus } = useMyServices();
 
   const [activeTab, setActiveTab] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedIds, setSelectedIds] = useState([]);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-  // C2-5: write-through persistence — every resolved list (internal or
-  // bridge-external) is snapshotted under one key; reload restores it.
-  // R2: when the write fails (quota/private-mode) the store keeps an
-  // in-memory copy for the session; toast once so the user is not misled.
-  const persistFailedRef = useRef(false);
-  useEffect(() => {
-    if (persistProviderServices(services) === false) {
-      if (!persistFailedRef.current && onShowToast) {
-        persistFailedRef.current = true;
-        onShowToast('Bộ nhớ trình duyệt bị đầy hoặc bị chặn — thay đổi chỉ được giữ trong phiên này.');
-      }
-    } else {
-      persistFailedRef.current = false;
-    }
-  }, [services, onShowToast]);
 
   const handleClearFilters = () => {
     setActiveTab('ALL');
@@ -81,7 +57,7 @@ export default function MyServicesPage({
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const matchTitle = service.title.toLowerCase().includes(q);
-      const matchCat = service.categoryName.toLowerCase().includes(q);
+      const matchCat = (service.categoryName || '').toLowerCase().includes(q);
       if (!matchTitle && !matchCat) return false;
     }
     if (selectedCategory !== 'ALL' && service.categorySlug !== selectedCategory) {
@@ -89,25 +65,6 @@ export default function MyServicesPage({
     }
     return true;
   });
-
-  const handleToggleStatus = (serviceId) => {
-    setServices((prev) =>
-      prev.map((s) => {
-        if (s.serviceId === serviceId) {
-          const nextStatus = s.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
-          if (onShowToast) {
-            onShowToast(
-              nextStatus === 'ACTIVE'
-                ? `Đã kích hoạt dịch vụ "${s.title}"`
-                : `Đã tạm ngưng nhận đơn cho "${s.title}"`
-            );
-          }
-          return { ...s, status: nextStatus };
-        }
-        return s;
-      })
-    );
-  };
 
   const handleToggleSelect = (serviceId) => {
     setSelectedIds((prev) =>
@@ -125,75 +82,64 @@ export default function MyServicesPage({
     }
   };
 
-  // R6: bulk Activate/Pause confirm like bulk Delete (YAGNI: window.confirm, no new modal).
-  const handleBulkActivate = () => {
-    if (!window.confirm(`Kích hoạt ${selectedIds.length} dịch vụ đã chọn?`)) return;
-    setServices((prev) =>
-      prev.map((s) =>
-        selectedIds.includes(s.serviceId) ? { ...s, status: 'ACTIVE' } : s
-      )
-    );
-    if (onShowToast) {
-      onShowToast(`Đã kích hoạt ${selectedIds.length} dịch vụ đã chọn`);
-    }
-    setSelectedIds([]);
-  };
-
-  const handleBulkPause = () => {
-    if (!window.confirm(`Tạm ngưng ${selectedIds.length} dịch vụ đã chọn?`)) return;
-    setServices((prev) =>
-      prev.map((s) =>
-        selectedIds.includes(s.serviceId) ? { ...s, status: 'PAUSED' } : s
-      )
-    );
-    if (onShowToast) {
-      onShowToast(`Đã tạm ngưng ${selectedIds.length} dịch vụ đã chọn`);
-    }
-    setSelectedIds([]);
-  };
-
-  const handleBulkDelete = () => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa ${selectedIds.length} dịch vụ đã chọn không?`)) {
-      setServices((prev) => prev.filter((s) => !selectedIds.includes(s.serviceId)));
-      if (onShowToast) {
-        onShowToast(`Đã xóa ${selectedIds.length} dịch vụ khỏi hệ thống`);
-      }
-      setSelectedIds([]);
-    }
-  };
-
-  const handleDeleteService = (serviceId) => {
+  const handleToggleStatus = async (serviceId) => {
     const s = services.find((item) => item.serviceId === serviceId);
-    if (window.confirm(`Xác nhận xóa dịch vụ "${s?.title}"?`)) {
-      setServices((prev) => prev.filter((item) => item.serviceId !== serviceId));
-      setSelectedIds((prev) => prev.filter((id) => id !== serviceId));
+    if (!s) return;
+    const next = s.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+    try {
+      await setStatus(serviceId, next);
       if (onShowToast) {
-        onShowToast(`Đã xóa dịch vụ "${s?.title}"`);
+        onShowToast(next === 'ACTIVE' ? `Đã mở bán dịch vụ "${s.title}"` : `Đã tạm ngưng nhận đơn cho "${s.title}"`);
       }
+    } catch (err) {
+      if (onShowToast) onShowToast(`Không đổi được trạng thái: ${err?.message || 'lỗi kết nối máy chủ'}`);
     }
   };
 
-  const handleDuplicateService = (service) => {
-    const duplicated = {
-      ...service,
-      serviceId: `svc-${Date.now()}`,
-      title: `${service.title} (Bản sao)`,
-      status: 'DRAFT',
-      impressions: 0,
-      clicks: 0,
-      ordersCount: 0,
-      updatedAt: new Date().toISOString(),
-    };
-    setServices((prev) => [duplicated, ...prev]);
+  // R6: bulk Activate/Pause confirm like bulk Delete.
+  const setManyStatus = async (rowStatus, verb) => {
+    if (!window.confirm(`${verb} ${selectedIds.length} dịch vụ đã chọn?`)) return;
+    const ids = [...selectedIds];
+    const results = await Promise.allSettled(ids.map((id) => setStatus(id, rowStatus)));
+    const failed = results.filter((r) => r.status === 'rejected').length;
     if (onShowToast) {
-      onShowToast('Đã tạo bản sao ở trạng thái Bản nháp');
+      onShowToast(
+        failed
+          ? `${verb} ${ids.length - failed}/${ids.length} dịch vụ, ${failed} dịch vụ lỗi`
+          : `Đã ${verb.toLowerCase()} ${ids.length} dịch vụ`
+      );
+    }
+    setSelectedIds([]);
+  };
+
+  const handleBulkActivate = () => setManyStatus('ACTIVE', 'Kích hoạt');
+
+  const handleBulkPause = () => setManyStatus('PAUSED', 'Tạm ngưng');
+
+  const removeMany = async (ids) => {
+    const results = await Promise.allSettled(ids.map((id) => deleteService(id)));
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    setSelectedIds((prev) => prev.filter((id) => !ids.includes(id)));
+    return failed;
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa ${selectedIds.length} dịch vụ đã chọn không?`)) return;
+    const count = selectedIds.length;
+    const failed = await removeMany(selectedIds);
+    if (onShowToast) {
+      onShowToast(
+        failed ? `Đã xóa ${count - failed}/${count} dịch vụ, ${failed} dịch vụ lỗi` : `Đã xóa ${count} dịch vụ khỏi hệ thống`
+      );
     }
   };
 
-  const handleCreateService = (newService) => {
-    setServices((prev) => [newService, ...prev]);
+  const handleDeleteService = async (serviceId) => {
+    const s = services.find((item) => item.serviceId === serviceId);
+    if (!window.confirm(`Xác nhận xóa dịch vụ "${s?.title}"?`)) return;
+    const failed = await removeMany([serviceId]);
     if (onShowToast) {
-      onShowToast(`Đã tạo thành công dịch vụ mới: "${newService.title}"`);
+      onShowToast(failed ? `Không xóa được dịch vụ "${s?.title}"` : `Đã xóa dịch vụ "${s?.title}"`);
     }
   };
 
@@ -213,13 +159,15 @@ export default function MyServicesPage({
 
           <div className={styles.providerBadgeBox}>
             <ShieldCheck size={16} className={styles.shieldIcon} />
-            <span>Tài khoản Chuyên gia: <strong>Trần Minh Quang</strong> (Top Rated)</span>
+            <span>Kênh Chuyên gia</span>
           </div>
         </div>
 
         <div className={styles.pageHeader}>
           <div>
-            <h1 className={styles.pageTitle}>Quản lý dịch vụ</h1>
+            <h1 className={styles.pageTitle}>
+              <Store size={26} className={styles.titleIcon} aria-hidden="true" /> Quản lý dịch vụ
+            </h1>
             <p className={styles.pageSubtitle}>
               Theo dõi tình trạng hiển thị, mức giá, số lượt xem và hiệu suất các gói dịch vụ bạn cung cấp trên WorkGo.
             </p>
@@ -240,36 +188,45 @@ export default function MyServicesPage({
           onSearchChange={setSearchQuery}
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
-          onOpenCreateModal={() => (onOpenCreateForm ? onOpenCreateForm() : setIsCreateModalOpen(true))}
+          onOpenCreateModal={() => onOpenCreateForm && onOpenCreateForm()}
         />
 
+        {status !== 'ready' ? (
+          <div className={styles.pageSubtitle} role={status === 'error' ? 'alert' : 'status'}>
+            <p>{STATE_MESSAGES[status]}</p>
+            {status === 'error' && (
+              <button type="button" className={styles.availabilityBtn} onClick={reload}>
+                Thử lại
+              </button>
+            )}
+            {status === 'forbidden' && onOpenProviderOnboarding && (
+              <button type="button" className={styles.availabilityBtn} onClick={onOpenProviderOnboarding}>
+                Đăng ký làm Chuyên gia
+              </button>
+            )}
+          </div>
+        ) : (
         <ServicesTable
           services={filteredServices}
           selectedIds={selectedIds}
           onToggleSelect={handleToggleSelect}
           onSelectAll={handleSelectAll}
-          onToggleStatus={handleToggleStatus}
           onViewService={onSelectService}
           onEditService={(s) =>
             onOpenEditForm
               ? onOpenEditForm(s.serviceId)
               : onShowToast && onShowToast(`Mở chỉnh sửa cho "${s.title}"`)
           }
-          onDuplicateService={handleDuplicateService}
+          onToggleStatus={handleToggleStatus}
           onDeleteService={handleDeleteService}
           onBulkActivate={handleBulkActivate}
           onBulkPause={handleBulkPause}
           onBulkDelete={handleBulkDelete}
           onClearFilters={handleClearFilters}
-          onCreateService={() => (onOpenCreateForm ? onOpenCreateForm() : setIsCreateModalOpen(true))}
+          onCreateService={() => onOpenCreateForm && onOpenCreateForm()}
         />
+        )}
       </div>
-
-      <CreateServiceModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onCreate={handleCreateService}
-      />
     </div>
   );
 }

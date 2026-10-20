@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Landmark } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { KEYS } from "../_stores/keys";
 import { mockPayout, type SavedPayout } from "../_mocks/mockPayout";
@@ -92,7 +93,9 @@ export default function PayoutSettingsPage({ onShowToast }: TrungPageProps) {
   return (
     <main className={styles.wrap}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Cài đặt rút tiền</h1>
+        <h1 className={styles.title}>
+          <Landmark size={24} className={styles.titleIcon} aria-hidden="true" /> Cài đặt rút tiền
+        </h1>
         <p className={styles.sub}>Tiền trong ví sẽ được chuyển về tài khoản này khi bạn yêu cầu rút.</p>
         {savedMask ? <p className={styles.saved}>Tài khoản đã lưu: {savedMask}</p> : null}
         <form onSubmit={submit} noValidate className={styles.form}>

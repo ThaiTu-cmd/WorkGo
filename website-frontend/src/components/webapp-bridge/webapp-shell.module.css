@@ -18,22 +18,6 @@
   overflow-x: clip;
 }
 
-.pageScope {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  --header-height: var(--top-stack);
-}
-
-.offsetScope {
-  padding-top: var(--header-height);
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
 /* F6: toast queue stack — positioning moved here from .toastNotification
    (same geometry as web-app mirror). */
 .toastStack {
@@ -194,16 +178,9 @@
   --transition-smooth: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 
   --container-max: 1240px;
-  --header-height: 76px;
-  --base-header-height: 76px;
-  --subnav-height: 61px;
-  --offline-h: 0px;
-  --top-stack: calc(var(--offline-h) + var(--base-header-height) + var(--subnav-height));
-}
-
-.appRootNoHeader {
-  --base-header-height: 0px;
-  --header-height: 0px;
+  /* Fixed chrome = header bar only; pages offset their content with --header-height. */
+  --header-bar-height: 76px;
+  --header-height: var(--header-bar-height);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -232,4 +209,14 @@
     padding-left: 20px;
     padding-right: 20px;
   }
+}
+
+/* Trung pages have no own header offset or page background: push them below
+   the fixed header and give them the web-app's light surface (the site body
+   may be dark, which made their dark text unreadable). */
+.trungPage {
+  padding-top: var(--header-height);
+  min-height: 70vh;
+  background-color: var(--wg-bg);
+  color: var(--wg-text);
 }

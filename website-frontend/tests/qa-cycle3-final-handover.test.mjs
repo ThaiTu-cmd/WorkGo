@@ -100,11 +100,7 @@ test("QA-C3-HO-11: Task-2 fallback locked — static bridge, no dead alias", () 
   assert.match(cfg, /withNextIntl/, "must preserve withNextIntl");
   assert.match(cfg, /reactStrictMode/, "must preserve existing keys");
   const shell = read("website-frontend/src/components/webapp-bridge/webapp-shell.tsx");
-  assert.match(
-    shell,
-    /_webapp-mirror\/data\/mockProviderServices/,
-    "shell resolves provider data straight from the mirror (static)"
-  );
+  assert.doesNotMatch(shell, /mockProviderServices/, "shell no longer bundles provider mocks");
   assert.ok(
     !exists("website-frontend/src/components/webapp-bridge/service-adapters.ts"),
     "engine adapters must be absent in fallback state"

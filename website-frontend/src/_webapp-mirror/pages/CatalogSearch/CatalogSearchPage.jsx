@@ -4,8 +4,8 @@ import SearchToolbar from './components/SearchToolbar/SearchToolbar';
 import Pagination from './components/Pagination/Pagination';
 import ServiceCard from '../../components/common/ServiceCard/ServiceCard';
 import SkeletonServiceCard from '../../components/common/Skeleton/SkeletonServiceCard';
-import { mockServices } from '../../data/mockServices';
 import { useCatalogCategories } from '../../hooks/useCatalogCategories';
+import { useServiceList } from '../../hooks/useServiceList';
 import { SearchX, RotateCcw, X } from 'lucide-react';
 import styles from './CatalogSearchPage.module.css';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
@@ -32,6 +32,9 @@ export default function CatalogSearchPage({
 
   const pageSize = 6;
   const { categories, status: categoriesStatus } = useCatalogCategories();
+  // All PUBLISHED services; category / type / price / rating / keyword filters
+  // and sorting below run on this list (the API has no keyword search).
+  const { services: listedServices, status: servicesStatus } = useServiceList();
 
   useEffect(() => {
     setIsFiltering(true);
@@ -71,7 +74,7 @@ export default function CatalogSearchPage({
 
   // Real-time multi-criteria filtering
   const filteredServices = useMemo(() => {
-    return mockServices.filter((service) => {
+    return listedServices.filter((service) => {
       // 1. Category filter
       if (selectedCategory !== 'ALL' && service.categorySlug !== selectedCategory) {
         return false;
@@ -118,7 +121,7 @@ export default function CatalogSearchPage({
 
       return true;
     });
-  }, [selectedCategory, selectedType, priceRange, deliveryTime, minRating, onlyVerified, searchQuery]);
+  }, [listedServices, selectedCategory, selectedType, priceRange, deliveryTime, minRating, onlyVerified, searchQuery]);
 
   // Sorting
   const sortedServices = useMemo(() => {
@@ -306,7 +309,7 @@ export default function CatalogSearchPage({
 
           {/* Services Grid Column */}
           <main className={styles.servicesColumn}>
-            {isFiltering ? (
+            {isFiltering || servicesStatus === 'loading' ? (
               <div className={styles.servicesGrid} aria-busy="true" aria-label="Đang tải dịch vụ">
                 <SkeletonServiceCard count={pageSize} />
               </div>
@@ -340,18 +343,30 @@ export default function CatalogSearchPage({
                 <div className={styles.emptyIconBox}>
                   <SearchX size={48} className={styles.emptyIcon} />
                 </div>
-                <h3 className={styles.emptyTitle}>Không tìm thấy dịch vụ phù hợp</h3>
+                <h3 className={styles.emptyTitle}>
+                  {servicesStatus === 'ready' && listedServices.length > 0
+                    ? 'Không tìm thấy dịch vụ phù hợp'
+                    : 'Chưa có dịch vụ để hiển thị'}
+                </h3>
                 <p className={styles.emptyDesc}>
-                  Không có dịch vụ nào khớp với tiêu chí lọc hiện tại. Hãy thử nới lỏng khoảng giá, thay đổi hình thức hoặc xóa bộ lọc để khám phá thêm.
+                  {servicesStatus === 'needs-login'
+                    ? 'Đăng nhập để duyệt dịch vụ trên WorkGo.'
+                    : servicesStatus === 'error'
+                      ? 'Không tải được danh sách dịch vụ. Kiểm tra kết nối tới máy chủ rồi thử lại.'
+                      : listedServices.length > 0
+                        ? 'Không có dịch vụ nào khớp với bộ lọc hiện tại. Hãy nới khoảng giá, đổi hình thức hoặc xóa bộ lọc.'
+                        : 'Hiện chưa có dịch vụ nào được đăng.'}
                 </p>
-                <button
-                  type="button"
-                  className={styles.emptyResetBtn}
-                  onClick={handleResetFilters}
-                >
-                  <RotateCcw size={16} />
-                  <span>Xóa tất cả bộ lọc</span>
-                </button>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    className={styles.emptyResetBtn}
+                    onClick={handleResetFilters}
+                  >
+                    <RotateCcw size={16} />
+                    <span>Xóa tất cả bộ lọc</span>
+                  </button>
+                )}
               </div>
             )}
           </main>

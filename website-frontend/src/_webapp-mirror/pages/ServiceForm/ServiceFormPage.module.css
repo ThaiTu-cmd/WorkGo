@@ -45,6 +45,9 @@
 }
 
 .topBarTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-heading, sans-serif);
   font-size: 1.125rem;
   font-weight: 800;
@@ -177,3 +180,7 @@
   transform: translateY(-1px);
 }
 
+.titleIcon {
+  flex-shrink: 0;
+  color: var(--wg-primary);
+}

@@ -2,51 +2,16 @@ import React from 'react';
 import { Globe, Shield } from 'lucide-react';
 import styles from './Footer.module.css';
 
-const COLUMNS = [
-  {
-    title: 'Danh mục dịch vụ',
-    links: [
-      ['#categories', 'Lập trình & Công nghệ'],
-      ['#categories', 'Thiết kế đồ họa & UI/UX'],
-      ['#categories', 'Sửa chữa Điện nước'],
-      ['#categories', 'Vệ sinh & Dọn dẹp'],
-      ['#categories', 'Viết lách & Dịch thuật'],
-      ['#categories', 'Marketing & Quảng cáo'],
-    ],
-  },
-  {
-    title: 'Dành cho Khách hàng',
-    links: [
-      ['#how-it-works', 'Cách thức đặt dịch vụ'],
-      ['#why-workgo', 'Bảo chứng Ký quỹ (Escrow)'],
-      ['#cta', 'Đăng tin tuyển dụng'],
-      ['#', 'Chính sách hoàn tiền'],
-      ['#', 'Câu hỏi thường gặp (FAQ)'],
-    ],
-  },
-  {
-    title: 'Dành cho Chuyên gia',
-    links: [
-      ['#cta', 'Trở thành Chuyên gia'],
-      ['#', 'Tiêu chuẩn xác thực'],
-      ['#', 'Quy định gói dịch vụ'],
-      ['#', 'Rút tiền & Thanh toán'],
-      ['#', 'Cộng đồng Freelancer'],
-    ],
-  },
-  {
-    title: 'Về WorkGo',
-    links: [
-      ['#', 'Giới thiệu nền tảng'],
-      ['#', 'Cơ hội nghề nghiệp'],
-      ['#', 'Điều khoản sử dụng'],
-      ['#', 'Chính sách bảo mật'],
-      ['#', 'Liên hệ & Trợ giúp 24/7'],
-    ],
-  },
-];
+import { FOOTER_COLUMNS } from './footerLinks.js';
+export { FOOTER_COLUMNS };
 
-export default function Footer() {
+export default function Footer({ onNavigate }) {
+  const handle = (event, link) => {
+    if (typeof onNavigate !== 'function') return;
+    event.preventDefault();
+    onNavigate(link.page, link.params || {});
+  };
+
   return (
     <footer className={styles.footer}>
       <div className="container">
@@ -66,12 +31,20 @@ export default function Footer() {
             </span>
           </div>
 
-          {COLUMNS.map((col) => (
+          {FOOTER_COLUMNS.map((col) => (
             <div key={col.title} className={styles.col}>
               <h4 className={styles.colTitle}>{col.title}</h4>
               <ul className={styles.linkList}>
-                {col.links.map(([href, label]) => (
-                  <li key={label}><a href={href}>{label}</a></li>
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    <a
+                      href={link.params?.category ? `/vi/catalog?category=${link.params.category}` : `/vi/${link.page}`}
+                      onClick={(e) => handle(e, link)}
+                      className={styles.footerLink}
+                    >
+                      {link.label}
+                    </a>
+                  </li>
                 ))}
               </ul>
             </div>
@@ -83,13 +56,13 @@ export default function Footer() {
             © 2026 WorkGo Marketplace Inc. Bảo lưu mọi quyền.
           </span>
           <div className={styles.rightBottom}>
-            <div className={styles.localeItem}>
+            <span className={styles.localeItemStatic}>
               <Globe size={16} />
               <span>Tiếng Việt</span>
-            </div>
-            <div className={styles.localeItem}>
+            </span>
+            <span className={styles.localeItemStatic}>
               <span>₫ VND</span>
-            </div>
+            </span>
           </div>
         </div>
       </div>

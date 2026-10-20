@@ -446,6 +446,20 @@ export default function OrderDashboardPage({ onGoHome, onShowToast }) {
                                     )}
                                   </div>
                                 )}
+                                {o.statusHistory && (
+                                  <div style={{ marginTop: '12px', borderTop: '1px dashed #e2e8f0', paddingTop: '10px' }}>
+                                    <strong style={{ fontSize: '0.85rem', color: '#334155', display: 'block', marginBottom: '6px' }}>
+                                      Lịch sử trạng thái:
+                                    </strong>
+                                    <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.8rem', color: '#64748b' }}>
+                                      {o.statusHistory.map((h, hIdx) => (
+                                        <li key={hIdx}>
+                                          <strong>{h.status}</strong> ({formatDateTime(h.timestamp)}): {h.note}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
                               </div>
                             </td>
                           </tr>

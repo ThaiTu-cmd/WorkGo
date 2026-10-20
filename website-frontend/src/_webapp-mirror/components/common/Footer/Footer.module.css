@@ -28,6 +28,13 @@
     grid-template-columns: 1fr;
     gap: 28px;
   }
+
+  .linkList li a,
+  .footerLink {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
 }
 
 .brandCol {
@@ -79,14 +86,26 @@
   gap: 11px;
 }
 
-.linkList li a {
+.linkList li a,
+.footerLink {
   font-size: 0.9rem;
   line-height: 1.45;
   color: var(--wg-text-secondary);
   transition: color var(--transition-fast);
+  overflow-wrap: anywhere;
+  text-decoration: none;
 }
 
-.linkList li a:hover {
+.linkList li a:hover,
+.footerLink:hover {
+  color: var(--wg-primary);
+}
+
+.linkList li a:focus-visible,
+.footerLink:focus-visible {
+  outline: 2px solid var(--wg-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs, 4px);
   color: var(--wg-primary);
 }
 
@@ -120,18 +139,25 @@
   color: var(--wg-text-secondary);
 }
 
+.localeItemStatic {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--wg-border);
+  border-radius: var(--radius-sm);
+  color: var(--wg-text-secondary);
+  cursor: default;
+  user-select: none;
+}
+
 .localeItem {
   display: flex;
   align-items: center;
   gap: 6px;
-  cursor: pointer;
   padding: 6px 10px;
   border: 1px solid var(--wg-border);
   border-radius: var(--radius-sm);
-  transition: background-color var(--transition-fast), color var(--transition-fast);
-}
-
-.localeItem:hover {
-  background-color: var(--wg-bg);
-  color: var(--wg-text);
+  color: var(--wg-text-secondary);
+  cursor: default;
 }

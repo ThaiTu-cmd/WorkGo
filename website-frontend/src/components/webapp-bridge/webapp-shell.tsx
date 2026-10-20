@@ -18,6 +18,12 @@ import ServiceFormPage from "@/_webapp-mirror/pages/ServiceForm/ServiceFormPage"
 import AvailabilityPage from "@/_webapp-mirror/pages/Availability/AvailabilityPage";
 import CheckoutPage from "@/_webapp-mirror/pages/Checkout/CheckoutPage";
 import OrderDashboardPage from "@/_webapp-mirror/pages/OrderDashboard/OrderDashboardPage";
+import PublicInfoPage from "@/_webapp-mirror/pages/PublicInfo/PublicInfoPage";
+import { PUBLIC_INFO_PAGE_KEYS } from "@/_webapp-mirror/pages/PublicInfo/publicInfoContent";
+import VerificationCenterPage from "@/_webapp-mirror/pages/BackendParity/VerificationCenterPage";
+import BookingSlotsPage from "@/_webapp-mirror/pages/BackendParity/BookingSlotsPage";
+import AdminConsolePage from "@/_webapp-mirror/pages/BackendParity/AdminConsolePage";
+import NotFoundPage from "@/_webapp-mirror/pages/NotFound/NotFoundPage";
 import { mockProviderServices } from "@/_webapp-mirror/data/mockProviderServices";
 import {
   initialProviderServices,
@@ -82,7 +88,24 @@ export type TrungPageKey =
   | "wallet"
   | "payout-settings"
   | "review-form"
-  | "dispute-center";
+  | "dispute-center"
+  // 12 Public info content pages
+  | "how-it-works"
+  | "escrow-protection"
+  | "refund-policy"
+  | "faq"
+  | "verification-standards"
+  | "package-rules"
+  | "community"
+  | "about"
+  | "careers"
+  | "terms"
+  | "privacy"
+  | "contact"
+  // 3 Backend parity mock pages
+  | "verification-center"
+  | "booking-slots"
+  | "admin-console";
 
 type CategorySelection = {
   slug: string;
@@ -228,6 +251,28 @@ export default function WebAppShell() {
     }
   }, [providerServices, showToast]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      const raf = requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      });
+      const id = setTimeout(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 50);
+      return () => {
+        cancelAnimationFrame(raf);
+        clearTimeout(id);
+      };
+    }
+  }, [currentPage]);
+
   // Navigate handler from Header or links
   const handleNavigate = (page: TrungPageKey, params: CatalogFilterParams = {}) => {
     setPreviousPage(currentPage);
@@ -243,8 +288,23 @@ export default function WebAppShell() {
     if (page === "submit-proposal" && params.jobId) setSelectedJobId(params.jobId);
     if (page === "proposal-review" && params.jobId) setSelectedJobId(params.jobId);
     if (page === "review-form" && params.orderId) setSelectedOrderId(params.orderId);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
   };
+
+  useEffect(() => {
+    const handleCustomNav = (e: Event) => {
+      const customEvent = e as CustomEvent<{ page: TrungPageKey; params?: CatalogFilterParams }>;
+      if (customEvent.detail?.page) {
+        handleNavigate(customEvent.detail.page, customEvent.detail.params || {});
+      }
+    };
+    window.addEventListener("workgo-navigate", handleCustomNav);
+    return () => window.removeEventListener("workgo-navigate", handleCustomNav);
+  }, []);
 
   // Cycle 4: sign out of the mock session and return to a signed-out header.
   const handleLogout = () => {
@@ -604,10 +664,82 @@ export default function WebAppShell() {
             <DisputeCenterPage onNavigate={handleNavigate} onShowToast={showToast} />
           </div>
         )}
+
+        {/* 12 Public Info Content Pages */}
+        {PUBLIC_INFO_PAGE_KEYS.includes(currentPage as any) && (
+          <div className={styles.offsetScope}>
+            <PublicInfoPage
+              pageKey={currentPage}
+              onNavigate={handleNavigate}
+              onShowToast={showToast}
+            />
+          </div>
+        )}
+
+        {/* 3 Backend Parity Pages */}
+        {currentPage === "verification-center" && (
+          <div className={styles.offsetScope}>
+            <VerificationCenterPage
+              onNavigate={handleNavigate}
+              onShowToast={showToast}
+            />
+          </div>
+        )}
+
+        {currentPage === "booking-slots" && (
+          <div className={styles.offsetScope}>
+            <BookingSlotsPage
+              onNavigate={handleNavigate}
+              onShowToast={showToast}
+            />
+          </div>
+        )}
+
+        {currentPage === "admin-console" && (
+          <div className={styles.offsetScope}>
+            <AdminConsolePage
+              onNavigate={handleNavigate}
+              onShowToast={showToast}
+            />
+          </div>
+        )}
+
+        {/* Fallback NotFoundPage for any unregistered/legacy routes */}
+        {currentPage !== "home" &&
+          currentPage !== "catalog" &&
+          currentPage !== "detail" &&
+          currentPage !== "my-services" &&
+          currentPage !== "service-form" &&
+          currentPage !== "availability" &&
+          currentPage !== "checkout" &&
+          currentPage !== "orders" &&
+          currentPage !== "register" &&
+          currentPage !== "login" &&
+          currentPage !== "profile-settings" &&
+          currentPage !== "address-book" &&
+          currentPage !== "provider-onboarding" &&
+          currentPage !== "provider-profile" &&
+          currentPage !== "job-list" &&
+          currentPage !== "job-post" &&
+          currentPage !== "submit-proposal" &&
+          currentPage !== "proposal-review" &&
+          currentPage !== "payment-gateway" &&
+          currentPage !== "wallet" &&
+          currentPage !== "payout-settings" &&
+          currentPage !== "review-form" &&
+          currentPage !== "dispute-center" &&
+          currentPage !== "verification-center" &&
+          currentPage !== "booking-slots" &&
+          currentPage !== "admin-console" &&
+          !PUBLIC_INFO_PAGE_KEYS.includes(currentPage as any) && (
+            <div className={styles.offsetScope}>
+              <NotFoundPage requestedKey={currentPage} onNavigate={handleNavigate} />
+            </div>
+          )}
       </div>
 
       {/* Footer (hidden on service-form wizard for clean focus) */}
-      {currentPage !== "service-form" && <Footer />}
+      {currentPage !== "service-form" && <Footer onNavigate={handleNavigate} />}
 
       {/* Authentication Modal */}
       {authModal && (

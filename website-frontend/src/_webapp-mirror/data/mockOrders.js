@@ -6,9 +6,32 @@ const DAY = 24 * HOUR;
 const now = Date.now();
 const at = (offsetMs) => new Date(now + offsetMs).toISOString();
 
+const buildStatusHistory = (status, timeline) => {
+  const history = [
+    { status: 'CREATED', timestamp: timeline.createdAt || at(-10 * DAY), note: 'Đơn hàng được khởi tạo thành công' },
+  ];
+  if (timeline.confirmedAt) {
+    history.push({ status: 'CONFIRMED', timestamp: timeline.confirmedAt, note: 'Chuyên gia đã xác nhận nhận việc' });
+  }
+  if (timeline.startedAt) {
+    history.push({ status: 'IN_PROGRESS', timestamp: timeline.startedAt, note: 'Bắt đầu triển khai dịch vụ' });
+  }
+  if (timeline.deliveredAt) {
+    history.push({ status: 'DELIVERED', timestamp: timeline.deliveredAt, note: 'Chuyên gia đã bàn giao sản phẩm nghiệm thu' });
+  }
+  if (timeline.completedAt) {
+    history.push({ status: 'COMPLETED', timestamp: timeline.completedAt, note: 'Khách hàng hoàn tất nghiệm thu và đánh giá' });
+  }
+  if (timeline.cancelledAt) {
+    history.push({ status: 'CANCELLED', timestamp: timeline.cancelledAt, note: 'Đơn hàng đã được hủy' });
+  }
+  return history;
+};
+
 const order = ({ id, number, title, executionType, subtotal, status, counterpartName, timeline }) => {
   const platformFee = Math.round(subtotal * FEE_RATE);
   const paid = status !== 'PENDING_PAYMENT' && status !== 'CANCELLED';
+  const t = timeline || {};
   return {
     orderId: id,
     orderNumber: number,
@@ -30,7 +53,8 @@ const order = ({ id, number, title, executionType, subtotal, status, counterpart
     completedAt: null,
     cancelledAt: null,
     autoCompleteAt: null,
-    ...timeline,
+    statusHistory: buildStatusHistory(status, t),
+    ...t,
   };
 };
 

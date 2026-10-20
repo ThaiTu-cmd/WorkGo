@@ -11,6 +11,12 @@ import Footer from './components/common/Footer/Footer';
 import CatalogSearchPage from './pages/CatalogSearch/CatalogSearchPage';
 import ServiceDetailPage from './pages/ServiceDetail/ServiceDetailPage';
 import MyServicesPage from './pages/MyServices/MyServicesPage';
+import PublicInfoPage from './pages/PublicInfo/PublicInfoPage';
+import { PUBLIC_INFO_PAGE_KEYS } from './pages/PublicInfo/publicInfoContent';
+import VerificationCenterPage from './pages/BackendParity/VerificationCenterPage';
+import BookingSlotsPage from './pages/BackendParity/BookingSlotsPage';
+import AdminConsolePage from './pages/BackendParity/AdminConsolePage';
+import NotFoundPage from './pages/NotFound/NotFoundPage';
 // R5: split rarely-opened heavy views out of the initial bundle.
 const AuthModal = React.lazy(() => import('./components/common/AuthModal/AuthModal'));
 const ServiceFormPage = React.lazy(() => import('./pages/ServiceForm/ServiceFormPage'));
@@ -60,6 +66,20 @@ export default function App() {
     // showToast identity changes per render; depending on it would re-toast.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [providerServices]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      const id = setTimeout(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 50);
+      return () => clearTimeout(id);
+    }
+  }, [currentPage]);
   const [serviceFormMode, setServiceFormMode] = useState('create'); // 'create' | 'edit'
   const [editServiceId, setEditServiceId] = useState(null);
   const [catalogFilters, setCatalogFilters] = useState({
@@ -106,8 +126,24 @@ export default function App() {
         query: params.query || '',
       });
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
   };
+
+  useEffect(() => {
+    const handleCustomNav = (e) => {
+      if (e.detail?.page) {
+        handleNavigate(e.detail.page, e.detail.params || {});
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('workgo-navigate', handleCustomNav);
+      return () => window.removeEventListener('workgo-navigate', handleCustomNav);
+    }
+  }, []);
 
   // Search from HeroBanner
   const handleHeroSearch = ({ keyword, executionType }) => {
@@ -294,8 +330,81 @@ export default function App() {
         </Suspense>
       )}
 
+      {/* 12 Public Info Content Pages */}
+      {[
+        'how-it-works',
+        'escrow-protection',
+        'refund-policy',
+        'faq',
+        'verification-standards',
+        'package-rules',
+        'community',
+        'about',
+        'careers',
+        'terms',
+        'privacy',
+        'contact',
+      ].includes(currentPage) && (
+        <PublicInfoPage
+          pageKey={currentPage}
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+        />
+      )}
+
+      {/* 3 Backend Parity Pages */}
+      {currentPage === 'verification-center' && (
+        <VerificationCenterPage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+        />
+      )}
+
+      {currentPage === 'booking-slots' && (
+        <BookingSlotsPage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+        />
+      )}
+
+      {currentPage === 'admin-console' && (
+        <AdminConsolePage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+        />
+      )}
+
+      {/* Fallback NotFoundPage cho 13 page key legacy Header hoặc route chưa xác định */}
+      {currentPage !== 'home' &&
+        currentPage !== 'catalog' &&
+        currentPage !== 'detail' &&
+        currentPage !== 'my-services' &&
+        currentPage !== 'service-form' &&
+        currentPage !== 'verification-center' &&
+        currentPage !== 'booking-slots' &&
+        currentPage !== 'admin-console' &&
+        ![
+          'how-it-works',
+          'escrow-protection',
+          'refund-policy',
+          'faq',
+          'verification-standards',
+          'package-rules',
+          'community',
+          'about',
+          'careers',
+          'terms',
+          'privacy',
+          'contact',
+        ].includes(currentPage) && (
+          <NotFoundPage
+            requestedKey={currentPage}
+            onNavigate={handleNavigate}
+          />
+        )}
+
       {/* Footer (hidden on service-form wizard for clean focus) */}
-      {currentPage !== 'service-form' && <Footer />}
+      {currentPage !== 'service-form' && <Footer onNavigate={handleNavigate} />}
 
       {/* Authentication Modal (lazy chunk) */}
       {authModal && (

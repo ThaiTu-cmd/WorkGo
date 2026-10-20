@@ -55,6 +55,14 @@ export default function ServiceFormPage({
     },
     coverImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80',
     videoUrl: '',
+    addons: [
+      { id: 'addon-fast', title: 'Giao hàng hỏa tốc (Rút ngắn 40% thời gian)', desc: 'Ưu tiên tập trung hoàn thiện dự án của bạn trước tiên trong lịch trình.', price: 800000, active: true },
+      { id: 'addon-source', title: 'Bàn giao trọn bộ File gốc & Source Code', desc: 'Bao gồm toàn bộ file thiết kế Figma gốc và mã nguồn sạch chuẩn repository.', price: 600000, active: true },
+    ],
+    mediaUrls: [
+      'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=400&auto=format&fit=crop&q=80',
+    ],
   };
 
   const [formData, setFormData] = useState(defaultFormData);
@@ -178,6 +186,8 @@ export default function ServiceFormPage({
       avgRating: isEdit ? 4.98 : 0,
       reviewCount: isEdit ? 38 : 0,
       description: cleanDescription,
+      addons: formData.addons,
+      mediaUrls: formData.mediaUrls,
       createdAt: isEdit ? '2026-02-15' : new Date().toISOString(),
     };
 

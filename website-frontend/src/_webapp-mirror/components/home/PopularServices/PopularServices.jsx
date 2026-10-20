@@ -1,24 +1,32 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useServiceList } from "../../../hooks/useServiceList";
 import ServiceCard from "../../common/ServiceCard/ServiceCard";
-import { mockServices } from "../../../data/mockServices";
-import { ChevronLeft, ChevronRight, Flame } from "lucide-react";
+import { ChevronLeft, ChevronRight, Flame, Globe, House, Truck } from "lucide-react";
 import styles from "./PopularServices.module.css";
+
+const POPULAR_LIMIT = 8;
 
 export default function PopularServices({ onSelectService }) {
   const [activeTab, setActiveTab] = useState("ALL");
   const [startIndex, setStartIndex] = useState(0);
+  const { services, status } = useServiceList();
+  // Most-ordered PUBLISHED services first.
+  const popular = useMemo(
+    () => [...services].sort((a, b) => b.orderCount - a.orderCount).slice(0, POPULAR_LIMIT),
+    [services]
+  );
 
   const filterTabs = [
-    { key: "ALL", label: "Tất cả dịch vụ" },
-    { key: "DIGITAL", label: "🌐 Online / Digital" },
-    { key: "ONSITE", label: "🏠 Tại nhà / Onsite" },
-    { key: "DELIVERY", label: "🚚 Giao nhận" },
+    { key: "ALL", label: "Tất cả" },
+    { key: "DIGITAL", icon: Globe, label: "Online" },
+    { key: "ONSITE", icon: House, label: "Tại nhà" },
+    { key: "DELIVERY", icon: Truck, label: "Giao nhận" },
   ];
 
   const filteredServices =
     activeTab === "ALL"
-      ? mockServices
-      : mockServices.filter((s) => s.executionType === activeTab);
+      ? popular
+      : popular.filter((s) => s.executionType === activeTab);
 
   const visibleCount = 4;
   const maxStart = Math.max(0, filteredServices.length - visibleCount);
@@ -39,14 +47,11 @@ export default function PopularServices({ onSelectService }) {
           <div>
             <div className={styles.badgeRow}>
               <Flame size={18} className={styles.flameIcon} />
-              <span className={styles.badgeText}>Thịnh hành trên WorkGo</span>
+              <span className={styles.badgeText}>Thịnh hành</span>
             </div>
-            <h2 className={styles.title}>
-              Dịch vụ chuyên nghiệp được yêu thích
-            </h2>
+            <h2 className={styles.title}>Dịch vụ được yêu thích</h2>
             <p className={styles.subtitle}>
-              Lựa chọn từ các Chuyên gia có điểm đánh giá cao và hoàn thành hàng
-              trăm đơn hàng
+              Từ các Chuyên gia được đánh giá cao
             </p>
           </div>
 
@@ -85,12 +90,24 @@ export default function PopularServices({ onSelectService }) {
                 setStartIndex(0);
               }}
             >
+              {tab.icon && <tab.icon size={15} aria-hidden="true" />}
               {tab.label}
             </button>
           ))}
         </div>
 
         {/* Services Grid/Carousel View */}
+        {filteredServices.length === 0 && (
+          <p className={styles.subtitle}>
+            {status === "loading"
+              ? "Đang tải dịch vụ..."
+              : status === "needs-login"
+                ? "Đăng nhập để xem các dịch vụ trên WorkGo."
+                : status === "error"
+                  ? "Không tải được dịch vụ từ máy chủ."
+                  : "Chưa có dịch vụ nào ở mục này."}
+          </p>
+        )}
         <div className={styles.servicesGrid}>
           {filteredServices.map((service, idx) => (
             <div

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { BriefcaseBusiness } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { JOB_TYPES, mockJobs, type Job, type JobType } from "../_mocks/mockJobs";
 import { KEYS } from "../_stores/keys";
@@ -68,7 +69,9 @@ export default function JobListPage({ onNavigate }: TrungPageProps) {
     <main className={styles.wrap}>
       <div className={styles.head}>
         <div>
-          <h1 className={styles.title}>Tìm việc làm</h1>
+          <h1 className={styles.title}>
+            <BriefcaseBusiness size={24} className={styles.titleIcon} aria-hidden="true" /> Tìm việc làm
+          </h1>
           <p className={styles.sub}>Khám phá các việc client đăng cần provider thực hiện.</p>
         </div>
         <button type="button" className={styles.primary} onClick={() => onNavigate("job-post")}>

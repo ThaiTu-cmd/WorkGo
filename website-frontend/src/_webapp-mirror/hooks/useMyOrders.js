@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { orderApi } from '../api/orderApi';
 import { getAccessToken } from '../api/axiosClient';
-import { getMockOrders } from '../data/mockOrders';
 
 export const PAGE_SIZE = 10;
 
@@ -30,28 +29,24 @@ const AUTO_COMPLETE_HOURS = 72;
 
 // status: 'loading' | 'api' | 'needs-login' | 'error'
 //  - api                 : page of GET /order/orders for this role
-//  - needs-login / error : bundled mocks, paged locally
-// Status changes stay local in both modes: order-service has no transition endpoint yet.
+//  - needs-login / error : empty list, the page explains why
+// Status changes stay local: order-service has no transition endpoint yet (BACKEND_GAPS.md).
+const EMPTY_PAGE = { currentPage: 0, totalPages: 1, totalElements: 0 };
 export function useMyOrders(roleName, page) {
   const [status, setStatus] = useState('loading');
   const [orders, setOrders] = useState([]);
   const [pageInfo, setPageInfo] = useState({ currentPage: 0, totalPages: 1, totalElements: 0 });
 
-  const applyMocks = useCallback(
-    (nextStatus) => {
-      const all = getMockOrders(roleName);
-      const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
-      setStatus(nextStatus);
-      setOrders(all.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE));
-      setPageInfo({ currentPage: page, totalPages, totalElements: all.length });
-    },
-    [roleName, page]
-  );
+  const fail = useCallback((nextStatus) => {
+    setStatus(nextStatus);
+    setOrders([]);
+    setPageInfo(EMPTY_PAGE);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      if (!getAccessToken()) return applyMocks('needs-login');
+      if (!getAccessToken()) return fail('needs-login');
       setStatus('loading');
       try {
         const res = await orderApi.getMyOrders(roleName, page, PAGE_SIZE);
@@ -66,7 +61,7 @@ export function useMyOrders(roleName, page) {
         setStatus('api');
       } catch (err) {
         if (cancelled) return;
-        applyMocks(err?.status === 401 ? 'needs-login' : 'error');
+        fail(err?.status === 401 ? 'needs-login' : 'error');
       }
     };
     load();
@@ -75,7 +70,7 @@ export function useMyOrders(roleName, page) {
       cancelled = true;
       window.removeEventListener('workgo-auth-changed', load);
     };
-  }, [roleName, page, applyMocks]);
+  }, [roleName, page, fail]);
 
   // Returns false when the move breaks canTransitionTo (caller shows a toast).
   // `extra` is merged into the order (e.g. cancelReason from the cancel form).

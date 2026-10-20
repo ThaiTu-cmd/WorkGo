@@ -1,5 +1,5 @@
 import React from 'react';
-import { WEEK_DAYS } from '../../../data/mockAvailability';
+import { WEEK_DAYS } from '../../../api/availabilityApi';
 import { timeToMinutes } from '../../../api/availabilityApi';
 import styles from '../AvailabilityPage.module.css';
 

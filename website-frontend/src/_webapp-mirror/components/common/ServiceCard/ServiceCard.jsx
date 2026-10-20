@@ -110,10 +110,16 @@ export default function ServiceCard({ service }) {
         {/* Rating and Reviews */}
         <div className={styles.ratingRow}>
           <Star size={15} className={styles.starIcon} fill="var(--wg-star)" />
-          <span className={styles.ratingScore}>
-            {service.avgRating.toFixed(1)}
-          </span>
-          <span className={styles.reviewCount}>({service.reviewCount})</span>
+          {service.reviewCount > 0 ? (
+            <>
+              <span className={styles.ratingScore}>
+                {Number(service.avgRating).toFixed(1)}
+              </span>
+              <span className={styles.reviewCount}>({service.reviewCount})</span>
+            </>
+          ) : (
+            <span className={styles.reviewCount}>Chưa có đánh giá</span>
+          )}
         </div>
 
         {/* Divider */}
@@ -121,10 +127,14 @@ export default function ServiceCard({ service }) {
 
         {/* Footer: Delivery Time & Starting Price */}
         <div className={styles.cardFooter}>
-          <div className={styles.deliveryBadge}>
-            <Clock size={13} />
-            <span>{service.deliveryDays} ngày</span>
-          </div>
+          {service.deliveryDays != null ? (
+            <div className={styles.deliveryBadge}>
+              <Clock size={13} />
+              <span>{service.deliveryDays} ngày</span>
+            </div>
+          ) : (
+            <span />
+          )}
           <div className={styles.priceContainer}>
             <span className={styles.priceLabel}>Khởi điểm</span>
             <span className={styles.priceValue}>

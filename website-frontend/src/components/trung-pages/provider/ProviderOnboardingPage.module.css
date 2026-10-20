@@ -46,7 +46,8 @@
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   min-height: 44px;
   border: 1px solid #e4e5e7;
   border-radius: 10px;
@@ -59,7 +60,8 @@
 }
 
 .field input:focus-visible,
-.field textarea:focus-visible {
+.field textarea:focus-visible,
+.field select:focus-visible {
   outline: 2px solid #1dbf73;
   outline-offset: 1px;
 }
@@ -117,4 +119,15 @@
   .card {
     padding: 20px;
   }
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.titleIcon {
+  flex-shrink: 0;
+  color: var(--wg-primary);
 }

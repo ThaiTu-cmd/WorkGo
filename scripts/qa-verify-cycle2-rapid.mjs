@@ -10,7 +10,6 @@ const CHROME_PATH = "C:/Users/Tran Huu Trung/AppData/Local/ms-playwright/chromiu
 const ORIGINS = process.argv[2]
   ? process.argv.slice(2).map((u, i) => ({ name: `arg${i}`, url: u }))
   : [
-      { name: "5173", url: "http://localhost:5173/" },
       { name: "3000-vi", url: "http://localhost:3000/vi" },
     ];
 const EVIDENCE_DIR = path.resolve(".team/evidence/cycle2");

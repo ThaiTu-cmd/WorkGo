@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,9 +16,6 @@ const WEB_CSS = path.join(REPO, "website-frontend", "src", "components", "webapp
 const AND_HOME = path.join(REPO, "android-frontend", "src", "app", "index.tsx");
 const AND_PREVIEW = path.join(REPO, "android-frontend", "src", "app", "webapp-preview.tsx");
 const NEXT_CONFIG = path.join(REPO, "website-frontend", "next.config.ts");
-const COPY_SCRIPT = path.join(REPO, "scripts", "copy-webapp-mirror.mjs");
-const SRC_ROOT = path.join(REPO, "web-app", "src");
-const WEBSITE_MIRROR = path.join(REPO, "website-frontend", "src", "_webapp-mirror");
 
 test("C3-QA-HP-01: Default locale route renders bridge shell as the homepage", () => {
   assert.ok(fs.existsSync(DEFAULT_ROUTE), "default route page must exist");
@@ -127,9 +124,3 @@ test("C3-QA-EC-03: Zero Poison Chain - Neither Default Route nor Shell imports A
   assert.doesNotMatch(shell, /from\s+["'][^"']*App\.module\.css["']/, "Shell must not import App.module.css");
 });
 
-test("C3-QA-EC-04: Verification script confirms 0 mismatches for the website mirror", async () => {
-  const mod = await import(pathToFileURL(COPY_SCRIPT).href);
-  const result = mod.verifyMirrors(SRC_ROOT, [WEBSITE_MIRROR]);
-  assert.equal(result.ok, true, "verifyMirrors must return ok: true");
-  assert.equal(result.mismatches.length, 0, "There must be 0 mismatches between source and mirrors");
-});

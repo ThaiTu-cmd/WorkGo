@@ -37,6 +37,7 @@ const COLUMNS = [
   {
     title: 'Về WorkGo',
     links: [
+      ['#why-workgo', 'Giá trị cốt lõi'],
       ['#', 'Giới thiệu nền tảng'],
       ['#', 'Cơ hội nghề nghiệp'],
       ['#', 'Điều khoản sử dụng'],

@@ -21,4 +21,8 @@ public class OrderCreationRequest {
 
     List<UUID> addonIds;
 
+    UUID bookingSlotId;
+
+    String address;
+
 }

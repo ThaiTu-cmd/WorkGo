@@ -1,13 +1,15 @@
+/* Pinned right under the fixed Header bar. Its height is part of
+   --header-height (webapp-shell.module.css), so pages already leave room. */
 .bar {
   position: fixed;
-  top: calc(var(--offline-h, 0px) + var(--base-header-height, 76px));
+  top: var(--header-bar-height, 76px);
   left: 0;
   right: 0;
-  height: var(--subnav-height, 61px);
-  box-sizing: border-box;
-  z-index: 990; /* dưới Header (1000), trên nội dung, dưới toast (3000) */
+  z-index: 999;
+  height: var(--subnav-height, 56px);
   background: #ffffff;
   border-bottom: 1px solid #e4e5e7;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   overflow: hidden;
 }
 
@@ -18,12 +20,11 @@
   height: 100%;
   max-width: 1320px;
   margin: 0 auto;
-  padding: 8px 32px;
-  box-sizing: border-box;
+  padding: 0 32px;
   overflow-x: auto;
   overflow-y: hidden;
-  scroll-padding-inline: 36px;
-  scrollbar-width: none; /* một scroll container duy nhất, ẩn scrollbar */
+  /* Still swipe/scrollable, but no visible scrollbar. */
+  scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
@@ -34,7 +35,7 @@
 .link {
   flex: 0 0 auto;
   min-height: 44px;
-  padding: 10px 14px;
+  padding: 8px 14px;
   font-size: 0.85rem;
   font-weight: 600;
   color: #62646a;
@@ -62,44 +63,5 @@
   .inner {
     padding-left: 20px;
     padding-right: 20px;
-  }
-}
-
-/* UI cycle 2 — scroll affordance (mask mờ 2 đầu, chỉ là trang trí: pointer-events:none,
-   không xuất hiện trong accessibility tree). Vị trí mask bám đúng mép của .inner
-   (inner max-width 1320px margin auto, .bar không padding): khi bar rộng hơn 1320px
-   mask lùi vào (100% - 1320px)/2, ngược lại bám mép. */
-.bar::before,
-.bar::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 32px;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.15s linear;
-}
-
-.bar::before {
-  left: max(0px, calc((100% - 1320px) / 2));
-  background: linear-gradient(to right, #ffffff 25%, rgba(255, 255, 255, 0));
-}
-
-.bar::after {
-  right: max(0px, calc((100% - 1320px) / 2));
-  background: linear-gradient(to left, #ffffff 25%, rgba(255, 255, 255, 0));
-}
-
-.bar[data-fade-left="true"]::before,
-.bar[data-fade-right="true"]::after {
-  opacity: 1;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .bar::before,
-  .bar::after {
-    transition: none;
   }
 }

@@ -43,7 +43,16 @@ public enum ErrorCode {
     ORDER_ITEM_TOTAL_MISMATCH(2019, "Order items total does not match subtotal", HttpStatus.INTERNAL_SERVER_ERROR),
     ORDER_EXECUTION_NOT_FOUND(2020, "Execution not found for this order", HttpStatus.NOT_FOUND),
 
-;
+    //===========EVIDENCE============
+    ORDER_EVIDENCE_NOT_ALLOWED(2021, "Evidence is not allowed at this status", HttpStatus.BAD_REQUEST),
+    ORDER_EVIDENCE_PHASE_REQUIRED(2022, "Evidence phase is required", HttpStatus.BAD_REQUEST),
+    ORDER_EVIDENCE_FILE_REQUIRED(2023, "Evidence file url is required", HttpStatus.BAD_REQUEST),
+
+
+    ORDER_BOOKING_SLOT_REQUIRED(3001,"Booking slot is required!" , HttpStatus.NOT_FOUND),
+    ORDER_ADDRESS_REQUIRED(3002, "Order Address is required !", HttpStatus.NOT_FOUND );
+
+
     private int code;
     private String message;
     private HttpStatusCode statusCode;

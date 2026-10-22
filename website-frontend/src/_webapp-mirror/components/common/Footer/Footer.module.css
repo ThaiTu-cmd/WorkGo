@@ -28,6 +28,12 @@
     grid-template-columns: 1fr;
     gap: 28px;
   }
+
+  .footerLink {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
 }
 
 .brandCol {
@@ -39,12 +45,22 @@
 }
 
 .footerLogo {
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
   font-family: var(--font-heading);
   font-size: 1.6rem;
   font-weight: 800;
   letter-spacing: -0.5px;
   color: var(--wg-primary-active);
   line-height: 1.2;
+}
+
+.footerLogo:focus-visible {
+  outline: 2px solid var(--wg-primary);
+  outline-offset: 2px;
 }
 
 .brandDesc {
@@ -79,15 +95,27 @@
   gap: 11px;
 }
 
-.linkList li a {
+.footerLink {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
   font-size: 0.9rem;
   line-height: 1.45;
+  text-align: left;
+  cursor: pointer;
   color: var(--wg-text-secondary);
   transition: color var(--transition-fast);
+  overflow-wrap: anywhere;
 }
 
-.linkList li a:hover {
+.footerLink:hover {
   color: var(--wg-primary);
+}
+
+.footerLink:focus-visible {
+  outline: 2px solid var(--wg-primary);
+  outline-offset: 2px;
 }
 
 .bottomBar {
@@ -120,18 +148,14 @@
   color: var(--wg-text-secondary);
 }
 
-.localeItem {
+.localeItemStatic {
   display: flex;
   align-items: center;
   gap: 6px;
-  cursor: pointer;
+  cursor: default;
+  user-select: none;
   padding: 6px 10px;
   border: 1px solid var(--wg-border);
   border-radius: var(--radius-sm);
-  transition: background-color var(--transition-fast), color var(--transition-fast);
-}
-
-.localeItem:hover {
-  background-color: var(--wg-bg);
-  color: var(--wg-text);
+  color: var(--wg-text-secondary);
 }

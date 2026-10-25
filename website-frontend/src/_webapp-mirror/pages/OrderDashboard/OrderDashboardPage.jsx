@@ -3,6 +3,8 @@ import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Info, Loader2, Searc
 import { useMyOrders } from '../../hooks/useMyOrders';
 import OrderStatusBadge from './components/OrderStatusBadge';
 import OrderExecutionInfo from './components/OrderExecutionInfo';
+import WorkEvidencePanel from './components/WorkEvidencePanel';
+import { useOrderExecution } from '../../hooks/useOrderExecution';
 import OrderCancelPage from '../OrderCancel/OrderCancelPage';
 import styles from './OrderDashboardPage.module.css';
 
@@ -106,6 +108,26 @@ const paymentLabel = (order) => {
   if (order.orderStatus === 'COMPLETED') return 'Đã giải ngân';
   return order.paymentStatus === 'SUCCEEDED' ? 'Đã thanh toán · Escrow' : 'Chưa thanh toán';
 };
+
+// Server-side progress of an expanded order: execution info for every order,
+// plus on-site work evidence for ONSITE orders (both read the same execution).
+function OrderLiveDetails({ order, role, onShowToast }) {
+  const executionState = useOrderExecution(order.orderId);
+  return (
+    <>
+      <OrderExecutionInfo state={executionState} />
+      {order.executionType === 'ONSITE' && (
+        <WorkEvidencePanel
+          orderId={order.orderId}
+          role={role}
+          orderStatus={order.orderStatus}
+          onsiteStatus={executionState.execution?.onsite?.status}
+          onShowToast={onShowToast}
+        />
+      )}
+    </>
+  );
+}
 
 export default function OrderDashboardPage({ onGoHome, onShowToast }) {
   const [role, setRole] = useState('CLIENT');
@@ -436,7 +458,7 @@ export default function OrderDashboardPage({ onGoHome, onShowToast }) {
                                     <dd>{formatDateTime(o.orderStatus === 'CANCELLED' ? o.cancelledAt : o.completedAt)}</dd>
                                   </div>
                                 </dl>
-                                {isLive && <OrderExecutionInfo orderId={o.orderId} />}
+                                {isLive && <OrderLiveDetails order={o} role={role} onShowToast={toast} />}
                                 {(o.cancelRequest || o.cancelReason) && (
                                   <div className={styles.cancelInfo}>
                                     <strong>

@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { orderApi } from '../../../api/orderApi';
+import React from 'react';
 import styles from './OrderExecutionInfo.module.css';
 
 const DIGITAL_STATUS = {
@@ -11,31 +10,22 @@ const DIGITAL_STATUS = {
   CANCELLED: 'Đã hủy',
 };
 
+export const ONSITE_STATUS = {
+  SCHEDULED: 'Đã lên lịch',
+  IN_SERVICE: 'Đang thực hiện tại nhà',
+  SERVICE_DONE: 'Đã làm xong, chờ nghiệm thu',
+  ACCEPT: 'Đã nghiệm thu',
+  CANCELLED: 'Đã hủy',
+};
+
 const formatDateTime = (iso) =>
   iso
     ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso))
     : '—';
 
 // Read-only execution progress from order-service (GET /orders/{id}/execution).
-// Loaded when the order row is expanded; there are no execution actions yet.
-export default function OrderExecutionInfo({ orderId }) {
-  const [state, setState] = useState({ status: 'loading', execution: null });
-
-  useEffect(() => {
-    let cancelled = false;
-    orderApi.getExecution(orderId).then(
-      (res) => {
-        if (!cancelled) setState({ status: 'ready', execution: res?.result ?? null });
-      },
-      (err) => {
-        if (!cancelled) setState({ status: err?.status === 404 ? 'none' : 'error', execution: null });
-      }
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [orderId]);
-
+// `state` comes from useOrderExecution, loaded when the order row is expanded.
+export default function OrderExecutionInfo({ state }) {
   if (state.status === 'loading') return <p className={styles.muted}>Đang tải tiến độ thực hiện...</p>;
   if (state.status === 'none' || !state.execution) {
     return state.status === 'error' ? (
@@ -70,7 +60,7 @@ export default function OrderExecutionInfo({ orderId }) {
         <dl className={styles.list}>
           <div>
             <dt>Trạng thái</dt>
-            <dd>{onsite.status}</dd>
+            <dd>{ONSITE_STATUS[onsite.status] || onsite.status}</dd>
           </div>
           <div>
             <dt>Lịch hẹn</dt>

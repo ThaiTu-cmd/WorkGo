@@ -4,15 +4,15 @@ import com.workgo.catalog.dto.request.AddOnCreationRequest;
 import com.workgo.catalog.dto.request.AddOnUpdateRequest;
 import com.workgo.catalog.dto.response.AddOnResponse;
 import com.workgo.catalog.entity.AddOn;
+import org.mapstruct.Builder;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", builder = @Builder(disableBuilder = true))
 public interface AddOnMapper {
 
     @Mapping(target = "service", source = "service.serviceId")
-    @Mapping(target = "addOnId", source = "addOnId")
     AddOnResponse toAddOnResponse(AddOn addOn);
 
     void updateAddOn(@MappingTarget AddOn addOn, AddOnUpdateRequest request);

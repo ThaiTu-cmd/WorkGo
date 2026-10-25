@@ -77,7 +77,12 @@
   background-color: var(--wg-primary);
   color: #ffffff;
   border-color: var(--wg-primary);
-  transform: scale(1.05);
+  transform: scale(1.06);
+  box-shadow: 0 4px 12px var(--wg-primary-glow);
+}
+
+.arrowBtn:active:not(:disabled) {
+  transform: scale(0.94);
 }
 
 .arrowBtn:disabled {
@@ -105,13 +110,24 @@
   background-color: var(--wg-bg);
   border: 1px solid var(--wg-border);
   color: var(--wg-text-secondary);
-  transition: all var(--transition-fast);
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background-color 0.15s ease,
+              border-color 0.15s ease,
+              color 0.15s ease,
+              box-shadow 0.15s ease;
+  cursor: pointer;
   white-space: nowrap;
 }
 
 .tabBtn:hover {
-  background-color: #e5e7eb;
-  color: var(--wg-text);
+  border-color: var(--wg-primary);
+  color: var(--wg-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.tabBtn:active {
+  transform: translateY(0) scale(0.96);
 }
 
 .tabActive {

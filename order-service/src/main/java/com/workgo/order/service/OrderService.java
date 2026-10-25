@@ -4,11 +4,15 @@ import com.workgo.order.dto.PageResponse;
 import com.workgo.order.dto.request.OrderCreationRequest;
 import com.workgo.order.dto.response.OrderResponse;
 import com.workgo.order.dto.response.OrderStatusHistoryResponse;
+import com.workgo.order.dto.response.PaymentConfirmationResponse;
 import com.workgo.order.dto.response.client.AddOnResponse;
 import com.workgo.order.dto.response.client.PackageResponse;
+import com.workgo.order.dto.response.client.ProviderProfileResponse;
 import com.workgo.order.dto.response.client.ServiceResponse;
+import com.workgo.order.dto.snapshot.*;
 import com.workgo.order.entity.Order;
 import com.workgo.order.entity.OrderItem;
+import com.workgo.order.entity.OrderSnapshot;
 import com.workgo.order.entity.OrderStatusHistory;
 import com.workgo.order.enumeration.*;
 import com.workgo.order.enumeration.client.AddOnStatus;
@@ -21,8 +25,10 @@ import com.workgo.order.mapper.OrderMapper;
 import com.workgo.order.mapper.OrderStatusHistoryMapper;
 import com.workgo.order.reppository.OrderItemRepository;
 import com.workgo.order.reppository.OrderRepository;
+import com.workgo.order.reppository.OrderSnapshotRepository;
 import com.workgo.order.reppository.OrderStatusHistoryRepository;
 import com.workgo.order.reppository.client.CatalogClient;
+import com.workgo.order.reppository.client.IdentityClient;
 import com.workgo.order.utils.TokenUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +57,9 @@ public class OrderService {
     OrderMapper orderMapper;
     OrderStatusHistoryMapper orderStatusHistoryMapper;
     CatalogClient catalogClient;
+    IdentityClient identityClient;
     OrderStatusService orderStatusService;
+    OrderSnapshotRepository orderSnapshotRepository;
     OrderStatusHistoryRepository orderStatusHistoryRepository;
     OrderItemRepository orderItemRepository;
     OrderItemMapper orderItemMapper;
@@ -134,13 +142,34 @@ public class OrderService {
         //tao digital/ onsite execution tuy loai executiontype cua order
         executionService.createFor(order, request, packageResponse);
 
-        //TODO (M6): ONSITE -> catalogClient.holdSlot(request.getBookingSlotId(), order.getOrderId())
-        //TODO (B6): luu OrderSnapshot trong cung transaction nay
+        saveSnapshot(order, request, serviceResponse, packageResponse, addOns,
+                subtotal, platformFee, totalAmount, providerNetAmount);
+
 
         //ghi lai order status history
         orderStatusService.recordCreated(order, clientId);
 
         return orderMapper.toOrderResponse(order);
+    }
+
+    public PaymentConfirmationResponse<Object> confirmPayment(UUID orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (order.getOrderStatus() != OrderStatus.PENDING_PAYMENT) {
+            throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
+        }
+
+        order.setPaymentStatus(PaymentStatus.SUCCEEDED);
+
+        orderStatusService.transition(order, OrderStatus.CONFIRMED, null, RoleName.SYSTEM);
+
+        return PaymentConfirmationResponse.builder()
+                .orderId(order.getOrderId())
+                .orderStatus(order.getOrderStatus())
+                .paymentStatus(order.getPaymentStatus())
+                .build();
     }
 
     //loc ra addon duoc chon
@@ -290,6 +319,73 @@ public class OrderService {
         String random = UUID.randomUUID().toString();
 
         return "WG" + date + "-" + random;
+    }
+
+    private void saveSnapshot(Order order,
+                              OrderCreationRequest request,
+                              ServiceResponse serviceResponse,
+                              PackageResponse packageResponse,
+                              List<AddOnResponse> addOns,
+                              BigDecimal subtotal,
+                              BigDecimal platformFee,
+                              BigDecimal totalAmount,
+                              BigDecimal providerNetAmount) {
+
+        ProviderProfileResponse provider =
+                identityClient.getProviderProfile(serviceResponse.getProviderId());
+
+        List<AddOnSnapshot> addOnSnapshots = addOns.stream()
+                .map(addOn -> AddOnSnapshot.builder()
+                        .addOnId(addOn.getAddOnId())
+                        .name(addOn.getName())
+                        .description(addOn.getDescription())
+                        .price(addOn.getPrice())
+                        .build())
+                .toList();
+
+        orderSnapshotRepository.save(OrderSnapshot.builder()
+                .order(order)
+                .serviceSnapshot(ServiceSnapshot.builder()
+                        .serviceId(serviceResponse.getServiceId())
+                        .providerId(serviceResponse.getProviderId())
+                        .title(serviceResponse.getTitle())
+                        .description(serviceResponse.getDescription())
+                        .executionType(serviceResponse.getExecutionType())
+                        .basePrice(BigDecimal.valueOf(serviceResponse.getBasePrice()))
+                        .currency(serviceResponse.getCurrency())
+                        .build())
+                .packageSnapshot(PackageSnapshot.builder()
+                        .packageId(packageResponse.getPackageId())
+                        .name(packageResponse.getName())
+                        .description(packageResponse.getDescription())
+                        .price(packageResponse.getPrice())
+                        .currency(packageResponse.getCurrency())
+                        .deliveryDay(packageResponse.getDeliveryDay())
+                        .durationMinute(packageResponse.getDurationMinute())
+                        .revisionLimit(packageResponse.getRevisionLimit())
+                        .build())
+                .addOnSnapshot(addOnSnapshots)
+                .pricingSnapshot(PricingSnapshot.builder()
+                        .subtotal(subtotal)
+                        .platformFee(platformFee)
+                        .totalAmount(totalAmount)
+                        .providerNetAmount(providerNetAmount)
+                        .platformFeeRate(platformFeeRate)
+                        .currency(order.getCurrency())
+                        .build())
+                .providerSnapshot(ProviderSnapshot.builder()
+                        .providerId(serviceResponse.getProviderId())
+                        .businessName(provider.getBusinessName())
+                        .build())
+                .executionSnapshot(ExecutionSnapshot.builder()
+                        .executionType(serviceResponse.getExecutionType())
+                        .address(serviceResponse.getExecutionType() == ExecutionType.ONSITE
+                                ? request.getAddress() : null)
+                        .autoCompleteHours(serviceResponse.getExecutionType() == ExecutionType.ONSITE
+                                ? 24 : 72)
+                        .build())
+                .requirementValues(null)
+                .build());
     }
 
 }

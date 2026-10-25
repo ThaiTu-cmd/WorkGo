@@ -49,6 +49,27 @@ function loadProposals(): Proposal[] {
   }
 }
 
+export function validateProposalJob(raw: string): string | undefined {
+  return raw ? undefined : "Vui lòng chọn việc cần gửi đề xuất!";
+}
+
+export function validateProposalBid(raw: string): string | undefined {
+  const bid = Number(String(raw).replace(/[^\d]/g, ""));
+  if (!Number.isFinite(bid) || bid <= 0) return "Giá gói phải là số lớn hơn 0!";
+  if (bid < PRICE_MIN) return `Giá tối thiểu là ${PRICE_MIN.toLocaleString("vi-VN")} ₫!`;
+  if (bid > PRICE_MAX) return `Giá vượt quá ${PRICE_MAX.toLocaleString("vi-VN")} ₫ cho phép!`;
+  return undefined;
+}
+
+export function validateProposalDuration(raw: string): string | undefined {
+  const duration = Number(raw);
+  return !Number.isInteger(duration) || duration < 1 ? "Thời gian thực hiện tối thiểu 1 ngày!" : undefined;
+}
+
+export function validateProposalMessage(raw: string): string | undefined {
+  return sanitizeText(raw).length < 20 ? "Vui lòng nhập lời nhắn chi tiết từ 20 ký tự trở lên!" : undefined;
+}
+
 export default function SubmitProposalPage({ onNavigate, onShowToast, jobId }: TrungPageProps) {
   // Lazy init is SSR-safe and remounts fresh on every shell navigation
   // (shell renders pages conditionally), so no post-mount sync is needed.
@@ -61,18 +82,18 @@ export default function SubmitProposalPage({ onNavigate, onShowToast, jobId }: T
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const next: typeof errors = {};
-    if (!selectedJobId) next.job = "Vui lòng chọn việc cần gửi đề xuất!";
-    const bid = Number(String(bidRaw).replace(/[^\d]/g, ""));
-    if (!Number.isFinite(bid) || bid <= 0) next.bid = "Giá gói phải là số lớn hơn 0!";
-    else if (bid < PRICE_MIN) next.bid = `Giá tối thiểu là ${PRICE_MIN.toLocaleString("vi-VN")} ₫!`;
-    else if (bid > PRICE_MAX) next.bid = `Giá vượt quá ${PRICE_MAX.toLocaleString("vi-VN")} ₫ cho phép!`;
-    const duration = Number(durationRaw);
-    if (!Number.isInteger(duration) || duration < 1) next.duration = "Thời gian thực hiện tối thiểu 1 ngày!";
-    const cleanMsg = sanitizeText(message);
-    if (cleanMsg.length < 20) next.message = "Vui lòng nhập lời nhắn chi tiết từ 20 ký tự trở lên!";
+    const next: typeof errors = {
+      job: validateProposalJob(selectedJobId),
+      bid: validateProposalBid(bidRaw),
+      duration: validateProposalDuration(durationRaw),
+      message: validateProposalMessage(message),
+    };
     setErrors(next);
     if (next.job ?? next.bid ?? next.duration ?? next.message) return;
+
+    const bid = Number(String(bidRaw).replace(/[^\d]/g, ""));
+    const duration = Number(durationRaw);
+    const cleanMsg = sanitizeText(message);
 
     const existing = loadProposals();
     const dup = existing.some((p) => p.jobId === selectedJobId && p.providerName === "Bạn" && p.status === "PENDING");
@@ -110,7 +131,15 @@ export default function SubmitProposalPage({ onNavigate, onShowToast, jobId }: T
         <form onSubmit={submit} noValidate className={styles.form}>
           <label className={styles.field}>
             <span>Chọn việc</span>
-            <select value={selectedJobId} onChange={(e) => setSelectedJobId(e.target.value)}>
+            <select
+              value={selectedJobId}
+              onChange={(e) => {
+                setSelectedJobId(e.target.value);
+                if (errors.job) setErrors((prev) => ({ ...prev, job: validateProposalJob(e.target.value) }));
+              }}
+              onBlur={() => setErrors((prev) => ({ ...prev, job: validateProposalJob(selectedJobId) }))}
+              aria-describedby={errors.job ? "proposal-job-error" : undefined}
+            >
               <option value="">-- Chọn việc --</option>
               {jobs.map((j) => (
                 <option key={j.jobId} value={j.jobId}>
@@ -118,24 +147,72 @@ export default function SubmitProposalPage({ onNavigate, onShowToast, jobId }: T
                 </option>
               ))}
             </select>
-            {errors.job ? <em className={styles.error}>{errors.job}</em> : null}
+            {errors.job ? (
+              <em id="proposal-job-error" className={styles.error}>
+                {errors.job}
+              </em>
+            ) : null}
           </label>
           <div className={styles.row}>
             <label className={styles.field}>
               <span>Giá chào (₫)</span>
-              <input value={bidRaw} onChange={(e) => setBidRaw(e.target.value)} placeholder="2000000" inputMode="numeric" />
-              {errors.bid ? <em className={styles.error}>{errors.bid}</em> : null}
+              <input
+                value={bidRaw}
+                onChange={(e) => {
+                  setBidRaw(e.target.value);
+                  if (errors.bid) setErrors((prev) => ({ ...prev, bid: validateProposalBid(e.target.value) }));
+                }}
+                onBlur={() => setErrors((prev) => ({ ...prev, bid: validateProposalBid(bidRaw) }))}
+                placeholder="2000000"
+                inputMode="numeric"
+                aria-describedby={errors.bid ? "proposal-bid-error" : undefined}
+              />
+              {errors.bid ? (
+                <em id="proposal-bid-error" className={styles.error}>
+                  {errors.bid}
+                </em>
+              ) : null}
             </label>
             <label className={styles.field}>
               <span>Số ngày thực hiện</span>
-              <input value={durationRaw} onChange={(e) => setDurationRaw(e.target.value)} placeholder="5" inputMode="numeric" />
-              {errors.duration ? <em className={styles.error}>{errors.duration}</em> : null}
+              <input
+                value={durationRaw}
+                onChange={(e) => {
+                  setDurationRaw(e.target.value);
+                  if (errors.duration)
+                    setErrors((prev) => ({ ...prev, duration: validateProposalDuration(e.target.value) }));
+                }}
+                onBlur={() => setErrors((prev) => ({ ...prev, duration: validateProposalDuration(durationRaw) }))}
+                placeholder="5"
+                inputMode="numeric"
+                aria-describedby={errors.duration ? "proposal-duration-error" : undefined}
+              />
+              {errors.duration ? (
+                <em id="proposal-duration-error" className={styles.error}>
+                  {errors.duration}
+                </em>
+              ) : null}
             </label>
           </div>
           <label className={styles.field}>
             <span>Lời nhắn (tối thiểu 20 ký tự)</span>
-            <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={5} placeholder="Kinh nghiệm và phương án thực hiện của bạn..." />
-            {errors.message ? <em className={styles.error}>{errors.message}</em> : null}
+            <textarea
+              value={message}
+              onChange={(e) => {
+                setMessage(e.target.value);
+                if (errors.message)
+                  setErrors((prev) => ({ ...prev, message: validateProposalMessage(e.target.value) }));
+              }}
+              onBlur={() => setErrors((prev) => ({ ...prev, message: validateProposalMessage(message) }))}
+              rows={5}
+              placeholder="Kinh nghiệm và phương án thực hiện của bạn..."
+              aria-describedby={errors.message ? "proposal-message-error" : undefined}
+            />
+            {errors.message ? (
+              <em id="proposal-message-error" className={styles.error}>
+                {errors.message}
+              </em>
+            ) : null}
           </label>
           <button type="submit" className={styles.submit}>
             Gửi đề xuất

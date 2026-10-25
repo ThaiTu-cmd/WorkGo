@@ -8,7 +8,7 @@ export default function DualCTA({ onOpenAuth }) {
       <div className="container">
         <div className={styles.ctaGrid}>
           {/* Client Card */}
-          <div className={`${styles.ctaCard} ${styles.clientCard}`}>
+          <div className={`${styles.ctaCard} ${styles.clientCard} reveal reveal-delay-1`}>
             <div className={styles.cardHeader}>
               <div className={styles.iconCircle}>
                 <Briefcase size={26} />
@@ -34,7 +34,7 @@ export default function DualCTA({ onOpenAuth }) {
           </div>
 
           {/* Provider Card */}
-          <div className={`${styles.ctaCard} ${styles.providerCard}`}>
+          <div className={`${styles.ctaCard} ${styles.providerCard} reveal reveal-delay-2`}>
             <div className={styles.cardHeader}>
               <div className={styles.iconCircle}>
                 <UserCheck size={26} />

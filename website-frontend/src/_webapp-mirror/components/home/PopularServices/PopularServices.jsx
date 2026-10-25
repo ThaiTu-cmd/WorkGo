@@ -43,7 +43,7 @@ export default function PopularServices({ onSelectService }) {
     <section className={styles.section} id="popular-services">
       <div className="container">
         {/* Section Header */}
-        <div className={styles.headerRow}>
+        <div className={`${styles.headerRow} reveal`}>
           <div>
             <div className={styles.badgeRow}>
               <Flame size={18} className={styles.flameIcon} />
@@ -79,7 +79,7 @@ export default function PopularServices({ onSelectService }) {
         </div>
 
         {/* Filter Tabs */}
-        <div className={styles.tabList}>
+        <div className={`${styles.tabList} reveal reveal-delay-1`}>
           {filterTabs.map((tab) => (
             <button
               key={tab.key}
@@ -109,10 +109,10 @@ export default function PopularServices({ onSelectService }) {
           </p>
         )}
         <div className={styles.servicesGrid}>
-          {filteredServices.map((service) => (
+          {filteredServices.map((service, idx) => (
             <div
               key={service.serviceId}
-              className={styles.cardCol}
+              className={`${styles.cardCol} reveal reveal-delay-${(idx % 4) + 1}`}
               onClick={() => onSelectService && onSelectService(service)}
             >
               <ServiceCard service={service} />

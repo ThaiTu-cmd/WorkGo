@@ -29,6 +29,36 @@
   overflow-wrap: break-word;
 }
 
+.demoBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-top: 14px;
+  font-size: 0.88rem;
+  color: #166534;
+}
+
+.demoFillBtn {
+  background: #1dbf73;
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.demoFillBtn:hover {
+  background: #19a463;
+}
+
 .form {
   display: flex;
   flex-direction: column;

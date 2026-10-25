@@ -34,7 +34,7 @@ export default function HowItWorks() {
     <section className={styles.section} id="how-it-works">
       <div className="container">
         {/* Header */}
-        <div className={styles.header}>
+        <div className={`${styles.header} reveal`}>
           <span className={styles.tagline}>DỄ DÀNG & AN TÂM</span>
           <h2 className={styles.title}>Cách thức hoạt động trên WorkGo</h2>
           <p className={styles.subtitle}>4 bước đơn giản, an toàn</p>
@@ -45,7 +45,7 @@ export default function HowItWorks() {
           {steps.map((st, idx) => {
             const Icon = st.icon;
             return (
-              <div key={idx} className={styles.stepCard}>
+              <div key={idx} className={`${styles.stepCard} reveal reveal-delay-${idx + 1}`}>
                 <div className={styles.stepTop}>
                   <span className={styles.stepNum}>{st.stepNumber}</span>
                   <div className={styles.stepIconBox}>

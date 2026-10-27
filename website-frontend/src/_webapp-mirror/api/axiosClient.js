@@ -39,9 +39,22 @@ export const NOT_PROVIDER_MESSAGE =
 // (e.g. backend not running), not a business error from the API.
 const UNREACHABLE_MESSAGE = 'Không kết nối được máy chủ. Vui lòng kiểm tra backend rồi thử lại.';
 
+const API_NOT_FOUND_MESSAGE =
+  'Không tìm thấy API (HTTP 404). Có thể API Gateway đang trỏ tới một dịch vụ khác ' +
+  'hoặc identity-service chưa chạy. Vui lòng kiểm tra API Gateway và identity-service.';
+
+export function buildApiErrorMessage(status, body, contentType = '') {
+  if (body?.message) return body.message;
+  if (status === 0 || status >= 500) return UNREACHABLE_MESSAGE;
+  if (status === 404 && !String(contentType).includes('application/json')) {
+    return API_NOT_FOUND_MESSAGE;
+  }
+  return `HTTP ${status}`;
+}
+
 export class ApiError extends Error {
-  constructor(status, body) {
-    super(body?.message || (status >= 500 || status === 0 ? UNREACHABLE_MESSAGE : `HTTP ${status}`));
+  constructor(status, body, contentType = '') {
+    super(buildApiErrorMessage(status, body, contentType));
     this.code = body?.code;
     this.status = status === 401 && FORBIDDEN_CODES.includes(this.code) ? 403 : status;
   }
@@ -63,9 +76,10 @@ async function request(method, url, { params, data } = {}) {
   } catch {
     throw new ApiError(0, null);
   }
+  const contentType = res.headers.get('content-type') || '';
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    const error = new ApiError(res.status, body);
+    const error = new ApiError(res.status, body, contentType);
     if (error.status === 401 && token) setAccessToken(null);
     throw error;
   }

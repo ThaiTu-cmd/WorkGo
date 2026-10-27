@@ -36,6 +36,10 @@ import DisputeCenterPage from "../trung-pages/trust/DisputeCenterPage";
 import PublicInfoPage, { isPublicInfoPageKey, type PublicInfoPageKey } from "../trung-pages/public/PublicInfoPage";
 import { PUBLIC_INFO_PAGE_KEYS } from "../trung-pages/public/publicInfoContent.js";
 import NotFoundPage from "../trung-pages/NotFoundPage";
+import MessagesPage from "../trung-pages/messages/MessagesPage";
+import type { ChatTarget } from "../trung-pages/messages/types";
+import { getAccessToken } from "@/_webapp-mirror/api/axiosClient";
+import { messageApi } from "./backend";
 import { Info } from "lucide-react";
 import styles from "./webapp-shell.module.css";
 
@@ -46,6 +50,9 @@ export type CatalogFilterParams = {
   jobId?: string;
   providerId?: string;
   orderId?: string;
+  serviceId?: string;
+  // "messages": thread to open (created if this is the first contact).
+  chat?: ChatTarget;
 };
 
 export type TrungPageKey =
@@ -84,6 +91,7 @@ export type TrungPageKey =
   | "terms"
   | "privacy"
   | "contact"
+  | "messages"
   | PublicInfoPageKey;
 
 const TRUNG_PAGE_KEYS = new Set<string>([
@@ -103,6 +111,7 @@ const TRUNG_PAGE_KEYS = new Set<string>([
   "review-form",
   "dispute-center",
   ...PUBLIC_INFO_PAGE_KEYS,
+  "messages",
 ]);
 
 const CORE_PAGE_KEYS = new Set<string>([
@@ -165,6 +174,7 @@ export default function WebAppShell() {
   const [selectedJobId, setSelectedJobId] = useState("");
   const [selectedProviderId, setSelectedProviderId] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState("");
+  const [chatConversationId, setChatConversationId] = useState("");
   // { service, pkg, addons } handed over by ServiceDetailPage "Tiếp tục đặt hàng".
   const [checkoutOrder, setCheckoutOrder] = useState<Record<string, unknown> | null>(null);
   // S4: offline state for the banner (M3) — refreshed on online/offline events.
@@ -247,6 +257,12 @@ export default function WebAppShell() {
 
   // Navigate handler from Header or links
   const handleNavigate = (page: TrungPageKey, params: CatalogFilterParams = {}) => {
+    // Conversations belong to an account: ask for sign-in first.
+    if (page === "messages" && !getAccessToken()) {
+      showToast("Vui lòng đăng nhập để nhắn tin.");
+      setAuthModal("login");
+      return;
+    }
     setPreviousPage(currentPage);
     setCurrentPage(page);
     if (page === "catalog") {
@@ -260,6 +276,11 @@ export default function WebAppShell() {
     if (page === "submit-proposal" && params.jobId) setSelectedJobId(params.jobId);
     if (page === "proposal-review" && params.jobId) setSelectedJobId(params.jobId);
     if (page === "review-form" && params.orderId) setSelectedOrderId(params.orderId);
+    if (page === "detail" && params.serviceId) setSelectedServiceId(params.serviceId);
+    if (page === "messages") {
+      const { chat } = params;
+      setChatConversationId(chat ? messageApi.openConversation(chat, chat.context) : "");
+    }
     scrollToTopInstant();
   };
 
@@ -424,6 +445,7 @@ export default function WebAppShell() {
           onSelectCategory={handleSelectCategory}
           onGoHome={() => handleNavigate("home")}
           onShowToast={showToast}
+          onContactSeller={(chat: ChatTarget) => handleNavigate("messages", { chat })}
           onCheckout={(order: Record<string, unknown>) => {
             setCheckoutOrder(order);
             handleNavigate("checkout");
@@ -444,7 +466,11 @@ export default function WebAppShell() {
 
       {currentPage === "orders" && (
         /* Client / Provider order dashboard */
-        <OrderDashboardPage onGoHome={() => handleNavigate("home")} onShowToast={showToast} />
+        <OrderDashboardPage
+          onGoHome={() => handleNavigate("home")}
+          onShowToast={showToast}
+          onOpenChat={(chat: ChatTarget) => handleNavigate("messages", { chat })}
+        />
       )}
 
       {currentPage === "my-services" && (
@@ -570,6 +596,15 @@ export default function WebAppShell() {
           onShowToast={showToast}
         />
       )}
+
+      {currentPage === "messages" && (
+        <MessagesPage
+          key={chatConversationId}
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+          conversationId={chatConversationId || undefined}
+        />
+      )}
       </div>
       )}
 
@@ -581,7 +616,8 @@ export default function WebAppShell() {
       )}
 
       {/* Footer (hidden on service-form wizard for clean focus) */}
-      {currentPage !== "service-form" && <Footer onNavigate={handleNavigate} />}
+      {/* Messages is a full-height app view, so it drops the footer too. */}
+      {currentPage !== "service-form" && currentPage !== "messages" && <Footer onNavigate={handleNavigate} />}
 
       {/* Authentication Modal */}
       {authModal && (

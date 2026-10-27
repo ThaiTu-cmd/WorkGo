@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Info, Loader2, Search, Package } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Info, Loader2, MessageSquare, Search, Package } from 'lucide-react';
 import { useMyOrders } from '../../hooks/useMyOrders';
 import OrderStatusBadge from './components/OrderStatusBadge';
 import OrderExecutionInfo from './components/OrderExecutionInfo';
@@ -131,7 +131,7 @@ function OrderLiveDetails({ order, role, onShowToast }) {
   );
 }
 
-export default function OrderDashboardPage({ onGoHome, onShowToast }) {
+export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }) {
   const [role, setRole] = useState('CLIENT');
   const [page, setPage] = useState(0);
   const [tab, setTab] = useState('ACTIVE');
@@ -229,6 +229,18 @@ export default function OrderDashboardPage({ onGoHome, onShowToast }) {
   };
 
   const partnerHeader = role === 'CLIENT' ? 'Chuyên gia' : 'Khách hàng';
+
+  // The counterpart is the provider when I'm the client, and vice versa.
+  const openChat = (o) => {
+    const participantId = role === 'CLIENT' ? o.providerId : o.clientId;
+    if (!onOpenChat || !participantId) return;
+    onOpenChat({
+      participantId,
+      participantName: o.counterpartName || `${partnerHeader} #${String(participantId).slice(0, 6)}`,
+      participantRole: role === 'CLIENT' ? 'PROVIDER' : 'CLIENT',
+      context: { type: 'order', id: o.orderId, title: o.title, label: o.orderNumber, status: o.orderStatus },
+    });
+  };
 
   return (
     <div className={styles.pageContainer}>
@@ -404,6 +416,16 @@ export default function OrderDashboardPage({ onGoHome, onShowToast }) {
                                 {a.label}
                               </button>
                             ))}
+                            {onOpenChat && (
+                              <button
+                                type="button"
+                                className={`${styles.btn} ${styles.btn_ghost}`}
+                                onClick={() => openChat(o)}
+                              >
+                                <MessageSquare size={14} aria-hidden="true" />
+                                Nhắn tin
+                              </button>
+                            )}
                             <button
                               type="button"
                               className={`${styles.btn} ${styles.btn_ghost}`}

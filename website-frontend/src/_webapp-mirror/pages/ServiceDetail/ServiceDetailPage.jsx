@@ -27,7 +27,8 @@ export default function ServiceDetailPage({
   onSelectCategory,
   onGoHome,
   onShowToast,
-  onCheckout
+  onCheckout,
+  onContactSeller
 }) {
   const { status, service } = useServiceDetail(serviceId);
 
@@ -64,6 +65,15 @@ export default function ServiceDetailPage({
   };
 
   const handleContactSeller = () => {
+    if (onContactSeller && service.providerId) {
+      onContactSeller({
+        participantId: service.providerId,
+        participantName: service.provider.name,
+        participantRole: 'PROVIDER',
+        context: { type: 'service', id: service.serviceId, title: service.title },
+      });
+      return;
+    }
     if (onShowToast) {
       onShowToast(`Đã mở kênh chat riêng với ${service.provider.name}`);
     }

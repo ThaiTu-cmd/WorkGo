@@ -6,3 +6,5 @@ export { providerApi } from "@/_webapp-mirror/api/providerApi";
 export { fromAddressForm, pageItems, toAddress, toProvider } from "@/_webapp-mirror/api/adapters";
 export { NOT_PROVIDER_MESSAGE } from "@/_webapp-mirror/api/axiosClient";
 export { useAuthToken } from "@/_webapp-mirror/hooks/useAuthToken";
+export { messageApi, ME, unreadOf, totalUnread } from "@/_webapp-mirror/api/messageApi";
+export { useMessages } from "@/_webapp-mirror/hooks/useMessages";

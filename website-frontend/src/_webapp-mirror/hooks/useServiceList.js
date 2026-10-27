@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { catalogApi } from '../api/catalogApi';
 import { providerApi } from '../api/providerApi';
-import { getAccessToken } from '../api/axiosClient';
 import { pageItems, toServiceCard } from '../api/adapters';
 
 const EXECUTION_TYPES = ['DIGITAL', 'ONSITE'];
@@ -26,7 +25,6 @@ export function useServiceList() {
     let cancelled = false;
 
     const load = async () => {
-      if (!getAccessToken()) return setState({ status: 'needs-login', services: [] });
       setState((s) => ({ ...s, status: 'loading' }));
       try {
         const categories = flattenCategories(pageItems(await catalogApi.getRootCategories()));

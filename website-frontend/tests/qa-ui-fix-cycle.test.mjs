@@ -163,5 +163,5 @@ test("UF-08: shell tsx keeps route comment, TrungSubNav render, Footer guard", (
   const tsx = shellTsx();
   assert.match(tsx, /15 trung-pages/);
   assert.match(tsx, /TrungSubNav/);
-  assert.match(tsx, /\{currentPage\s*!==\s*"service-form"\s*&&\s*<Footer\s*\/>\}/);
+  assert.match(tsx, /\{currentPage\s*!==\s*"service-form"\s*&&\s*<Footer\b[^>]*\/>\}/);
 });

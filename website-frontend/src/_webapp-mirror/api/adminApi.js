@@ -1,4 +1,4 @@
-import axiosClient from './axiosClient';
+import axiosClient from './axiosClient.js';
 
 // Admin-only endpoints (backend checks hasRole('ADMIN') on the service layer).
 // List endpoints answer ApiResponse<PageResponse{ data, totalElements, totalPages, currentPage }>.
@@ -20,6 +20,8 @@ export const adminApi = {
   listUsers: ({ page = 0, size = 10 } = {}) =>
     axiosClient.get('/identity/users', { params: { page, size } }),
   getUser: (userId) => axiosClient.get(`/identity/users/${userId}`),
+  updateUser: (userId, body) => axiosClient.put(`/identity/users/${userId}`, body),
+  deleteUser: (userId) => axiosClient.delete(`/identity/users/${userId}`),
 
   // catalog-service categories. body: { name, slug, description, parent (categoryId | null) }
   listCategories: ({ page = 0, size = 20 } = {}) =>

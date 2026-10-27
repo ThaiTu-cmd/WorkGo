@@ -1,4 +1,4 @@
-import axiosClient from './axiosClient';
+import axiosClient from './axiosClient.js';
 
 // order-service endpoints via gateway (/api/v1/order/**).
 export const orderApi = {
@@ -7,6 +7,9 @@ export const orderApi = {
     axiosClient.get('/order/orders', { params: { roleName, page, size } }),
 
   getOrder: (orderId) => axiosClient.get(`/order/orders/${orderId}`),
+
+  getOrderHistory: (orderId, page = 0, size = 10) =>
+    axiosClient.get(`/order/orders/${orderId}/history`, { params: { page, size } }),
 
   // ExecutionResponse { executionType, startedAt, deliveredAt, completedAt,
   //   digital: { status, deadlineAt, revisionLimit, revisionsUsed, requirementSubmittedAt },

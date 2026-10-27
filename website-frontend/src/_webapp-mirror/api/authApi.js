@@ -1,6 +1,6 @@
-import axiosClient, { getAccessToken, setAccessToken } from './axiosClient';
+import axiosClient, { getAccessToken, setAccessToken } from './axiosClient.js';
 
-export { splitFullName, joinFullName } from './adapters';
+export { splitFullName, joinFullName } from './adapters.js';
 
 // identity-service via gateway (/api/v1/identity/**). token/registration/logout are public.
 export const authApi = {
@@ -14,6 +14,10 @@ export const authApi = {
 
   // body: { firstName, lastName, userName, password, email, phone }
   register: (body) => axiosClient.post('/identity/users/registration', body),
+
+  introspect: (token) => axiosClient.post('/identity/auth/introspect', { token }),
+
+  refresh: (token) => axiosClient.post('/identity/auth/refresh', { token }),
 
   logout: async () => {
     const token = getAccessToken();

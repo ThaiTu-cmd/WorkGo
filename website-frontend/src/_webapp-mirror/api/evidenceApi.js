@@ -1,4 +1,4 @@
-import axiosClient from './axiosClient';
+import axiosClient from './axiosClient.js';
 
 // Work evidence for ONSITE orders (order-service, /orders/{orderId}/evidence).
 // Only the order's provider may upload, and only while the order is IN_PROGRESS

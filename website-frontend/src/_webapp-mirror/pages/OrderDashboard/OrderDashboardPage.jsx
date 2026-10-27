@@ -6,11 +6,13 @@ import OrderExecutionInfo from './components/OrderExecutionInfo';
 import WorkEvidencePanel from './components/WorkEvidencePanel';
 import { useOrderExecution } from '../../hooks/useOrderExecution';
 import OrderCancelPage from '../OrderCancel/OrderCancelPage';
+import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
 import styles from './OrderDashboardPage.module.css';
 
 const NOTICES = {
   'needs-login': 'Đăng nhập để xem đơn hàng của bạn.',
   error: 'Không kết nối được order-service — chưa tải được đơn hàng.',
+  'not-provider': NOT_PROVIDER_MESSAGE,
 };
 
 const ACTIVE_STATUSES = ['PENDING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS', 'DELIVERED'];

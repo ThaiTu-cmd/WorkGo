@@ -61,7 +61,9 @@ export function useMyOrders(roleName, page) {
         setStatus('api');
       } catch (err) {
         if (cancelled) return;
-        fail(err?.status === 401 ? 'needs-login' : 'error');
+        // 403 = signed in but no PROVIDER role/providerId yet (axiosClient maps 1007).
+        if (err?.status === 403) fail('not-provider');
+        else fail(err?.status === 401 ? 'needs-login' : 'error');
       }
     };
     load();

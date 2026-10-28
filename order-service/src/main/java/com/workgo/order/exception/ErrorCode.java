@@ -50,7 +50,11 @@ public enum ErrorCode {
 
 
     ORDER_BOOKING_SLOT_REQUIRED(3001,"Booking slot is required!" , HttpStatus.NOT_FOUND),
-    ORDER_ADDRESS_REQUIRED(3002, "Order Address is required !", HttpStatus.NOT_FOUND );
+    ORDER_ADDRESS_REQUIRED(3002, "Order Address is required !", HttpStatus.NOT_FOUND ),
+
+    ORDER_CHECKIN_CODE_INVALID(3003, "Checkin code is invalid", HttpStatus.BAD_REQUEST),
+    ORDER_CHECKIN_TIME_INVALID(3004, "Checkin time is invalid", HttpStatus.BAD_REQUEST),
+    ORDER_EVIDENCE_AFTER_REQUIRED(3005, "At least one AFTER evidence is required", HttpStatus.BAD_REQUEST);
 
 
     private int code;

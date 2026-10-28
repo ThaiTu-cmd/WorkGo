@@ -32,6 +32,7 @@ public class OrderStatusService {
         saveHistory(order, null, order.getOrderStatus(), clientId, RoleName.CLIENT);
     }
 
+    //chuyen trang thai cua order
     public void transition(Order order, OrderStatus toStatus, UUID actorId, RoleName roleName){
 
         OrderStatus fromStatus = order.getOrderStatus();

@@ -14,7 +14,7 @@ import java.util.UUID;
 @Setter
 @Builder
 @RequiredArgsConstructor
-@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class ServiceResponse {
 
     UUID serviceId;

@@ -37,6 +37,9 @@ export default function RootLayout() {
             <Stack.Screen name="service/[id]" options={{ title: 'Chi tiết dịch vụ' }} />
             <Stack.Screen name="checkout" options={{ title: 'Đặt dịch vụ' }} />
             <Stack.Screen name="orders/[id]" options={{ title: 'Chi tiết đơn hàng' }} />
+            <Stack.Screen name="account/profile" options={{ title: 'Thông tin cá nhân' }} />
+            <Stack.Screen name="account/addresses/index" options={{ title: 'Sổ địa chỉ' }} />
+            <Stack.Screen name="account/addresses/[id]" options={{ title: 'Địa chỉ' }} />
           </Stack>
         </AuthProvider>
       </QueryClientProvider>

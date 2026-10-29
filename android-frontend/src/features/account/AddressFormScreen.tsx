@@ -5,6 +5,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { StyleSheet, Text, type TextInputProps } from 'react-native';
 
 import { errorMessage } from '@/api/errors';
+import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { Button, colors, font, Screen, SkeletonList, TextField } from '@/ui';
 
@@ -30,7 +31,7 @@ export function AddressFormScreen() {
   const isNew = id === 'new';
   const addresses = useAddresses(signedIn && !isNew);
 
-  if (!signedIn) return null;
+  if (!signedIn) return <LoginRequired edges={['bottom']} />;
   if (!isNew && addresses.isPending) {
     return (
       <Screen edges={['bottom']}>

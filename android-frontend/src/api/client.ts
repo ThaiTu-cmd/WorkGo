@@ -6,7 +6,9 @@ type Params = Record<string, string | number | boolean | undefined | null>;
 
 type ClientHooks = {
   getToken: () => string | null;
-  onUnauthorized: () => void;
+  // Receives the token the failed request carried, which may already have
+  // been replaced by a refresh.
+  onUnauthorized: (sentToken: string) => void;
 };
 
 // The session layer plugs in here (AuthProvider), so this module never
@@ -43,7 +45,7 @@ async function request<T>(method: string, path: string, { params, data }: { para
   const body = await res.json().catch(() => null);
   if (!res.ok) {
     const error = new ApiError(res.status, body);
-    if (error.status === 401 && token) hooks.onUnauthorized();
+    if (error.status === 401 && token) hooks.onUnauthorized(token);
     throw error;
   }
   return body as T;

@@ -7,6 +7,7 @@ import { errorMessage } from '@/api/errors';
 import type { OrderRole } from '@/api/types';
 import { useAuth } from '@/auth/AuthProvider';
 import { hasRole } from '@/auth/jwt';
+import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { Chip, colors, EmptyState, ErrorState, font, SkeletonList, spacing } from '@/ui';
 
@@ -14,7 +15,7 @@ import { useOrders } from './hooks';
 import { OrderRow } from './OrderRow';
 
 export function OrdersScreen() {
-  const signedIn = useRequireAuth();
+  const signedIn = useRequireAuth({ prompt: false });
   const { claims } = useAuth();
   const router = useRouter();
   const isProvider = hasRole(claims, 'PROVIDER');
@@ -30,7 +31,7 @@ export function OrdersScreen() {
     }, [signedIn, refetch])
   );
 
-  if (!signedIn) return null;
+  if (!signedIn) return <LoginRequired edges={['top']} message="Đăng nhập để xem đơn hàng của bạn." />;
   const items = orders.data?.pages.flatMap((p) => p.items) ?? [];
 
   return (

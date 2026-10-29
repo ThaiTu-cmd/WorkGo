@@ -158,3 +158,71 @@ test('client onUnauthorized → guest', async () => {
   expect(api.status).toBe('guest');
   await waitFor(async () => expect(await readToken()).toBeNull());
 });
+
+test('a 401 for the token that was just refreshed away does not sign out', async () => {
+  const old = tokenExpiringIn(HOUR);
+  const fresh = tokenExpiringIn(24 * HOUR);
+  await writeToken(old);
+  await renderAuth();
+
+  // A request goes out with the old token, the refresh lands, then the old request 401s.
+  let reject!: (r: unknown) => void;
+  global.fetch = jest.fn(
+    () => new Promise((resolve) => (reject = () => resolve({ ok: false, status: 401, json: async () => ({ code: 1006 }) })))
+  ) as never;
+  const inFlight = http.get('/order/orders').catch(() => {});
+  mocked.refresh.mockResolvedValue(fresh);
+  await act(async () => {
+    await api.refresh();
+  });
+  await act(async () => {
+    reject(null);
+    await inFlight;
+  });
+
+  expect(api.status).toBe('signedIn');
+  expect(api.token).toBe(fresh);
+  expect(await readToken()).toBe(fresh);
+});
+
+test('overlapping refresh calls hit the server once', async () => {
+  // 10h left: no automatic refresh at mount, only the two manual calls below.
+  await writeToken(tokenExpiringIn(10 * HOUR));
+  await renderAuth();
+  let resolve!: (t: string) => void;
+  mocked.refresh.mockReturnValue(new Promise<string>((r) => (resolve = r)));
+
+  let results: boolean[] = [];
+  await act(async () => {
+    const both = Promise.all([api.refresh(), api.refresh()]);
+    resolve(tokenExpiringIn(24 * HOUR));
+    results = await both;
+  });
+  expect(mocked.refresh).toHaveBeenCalledTimes(1);
+  expect(results).toEqual([true, true]);
+});
+
+test('a session dropped by a 401 also clears cached user data', async () => {
+  await writeToken(tokenExpiringIn(10 * HOUR));
+  const queryClient = new QueryClient();
+  const clear = jest.spyOn(queryClient, 'clear');
+  await renderAuth(queryClient);
+  global.fetch = jest.fn(async () => ({ ok: false, status: 401, json: async () => ({ code: 1006 }) })) as never;
+
+  await act(async () => {
+    await http.get('/order/orders').catch(() => {});
+  });
+  expect(clear).toHaveBeenCalled();
+});
+
+test('AppState active with an expired token → guest', async () => {
+  await writeToken(tokenExpiringIn(10 * HOUR));
+  await renderAuth();
+  const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 11 * HOUR);
+  await act(async () => {
+    appStateHandler?.('active');
+  });
+  expect(api.status).toBe('guest');
+  expect(mocked.refresh).not.toHaveBeenCalled();
+  nowSpy.mockRestore();
+});

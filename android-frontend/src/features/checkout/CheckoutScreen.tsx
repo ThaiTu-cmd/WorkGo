@@ -10,11 +10,13 @@ import { errorMessage } from '@/api/errors';
 import { orderApi } from '@/api/orderApi';
 import { qk } from '@/api/queryKeys';
 import type { AddressDto, BookingSlotDto, OrderCreationRequest } from '@/api/types';
+import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { useServiceDetail } from '@/features/catalog/hooks';
 import { PackagePicker } from '@/features/catalog/PackagePicker';
 import { upcomingAvailableSlots } from '@/features/orders/orderStatus';
 import { formatDateTime, formatVnd } from '@/lib/format';
+import { useSingleFlight } from '@/lib/useSingleFlight';
 import { Button, Card, colors, ErrorState, font, OptionRow, Screen, SkeletonList, spacing } from '@/ui';
 
 import { estimateTotal, validateCheckout } from './checkout';
@@ -23,6 +25,7 @@ export function CheckoutScreen() {
   const signedIn = useRequireAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const once = useSingleFlight();
   const params = useLocalSearchParams<{ serviceId: string; packageId?: string }>();
   const detail = useServiceDetail(params.serviceId);
   const service = detail.data;
@@ -55,7 +58,7 @@ export function CheckoutScreen() {
     onError: (err) => setSubmitError(errorMessage(err)),
   });
 
-  if (!signedIn) return null;
+  if (!signedIn) return <LoginRequired edges={['bottom']} />;
   if (detail.isPending || (onsite && (slots.isPending || addresses.isPending))) {
     return (
       <Screen edges={['bottom']}>
@@ -157,7 +160,8 @@ export function CheckoutScreen() {
         onPress={() => {
           if (!check.ok) return;
           setSubmitError(null);
-          create.mutate(check.body);
+          // onError above shows the message; the guard only needs the promise to settle.
+          void once(() => create.mutateAsync(check.body).catch(() => undefined));
         }}
       />
     </Screen>

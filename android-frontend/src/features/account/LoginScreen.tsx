@@ -31,7 +31,11 @@ export function LoginScreen() {
     setFormError(null);
     try {
       await signIn(userName.trim(), password);
-      router.replace(safeRedirect(redirect));
+      // With a destination, login turns into it; otherwise return to whatever opened login.
+      const target = safeRedirect(redirect);
+      if (target) router.replace(target);
+      else if (router.canGoBack()) router.back();
+      else router.replace('/');
     } catch (err) {
       setFormError(err instanceof ApiError && err.status === 401 ? 'Sai tên đăng nhập hoặc mật khẩu.' : errorMessage(err));
     }
@@ -72,7 +76,7 @@ export function LoginScreen() {
         )}
       />
       <Button title="Đăng nhập" loading={isSubmitting} onPress={onSubmit} />
-      <Link href={{ pathname: '/auth/register', params: redirect ? { redirect } : {} }} style={styles.link}>
+      <Link href={{ pathname: '/auth/register', params: { viaLogin: '1', ...(redirect ? { redirect } : {}) } }} style={styles.link}>
         Chưa có tài khoản? Đăng ký
       </Link>
     </Screen>

@@ -75,12 +75,28 @@ export function useDeleteService() {
 
 export type SaveServiceInput = {
   serviceId: string | null;
+  currentSlug?: string;
   currentStatus?: ServiceStatus;
   info: ServiceInfo;
   packages: PackageInput[];
   images: string[];
   hasCover: boolean;
 };
+
+// What a previous, partly failed save already wrote, so a retry continues
+// instead of creating the service again.
+export type SaveProgress = {
+  serviceId?: string;
+  slug?: string;
+  packageIds: Record<number, string>;
+  mediaSaved: number;
+  published: boolean;
+};
+
+export const newSaveProgress = (): SaveProgress => ({ packageIds: {}, mediaSaved: 0, published: false });
+
+// Slugs are unique across all providers: suffix the title so two "Sửa máy lạnh" can coexist.
+const uniqueSlug = (title: string) => `${slugify(title)}-${Math.random().toString(36).slice(2, 6).padEnd(4, '0')}`;
 
 const packageBody = (p: PackageInput) => ({
   name: p.name.trim(),
@@ -94,34 +110,44 @@ const packageBody = (p: PackageInput) => ({
 
 // Service, then its packages, then its images — the catalog API has no
 // single "save everything" endpoint. A new service is published right away.
-export async function saveService(input: SaveServiceInput): Promise<string> {
-  const basePrice = Math.min(...input.packages.map((p) => p.price));
+// Pass the same `progress` again to retry after a failure.
+export async function saveService(input: SaveServiceInput, progress: SaveProgress = newSaveProgress()): Promise<string> {
+  const isNew = !input.serviceId;
   const body = {
     categoryId: input.info.categoryId,
     executionType: input.info.executionType,
     title: input.info.title.trim(),
-    slug: slugify(input.info.title),
+    slug: input.currentSlug ?? progress.slug ?? uniqueSlug(input.info.title),
     description: input.info.description.trim(),
-    basePrice,
+    basePrice: Math.min(...input.packages.map((p) => p.price)),
     currency: 'VND',
   };
 
-  let serviceId = input.serviceId;
-  if (serviceId) {
+  let serviceId = input.serviceId ?? progress.serviceId;
+  if (!serviceId) {
+    progress.slug = body.slug;
+    serviceId = (await catalogApi.createService(body)).result.serviceId;
+    progress.serviceId = serviceId;
+  } else if (!isNew) {
     // PUT writes nulls too: always send the status the service already has.
     await catalogApi.updateService(serviceId, { ...body, status: input.currentStatus ?? 'DRAFT' });
-  } else {
-    serviceId = (await catalogApi.createService(body)).result.serviceId;
   }
 
-  for (const p of input.packages) {
+  for (const [i, p] of input.packages.entries()) {
     if (p.id) await catalogApi.updatePackage(p.id, packageBody(p));
-    else await catalogApi.createPackage(serviceId, packageBody(p));
+    else if (!progress.packageIds[i]) {
+      const created = await catalogApi.createPackage(serviceId, packageBody(p));
+      progress.packageIds[i] = created?.result?.packageId ?? 'created';
+    }
   }
-  for (const [i, url] of input.images.entries()) {
-    await catalogApi.createMedia(serviceId, { url, mediaType: 'IMAGE', cover: !input.hasCover && i === 0 });
+  for (let i = progress.mediaSaved; i < input.images.length; i++) {
+    await catalogApi.createMedia(serviceId, { url: input.images[i], mediaType: 'IMAGE', cover: !input.hasCover && i === 0 });
+    progress.mediaSaved = i + 1;
   }
-  if (!input.serviceId) await catalogApi.setServiceStatus(serviceId, 'PUBLISHED');
+  if (isNew && !progress.published) {
+    await catalogApi.setServiceStatus(serviceId, 'PUBLISHED');
+    progress.published = true;
+  }
   return serviceId;
 }
 
@@ -129,7 +155,7 @@ export function useSaveService() {
   const queryClient = useQueryClient();
   const invalidate = useInvalidateCatalog();
   return useMutation({
-    mutationFn: saveService,
+    mutationFn: ({ input, progress }: { input: SaveServiceInput; progress: SaveProgress }) => saveService(input, progress),
     onSuccess: (serviceId) => {
       invalidate();
       void queryClient.invalidateQueries({ queryKey: qk.service(serviceId) });

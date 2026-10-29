@@ -5,6 +5,7 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 import { instantToTime, timeToInstant, timeToMinutes, WEEK_DAYS } from '@/api/availabilityApi';
 import { errorMessage } from '@/api/errors';
 import type { RuleDto } from '@/api/types';
+import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { formatDateTime } from '@/lib/format';
 import { Badge, Button, Card, Chip, colors, EmptyState, ErrorState, font, Screen, SkeletonList, spacing, TextField } from '@/ui';
@@ -37,7 +38,7 @@ export function AvailabilityScreen() {
   const [draft, setDraft] = React.useState<Draft | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
-  if (!signedIn) return null;
+  if (!signedIn) return <LoginRequired edges={['bottom']} />;
 
   const edit = (r: RuleDto) =>
     setDraft({

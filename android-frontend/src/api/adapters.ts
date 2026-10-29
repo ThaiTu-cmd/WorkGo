@@ -55,6 +55,7 @@ export type ServiceCard = {
 };
 
 export type ServiceDetail = Omit<ServiceCard, 'avgRating'> & {
+  slug?: string;
   description: string;
   status?: ServiceDto['status'];
   currency?: string;
@@ -146,6 +147,7 @@ export function toServiceDetail({
   return {
     ...card,
     categoryName: category?.name ?? 'Dịch vụ',
+    slug: service.slug,
     description: service.description || '',
     status: service.status,
     currency: service.currency,

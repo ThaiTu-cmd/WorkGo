@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { errorMessage } from '@/api/errors';
 import type { OrderRole } from '@/api/types';
+import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { formatDateTime, formatVnd } from '@/lib/format';
 import { Badge, Card, colors, ErrorState, font, Screen, SkeletonList, spacing } from '@/ui';
@@ -26,7 +27,7 @@ export function OrderDetailScreen({
   const detail = useOrderDetail(id, signedIn);
   const { order, history, execution } = detail;
 
-  if (!signedIn) return null;
+  if (!signedIn) return <LoginRequired edges={['bottom']} />;
   if (order.isPending) {
     return (
       <Screen edges={['bottom']}>

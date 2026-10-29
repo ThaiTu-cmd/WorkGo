@@ -5,6 +5,7 @@ import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { errorMessage } from '@/api/errors';
 import { useAuth } from '@/auth/AuthProvider';
+import { buildRedirect } from '@/auth/useRequireAuth';
 import { formatVnd } from '@/lib/format';
 import { Avatar, Badge, Button, Card, colors, ErrorState, font, Screen, SkeletonList, spacing } from '@/ui';
 
@@ -41,7 +42,11 @@ export function ServiceDetailScreen() {
   const order = () => {
     const target = { pathname: '/checkout' as const, params: { serviceId: service.serviceId, ...(selected ? { packageId: selected } : {}) } };
     if (status === 'signedIn') router.push(target);
-    else router.push({ pathname: '/auth/login', params: { redirect: `/checkout?serviceId=${service.serviceId}` } });
+    else
+      router.push({
+        pathname: '/auth/login',
+        params: { redirect: buildRedirect('/checkout', { serviceId: service.serviceId, packageId: selected ?? undefined }) },
+      });
   };
 
   return (

@@ -36,7 +36,7 @@ const FIELDS: { name: FieldPath<Values>; label: string; input?: TextInputProps }
 export function RegisterScreen() {
   const { signIn } = useAuth();
   const router = useRouter();
-  const { redirect } = useLocalSearchParams<{ redirect?: string }>();
+  const { redirect, viaLogin } = useLocalSearchParams<{ redirect?: string; viaLogin?: string }>();
   const [formError, setFormError] = React.useState<string | null>(null);
   const {
     control,
@@ -58,7 +58,14 @@ export function RegisterScreen() {
         password: v.password,
       });
       await signIn(v.userName.trim(), v.password);
-      router.replace(safeRedirect(redirect));
+      // Close register (and the login screen under it, when it came from there).
+      const target = safeRedirect(redirect);
+      const opened = viaLogin === '1' ? 2 : 1;
+      if (target) {
+        if (opened > 1) router.dismiss(opened - 1);
+        router.replace(target);
+      } else if (router.canDismiss()) router.dismiss(opened);
+      else router.replace('/');
     } catch (err) {
       setFormError(errorMessage(err));
     }

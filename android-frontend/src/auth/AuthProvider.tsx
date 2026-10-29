@@ -38,19 +38,30 @@ export function AuthProvider({ children, queryClient }: { children: React.ReactN
     tokenRef.current = null;
     setToken(null);
     setStatus('guest');
+    // Cached orders/addresses/profile belong to the user who just left.
+    queryClient?.clear();
     void clearToken();
-  }, []);
+  }, [queryClient]);
 
-  const refresh = React.useCallback(async (): Promise<boolean> => {
+  // /auth/refresh invalidates the token it receives, so a second concurrent
+  // call would send a dead token: share the one in flight.
+  const refreshing = React.useRef<Promise<boolean> | null>(null);
+  const refresh = React.useCallback((): Promise<boolean> => {
+    if (refreshing.current) return refreshing.current;
     const current = tokenRef.current;
-    if (!current) return false;
-    try {
-      await adopt(await authApi.refresh(current));
-      return true;
-    } catch {
-      // keep the current token until it actually expires
-      return false;
-    }
+    if (!current) return Promise.resolve(false);
+    refreshing.current = (async () => {
+      try {
+        await adopt(await authApi.refresh(current));
+        return true;
+      } catch {
+        // keep the current token until it actually expires
+        return false;
+      } finally {
+        refreshing.current = null;
+      }
+    })();
+    return refreshing.current;
   }, [adopt]);
 
   const refreshIfDue = React.useCallback(() => {
@@ -59,7 +70,13 @@ export function AuthProvider({ children, queryClient }: { children: React.ReactN
   }, [refresh]);
 
   React.useEffect(() => {
-    configureClient({ getToken: () => tokenRef.current, onUnauthorized: dropSession });
+    configureClient({
+      getToken: () => tokenRef.current,
+      // A 401 for a token a refresh already replaced says nothing about the session.
+      onUnauthorized: (sentToken) => {
+        if (sentToken === tokenRef.current) dropSession();
+      },
+    });
   }, [dropSession]);
 
   React.useEffect(() => {

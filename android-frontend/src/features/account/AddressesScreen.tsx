@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
 import { errorMessage } from '@/api/errors';
+import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { Button, Card, colors, EmptyState, ErrorState, font, Screen, SkeletonList, spacing } from '@/ui';
 
@@ -13,7 +14,7 @@ export function AddressesScreen() {
   const addresses = useAddresses(signedIn);
   const remove = useDeleteAddress();
 
-  if (!signedIn) return null;
+  if (!signedIn) return <LoginRequired edges={['bottom']} />;
 
   const confirmDelete = (id: string, name: string) =>
     Alert.alert('Xoá địa chỉ', `Xoá địa chỉ "${name}"?`, [

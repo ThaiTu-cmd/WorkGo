@@ -4,6 +4,7 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 
 import type { RowStatus } from '@/api/adapters';
 import { errorMessage } from '@/api/errors';
+import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { EXECUTION_LABEL } from '@/features/catalog/ServiceCardView';
 import { formatVnd } from '@/lib/format';
@@ -23,7 +24,7 @@ export function MyServicesScreen() {
   const remove = useDeleteService();
   const [tab, setTab] = React.useState<RowStatus | 'ALL'>('ALL');
 
-  if (!signedIn) return null;
+  if (!signedIn) return <LoginRequired edges={['bottom']} />;
   if (services.isError && isForbidden(services.error)) {
     return (
       <Screen edges={['bottom']}>

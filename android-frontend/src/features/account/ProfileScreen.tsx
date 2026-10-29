@@ -7,6 +7,7 @@ import { z } from 'zod';
 
 import { joinFullName, splitFullName } from '@/api/adapters';
 import { errorMessage } from '@/api/errors';
+import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { Button, colors, ErrorState, font, Screen, SkeletonList, TextField } from '@/ui';
 
@@ -23,7 +24,7 @@ type Values = z.infer<typeof schema>;
 export function ProfileScreen() {
   const signedIn = useRequireAuth();
   const me = useMe(signedIn);
-  if (!signedIn) return null;
+  if (!signedIn) return <LoginRequired edges={['bottom']} />;
   if (me.isPending) {
     return (
       <Screen edges={['bottom']}>

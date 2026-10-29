@@ -6,11 +6,13 @@ import { useAuth } from '@/auth/AuthProvider';
 import { LoginScreen } from '../LoginScreen';
 
 const mockReplace = jest.fn();
+const mockBack = jest.fn();
+let mockCanGoBack = false;
 let mockParams: Record<string, string> = {};
 jest.mock('expo-router', () => {
   const { Text } = jest.requireActual('react-native');
   return {
-    useRouter: () => ({ replace: mockReplace, push: jest.fn(), back: jest.fn() }),
+    useRouter: () => ({ replace: mockReplace, push: jest.fn(), back: mockBack, canGoBack: () => mockCanGoBack }),
     useLocalSearchParams: () => mockParams,
     // The real Link renders a Text.
     Link: ({ children }: { children: React.ReactNode }) => <Text>{children}</Text>,
@@ -24,6 +26,17 @@ const signIn = jest.fn();
 beforeEach(() => {
   jest.clearAllMocks();
   mockParams = {};
+  mockCanGoBack = false;
+});
+
+test('without a redirect, success goes back to the screen that opened login', async () => {
+  mockCanGoBack = true;
+  signIn.mockResolvedValueOnce(undefined);
+  await render(<LoginScreen />);
+  await fill('an', 'pw');
+  await fireEvent.press(screen.getByRole('button', { name: 'Đăng nhập' }));
+  await waitFor(() => expect(mockBack).toHaveBeenCalledTimes(1));
+  expect(mockReplace).not.toHaveBeenCalled();
 });
 
 async function fill(user: string, pass: string) {

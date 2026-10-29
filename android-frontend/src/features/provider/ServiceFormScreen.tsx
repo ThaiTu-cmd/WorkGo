@@ -5,12 +5,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { errorMessage } from '@/api/errors';
 import type { ServiceStatus } from '@/api/types';
+import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { useCategories, useServiceDetail } from '@/features/catalog/hooks';
 import { pickImage } from '@/lib/image';
+import { useSingleFlight } from '@/lib/useSingleFlight';
 import { Button, Chip, colors, ErrorState, font, radius, Screen, SkeletonList, spacing, TextField } from '@/ui';
 
-import { useSaveService } from './hooks';
+import { newSaveProgress, useSaveService, type SaveProgress } from './hooks';
 import {
   MAX_SERVICE_IMAGES,
   packagesSchema,
@@ -38,7 +40,7 @@ export function ServiceFormScreen() {
   const signedIn = useRequireAuth();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const existing = useServiceDetail(id);
-  if (!signedIn) return null;
+  if (!signedIn) return <LoginRequired edges={['bottom']} />;
   if (id && existing.isPending) {
     return (
       <Screen edges={['bottom']}>
@@ -57,6 +59,7 @@ export function ServiceFormScreen() {
   return (
     <ServiceForm
       serviceId={id ?? null}
+      currentSlug={d?.slug}
       currentStatus={d?.status}
       initialInfo={{
         title: d?.title ?? '',
@@ -83,12 +86,14 @@ export function ServiceFormScreen() {
 
 function ServiceForm({
   serviceId,
+  currentSlug,
   currentStatus,
   initialInfo,
   initialPackages,
   existingImages,
 }: {
   serviceId: string | null;
+  currentSlug?: string;
   currentStatus?: ServiceStatus;
   initialInfo: ServiceInfo;
   initialPackages: PackageDraft[];
@@ -97,6 +102,9 @@ function ServiceForm({
   const router = useRouter();
   const categories = useCategories();
   const save = useSaveService();
+  const once = useSingleFlight();
+  // Survives a failed save so "Đăng dịch vụ" again continues where it stopped.
+  const progress = React.useRef<SaveProgress>(newSaveProgress());
   const [step, setStep] = React.useState(0);
   const [info, setInfo] = React.useState<ServiceInfo>(initialInfo);
   const [packages, setPackages] = React.useState<PackageDraft[]>(initialPackages);
@@ -130,16 +138,24 @@ function ServiceForm({
 
   const submit = () => {
     setError(null);
-    save.mutate(
-      {
-        serviceId,
-        currentStatus,
-        info,
-        packages: packages.map(toPackageInput),
-        images,
-        hasCover: existingImages.length > 0,
-      },
-      { onSuccess: () => router.back(), onError: (err) => setError(errorMessage(err)) }
+    void once(() =>
+      save
+        .mutateAsync({
+          input: {
+            serviceId,
+            currentSlug,
+            currentStatus,
+            info,
+            packages: packages.map(toPackageInput),
+            images,
+            hasCover: existingImages.length > 0,
+          },
+          progress: progress.current,
+        })
+        .then(
+          () => router.back(),
+          (err) => setError(errorMessage(err))
+        )
     );
   };
 

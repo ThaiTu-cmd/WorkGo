@@ -8,6 +8,7 @@ import { EVIDENCE_PHASES, evidenceApi } from '@/api/evidenceApi';
 import { qk } from '@/api/queryKeys';
 import type { EvidencePhase } from '@/api/types';
 import { pickImage, type PickedImage } from '@/lib/image';
+import { useSingleFlight } from '@/lib/useSingleFlight';
 import { Button, Chip, colors, font, radius, spacing } from '@/ui';
 
 import { buildEvidenceBody, getLocationOrNull } from './evidence';
@@ -24,6 +25,7 @@ export function EvidenceUploadButton({ orderId }: { orderId: string }) {
 
 function EvidenceUploadSheet({ orderId, onClose }: { orderId: string; onClose: () => void }) {
   const queryClient = useQueryClient();
+  const once = useSingleFlight();
   const [phase, setPhase] = React.useState<EvidencePhase>('BEFORE');
   const [image, setImage] = React.useState<PickedImage | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -68,7 +70,12 @@ function EvidenceUploadSheet({ orderId, onClose }: { orderId: string; onClose: (
             <Button title="Chọn ảnh" variant="secondary" style={styles.flex} onPress={() => void choose('library')} />
           </View>
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Button title="Gửi" loading={upload.isPending} disabled={!image} onPress={() => upload.mutate()} />
+          <Button
+            title="Gửi"
+            loading={upload.isPending}
+            disabled={!image}
+            onPress={() => void once(() => upload.mutateAsync().catch(() => undefined))}
+          />
           <Button title="Đóng" variant="secondary" onPress={onClose} />
         </View>
       </View>

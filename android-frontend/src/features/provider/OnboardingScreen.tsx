@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { errorMessage } from '@/api/errors';
 import { useAuth } from '@/auth/AuthProvider';
 import { hasRole } from '@/auth/jwt';
+import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { Badge, Button, Card, Chip, colors, ErrorState, font, Screen, SkeletonList, spacing, TextField } from '@/ui';
 
@@ -28,7 +29,7 @@ export function OnboardingScreen() {
   const [error, setError] = React.useState<string | null>(null);
   const [refreshing, setRefreshing] = React.useState(false);
 
-  if (!signedIn) return null;
+  if (!signedIn) return <LoginRequired edges={['bottom']} />;
   if (profile.isPending) {
     return (
       <Screen edges={['bottom']}>

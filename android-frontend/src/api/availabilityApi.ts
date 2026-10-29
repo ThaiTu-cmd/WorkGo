@@ -6,6 +6,7 @@ export type RuleBody = {
   startTime: string;
   endTime: string;
   slotDurationMinute: number;
+  status: 'ACTIVE' | 'INACTIVE';
 };
 
 // catalog-service availability endpoints via gateway (/api/v1/catalog/**).

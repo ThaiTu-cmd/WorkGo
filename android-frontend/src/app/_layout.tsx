@@ -40,6 +40,11 @@ export default function RootLayout() {
             <Stack.Screen name="account/profile" options={{ title: 'Thông tin cá nhân' }} />
             <Stack.Screen name="account/addresses/index" options={{ title: 'Sổ địa chỉ' }} />
             <Stack.Screen name="account/addresses/[id]" options={{ title: 'Địa chỉ' }} />
+            <Stack.Screen name="provider/onboarding" options={{ title: 'Trở thành chuyên gia' }} />
+            <Stack.Screen name="provider/services/index" options={{ title: 'Dịch vụ của tôi' }} />
+            <Stack.Screen name="provider/services/new" options={{ title: 'Tạo dịch vụ' }} />
+            <Stack.Screen name="provider/services/[id]/edit" options={{ title: 'Sửa dịch vụ' }} />
+            <Stack.Screen name="provider/services/[id]/availability" options={{ title: 'Lịch trống' }} />
           </Stack>
         </AuthProvider>
       </QueryClientProvider>

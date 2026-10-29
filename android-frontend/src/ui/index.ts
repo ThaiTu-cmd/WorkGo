@@ -2,6 +2,7 @@ export { Avatar } from './Avatar';
 export { Badge, type Tone } from './Badge';
 export { Button } from './Button';
 export { Card } from './Card';
+export { Chip } from './Chip';
 export { OfflineBanner } from './OfflineBanner';
 export { Screen } from './Screen';
 export { EmptyState, ErrorState, Skeleton, SkeletonList } from './States';

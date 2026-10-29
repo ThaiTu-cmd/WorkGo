@@ -34,6 +34,7 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="auth/login" options={{ title: 'Đăng nhập' }} />
             <Stack.Screen name="auth/register" options={{ title: 'Đăng ký' }} />
+            <Stack.Screen name="service/[id]" options={{ title: 'Chi tiết dịch vụ' }} />
           </Stack>
         </AuthProvider>
       </QueryClientProvider>

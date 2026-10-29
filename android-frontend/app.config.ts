@@ -15,7 +15,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     package: 'com.workgo.app',
     versionCode: 1,
     adaptiveIcon: {
-      backgroundColor: '#E6F4FE',
+      backgroundColor: '#1dbf73',
       foregroundImage: './assets/images/android-icon-foreground.png',
       backgroundImage: './assets/images/android-icon-background.png',
       monochromeImage: './assets/images/android-icon-monochrome.png',
@@ -31,9 +31,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-splash-screen',
       {
-        backgroundColor: '#208AEF',
+        backgroundColor: '#1dbf73',
         image: './assets/images/splash-icon.png',
-        imageWidth: 76,
+        imageWidth: 120,
       },
     ],
     'expo-secure-store',
@@ -54,6 +54,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-build-properties',
       { android: { usesCleartextTraffic: process.env.WORKGO_ALLOW_HTTP === '1' } },
     ],
+    './plugins/withReleaseSigning',
   ],
   experiments: {
     reactCompiler: true,

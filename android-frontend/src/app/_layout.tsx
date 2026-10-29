@@ -35,6 +35,8 @@ export default function RootLayout() {
             <Stack.Screen name="auth/login" options={{ title: 'Đăng nhập' }} />
             <Stack.Screen name="auth/register" options={{ title: 'Đăng ký' }} />
             <Stack.Screen name="service/[id]" options={{ title: 'Chi tiết dịch vụ' }} />
+            <Stack.Screen name="checkout" options={{ title: 'Đặt dịch vụ' }} />
+            <Stack.Screen name="orders/[id]" options={{ title: 'Chi tiết đơn hàng' }} />
           </Stack>
         </AuthProvider>
       </QueryClientProvider>

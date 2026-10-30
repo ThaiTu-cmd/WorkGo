@@ -296,29 +296,44 @@ export default function Step2Pricing({ formData, onChange, errors = {} }) {
       </p>
 
       <div className={styles.addonsGrid}>
-        <div className={`${styles.addonCard} ${styles.active}`}>
-          <input type="checkbox" className={styles.addonCheck} defaultChecked />
-          <div className={styles.addonContent}>
-            <div className={styles.addonTitle}>Giao hàng hỏa tốc (Rút ngắn 40% thời gian)</div>
-            <div className={styles.addonDesc}>Ưu tiên tập trung hoàn thiện dự án của bạn trước tiên trong lịch trình.</div>
-            <div className={styles.addonPriceRow}>
-              <input type="number" className={styles.addonPriceInput} defaultValue={800000} step={50000} />
-              <span className={styles.currency}>VNĐ</span>
-            </div>
-          </div>
-        </div>
+        {(formData.addons || [
+          { id: 'addon-fast', title: 'Giao hàng hỏa tốc (Rút ngắn 40% thời gian)', desc: 'Ưu tiên tập trung hoàn thiện dự án của bạn trước tiên trong lịch trình.', price: 800000, active: true },
+          { id: 'addon-source', title: 'Bàn giao trọn bộ File gốc & Source Code', desc: 'Bao gồm toàn bộ file thiết kế Figma gốc và mã nguồn sạch chuẩn repository.', price: 600000, active: true },
+        ]).map((addon, idx) => {
+          const currentAddons = formData.addons || [
+            { id: 'addon-fast', title: 'Giao hàng hỏa tốc (Rút ngắn 40% thời gian)', desc: 'Ưu tiên tập trung hoàn thiện dự án của bạn trước tiên trong lịch trình.', price: 800000, active: true },
+            { id: 'addon-source', title: 'Bàn giao trọn bộ File gốc & Source Code', desc: 'Bao gồm toàn bộ file thiết kế Figma gốc và mã nguồn sạch chuẩn repository.', price: 600000, active: true },
+          ];
+          const updateAddon = (field, val) => {
+            const next = currentAddons.map((item, i) => (i === idx ? { ...item, [field]: val } : item));
+            onChange('addons', next);
+          };
 
-        <div className={`${styles.addonCard} ${styles.active}`}>
-          <input type="checkbox" className={styles.addonCheck} defaultChecked />
-          <div className={styles.addonContent}>
-            <div className={styles.addonTitle}>Bàn giao trọn bộ File gốc & Source Code</div>
-            <div className={styles.addonDesc}>Bao gồm toàn bộ file thiết kế Figma gốc và mã nguồn sạch chuẩn repository.</div>
-            <div className={styles.addonPriceRow}>
-              <input type="number" className={styles.addonPriceInput} defaultValue={600000} step={50000} />
-              <span className={styles.currency}>VNĐ</span>
+          return (
+            <div key={addon.id || idx} className={`${styles.addonCard} ${addon.active ? styles.active : ''}`}>
+              <input
+                type="checkbox"
+                className={styles.addonCheck}
+                checked={addon.active !== false}
+                onChange={(e) => updateAddon('active', e.target.checked)}
+              />
+              <div className={styles.addonContent}>
+                <div className={styles.addonTitle}>{addon.title}</div>
+                <div className={styles.addonDesc}>{addon.desc}</div>
+                <div className={styles.addonPriceRow}>
+                  <input
+                    type="number"
+                    className={styles.addonPriceInput}
+                    value={addon.price ?? 0}
+                    step={50000}
+                    onChange={(e) => updateAddon('price', Number(e.target.value))}
+                  />
+                  <span className={styles.currency}>VNĐ</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          );
+        })}
       </div>
     </div>
   );

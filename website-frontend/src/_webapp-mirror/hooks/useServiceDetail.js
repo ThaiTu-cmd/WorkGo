@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { catalogApi } from '../api/catalogApi';
 import { providerApi } from '../api/providerApi';
-import { getAccessToken } from '../api/axiosClient';
 import { pageItems, toServiceDetail } from '../api/adapters';
 
 // One service from catalog-service plus its packages / add-ons / media,
@@ -15,7 +14,6 @@ export function useServiceDetail(serviceId) {
 
     const load = async () => {
       if (!serviceId) return setState({ status: 'not-found', service: null });
-      if (!getAccessToken()) return setState({ status: 'needs-login', service: null });
       setState({ status: 'loading', service: null });
       try {
         const serviceRes = await catalogApi.getService(serviceId);

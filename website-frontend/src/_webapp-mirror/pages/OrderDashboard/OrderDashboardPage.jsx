@@ -1,14 +1,18 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Info, Loader2, Search, Package } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Info, Loader2, MessageSquare, Search, Package } from 'lucide-react';
 import { useMyOrders } from '../../hooks/useMyOrders';
 import OrderStatusBadge from './components/OrderStatusBadge';
 import OrderExecutionInfo from './components/OrderExecutionInfo';
+import WorkEvidencePanel from './components/WorkEvidencePanel';
+import { useOrderExecution } from '../../hooks/useOrderExecution';
 import OrderCancelPage from '../OrderCancel/OrderCancelPage';
+import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
 import styles from './OrderDashboardPage.module.css';
 
 const NOTICES = {
   'needs-login': 'Đăng nhập để xem đơn hàng của bạn.',
   error: 'Không kết nối được order-service — chưa tải được đơn hàng.',
+  'not-provider': NOT_PROVIDER_MESSAGE,
 };
 
 const ACTIVE_STATUSES = ['PENDING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS', 'DELIVERED'];
@@ -107,7 +111,27 @@ const paymentLabel = (order) => {
   return order.paymentStatus === 'SUCCEEDED' ? 'Đã thanh toán · Escrow' : 'Chưa thanh toán';
 };
 
-export default function OrderDashboardPage({ onGoHome, onShowToast }) {
+// Server-side progress of an expanded order: execution info for every order,
+// plus on-site work evidence for ONSITE orders (both read the same execution).
+function OrderLiveDetails({ order, role, onShowToast }) {
+  const executionState = useOrderExecution(order.orderId);
+  return (
+    <>
+      <OrderExecutionInfo state={executionState} />
+      {order.executionType === 'ONSITE' && (
+        <WorkEvidencePanel
+          orderId={order.orderId}
+          role={role}
+          orderStatus={order.orderStatus}
+          onsiteStatus={executionState.execution?.onsite?.status}
+          onShowToast={onShowToast}
+        />
+      )}
+    </>
+  );
+}
+
+export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }) {
   const [role, setRole] = useState('CLIENT');
   const [page, setPage] = useState(0);
   const [tab, setTab] = useState('ACTIVE');
@@ -205,6 +229,18 @@ export default function OrderDashboardPage({ onGoHome, onShowToast }) {
   };
 
   const partnerHeader = role === 'CLIENT' ? 'Chuyên gia' : 'Khách hàng';
+
+  // The counterpart is the provider when I'm the client, and vice versa.
+  const openChat = (o) => {
+    const participantId = role === 'CLIENT' ? o.providerId : o.clientId;
+    if (!onOpenChat || !participantId) return;
+    onOpenChat({
+      participantId,
+      participantName: o.counterpartName || `${partnerHeader} #${String(participantId).slice(0, 6)}`,
+      participantRole: role === 'CLIENT' ? 'PROVIDER' : 'CLIENT',
+      context: { type: 'order', id: o.orderId, title: o.title, label: o.orderNumber, status: o.orderStatus },
+    });
+  };
 
   return (
     <div className={styles.pageContainer}>
@@ -380,6 +416,16 @@ export default function OrderDashboardPage({ onGoHome, onShowToast }) {
                                 {a.label}
                               </button>
                             ))}
+                            {onOpenChat && (
+                              <button
+                                type="button"
+                                className={`${styles.btn} ${styles.btn_ghost}`}
+                                onClick={() => openChat(o)}
+                              >
+                                <MessageSquare size={14} aria-hidden="true" />
+                                Nhắn tin
+                              </button>
+                            )}
                             <button
                               type="button"
                               className={`${styles.btn} ${styles.btn_ghost}`}
@@ -436,7 +482,7 @@ export default function OrderDashboardPage({ onGoHome, onShowToast }) {
                                     <dd>{formatDateTime(o.orderStatus === 'CANCELLED' ? o.cancelledAt : o.completedAt)}</dd>
                                   </div>
                                 </dl>
-                                {isLive && <OrderExecutionInfo orderId={o.orderId} />}
+                                {isLive && <OrderLiveDetails order={o} role={role} onShowToast={toast} />}
                                 {(o.cancelRequest || o.cancelReason) && (
                                   <div className={styles.cancelInfo}>
                                     <strong>
@@ -448,6 +494,20 @@ export default function OrderDashboardPage({ onGoHome, onShowToast }) {
                                     {(o.cancelRequest || o.cancelReason).note && (
                                       <p>“{(o.cancelRequest || o.cancelReason).note}”</p>
                                     )}
+                                  </div>
+                                )}
+                                {o.statusHistory && (
+                                  <div style={{ marginTop: '12px', borderTop: '1px dashed #e2e8f0', paddingTop: '10px' }}>
+                                    <strong style={{ fontSize: '0.85rem', color: '#334155', display: 'block', marginBottom: '6px' }}>
+                                      Lịch sử trạng thái:
+                                    </strong>
+                                    <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.8rem', color: '#64748b' }}>
+                                      {o.statusHistory.map((h, hIdx) => (
+                                        <li key={hIdx}>
+                                          <strong>{h.status}</strong> ({formatDateTime(h.timestamp)}): {h.note}
+                                        </li>
+                                      ))}
+                                    </ul>
                                   </div>
                                 )}
                               </div>

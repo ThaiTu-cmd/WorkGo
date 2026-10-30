@@ -114,3 +114,33 @@
 .itemActive .itemIcon {
   color: var(--wg-primary);
 }
+
+.triggerIcon {
+  position: relative;
+  display: inline-flex;
+}
+
+.dot {
+  position: absolute;
+  top: -2px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--wg-accent, #ff7640);
+  box-shadow: 0 0 0 2px var(--wg-surface, #ffffff);
+}
+
+.count {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--wg-accent, #ff7640);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+}

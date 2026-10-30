@@ -17,14 +17,15 @@ import styles from './Header.module.css';
 import { useFocusTrap } from '../../../hooks/useFocusTrap';
 import { useAuthToken } from '../../../hooks/useAuthToken';
 import { authApi } from '../../../api/authApi';
-import AccountMenu, { ACCOUNT_GROUPS } from './AccountMenu';
+import AccountMenu, { accountGroupsFor, openAccountItem } from './AccountMenu';
 
 export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [miniSearchQuery, setMiniSearchQuery] = useState('');
   const drawerRef = useRef(null);
-  const isLoggedIn = Boolean(useAuthToken());
+  const token = useAuthToken();
+  const isLoggedIn = Boolean(token);
   // F3: keep Tab cycling inside the drawer while open.
   useFocusTrap(drawerRef, mobileMenuOpen);
 
@@ -236,7 +237,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
 
             {isLoggedIn ? (
               <>
-                {ACCOUNT_GROUPS.map((group) => (
+                {accountGroupsFor(token).map((group) => (
                   <div key={group.title} className={styles.mobileGroup}>
                     <p className={styles.mobileGroupTitle}>{group.title}</p>
                     {/* "Đơn hàng của tôi" is already listed above in the drawer. */}
@@ -248,7 +249,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
                         aria-current={item.key === activePage ? 'page' : undefined}
                         onClick={() => {
                           setMobileMenuOpen(false);
-                          onNavigate && onNavigate(item.key);
+                          openAccountItem(item, onNavigate);
                         }}
                       >
                         <item.icon size={18} aria-hidden="true" />

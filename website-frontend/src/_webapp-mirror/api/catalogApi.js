@@ -1,4 +1,4 @@
-import axiosClient from './axiosClient';
+import axiosClient from './axiosClient.js';
 
 // catalog-service via gateway: /api/v1/catalog/** (requires a Bearer token).
 export const catalogApi = {
@@ -51,22 +51,29 @@ export const catalogApi = {
     });
   },
 
-  // body: { name, description, price, currency, deliveryDay, durationMinute, revisionLimit }
+  // Packages
   createPackage: (serviceId, body) => axiosClient.post(`/catalog/packages/services/${serviceId}`, body),
-
-  updatePackage: (packageId, body) => axiosClient.put(`/catalog/packages/${packageId}`, body),
-
-  // body: { url, mediaType: 'IMAGE' | 'VIDEO' | 'FILE', cover }
-  createMedia: (serviceId, body) => axiosClient.post(`/catalog/medias/services/${serviceId}`, body),
-
   getPackages: (serviceId, page = 0, size = 20) =>
     axiosClient.get(`/catalog/packages/services/${serviceId}`, { params: { page, size } }),
+  getPackage: (packageId) => axiosClient.get(`/catalog/packages/${packageId}`),
+  updatePackage: (packageId, body) => axiosClient.put(`/catalog/packages/${packageId}`, body),
+  deletePackage: (packageId) => axiosClient.delete(`/catalog/packages/${packageId}`),
 
+  // Add-ons
+  createAddon: (serviceId, body) => axiosClient.post(`/catalog/addons/service/${serviceId}`, body),
   getAddons: (serviceId, page = 0, size = 20) =>
     axiosClient.get(`/catalog/addons/service/${serviceId}`, { params: { page, size } }),
+  getAddon: (addonId) => axiosClient.get(`/catalog/addons/${addonId}`),
+  updateAddon: (addonId, body) => axiosClient.put(`/catalog/addons/${addonId}`, body),
+  deleteAddon: (addonId) => axiosClient.delete(`/catalog/addons/${addonId}`),
 
+  // Service Media
+  createMedia: (serviceId, body) => axiosClient.post(`/catalog/medias/services/${serviceId}`, body),
   getMedias: (serviceId, page = 0, size = 20) =>
     axiosClient.get(`/catalog/medias/services/${serviceId}`, { params: { page, size } }),
+  getMedia: (serviceMediaId) => axiosClient.get(`/catalog/medias/${serviceMediaId}`),
+  updateMedia: (serviceMediaId, body) => axiosClient.put(`/catalog/medias/${serviceMediaId}`, body),
+  deleteMedia: (serviceMediaId) => axiosClient.delete(`/catalog/medias/${serviceMediaId}`),
 };
 
 export default catalogApi;

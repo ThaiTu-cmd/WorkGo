@@ -196,6 +196,25 @@ export default function ProviderOnboardingPage({ onNavigate, onShowToast }: Trun
           <button type="submit" className={styles.submit} disabled={submitting}>
             {submitting ? "Đang gửi..." : "Gửi yêu cầu"}
           </button>
+          <div style={{ marginTop: '16px', textAlign: 'center', borderTop: '1px solid #e2e8f0', paddingTop: '12px' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Đã có tài khoản chuyên gia? </span>
+            <button
+              type="button"
+              onClick={() => onNavigate("verification-center")}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#2563eb',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                minHeight: '44px',
+              }}
+            >
+              Xác thực hồ sơ tại Verification Center →
+            </button>
+          </div>
         </form>
       </div>
     </main>

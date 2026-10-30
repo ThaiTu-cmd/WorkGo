@@ -61,13 +61,12 @@ public class CategoryService {
                 .parent(parentCategory)
                 .build();
 
-        parentCategory.getChildren().add(category);
-        if(parentCategory != null){
-            categoryRepository.save(parentCategory);
-        }
-
-
+        // The child owns the parent_id column, so saving it once is enough;
+        // saving the parent too would cascade a second insert of this child.
         Category savedCategory = categoryRepository.save(category);
+        if(parentCategory != null){
+            parentCategory.getChildren().add(savedCategory);
+        }
 
         return categoryMapper.toCategoryCreationResponse(savedCategory);
 

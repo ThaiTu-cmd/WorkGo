@@ -315,8 +315,11 @@ public class OrderService {
     }
 
     public OrderResponse getOrder(UUID orderId){
+
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        tokenUtils.assertParticipant(order);
 
         return orderMapper.toOrderResponse(order);
     }

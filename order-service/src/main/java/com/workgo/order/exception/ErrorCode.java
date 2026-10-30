@@ -54,8 +54,12 @@ public enum ErrorCode {
 
     ORDER_CHECKIN_CODE_INVALID(3003, "Checkin code is invalid", HttpStatus.BAD_REQUEST),
     ORDER_CHECKIN_TIME_INVALID(3004, "Checkin time is invalid", HttpStatus.BAD_REQUEST),
-    ORDER_EVIDENCE_AFTER_REQUIRED(3005, "At least one AFTER evidence is required", HttpStatus.BAD_REQUEST);
+    ORDER_EVIDENCE_AFTER_REQUIRED(3005, "At least one AFTER evidence is required", HttpStatus.BAD_REQUEST),
 
+    ORDER_REQUIREMENTS_SUBMITTED(3006, "Requirements already submitted", HttpStatus.CONFLICT),
+    ORDER_DELIVERY_FILE_REQUIRED(3007, "At least one delivery file is required", HttpStatus.BAD_REQUEST),
+    ORDER_DELIVERY_NOT_FOUND(3008, "Delivery not found", HttpStatus.NOT_FOUND),
+    ORDER_REVISION_LIMIT_EXCEEDED(3009, "Revision limit exceeded", HttpStatus.CONFLICT);
 
     private int code;
     private String message;

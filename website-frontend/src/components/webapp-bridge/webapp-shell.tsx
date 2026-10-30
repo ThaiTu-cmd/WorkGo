@@ -41,6 +41,7 @@ import type { ChatTarget } from "../trung-pages/messages/types";
 import { getAccessToken } from "@/_webapp-mirror/api/axiosClient";
 import { messageApi } from "./backend";
 import { Info } from "lucide-react";
+import ScrollEnhancements from "../common/ScrollEnhancements";
 import styles from "./webapp-shell.module.css";
 
 export type CatalogFilterParams = {
@@ -363,6 +364,8 @@ export default function WebAppShell() {
 
   return (
     <div className={`${styles.appRoot} ${styles["webapp-scope"]}`}>
+      {/* Global Scroll Enhancements: Progress bar, Back to Top & .reveal animations */}
+      <ScrollEnhancements />
       {/* S4: offline banner — local data keeps working, user must know why */}
       {!isOnline && (
         <div className={styles.offlineBanner} role="status">

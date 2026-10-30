@@ -10,10 +10,7 @@ import com.workgo.order.dto.response.client.PackageResponse;
 import com.workgo.order.dto.response.client.ProviderProfileResponse;
 import com.workgo.order.dto.response.client.ServiceResponse;
 import com.workgo.order.dto.snapshot.*;
-import com.workgo.order.entity.Order;
-import com.workgo.order.entity.OrderItem;
-import com.workgo.order.entity.OrderSnapshot;
-import com.workgo.order.entity.OrderStatusHistory;
+import com.workgo.order.entity.*;
 import com.workgo.order.enumeration.*;
 import com.workgo.order.enumeration.client.AddOnStatus;
 import com.workgo.order.enumeration.client.PackageStatus;
@@ -23,10 +20,7 @@ import com.workgo.order.exception.ErrorCode;
 import com.workgo.order.mapper.OrderItemMapper;
 import com.workgo.order.mapper.OrderMapper;
 import com.workgo.order.mapper.OrderStatusHistoryMapper;
-import com.workgo.order.reppository.OrderItemRepository;
-import com.workgo.order.reppository.OrderRepository;
-import com.workgo.order.reppository.OrderSnapshotRepository;
-import com.workgo.order.reppository.OrderStatusHistoryRepository;
+import com.workgo.order.reppository.*;
 import com.workgo.order.reppository.client.CatalogClient;
 import com.workgo.order.reppository.client.IdentityClient;
 import com.workgo.order.utils.TokenUtils;
@@ -39,11 +33,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -64,6 +60,9 @@ public class OrderService {
     OrderItemRepository orderItemRepository;
     OrderItemMapper orderItemMapper;
     ExecutionService executionService;
+    ExecutionRepository executionRepository;
+    OnsiteExecutionRepository onsiteExecutionRepository;
+    PasswordEncoder passwordEncoder;
     TokenUtils tokenUtils;
 
     @NonFinal
@@ -152,6 +151,7 @@ public class OrderService {
         return orderMapper.toOrderResponse(order);
     }
 
+    @Transactional
     public PaymentConfirmationResponse<Object> confirmPayment(UUID orderId) {
 
         Order order = orderRepository.findById(orderId)
@@ -165,11 +165,38 @@ public class OrderService {
 
         orderStatusService.transition(order, OrderStatus.CONFIRMED, null, RoleName.SYSTEM);
 
+        String checkinCode = null;
+        Object executionStatus = null;
+
+        //chi on site
+        if (order.getExecutionType() == ExecutionType.ONSITE) {
+
+            Execution execution = executionRepository.findByOrder_OrderId(orderId)
+                    .orElseThrow(() -> new AppException(ErrorCode.ORDER_EXECUTION_NOT_FOUND));
+
+            OnsiteExecution onsite = onsiteExecutionRepository
+                    .findByExecution_ExecutionId(execution.getExecutionId())
+                    .orElseThrow(() -> new AppException(ErrorCode.ORDER_EXECUTION_NOT_FOUND));
+
+            checkinCode = generateCheckinCode();
+            onsite.setCheckinCodeHash(passwordEncoder.encode(checkinCode));
+            onsiteExecutionRepository.save(onsite);
+
+            executionStatus = onsite.getStatus();
+        }
+
         return PaymentConfirmationResponse.builder()
                 .orderId(order.getOrderId())
                 .orderStatus(order.getOrderStatus())
                 .paymentStatus(order.getPaymentStatus())
+                .executionStatus(executionStatus)
+                .checkinCode(checkinCode)
                 .build();
+    }
+
+    //sinh ra ma code checkin
+    private String generateCheckinCode() {
+        return String.format("%06d", new SecureRandom().nextInt(1_000_000));
     }
 
     //loc ra addon duoc chon
@@ -288,8 +315,11 @@ public class OrderService {
     }
 
     public OrderResponse getOrder(UUID orderId){
+
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        tokenUtils.assertParticipant(order);
 
         return orderMapper.toOrderResponse(order);
     }

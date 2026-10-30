@@ -10,10 +10,11 @@ VALUES ('CLIENT'),
        ('PROVIDER'), 
        ('ADMIN');
 
+-- Test password for provider accounts nguyenvana and tranthib: Provider@123
 INSERT INTO users (user_id, first_name, last_name, user_name, password, phone, email, status, avatar_url, created_at)
 VALUES 
-    ('99999999-9999-9999-9999-999999999999', 'Nguyễn', 'Văn A', 'nguyenvana', '$2a$10$3nS0oU.i9g.u4D8V9Y/8e.lB/T5uK0l7P9.U/5G6zX1M6jU4U8.mO', '0901234567', 'vana@example.com', 'ACTIVE', 'https://example.com/avatar1.jpg', CURRENT_TIMESTAMP),
-    ('88888888-8888-8888-8888-888888888888', 'Trần', 'Thị B', 'tranthib', '$2a$10$3nS0oU.i9g.u4D8V9Y/8e.lB/T5uK0l7P9.U/5G6zX1M6jU4U8.mO', '0901234568', 'thib@example.com', 'ACTIVE', 'https://example.com/avatar2.jpg', CURRENT_TIMESTAMP),
+    ('99999999-9999-9999-9999-999999999999', 'Nguyễn', 'Văn A', 'nguyenvana', '$2a$10$80H8UNgiwdZu.RyBrtHOR.AdwH/78epDqXBBQbB07GuCFwPcU4tSa', '0901234567', 'vana@example.com', 'ACTIVE', 'https://example.com/avatar1.jpg', CURRENT_TIMESTAMP),
+    ('88888888-8888-8888-8888-888888888888', 'Trần', 'Thị B', 'tranthib', '$2a$10$80H8UNgiwdZu.RyBrtHOR.AdwH/78epDqXBBQbB07GuCFwPcU4tSa', '0901234568', 'thib@example.com', 'ACTIVE', 'https://example.com/avatar2.jpg', CURRENT_TIMESTAMP),
     ('77777777-7777-7777-7777-777777777777', 'Lê', 'Văn C', 'levanc', '$2a$10$3nS0oU.i9g.u4D8V9Y/8e.lB/T5uK0l7P9.U/5G6zX1M6jU4U8.mO', '0901234569', 'vanc@example.com', 'ACTIVE', 'https://example.com/avatar3.jpg', CURRENT_TIMESTAMP);
 
 INSERT INTO user_role (user_role_id, granted_at, granted_by, user_id, role_name)

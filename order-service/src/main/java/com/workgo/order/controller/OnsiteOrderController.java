@@ -15,7 +15,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-@RequestMapping("/orders")
+@RequestMapping("/orders/onsite")
 public class OnsiteOrderController {
 
     OnsiteFlowService onsiteFlowService;

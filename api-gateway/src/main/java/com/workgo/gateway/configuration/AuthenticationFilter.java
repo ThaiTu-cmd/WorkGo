@@ -61,12 +61,15 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         String token = authHeader.getFirst().replace("Bearer ", "");
         log.info("Token: {}", token);
 
-        return identityService.introspect(token).flatMap(introspectResponse -> {
-            if(introspectResponse.getResult().isValid())
-                return chain.filter(exchange);
-            else
-                return unauthenticated(exchange.getResponse());
-        }).onErrorResume(throwable -> unauthenticated(exchange.getResponse()));
+        // Only a failed/invalid introspection means "unauthenticated". Errors from the
+        // downstream service (e.g. it is down) must not become 401, or clients drop
+        // a perfectly valid token and log the user out.
+        return identityService.introspect(token)
+                .map(introspectResponse -> introspectResponse.getResult().isValid())
+                .onErrorReturn(false)
+                .flatMap(valid -> valid
+                        ? chain.filter(exchange)
+                        : unauthenticated(exchange.getResponse()));
 
     }
 

@@ -52,6 +52,7 @@ export type CatalogFilterParams = {
   providerId?: string;
   orderId?: string;
   serviceId?: string;
+  section?: string;
   // "messages": thread to open (created if this is the first contact).
   chat?: ChatTarget;
 };
@@ -234,6 +235,9 @@ export default function WebAppShell() {
 
   // Reset scroll to top on every page change and manage landmark focus
   useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash && currentPage === "home") {
+      return;
+    }
     scrollToTopInstant();
 
     // A11y focus management: Focus main heading or main landmark on navigation
@@ -282,8 +286,34 @@ export default function WebAppShell() {
       const { chat } = params;
       setChatConversationId(chat ? messageApi.openConversation(chat, chat.context) : "");
     }
-    scrollToTopInstant();
+    if (params.section) {
+      if (typeof window !== "undefined") {
+        window.location.hash = params.section;
+      }
+      setTimeout(() => {
+        const el = document.getElementById(params.section!);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 350);
+    } else {
+      scrollToTopInstant();
+    }
   };
+
+  // Smooth scroll to hash anchor on home page load if present
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash && currentPage === "home") {
+      const id = window.location.hash.replace("#", "");
+      const timer = setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [currentPage]);
 
   // Navigation event listener for programmatic / test triggering
   useEffect(() => {

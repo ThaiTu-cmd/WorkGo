@@ -1,4 +1,5 @@
 .section {
+  scroll-margin-top: calc(var(--header-bar-height, var(--header-height, 76px)) + 16px);
   padding: 80px 0;
   background-color: var(--wg-surface);
   border-top: 1px solid var(--wg-border-light);

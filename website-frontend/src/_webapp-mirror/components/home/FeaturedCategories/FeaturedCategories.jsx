@@ -58,10 +58,14 @@ export default function FeaturedCategories({ onSelectCategory }) {
               Hàng trăm lĩnh vực cho cá nhân & doanh nghiệp
             </p>
           </div>
-          <a href="#all-categories" className={styles.viewAllLink}>
+          <button
+            type="button"
+            className={styles.viewAllLink}
+            onClick={() => onSelectCategory && onSelectCategory({ slug: 'ALL', name: 'Tất cả danh mục' })}
+          >
             <span>Xem tất cả</span>
             <ArrowRight size={16} />
-          </a>
+          </button>
         </div>
 
         {categories.length === 0 && (

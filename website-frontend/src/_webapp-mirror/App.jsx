@@ -84,7 +84,16 @@ export default function App() {
         query: params.query || '',
       });
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (params.section) {
+      setTimeout(() => {
+        const el = document.getElementById(params.section);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   // Search from HeroBanner

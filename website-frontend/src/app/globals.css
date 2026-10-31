@@ -478,9 +478,48 @@ html {
 /* =============================================================================
    Form Controls & Native Option Styling
    ============================================================================= */
+select {
+  border-radius: 12px;
+}
+
 select option {
   background-color: var(--bg-surface);
   color: var(--text-primary);
+  border-radius: 8px;
+}
+
+/* =============================================================================
+   Interactive Button Press / Click Micro-interactions (Emil Design Guidelines)
+   ============================================================================= */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+input[type="button"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+.clickable-btn {
+  transition: transform 0.14s cubic-bezier(0.2, 0, 0, 1),
+              background-color 0.15s ease,
+              border-color 0.15s ease,
+              box-shadow 0.15s ease,
+              color 0.15s ease;
+  user-select: none;
+}
+
+button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active,
+input[type="button"]:not(:disabled):active,
+input[type="submit"]:not(:disabled):active,
+.clickable-btn:active {
+  transform: scale(0.965);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active,
+  input[type="button"]:not(:disabled):active,
+  input[type="submit"]:not(:disabled):active,
+  .clickable-btn:active {
+    transform: none !important;
+  }
 }
 
 [data-theme="light"] .landing-cta-panel p {

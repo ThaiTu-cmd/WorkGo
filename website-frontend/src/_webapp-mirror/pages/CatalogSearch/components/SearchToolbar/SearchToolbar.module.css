@@ -86,14 +86,20 @@
   display: none;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
-  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  border-radius: 9999px;
   background-color: var(--wg-surface);
   border: 1px solid var(--wg-border);
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--wg-text);
   box-shadow: var(--shadow-sm);
+  transition: transform 0.14s cubic-bezier(0.2, 0, 0, 1), background-color var(--transition-fast);
+  cursor: pointer;
+}
+
+.mobileFilterBtn:active {
+  transform: scale(0.96);
 }
 
 .activeFilterBadge {
@@ -122,9 +128,15 @@
   gap: 8px;
   background-color: var(--wg-surface);
   border: 1px solid var(--wg-border);
-  border-radius: var(--radius-sm);
-  padding: 6px 12px;
+  border-radius: 9999px;
+  padding: 8px 16px;
   box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.sortWrapper:focus-within {
+  border-color: var(--wg-primary);
+  box-shadow: 0 0 0 2px var(--wg-primary-glow);
 }
 
 .sortLabel {

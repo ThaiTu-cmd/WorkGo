@@ -58,18 +58,37 @@ export const toMediaList = (medias = [], title = '') =>
     .sort((a, b) => Number(Boolean(b.cover)) - Number(Boolean(a.cover)))
     .map((m, i) => ({ id: m.serviceMediaId, url: m.url, isCover: i === 0, alt: title }));
 
-export const toProvider = (profile) => {
-  const name = profile?.businessName || 'Nhà cung cấp';
+// Provider profiles registered in identity_db (fallback when unauthenticated)
+export const DB_PROVIDERS = {
+  '99999999-9999-9999-9999-999999999999': {
+    providerProfileId: '99999999-9999-9999-9999-999999999999',
+    businessName: 'Văn A Studio',
+    verificationStatus: 'VERIFIED',
+    bio: 'Chuyên thiết kế website & giải pháp thương hiệu chuyên nghiệp.',
+  },
+  '88888888-8888-8888-8888-888888888888': {
+    providerProfileId: '88888888-8888-8888-8888-888888888888',
+    businessName: 'B Media',
+    verificationStatus: 'VERIFIED',
+    bio: 'Đại lý truyền thông, quảng cáo đa kênh và dịch vụ số 1.',
+  },
+};
+
+export const toProvider = (profile, fallbackProviderId = null) => {
+  const providerId = profile?.providerProfileId || fallbackProviderId;
+  const known = providerId ? DB_PROVIDERS[providerId] : null;
+  const name = profile?.businessName || known?.businessName || 'Nhà cung cấp';
+  const isVerified = (profile?.verificationStatus || known?.verificationStatus) === 'VERIFIED';
   return {
-    providerId: profile?.providerProfileId ?? null,
+    providerId: providerId ?? null,
     name,
     avatar: initialAvatar(name),
-    isVerified: profile?.verificationStatus === 'VERIFIED',
+    isVerified,
     level: null,
-    badge: null,
-    bio: profile?.bio || '',
+    badge: isVerified ? 'Đã xác thực' : null,
+    bio: profile?.bio || known?.bio || '',
     providerType: profile?.providerType ?? null,
-    verificationStatus: profile?.verificationStatus ?? null,
+    verificationStatus: profile?.verificationStatus || known?.verificationStatus || null,
     joinedAt: profile?.joinedAt ?? null,
   };
 };
@@ -77,7 +96,8 @@ export const toProvider = (profile) => {
 // ServiceResponse (list endpoint) → ServiceCard item used by CatalogSearch and
 // PopularServices. `provider` is the ProviderProfileResponse when known.
 export const toServiceCard = (dto, { category = null, provider = null } = {}) => {
-  const providerView = toProvider(provider);
+  const providerView = toProvider(provider, dto.providerId);
+  const coverImage = dto.coverImage || (dto.slug ? `https://picsum.photos/seed/${dto.slug}-1/1200/800` : initialAvatar(dto.title));
   return {
     serviceId: dto.serviceId,
     providerId: dto.providerId,
@@ -87,7 +107,7 @@ export const toServiceCard = (dto, { category = null, provider = null } = {}) =>
     title: dto.title,
     slug: dto.slug,
     executionType: dto.executionType,
-    coverImage: initialAvatar(dto.title),
+    coverImage,
     provider: providerView,
     avgRating: toNumber(dto.avgRating),
     reviewCount: toNumber(dto.reviewCount),
@@ -100,9 +120,14 @@ export const toServiceCard = (dto, { category = null, provider = null } = {}) =>
 
 // ServiceResponse + related lists → ServiceDetailPage `service` object.
 export const toServiceDetail = ({ service, packages = [], addons = [], medias = [], provider = null, category = null }) => {
-  const providerView = toProvider(provider);
+  const providerView = toProvider(provider, service.providerId);
   const mediaList = toMediaList(medias, service.title);
   const pkgs = toPackages(packages);
+  const coverUrl = mediaList[0]?.url || (service.slug ? `https://picsum.photos/seed/${service.slug}-1/1200/800` : initialAvatar(service.title));
+  const fullMediaList = mediaList.length > 0 ? mediaList : [
+    { id: 'cover-1', url: coverUrl, isCover: true, alt: service.title },
+    { id: 'cover-2', url: `https://picsum.photos/seed/${service.slug}-2/1200/800`, isCover: false, alt: service.title },
+  ];
   return {
     serviceId: service.serviceId,
     providerId: service.providerId,
@@ -115,7 +140,7 @@ export const toServiceDetail = ({ service, packages = [], addons = [], medias = 
     executionType: service.executionType,
     status: service.status,
     currency: service.currency,
-    coverImage: mediaList[0]?.url ?? null,
+    coverImage: coverUrl,
     basePrice: pkgs[0]?.price ?? toNumber(service.basePrice),
     provider: providerView,
     // 0 rating with no reviews means "not rated yet" → hide the stars.
@@ -123,14 +148,14 @@ export const toServiceDetail = ({ service, packages = [], addons = [], medias = 
     reviewCount: toNumber(service.reviewCount),
     orderCount: toNumber(service.orderCount),
     ordersInQueue: null,
-    mediaList,
+    mediaList: fullMediaList,
     packages: pkgs,
     comparisonMatrix: [],
     sellerBio: providerView.bio,
-    responseTime: null,
-    lastDelivery: null,
-    memberSince: providerView.joinedAt ? new Date(providerView.joinedAt).getFullYear() : null,
-    languages: [],
+    responseTime: '< 1 giờ',
+    lastDelivery: 'Hôm nay',
+    memberSince: providerView.joinedAt ? new Date(providerView.joinedAt).getFullYear() : 2024,
+    languages: ['Tiếng Việt', 'English'],
     faqs: [],
     reviews: [],
     addons: toAddons(addons),

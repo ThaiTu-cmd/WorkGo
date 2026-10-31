@@ -120,10 +120,10 @@ export default function FilterSidebar({
             </button>
 
             {categoriesStatus === 'needs-login' && (
-              <p className={styles.catNotice}>Đăng nhập để tải danh mục từ máy chủ. Đang hiển thị dữ liệu mẫu.</p>
+              <p className={styles.catNotice}>Đăng nhập để tải danh mục từ máy chủ.</p>
             )}
             {categoriesStatus === 'error' && (
-              <p className={styles.catNotice}>Không kết nối được máy chủ. Đang hiển thị dữ liệu mẫu.</p>
+              <p className={styles.catNotice}>Không kết nối được máy chủ. Vui lòng tải lại trang.</p>
             )}
 
             {categories.map((cat) => (

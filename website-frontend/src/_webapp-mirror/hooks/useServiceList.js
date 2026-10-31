@@ -15,8 +15,7 @@ const flattenCategories = (roots) =>
   ]);
 
 // Every PUBLISHED service from catalog-service, as ServiceCard items.
-// GET /catalog/services only matches when all four filters are sent, so this
-// asks once per (category x execution type) with a wide price range and merges.
+// Loads strictly real services from PostgreSQL via catalogApi.
 // status: 'loading' | 'ready' | 'needs-login' | 'error'
 export function useServiceList() {
   const [state, setState] = useState({ status: 'loading', services: [] });
@@ -27,7 +26,14 @@ export function useServiceList() {
     const load = async () => {
       setState((s) => ({ ...s, status: 'loading' }));
       try {
-        const categories = flattenCategories(pageItems(await catalogApi.getRootCategories()));
+        const rootRes = await catalogApi.getRootCategories();
+        const rootItems = pageItems(rootRes);
+        if (!rootItems || rootItems.length === 0) {
+          if (!cancelled) setState({ status: 'ready', services: [] });
+          return;
+        }
+
+        const categories = flattenCategories(rootItems);
         const categoryById = Object.fromEntries(categories.map((c) => [c.categoryId, c]));
 
         const pages = await Promise.all(
@@ -48,6 +54,11 @@ export function useServiceList() {
         pages.forEach((p) => pageItems(p).forEach((s) => byId.set(s.serviceId, s)));
         const services = [...byId.values()];
 
+        if (services.length === 0) {
+          if (!cancelled) setState({ status: 'ready', services: [] });
+          return;
+        }
+
         const providerIds = [...new Set(services.map((s) => s.providerId).filter(Boolean))];
         const providers = await Promise.all(
           providerIds.map((id) => providerApi.getProvider(id).then((r) => r?.result ?? null, () => null))
@@ -62,7 +73,12 @@ export function useServiceList() {
           ),
         });
       } catch (err) {
-        if (!cancelled) setState({ status: err?.status === 401 ? 'needs-login' : 'error', services: [] });
+        if (!cancelled) {
+          setState({
+            status: err?.status === 401 ? 'needs-login' : 'error',
+            services: [],
+          });
+        }
       }
     };
 

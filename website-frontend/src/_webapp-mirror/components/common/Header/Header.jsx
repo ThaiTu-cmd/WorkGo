@@ -80,6 +80,28 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
     }
   };
 
+  const handleProcessClick = (e) => {
+    e.preventDefault();
+    if (activePage === 'home') {
+      const el = document.getElementById('how-it-works');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+          window.history.pushState(null, '', '#how-it-works');
+        }
+      }
+    } else {
+      if (onNavigate) {
+        onNavigate('home', { section: 'how-it-works' });
+      }
+    }
+  };
+
+  const handleMobileProcessClick = (e) => {
+    setMobileMenuOpen(false);
+    handleProcessClick(e);
+  };
+
   return (
     <header className={`${styles.header} ${isScrolled || activePage !== 'home' ? styles.headerScrolled : ''}`}>
       <div className={`container ${styles.headerContainer}`}>
@@ -137,13 +159,8 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
           </button>
           <a
             href="#how-it-works"
-            className={styles.navLink}
-            onClick={(e) => {
-              if (activePage !== 'home') {
-                e.preventDefault();
-                onNavigate && onNavigate('home');
-              }
-            }}
+            className={`${styles.navLink} ${activePage === 'how-it-works' ? styles.navLinkActive : ''}`}
+            onClick={handleProcessClick}
           >
             <Workflow size={18} aria-hidden="true" />
             Quy trình
@@ -221,7 +238,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
             <a
               href="#how-it-works"
               className={styles.mobileNavLink}
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={handleMobileProcessClick}
             >
               <Workflow size={18} aria-hidden="true" />
               Quy trình

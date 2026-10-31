@@ -10,11 +10,6 @@ export default function PopularServices({ onSelectService }) {
   const [activeTab, setActiveTab] = useState("ALL");
   const [startIndex, setStartIndex] = useState(0);
   const { services, status } = useServiceList();
-  // Most-ordered PUBLISHED services first.
-  const popular = useMemo(
-    () => [...services].sort((a, b) => b.orderCount - a.orderCount).slice(0, POPULAR_LIMIT),
-    [services]
-  );
 
   const filterTabs = [
     { key: "ALL", label: "Tất cả" },
@@ -23,10 +18,18 @@ export default function PopularServices({ onSelectService }) {
     { key: "DELIVERY", icon: Truck, label: "Giao nhận" },
   ];
 
-  const filteredServices =
-    activeTab === "ALL"
-      ? popular
-      : popular.filter((s) => s.executionType === activeTab);
+  // Filter first by selected tab, then sort by highest orderCount
+  const filteredServices = useMemo(() => {
+    let list = services;
+    if (activeTab === "DIGITAL") {
+      list = services.filter((s) => s.executionType === "DIGITAL");
+    } else if (activeTab === "ONSITE") {
+      list = services.filter((s) => s.executionType === "ONSITE");
+    } else if (activeTab === "DELIVERY") {
+      list = services.filter((s) => s.executionType === "DELIVERY" || s.categorySlug === "van-chuyen-giao-hang");
+    }
+    return [...list].sort((a, b) => b.orderCount - a.orderCount).slice(0, POPULAR_LIMIT);
+  }, [services, activeTab]);
 
   const visibleCount = 4;
   const maxStart = Math.max(0, filteredServices.length - visibleCount);

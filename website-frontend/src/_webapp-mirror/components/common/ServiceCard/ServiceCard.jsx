@@ -85,20 +85,24 @@ export default function ServiceCard({ service }) {
         {/* Provider info row */}
         <div className={styles.providerRow}>
           <img
-            src={service.provider.avatar}
-            alt={service.provider.name}
+            src={service.provider?.avatar}
+            alt={service.provider?.name || 'Chuyên gia'}
             className={styles.avatar}
           />
           <div className={styles.providerInfo}>
             <div className={styles.providerNameWrap}>
               <span className={styles.providerName}>
-                {service.provider.name}
+                {service.provider?.name || 'Nhà cung cấp'}
               </span>
-              <CheckCircle size={13} className={styles.verifiedIcon} />
+              {service.provider?.isVerified && (
+                <CheckCircle size={13} className={styles.verifiedIcon} />
+              )}
             </div>
-            <span className={styles.providerLevel}>
-              {service.provider.badge}
-            </span>
+            {service.provider?.badge && (
+              <span className={styles.providerLevel}>
+                {service.provider.badge}
+              </span>
+            )}
           </div>
         </div>
 

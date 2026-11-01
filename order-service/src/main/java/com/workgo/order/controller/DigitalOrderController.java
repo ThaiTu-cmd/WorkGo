@@ -6,6 +6,7 @@ import com.workgo.order.dto.request.DeliverySubmissionRequest;
 import com.workgo.order.dto.request.RequirementSubmissionRequest;
 import com.workgo.order.dto.request.RevisionRequestCreationRequest;
 import com.workgo.order.dto.response.DeliveryPackageResponse;
+import com.workgo.order.dto.response.DigitalExecutionResponse;
 import com.workgo.order.dto.response.RevisionRequestResponse;
 import com.workgo.order.exception.ErrorCode;
 import com.workgo.order.service.DigitalFlowService;
@@ -84,6 +85,17 @@ public class DigitalOrderController {
                 .code(ErrorCode.SUCCESS.getCode())
                 .message(ErrorCode.SUCCESS.getMessage())
                 .result(digitalFlowService.getRevisions(orderId))
+                .build();
+    }
+
+    //client chap nhan service provider gui
+    @PostMapping("/{orderId}/accept")
+    ApiResponse<DigitalExecutionResponse> acceptDelivery(@PathVariable UUID orderId) {
+
+        return ApiResponse.<DigitalExecutionResponse>builder()
+                .code(ErrorCode.SUCCESS.getCode())
+                .message(ErrorCode.SUCCESS.getMessage())
+                .result(digitalFlowService.acceptDelivery(orderId))
                 .build();
     }
 

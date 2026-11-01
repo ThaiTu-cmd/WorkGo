@@ -5,12 +5,14 @@ import com.workgo.order.dto.request.DeliverySubmissionRequest;
 import com.workgo.order.dto.request.RequirementSubmissionRequest;
 import com.workgo.order.dto.request.RevisionRequestCreationRequest;
 import com.workgo.order.dto.response.DeliveryPackageResponse;
+import com.workgo.order.dto.response.DigitalExecutionResponse;
 import com.workgo.order.dto.response.RevisionRequestResponse;
 import com.workgo.order.entity.*;
 import com.workgo.order.enumeration.*;
 import com.workgo.order.exception.AppException;
 import com.workgo.order.exception.ErrorCode;
 import com.workgo.order.mapper.DeliveryPackageMapper;
+import com.workgo.order.mapper.ExecutionMapper;
 import com.workgo.order.mapper.RevisionRequestMapper;
 import com.workgo.order.reppository.*;
 import com.workgo.order.utils.TokenUtils;
@@ -43,6 +45,7 @@ public class DigitalFlowService {
     OrderStatusService orderStatusService;
     DeliveryPackageMapper deliveryPackageMapper;
     RevisionRequestMapper revisionRequestMapper;
+    ExecutionMapper executionMapper;
     TokenUtils tokenUtils;
 
     @Transactional
@@ -257,6 +260,52 @@ public class DigitalFlowService {
                 .stream()
                 .map(revisionRequestMapper::toResponse)
                 .toList();
+    }
+
+
+    //Client chap nhan order sau khi provider gui
+    public DigitalExecutionResponse acceptDelivery(UUID orderId) {
+
+        Order order = loadOrder(orderId);
+        assertIsClient(order);
+        assertDigital(order);
+
+        if (order.getOrderStatus() != OrderStatus.DELIVERED) {
+            throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
+        }
+
+        Execution execution = loadExecution(orderId);
+        DigitalExecution digital = loadDigital(execution.getExecutionId());
+
+        if (digital.getStatus() != DigitalExecutionStatus.SUBMITTED) {
+            throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
+        }
+
+        DeliveryPackage deliveryPackage = deliveryPackageRepository
+                .findFirstByExecution_ExecutionIdOrderByVersionNoDesc(execution.getExecutionId())
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_DELIVERY_NOT_FOUND));
+
+        if (deliveryPackage.getStatus() != DeliveryPackageStatus.SUBMITTED) {
+            throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
+        }
+
+        Instant now = Instant.now();
+
+
+        //luu lai tien do
+        deliveryPackage.setStatus(DeliveryPackageStatus.ACCEPTED);
+        deliveryPackageRepository.save(deliveryPackage);
+
+        digital.setStatus(DigitalExecutionStatus.ACCEPT);
+        digitalExecutionRepository.save(digital);
+
+        execution.setCompletedAt(now);
+        executionRepository.save(execution);
+
+        orderStatusService.transition(order, OrderStatus.COMPLETED,
+                tokenUtils.getCurrentUserId(), RoleName.CLIENT);
+
+        return executionMapper.toDigitalExecutionResponse(digital);
     }
 
     //=====================================

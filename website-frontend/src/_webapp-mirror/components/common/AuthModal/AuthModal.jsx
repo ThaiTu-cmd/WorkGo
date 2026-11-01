@@ -5,7 +5,7 @@ import { useFocusTrap } from '../../../hooks/useFocusTrap';
 import axiosClient, { setAccessToken } from '../../../api/axiosClient';
 import { authApi } from '../../../api/authApi';
 
-export default function AuthModal({ initialMode = 'login', onClose }) {
+export default function AuthModal({ initialMode = 'login', onClose, onLoginSuccess }) {
   const [mode, setMode] = useState(initialMode);
   const [formData, setFormData] = useState({
     userName: '',
@@ -54,9 +54,12 @@ export default function AuthModal({ initialMode = 'login', onClose }) {
           type: 'success',
           message: `Đăng nhập thành công! Chào mừng ${formData.userName}.`
         });
+        // Show the welcome feedback briefly, then close and let the shell land
+        // on the signed-in default view (catalog).
         setTimeout(() => {
           onClose();
-        }, 1000);
+          onLoginSuccess && onLoginSuccess();
+        }, 800);
       } catch (err) {
         setFeedback({
           type: 'error',

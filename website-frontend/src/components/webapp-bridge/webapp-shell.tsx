@@ -31,6 +31,7 @@ import ProposalReviewPage from "../trung-pages/jobs/ProposalReviewPage";
 import PaymentGatewayPage from "../trung-pages/payment/PaymentGatewayPage";
 import WalletPage from "../trung-pages/payment/WalletPage";
 import PayoutSettingsPage from "../trung-pages/payment/PayoutSettingsPage";
+import FinancePage, { type FinanceTab } from "../trung-pages/finance/FinancePage";
 import ReviewFormPage from "../trung-pages/trust/ReviewFormPage";
 import DisputeCenterPage from "../trung-pages/trust/DisputeCenterPage";
 import PublicInfoPage, { isPublicInfoPageKey, type PublicInfoPageKey } from "../trung-pages/public/PublicInfoPage";
@@ -53,6 +54,8 @@ export type CatalogFilterParams = {
   orderId?: string;
   serviceId?: string;
   section?: string;
+  // Finance hub pre-selected tab ("wallet" | "deposit" | "payout").
+  tab?: string;
   // "messages": thread to open (created if this is the first contact).
   chat?: ChatTarget;
 };
@@ -79,6 +82,7 @@ export type TrungPageKey =
   | "payment-gateway"
   | "wallet"
   | "payout-settings"
+  | "finance"
   | "review-form"
   | "dispute-center"
   | "how-it-works"
@@ -110,6 +114,7 @@ const TRUNG_PAGE_KEYS = new Set<string>([
   "payment-gateway",
   "wallet",
   "payout-settings",
+  "finance",
   "review-form",
   "dispute-center",
   ...PUBLIC_INFO_PAGE_KEYS,
@@ -128,6 +133,9 @@ const CORE_PAGE_KEYS = new Set<string>([
 ]);
 
 const KNOWN_PAGE_KEYS = new Set<string>([...CORE_PAGE_KEYS, ...TRUNG_PAGE_KEYS]);
+
+// Explicit "home" visits while signed in: one-shot override for R7 redirect.
+const HOME_INTENT_KEY = "workgo-home-intent";
 
 type CategorySelection = {
   slug: string;
@@ -170,8 +178,9 @@ function scrollToTopInstant() {
 // through turbopack.resolveAlias to engine-backed shims; without the alias
 // it falls back to the mirror's own web-app mocks.
 export default function WebAppShell() {
-  const [currentPage, setCurrentPage] = useState<TrungPageKey>("home"); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form' | 'availability' | 'checkout' | 'orders' + 15 trung-pages
+  const [currentPage, setCurrentPage] = useState<TrungPageKey>("home"); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form' | 'availability' | 'checkout' | 'orders' + 16 trung-pages
   const [previousPage, setPreviousPage] = useState<TrungPageKey>("home");
+  const [financeTab, setFinanceTab] = useState<FinanceTab>("wallet");
   const [selectedServiceId, setSelectedServiceId] = useState("");
   const [selectedJobId, setSelectedJobId] = useState("");
   const [selectedProviderId, setSelectedProviderId] = useState("");
@@ -212,6 +221,23 @@ export default function WebAppShell() {
   const [toasts, setToasts] = useState<Array<{ id: number; message: string }>>([]);
   const toastIdRef = useRef(0);
   const toastTimersRef = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+
+  // R7: signed-in users open the catalog, not the guest landing. Server render
+  // cannot see localStorage, so a mount-only effect switches to "catalog" after
+  // hydration. An explicit visit to Trang chủ during the session sets a flag
+  // once so that specific "home" intent is honoured instead of redirected.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!getAccessToken()) return;
+    if (currentPage !== "home") return;
+    if (window.sessionStorage.getItem(HOME_INTENT_KEY)) {
+      window.sessionStorage.removeItem(HOME_INTENT_KEY);
+      return;
+    }
+    // Current page is "home" only on first mount here (later home visits set
+    // the flag first), so this behaves as a mount-only redirect.
+    setCurrentPage("catalog");
+  }, []);
 
   useEffect(() => {
     const timers = toastTimersRef.current;
@@ -268,6 +294,17 @@ export default function WebAppShell() {
       setAuthModal("login");
       return;
     }
+    // Same for the Finance hub: wallet / top-up / payout are account features.
+    if (page === "finance" && !getAccessToken()) {
+      showToast("Vui lòng đăng nhập để dùng Tài chính.");
+      setAuthModal("login");
+      return;
+    }
+    // Visiting the guest landing is an explicit choice -> one-shot override
+    // for the signed-in "default to catalog" redirect.
+    if (page === "home" && getAccessToken() && typeof window !== "undefined") {
+      window.sessionStorage.setItem(HOME_INTENT_KEY, "1");
+    }
     setPreviousPage(currentPage);
     setCurrentPage(page);
     if (page === "catalog") {
@@ -276,6 +313,10 @@ export default function WebAppShell() {
         executionType: params.executionType || "ALL",
         query: params.query || "",
       });
+    }
+    if (page === "finance") {
+      const t = params.tab;
+      if (t === "wallet" || t === "deposit" || t === "payout") setFinanceTab(t);
     }
     if (page === "provider-profile" && params.providerId) setSelectedProviderId(params.providerId);
     if (page === "submit-proposal" && params.jobId) setSelectedJobId(params.jobId);
@@ -610,6 +651,15 @@ export default function WebAppShell() {
         <PayoutSettingsPage onNavigate={handleNavigate} onShowToast={showToast} />
       )}
 
+      {currentPage === "finance" && (
+        <FinancePage
+          activeTab={financeTab}
+          onOpenTab={setFinanceTab}
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+        />
+      )}
+
       {currentPage === "review-form" && (
         <ReviewFormPage
           onNavigate={handleNavigate}
@@ -654,7 +704,15 @@ export default function WebAppShell() {
 
       {/* Authentication Modal */}
       {authModal && (
-        <AuthModal initialMode={authModal} onClose={() => setAuthModal(null)} />
+        <AuthModal
+          initialMode={authModal}
+          onClose={() => setAuthModal(null)}
+          onLoginSuccess={() => {
+            // After a header-modal sign-in the default view is the catalog.
+            setAuthModal(null);
+            handleNavigate("catalog");
+          }}
+        />
       )}
     </div>
   );

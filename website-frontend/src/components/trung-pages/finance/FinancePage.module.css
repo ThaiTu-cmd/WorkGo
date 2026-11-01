@@ -1,0 +1,79 @@
+/* Finance hub sits between the fixed header and the embedded payment pages;
+   the tab bar aligns with those pages' own 1320px/32px content column. */
+.page {
+  min-height: 50vh;
+}
+
+.tabBarWrap {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 32px 32px 0;
+}
+
+.tabBar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  background: var(--wg-surface);
+  border: 1px solid var(--wg-border);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 22px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--wg-text-secondary);
+  white-space: nowrap;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--wg-primary-active);
+  background: var(--wg-primary-light);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--wg-primary);
+  outline-offset: 2px;
+}
+
+.tabActive,
+.tabActive:hover {
+  background: var(--wg-primary);
+  color: #ffffff;
+}
+
+@media (max-width: 600px) {
+  .tabBarWrap {
+    padding: 20px 20px 0;
+  }
+
+  .tabBar {
+    display: flex;
+    width: 100%;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 8px 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab {
+    transition: none;
+  }
+}

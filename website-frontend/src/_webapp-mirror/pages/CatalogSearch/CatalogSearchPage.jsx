@@ -378,7 +378,7 @@ export default function CatalogSearchPage({
         <div className={styles.mobileBackdrop} onClick={() => setMobileFilterOpen(false)}>
           <div className={styles.mobileDrawer} ref={filterDrawerRef} onClick={(e) => e.stopPropagation()}>
             <div className={styles.drawerHeader}>
-              <h3 className={styles.drawerTitle}>Bộ lọc dịch vụ</h3>
+              <h3 className={styles.drawerTitle}>Bộ lọc tìm kiếm</h3>
               <button
                 type="button"
                 className={styles.closeDrawerBtn}

@@ -43,7 +43,8 @@ export default function LoginPage({ onNavigate, onShowToast }: TrungPageProps) {
       setSubmitting(false);
     }
     onShowToast("Đăng nhập thành công!");
-    onNavigate("home");
+    // Signed-in default view is the catalog, not the guest landing.
+    onNavigate("catalog");
   };
 
   return (

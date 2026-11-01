@@ -5,7 +5,12 @@
   right: 0;
   height: var(--header-bar-height, var(--header-height));
   z-index: 1000;
-  transition: all var(--transition-base);
+  transition:
+    background-color var(--transition-base),
+    box-shadow var(--transition-base),
+    border-color var(--transition-base),
+    color var(--transition-base),
+    backdrop-filter var(--transition-base);
   background-color: transparent;
   color: #ffffff;
 }
@@ -49,6 +54,12 @@
   font-weight: 800;
   letter-spacing: -0.5px;
   color: inherit;
+}
+
+.logo:focus-visible {
+  outline: 2px solid var(--wg-primary);
+  outline-offset: 3px;
+  border-radius: 6px;
 }
 
 .logoText {
@@ -99,6 +110,8 @@
   border: none;
   outline: none;
   width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
   font-size: 0.875rem;
   background: transparent;
   color: var(--wg-text);
@@ -130,7 +143,7 @@
   background-color: var(--wg-primary-hover);
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1240px) {
   .navSearch {
     display: flex;
   }
@@ -149,20 +162,28 @@
 }
 
 /* C2-1 guard: Be Vietnam Pro glyphs run wider than Inter — tighten the
-   900–1100px band so header never overflows 1024px (reviewer: right=1028). */
+   900–1100px band so header never overflows 1024px (reviewer: right=1028).
+   The compact search only shows at ≥1240px, freeing horizontal room here. */
 @media (min-width: 900px) and (max-width: 1100px) {
   .desktopNav {
-    gap: 16px;
+    gap: 12px;
   }
   .navLink {
     font-size: 0.88rem;
-    padding: 8px 6px;
+    padding: 8px 10px;
+    gap: 6px;
   }
-  .navSearch {
-    width: 240px;
+  .actionButtons {
+    gap: 6px;
   }
-  .navSearch:focus-within {
-    width: 260px;
+  .signInBtn,
+  .joinBtn {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+  .trigger {
+    padding: 10px 12px;
+    font-size: 0.9rem;
   }
 }
 
@@ -176,7 +197,7 @@
   white-space: nowrap;
   font-weight: 600;
   font-size: 1rem;
-  transition: color var(--transition-fast), background-color var(--transition-fast), transform 0.12s cubic-bezier(0.2, 0, 0, 1);
+  transition: color var(--transition-fast), background-color var(--transition-fast), opacity var(--transition-fast), transform 0.12s cubic-bezier(0.2, 0, 0, 1);
   color: inherit;
   opacity: 0.92;
   cursor: pointer;
@@ -196,6 +217,11 @@
   background-color: var(--wg-primary-light);
 }
 
+.navLink:focus-visible {
+  outline: 2px solid var(--wg-primary);
+  outline-offset: 2px;
+}
+
 .navLinkActive {
   color: var(--wg-primary) !important;
   opacity: 1 !important;
@@ -206,8 +232,8 @@
   content: '';
   position: absolute;
   bottom: 2px;
-  left: 14px;
-  right: 14px;
+  left: 16px;
+  right: 16px;
   height: 2px;
   background-color: var(--wg-primary);
   border-radius: var(--radius-full);
@@ -219,31 +245,6 @@
 
 .headerScrolled .navLink:hover {
   color: var(--wg-primary);
-}
-
-.highlightLink {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #34d399 !important;
-}
-
-.headerScrolled .highlightLink {
-  color: var(--wg-primary) !important;
-}
-
-.highlightIcon {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.15);
-  }
 }
 
 .actionButtons {
@@ -277,6 +278,13 @@
 
 .signInBtn:active {
   transform: scale(0.96);
+}
+
+.signInBtn:focus-visible,
+.joinBtn:focus-visible,
+.menuToggle:focus-visible {
+  outline: 2px solid var(--wg-primary);
+  outline-offset: 2px;
 }
 
 .headerScrolled .signInBtn {

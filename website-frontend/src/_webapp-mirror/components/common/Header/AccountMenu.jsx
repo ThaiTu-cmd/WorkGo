@@ -24,6 +24,14 @@ import { useMessages } from '../../../hooks/useMessages';
 import { totalUnread } from '../../../api/messageApi';
 import { hasRole } from '../../../utils/jwt';
 import styles from './AccountMenu.module.css';
+import { decodeToken } from '../../../utils/jwt';
+
+// identity-service puts the username in the JWT subject; display-only fallback
+// used while myInfo is unavailable.
+const tokenUserName = (token) => {
+  const sub = decodeToken(token)?.sub;
+  return typeof sub === 'string' && sub ? sub : null;
+};
 
 // Signed-in destinations that used to live in the Trung sub-nav. Pages that
 // need an id (submit-proposal, review-form) are opened from their parent page.
@@ -75,10 +83,23 @@ export const accountGroupsFor = (token) =>
   hasRole(token, 'ADMIN') ? [...ACCOUNT_GROUPS, ADMIN_GROUP] : ACCOUNT_GROUPS;
 
 // Shell page keys go through onNavigate; items with `href` are separate routes.
+// The three wallet destinations open the Finance hub on the matching tab (Ví /
+// Nạp tiền / Rút tiền) instead of the standalone pages.
+const FINANCE_ITEM_TABS = {
+  'wallet': 'wallet',
+  'payment-gateway': 'deposit',
+  'payout-settings': 'payout',
+};
+
 export const openAccountItem = (item, onNavigate) => {
   if (item.href) {
     const locale = window.location.pathname.split('/')[1] || 'vi';
     window.location.href = `/${locale}/${item.href}`;
+    return;
+  }
+  const financeTab = FINANCE_ITEM_TABS[item.key];
+  if (financeTab && onNavigate) {
+    onNavigate('finance', { tab: financeTab });
     return;
   }
   if (onNavigate) onNavigate(item.key);
@@ -91,6 +112,31 @@ export default function AccountMenu({ onNavigate, activePage }) {
   const token = useAuthToken();
   const groups = accountGroupsFor(token);
   const unread = totalUnread(useMessages());
+  // Trigger shows who is signed in: "Nguyễn Văn A" (myInfo) with the login id
+  // as fallback while the profile is unavailable.
+  const [displayName, setDisplayName] = useState(null);
+
+  useEffect(() => {
+    if (!token) {
+      setDisplayName(null);
+      return undefined;
+    }
+    let cancelled = false;
+    authApi
+      .getMyInfo()
+      .then((res) => {
+        if (cancelled) return;
+        const user = res?.result;
+        const full = [user?.lastName, user?.firstName].filter(Boolean).join(' ').trim();
+        setDisplayName(full || user?.userName || tokenUserName(token) || null);
+      })
+      .catch(() => {
+        if (!cancelled) setDisplayName(tokenUserName(token));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   // Close on outside click or Escape (focus returns to the trigger).
   useEffect(() => {
@@ -132,7 +178,12 @@ export default function AccountMenu({ onNavigate, activePage }) {
           <UserRound size={18} />
           {unread > 0 && <span className={styles.dot} aria-hidden="true" />}
         </span>
-        <span className={styles.triggerLabel}>Tài khoản</span>
+        <span
+          className={styles.triggerLabel}
+          title={displayName || undefined}
+        >
+          {displayName || 'Tài khoản'}
+        </span>
         <ChevronDown size={16} className={open ? styles.chevronOpen : styles.chevron} />
       </button>
 

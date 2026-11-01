@@ -127,7 +127,7 @@
   background-color: var(--wg-primary-hover);
 }
 
-/* Mobile Drawer */
+/* Mobile Drawer — slides in from the LEFT like a real sidebar */
 .mobileBackdrop {
   position: fixed;
   top: 0;
@@ -138,7 +138,7 @@
   backdrop-filter: blur(4px);
   z-index: 2000;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   animation: fadeIn 0.2s ease;
 }
 
@@ -154,12 +154,12 @@
   background-color: var(--wg-surface);
   display: flex;
   flex-direction: column;
-  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.2);
+  animation: slideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.2);
 }
 
-@keyframes slideInRight {
-  from { transform: translateX(100%); }
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
   to { transform: translateX(0); }
 }
 

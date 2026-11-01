@@ -6,7 +6,7 @@ import {
   Sparkles,
   LayoutGrid,
   Package,
-  Workflow,
+  Wallet,
   LogIn,
   UserPlus,
   House,
@@ -80,26 +80,10 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
     }
   };
 
-  const handleProcessClick = (e) => {
+  const handleLogoClick = (e) => {
     e.preventDefault();
-    if (activePage === 'home') {
-      const el = document.getElementById('how-it-works');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        if (typeof window !== 'undefined' && window.history && window.history.pushState) {
-          window.history.pushState(null, '', '#how-it-works');
-        }
-      }
-    } else {
-      if (onNavigate) {
-        onNavigate('home', { section: 'how-it-works' });
-      }
-    }
-  };
-
-  const handleMobileProcessClick = (e) => {
-    setMobileMenuOpen(false);
-    handleProcessClick(e);
+    // Signed-in users land on the catalog; guests see the marketing landing.
+    if (onNavigate) onNavigate(isLoggedIn ? 'catalog' : 'home');
   };
 
   return (
@@ -110,10 +94,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
           <a
             href="#"
             className={styles.logo}
-            onClick={(e) => {
-              e.preventDefault();
-              onNavigate && onNavigate('home');
-            }}
+            onClick={handleLogoClick}
           >
             <span className={styles.logoText}>
               <span className={styles.logoWork}>Work</span>
@@ -121,9 +102,9 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
             </span>
           </a>
 
-          {/* Compact search in navbar */}
-          {(isScrolled || activePage !== 'home') && (
-            <form onSubmit={handleMiniSearchSubmit} className={styles.navSearch}>
+          {/* Compact search in navbar — always present on wide screens so the
+              bar never reflows when the scroll state changes. */}
+          <form onSubmit={handleMiniSearchSubmit} className={styles.navSearch}>
               <Search size={16} className={styles.navSearchIcon} />
               <input
                 type="text"
@@ -136,8 +117,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
                 <Search size={15} />
               </button>
             </form>
-          )}
-        </div>
+          </div>
 
         {/* Center/Right Desktop Navigation */}
         <nav className={styles.desktopNav}>
@@ -157,20 +137,20 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
             <Package size={18} aria-hidden="true" />
             Đơn hàng
           </button>
-          <a
-            href="#how-it-works"
-            className={`${styles.navLink} ${activePage === 'how-it-works' ? styles.navLinkActive : ''}`}
-            onClick={handleProcessClick}
-          >
-            <Workflow size={18} aria-hidden="true" />
-            Quy trình
-          </a>
           <button
             type="button"
-            className={`${styles.navLink} ${styles.highlightLink} ${activePage === 'my-services' ? styles.navLinkActive : ''}`}
+            className={`${styles.navLink} ${activePage === 'finance' ? styles.navLinkActive : ''}`}
+            onClick={() => onNavigate && onNavigate('finance')}
+          >
+            <Wallet size={18} aria-hidden="true" />
+            Tài chính
+          </button>
+          <button
+            type="button"
+            className={`${styles.navLink} ${activePage === 'my-services' ? styles.navLinkActive : ''}`}
             onClick={() => onNavigate && onNavigate('my-services')}
           >
-            <Sparkles size={18} className={styles.highlightIcon} aria-hidden="true" />
+            <Sparkles size={18} aria-hidden="true" />
             Provider
           </button>
         </nav>
@@ -219,8 +199,9 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
             {[
               { key: 'catalog', icon: LayoutGrid, label: 'Danh mục' },
               { key: 'home', icon: House, label: 'Trang chủ' },
-              { key: 'availability', icon: CalendarClock, label: 'Lịch rảnh' },
+              { key: 'finance', icon: Wallet, label: 'Tài chính' },
               { key: 'orders', icon: Package, label: 'Đơn hàng' },
+              { key: 'availability', icon: CalendarClock, label: 'Lịch rảnh' },
             ].map(({ key, icon: Icon, label }) => (
               <button
                 key={key}
@@ -235,14 +216,6 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
                 {label}
               </button>
             ))}
-            <a
-              href="#how-it-works"
-              className={styles.mobileNavLink}
-              onClick={handleMobileProcessClick}
-            >
-              <Workflow size={18} aria-hidden="true" />
-              Quy trình
-            </a>
             <a
               href="#cta"
               className={styles.mobileNavLink}

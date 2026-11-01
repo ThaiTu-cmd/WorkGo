@@ -326,6 +326,11 @@ public class OrderService {
 
     public PageResponse<OrderStatusHistoryResponse> getOrderHistory(UUID orderId, int page, int size){
 
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        tokenUtils.assertParticipant(order);
+
         Sort sort = Sort.by("createdAt").descending();
 
         Pageable pageable = PageRequest.of(page, size, sort);

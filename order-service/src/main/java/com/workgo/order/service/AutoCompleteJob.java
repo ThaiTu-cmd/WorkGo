@@ -48,7 +48,7 @@ public class AutoCompleteJob {
         }
     }
 
-    @Transactional
+
     private void complete(UUID orderId) {
 
         Order order = orderRepository.findById(orderId).orElse(null);

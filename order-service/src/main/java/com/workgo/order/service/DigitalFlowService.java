@@ -264,6 +264,7 @@ public class DigitalFlowService {
 
 
     //Client chap nhan order sau khi provider gui
+    @Transactional
     public DigitalExecutionResponse acceptDelivery(UUID orderId) {
 
         Order order = loadOrder(orderId);

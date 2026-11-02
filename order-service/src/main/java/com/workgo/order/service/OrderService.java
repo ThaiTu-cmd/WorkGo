@@ -2,7 +2,10 @@ package com.workgo.order.service;
 
 import com.workgo.order.dto.PageResponse;
 import com.workgo.order.dto.request.OrderCreationRequest;
+import com.workgo.order.dto.response.OrderDetailResponse;
+import com.workgo.order.dto.response.OrderItemResponse;
 import com.workgo.order.dto.response.OrderResponse;
+import com.workgo.order.dto.response.OrderSnapshotResponse;
 import com.workgo.order.dto.response.OrderStatusHistoryResponse;
 import com.workgo.order.dto.response.PaymentConfirmationResponse;
 import com.workgo.order.dto.response.client.AddOnResponse;
@@ -19,6 +22,7 @@ import com.workgo.order.exception.AppException;
 import com.workgo.order.exception.ErrorCode;
 import com.workgo.order.mapper.OrderItemMapper;
 import com.workgo.order.mapper.OrderMapper;
+import com.workgo.order.mapper.OrderSnapshotMapper;
 import com.workgo.order.mapper.OrderStatusHistoryMapper;
 import com.workgo.order.reppository.*;
 import com.workgo.order.reppository.client.CatalogClient;
@@ -59,6 +63,7 @@ public class OrderService {
     OrderStatusHistoryRepository orderStatusHistoryRepository;
     OrderItemRepository orderItemRepository;
     OrderItemMapper orderItemMapper;
+    OrderSnapshotMapper orderSnapshotMapper;
     ExecutionService executionService;
     ExecutionRepository executionRepository;
     OnsiteExecutionRepository onsiteExecutionRepository;
@@ -135,6 +140,8 @@ public class OrderService {
 
         //luu OrderItem
         List<OrderItem> orderItems = buildOrderItems(order, packageResponse, addOns, platformFee);
+
+        assertItemsTotalMatchesSubtotal(orderItems, subtotal);
 
         orderItemRepository.saveAll(orderItems);
 
@@ -314,14 +321,30 @@ public class OrderService {
                 .build();
     }
 
-    public OrderResponse getOrder(UUID orderId){
+    @Transactional(readOnly = true)
+    public OrderDetailResponse getOrder(UUID orderId){
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
         tokenUtils.assertParticipant(order);
 
-        return orderMapper.toOrderResponse(order);
+        List<OrderItemResponse> items = orderItemRepository
+                .findByOrder_OrderIdOrderBySortOrderAsc(orderId)
+                .stream()
+                .map(orderItemMapper::toOrderItemResponse)
+                .toList();
+
+        OrderSnapshotResponse snapshot = orderSnapshotRepository.findById(orderId)
+                .map(orderSnapshotMapper::toOrderSnapshotResponse)
+                .orElse(null);
+
+        return OrderDetailResponse.builder()
+                .order(orderMapper.toOrderResponse(order))
+                .items(items)
+                .snapshot(snapshot)
+                .execution(executionService.getExecutionOfOrder(order))
+                .build();
     }
 
     public PageResponse<OrderStatusHistoryResponse> getOrderHistory(UUID orderId, int page, int size){
@@ -347,6 +370,20 @@ public class OrderService {
                         .toList())
                 .build();
 
+    }
+
+    //tong tien PACKAGE + ADDON phai bang subtotal
+    private void assertItemsTotalMatchesSubtotal(List<OrderItem> items, BigDecimal subtotal) {
+
+        BigDecimal itemsTotal = items.stream()
+                .filter(item -> item.getItemType() == ItemType.PACKAGE
+                        || item.getItemType() == ItemType.ADDON)
+                .map(OrderItem::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (itemsTotal.compareTo(subtotal) != 0) {
+            throw new AppException(ErrorCode.ORDER_ITEM_TOTAL_MISMATCH);
+        }
     }
 
     private String generateOrderNumber(){

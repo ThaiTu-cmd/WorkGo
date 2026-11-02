@@ -3,6 +3,7 @@ package com.workgo.order.controller;
 import com.workgo.order.dto.ApiResponse;
 import com.workgo.order.dto.PageResponse;
 import com.workgo.order.dto.request.OrderCreationRequest;
+import com.workgo.order.dto.response.OrderDetailResponse;
 import com.workgo.order.dto.response.OrderResponse;
 import com.workgo.order.dto.response.OrderStatusHistoryResponse;
 import com.workgo.order.enumeration.RoleName;
@@ -53,10 +54,10 @@ public class OrderController {
 
     //lay cu the mot order
     @GetMapping("/{orderId}")
-    ApiResponse<OrderResponse> getOrder(
+    ApiResponse<OrderDetailResponse> getOrder(
             @PathVariable UUID orderId
             ){
-        return ApiResponse.<OrderResponse>builder()
+        return ApiResponse.<OrderDetailResponse>builder()
                 .code(ErrorCode.SUCCESS.getCode())
                 .message(ErrorCode.SUCCESS.getMessage())
                 .result(orderService.getOrder(orderId))

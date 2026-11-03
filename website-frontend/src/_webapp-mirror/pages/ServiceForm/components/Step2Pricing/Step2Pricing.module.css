@@ -310,6 +310,50 @@
   outline: none;
 }
 
+.addonContent .inputTitle,
+.addonContent .textareaDesc {
+  margin-bottom: 0.5rem;
+}
+
+.addonRemove {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #dc2626;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.addonRemove:hover {
+  background: #fef2f2;
+}
+
+.addonAdd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 120px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.addonAdd:hover {
+  border-color: #10b981;
+  color: #047857;
+}
+
 @media (max-width: 900px) {
   .addonsGrid {
     grid-template-columns: 1fr;

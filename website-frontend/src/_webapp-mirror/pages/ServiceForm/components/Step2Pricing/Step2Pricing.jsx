@@ -1,5 +1,8 @@
 import React from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 import styles from './Step2Pricing.module.css';
+
+let nextAddonKey = 0;
 
 export default function Step2Pricing({ formData, onChange, errors = {} }) {
   const isDigital = (formData.executionType || 'DIGITAL') === 'DIGITAL';
@@ -22,6 +25,15 @@ export default function Step2Pricing({ formData, onChange, errors = {} }) {
     };
     onChange('packages', updated);
   };
+
+  // Add-ons are saved with the service (create / update / delete by id).
+  // New rows get a local `key` so React keeps their inputs apart before they have an id.
+  const addons = formData.addons || [];
+  const updateAddon = (idx, field, value) =>
+    onChange('addons', addons.map((item, i) => (i === idx ? { ...item, [field]: value } : item)));
+  const removeAddon = (idx) => onChange('addons', addons.filter((_, i) => i !== idx));
+  const addAddon = () =>
+    onChange('addons', [...addons, { key: `new-${(nextAddonKey += 1)}`, name: '', desc: '', price: 100000 }]);
 
   return (
     <div className={styles.card}>
@@ -296,45 +308,59 @@ export default function Step2Pricing({ formData, onChange, errors = {} }) {
       </p>
 
       <div className={styles.addonsGrid}>
-        {(formData.addons || [
-          { id: 'addon-fast', title: 'Giao hàng hỏa tốc (Rút ngắn 40% thời gian)', desc: 'Ưu tiên tập trung hoàn thiện dự án của bạn trước tiên trong lịch trình.', price: 800000, active: true },
-          { id: 'addon-source', title: 'Bàn giao trọn bộ File gốc & Source Code', desc: 'Bao gồm toàn bộ file thiết kế Figma gốc và mã nguồn sạch chuẩn repository.', price: 600000, active: true },
-        ]).map((addon, idx) => {
-          const currentAddons = formData.addons || [
-            { id: 'addon-fast', title: 'Giao hàng hỏa tốc (Rút ngắn 40% thời gian)', desc: 'Ưu tiên tập trung hoàn thiện dự án của bạn trước tiên trong lịch trình.', price: 800000, active: true },
-            { id: 'addon-source', title: 'Bàn giao trọn bộ File gốc & Source Code', desc: 'Bao gồm toàn bộ file thiết kế Figma gốc và mã nguồn sạch chuẩn repository.', price: 600000, active: true },
-          ];
-          const updateAddon = (field, val) => {
-            const next = currentAddons.map((item, i) => (i === idx ? { ...item, [field]: val } : item));
-            onChange('addons', next);
-          };
-
-          return (
-            <div key={addon.id || idx} className={`${styles.addonCard} ${addon.active ? styles.active : ''}`}>
+        {addons.map((addon, idx) => (
+          <div key={addon.id || addon.key || idx} className={`${styles.addonCard} ${styles.active}`}>
+            <div className={styles.addonContent}>
               <input
-                type="checkbox"
-                className={styles.addonCheck}
-                checked={addon.active !== false}
-                onChange={(e) => updateAddon('active', e.target.checked)}
+                type="text"
+                className={styles.inputTitle}
+                placeholder="Tên add-on, ví dụ: Giao gấp trong 24h"
+                aria-label={`Tên add-on ${idx + 1}`}
+                value={addon.name}
+                onChange={(e) => updateAddon(idx, 'name', e.target.value)}
               />
-              <div className={styles.addonContent}>
-                <div className={styles.addonTitle}>{addon.title}</div>
-                <div className={styles.addonDesc}>{addon.desc}</div>
-                <div className={styles.addonPriceRow}>
-                  <input
-                    type="number"
-                    className={styles.addonPriceInput}
-                    value={addon.price ?? 0}
-                    step={50000}
-                    onChange={(e) => updateAddon('price', Number(e.target.value))}
-                  />
-                  <span className={styles.currency}>VNĐ</span>
-                </div>
+              <textarea
+                className={styles.textareaDesc}
+                placeholder="Mô tả ngắn cho khách hàng"
+                aria-label={`Mô tả add-on ${idx + 1}`}
+                value={addon.desc}
+                onChange={(e) => updateAddon(idx, 'desc', e.target.value)}
+              />
+              <div className={styles.addonPriceRow}>
+                <input
+                  type="number"
+                  className={styles.addonPriceInput}
+                  aria-label={`Giá add-on ${idx + 1}`}
+                  value={addon.price ?? 0}
+                  step={50000}
+                  min={0}
+                  onChange={(e) => updateAddon(idx, 'price', Number(e.target.value))}
+                />
+                <span className={styles.currency}>VNĐ</span>
+                <button
+                  type="button"
+                  className={styles.addonRemove}
+                  onClick={() => removeAddon(idx)}
+                  aria-label={`Xóa add-on ${idx + 1}`}
+                >
+                  <Trash2 size={14} aria-hidden="true" /> Xóa
+                </button>
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
+        <button type="button" className={styles.addonAdd} onClick={addAddon}>
+          <Plus size={16} aria-hidden="true" /> Thêm add-on
+        </button>
       </div>
+      {addons.length === 0 && (
+        <p className={styles.addonsSectionDesc}>Chưa có add-on nào. Khách vẫn đặt được các gói ở trên.</p>
+      )}
+      {errors.addons && (
+        <p role="alert" style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.75rem' }}>
+          {errors.addons}
+        </p>
+      )}
     </div>
   );
 }

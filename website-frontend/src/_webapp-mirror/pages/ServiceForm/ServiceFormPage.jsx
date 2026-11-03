@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { catalogApi } from '../../api/catalogApi';
 import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
-import { pageItems, toMediaList, toPackages } from '../../api/adapters';
+import { pageItems, toPackages } from '../../api/adapters';
+import { addonsToForm, mediasToForm, planAddonChanges, planMediaChanges } from './serviceFormSync';
 
 const TIER_KEYS = { BASIC: 'basic', STANDARD: 'standard', PREMIUM: 'premium' };
 
@@ -29,8 +30,10 @@ import {
   validateTitle,
   validateDescription,
   validatePrice,
+  validateAddons,
   sanitizeText,
   clampPrice,
+  isHttpUrl,
 } from './formValidation';
 
 export default function ServiceFormPage({
@@ -73,7 +76,11 @@ export default function ServiceFormPage({
         price: 8500000,
       },
     },
+    // Add-ons: { id (server addOnId, absent until saved), name, desc, price }.
+    addons: [],
     coverImage: '',
+    // Extra images: { id (server serviceMediaId, absent until saved), url }.
+    gallery: [],
     videoUrl: '',
   };
 
@@ -86,22 +93,28 @@ export default function ServiceFormPage({
   const [packageIds, setPackageIds] = useState({});
   // catalog ServiceStatus of the service being edited (kept on save).
   const [existingStatus, setExistingStatus] = useState(null);
+  // What the server had when editing started, so a save can create/update/delete
+  // only the add-ons and media that changed.
+  const [originalAddonIds, setOriginalAddonIds] = useState([]);
+  const [originalMedia, setOriginalMedia] = useState(null);
 
   useEffect(() => {
     if (!isEdit) return undefined;
     let cancelled = false;
     (async () => {
       try {
-        const [serviceRes, packagesRes, mediasRes] = await Promise.all([
+        const [serviceRes, packagesRes, mediasRes, addonsRes] = await Promise.all([
           catalogApi.getService(serviceId),
           catalogApi.getPackages(serviceId).catch(() => null),
-          catalogApi.getMedias(serviceId).catch(() => null),
+          catalogApi.getMedias(serviceId, 0, 50).catch(() => null),
+          catalogApi.getAddons(serviceId, 0, 50).catch(() => null),
         ]);
         const existing = serviceRes?.result;
         if (cancelled || !existing) return;
         const pkgs = toPackages(pageItems(packagesRes));
         const byTier = Object.fromEntries(pkgs.map((p) => [TIER_KEYS[p.tier], p]));
-        const cover = toMediaList(pageItems(mediasRes))[0]?.url;
+        const media = mediasToForm(pageItems(mediasRes));
+        const addons = addonsToForm(pageItems(addonsRes));
         const fromPkg = (key) => {
           const p = byTier[key];
           if (!p) return defaultFormData.packages[key];
@@ -115,6 +128,8 @@ export default function ServiceFormPage({
         };
         setPackageIds(Object.fromEntries(Object.entries(byTier).map(([k, p]) => [k, p.id])));
         setExistingStatus(existing.status || null);
+        setOriginalAddonIds(addons.map((a) => a.id));
+        setOriginalMedia(media);
         setFormData({
           ...defaultFormData,
           title: existing.title || '',
@@ -122,7 +137,10 @@ export default function ServiceFormPage({
           executionType: existing.executionType || 'DIGITAL',
           description: existing.description || '',
           packages: { basic: fromPkg('basic'), standard: fromPkg('standard'), premium: fromPkg('premium') },
-          coverImage: cover || '',
+          addons,
+          coverImage: media.cover?.url || '',
+          gallery: media.gallery,
+          videoUrl: media.video?.url || '',
         });
       } catch (err) {
         if (!cancelled && onShowToast) onShowToast(`Không tải được dịch vụ: ${err?.message || 'lỗi kết nối'}`);
@@ -161,10 +179,17 @@ export default function ServiceFormPage({
     if (step === 2) {
       const priceErr = validatePrice(formData.packages?.basic?.price);
       if (priceErr) errs.price = priceErr;
+      const addonErr = validateAddons(formData.addons);
+      if (addonErr) errs.addons = addonErr;
     }
     if (step === 3) {
       if (!formData.coverImage || !formData.coverImage.trim()) {
         errs.coverImage = 'Vui lòng cung cấp URL ảnh bìa chính!';
+      } else if (!isHttpUrl(formData.coverImage)) {
+        errs.coverImage = 'URL ảnh bìa phải bắt đầu bằng http:// hoặc https://';
+      }
+      if (formData.videoUrl?.trim() && !isHttpUrl(formData.videoUrl)) {
+        errs.videoUrl = 'Liên kết video phải bắt đầu bằng http:// hoặc https://';
       }
     }
 
@@ -235,8 +260,16 @@ export default function ServiceFormPage({
         else await catalogApi.createPackage(id, body);
       }
 
-      if (!isEdit && formData.coverImage?.trim()) {
-        await catalogApi.createMedia(id, { url: formData.coverImage.trim(), mediaType: 'IMAGE', cover: true });
+      const addonPlan = planAddonChanges(isEdit ? originalAddonIds : [], formData.addons);
+      for (const body of addonPlan.create) await catalogApi.createAddon(id, body);
+      for (const { id: addonId, body } of addonPlan.update) await catalogApi.updateAddon(addonId, body);
+      for (const addonId of addonPlan.remove) await catalogApi.deleteAddon(addonId);
+
+      const mediaOps = planMediaChanges(isEdit ? originalMedia : null, formData);
+      for (const step of mediaOps) {
+        if (step.op === 'create') await catalogApi.createMedia(id, step.body);
+        else if (step.op === 'update') await catalogApi.updateMedia(step.id, step.body);
+        else await catalogApi.deleteMedia(step.id);
       }
 
       if (!isEdit && targetStatus === 'PUBLISHED') {

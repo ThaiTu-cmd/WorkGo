@@ -1,8 +1,30 @@
-import React from 'react';
-import { Sparkles, Plus, Image as ImageIcon } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, Plus, X } from 'lucide-react';
+import { isHttpUrl } from '../../formValidation';
 import styles from './Step3Media.module.css';
 
 export default function Step3Media({ formData, onChange, errors = {} }) {
+  const gallery = formData.gallery || [];
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [galleryError, setGalleryError] = useState('');
+
+  // catalog rejects a second media with the same URL on one service (MEDIA_EXISTED).
+  const addImage = () => {
+    const url = newImageUrl.trim();
+    if (!isHttpUrl(url)) {
+      setGalleryError('URL ảnh phải bắt đầu bằng http:// hoặc https://');
+      return;
+    }
+    if (url === formData.coverImage?.trim() || gallery.some((g) => g.url === url)) {
+      setGalleryError('Ảnh này đã có trong dịch vụ.');
+      return;
+    }
+    onChange('gallery', [...gallery, { url }]);
+    setNewImageUrl('');
+  };
+
+  const removeImage = (idx) => onChange('gallery', gallery.filter((_, i) => i !== idx));
+
   const coverUrl = formData.coverImage || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80';
   const basePrice = formData.packages?.basic?.price || 2500000;
 
@@ -47,20 +69,46 @@ export default function Step3Media({ formData, onChange, errors = {} }) {
             <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem' }}>
               Bổ sung hình ảnh sản phẩm đã hoàn thành để nâng cao độ tin cậy.
             </p>
-            <div className={styles.galleryGrid}>
-              {(formData.mediaUrls || [
-                'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&auto=format&fit=crop&q=80',
-                'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=400&auto=format&fit=crop&q=80',
-              ]).map((url, idx) => (
-                <div key={idx} className={styles.gallerySlot}>
-                  <img src={url} alt={`Gallery ${idx + 1}`} />
-                </div>
-              ))}
-              <div className={styles.gallerySlot} title="Thêm ảnh minh họa">
-                <Plus size={20} />
-                <span>+ Thêm ảnh</span>
+            {gallery.length > 0 && (
+              <div className={styles.galleryGrid}>
+                {gallery.map((item, idx) => (
+                  <div key={item.id || item.url} className={styles.gallerySlot}>
+                    <img src={item.url} alt={`Ảnh dự án ${idx + 1}`} />
+                    <button
+                      type="button"
+                      className={styles.galleryRemove}
+                      onClick={() => removeImage(idx)}
+                      aria-label={`Xóa ảnh ${idx + 1}`}
+                    >
+                      <X size={14} aria-hidden="true" />
+                    </button>
+                  </div>
+                ))}
               </div>
+            )}
+            <div className={styles.galleryAddRow}>
+              <input
+                type="url"
+                className={styles.input}
+                placeholder="Dán URL ảnh (https://...)"
+                aria-label="URL ảnh dự án"
+                value={newImageUrl}
+                onChange={(e) => {
+                  setNewImageUrl(e.target.value);
+                  setGalleryError('');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addImage();
+                  }
+                }}
+              />
+              <button type="button" className={styles.galleryAddBtn} onClick={addImage}>
+                <Plus size={16} aria-hidden="true" /> Thêm ảnh
+              </button>
             </div>
+            {galleryError && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.375rem' }}>{galleryError}</p>}
           </div>
 
           {/* Video URL */}
@@ -76,6 +124,7 @@ export default function Step3Media({ formData, onChange, errors = {} }) {
               value={formData.videoUrl || ''}
               onChange={(e) => onChange('videoUrl', e.target.value)}
             />
+            {errors.videoUrl && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.375rem' }}>{errors.videoUrl}</p>}
           </div>
         </div>
 

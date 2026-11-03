@@ -48,6 +48,25 @@ export function validatePrice(raw) {
   return null;
 }
 
+// Add-ons are optional, but each one listed needs a name and a positive price.
+export function validateAddons(addons = []) {
+  for (const [i, addon] of addons.entries()) {
+    if (sanitizeText(addon.name).length < 3) {
+      return `Add-on #${i + 1}: vui lòng nhập tên từ 3 ký tự trở lên!`;
+    }
+    const price = Number(addon.price);
+    if (!Number.isFinite(price) || price <= 0) {
+      return `Add-on #${i + 1}: giá phải là số lớn hơn 0!`;
+    }
+    if (price > PRICE_MAX) {
+      return `Add-on #${i + 1}: giá vượt quá ${PRICE_MAX.toLocaleString('vi-VN')} ₫ cho phép!`;
+    }
+  }
+  return null;
+}
+
+export const isHttpUrl = (value) => /^https?:\/\/\S+$/i.test(String(value ?? '').trim());
+
 export function clampPrice(raw) {
   const value = Number(raw);
   if (!Number.isFinite(value) || value < 0) return 0;

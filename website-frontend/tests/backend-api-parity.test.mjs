@@ -13,7 +13,8 @@ import { addressApi } from "../src/_webapp-mirror/api/addressApi.js";
 import { authApi } from "../src/_webapp-mirror/api/authApi.js";
 import { providerApi } from "../src/_webapp-mirror/api/providerApi.js";
 import { adminApi } from "../src/_webapp-mirror/api/adminApi.js";
-import { orderApi } from "../src/_webapp-mirror/api/orderApi.js";
+import { orderApi, isOrderable, orderErrorMessage } from "../src/_webapp-mirror/api/orderApi.js";
+import axiosClient from "../src/_webapp-mirror/api/axiosClient.js";
 import { evidenceApi } from "../src/_webapp-mirror/api/evidenceApi.js";
 import { verificationApi } from "../src/_webapp-mirror/api/verificationApi.js";
 
@@ -131,6 +132,53 @@ test("API Parity: orderApi exports order, history, execution, and create operati
   assert.equal(typeof orderApi.getOrderHistory, "function");
   assert.equal(typeof orderApi.getExecution, "function");
   assert.equal(typeof orderApi.createOrder, "function");
+});
+
+test("API Parity: orderApi calls the onsite, digital and payment-confirm endpoints", async () => {
+  const calls = [];
+  const original = { get: axiosClient.get, post: axiosClient.post };
+  axiosClient.get = async (url, config) => calls.push(["GET", url, config?.params]);
+  axiosClient.post = async (url, body) => calls.push(["POST", url, body]);
+  try {
+    await orderApi.confirmPayment("o1");
+    await orderApi.checkin("o1", "123456");
+    await orderApi.completeOnsite("o1");
+    await orderApi.acceptOnsite("o1");
+    await orderApi.submitRequirements("o1", { description: "d" });
+    await orderApi.submitDelivery("o1", { message: "m", files: [] });
+    await orderApi.getDeliveries("o1");
+    await orderApi.requestRevision("o1", "fix it");
+    await orderApi.getRevisions("o1");
+    await orderApi.acceptDigital("o1");
+  } finally {
+    Object.assign(axiosClient, original);
+  }
+  assert.deepEqual(calls, [
+    ["POST", "/order/internal/orders/o1/confirm", undefined],
+    ["POST", "/order/orders/onsite/o1/checkin", { code: "123456" }],
+    ["POST", "/order/orders/onsite/o1/complete", undefined],
+    ["POST", "/order/orders/onsite/o1/accept", undefined],
+    ["POST", "/order/orders/digital/o1/requirements", { values: { description: "d" } }],
+    ["POST", "/order/orders/digital/o1/submissions", { message: "m", files: [] }],
+    ["GET", "/order/orders/digital/o1/submissions", undefined],
+    ["POST", "/order/orders/digital/o1/revisions", { reason: "fix it" }],
+    ["GET", "/order/orders/digital/o1/revisions", undefined],
+    ["POST", "/order/orders/digital/o1/accept", undefined],
+  ]);
+});
+
+test("API Parity: both DIGITAL and ONSITE services can be ordered", () => {
+  assert.equal(isOrderable("DIGITAL"), true);
+  assert.equal(isOrderable("ONSITE"), true);
+  assert.equal(isOrderable("DELIVERY"), false);
+});
+
+test("API Parity: orderErrorMessage maps order-service flow codes to Vietnamese", () => {
+  assert.match(orderErrorMessage({ code: 3003 }), /mã check-in/i);
+  assert.match(orderErrorMessage({ code: 3005 }), /Sau khi làm/);
+  assert.match(orderErrorMessage({ code: 3009 }), /lượt chỉnh sửa/);
+  assert.equal(orderErrorMessage({ code: 9999, message: "raw" }), "raw");
+  assert.ok(orderErrorMessage(null).length > 0);
 });
 
 test("API Parity: evidenceApi exports evidence retrieval and submission", () => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { orderApi } from '../api/orderApi';
 import { getAccessToken } from '../api/axiosClient';
 
@@ -30,12 +30,16 @@ const AUTO_COMPLETE_HOURS = 72;
 // status: 'loading' | 'api' | 'needs-login' | 'error'
 //  - api                 : page of GET /order/orders for this role
 //  - needs-login / error : empty list, the page explains why
-// Status changes stay local: order-service has no transition endpoint yet (BACKEND_GAPS.md).
+// transition/requestCancel stay local (only cancellation has no order-service endpoint yet);
+// flow actions call the API and then reload().
 const EMPTY_PAGE = { currentPage: 0, totalPages: 1, totalElements: 0 };
 export function useMyOrders(roleName, page) {
   const [status, setStatus] = useState('loading');
   const [orders, setOrders] = useState([]);
   const [pageInfo, setPageInfo] = useState({ currentPage: 0, totalPages: 1, totalElements: 0 });
+  // Bumped by reload() after a flow action changed an order on the server.
+  const [reloadKey, setReloadKey] = useState(0);
+  const reloading = useRef(false);
 
   const fail = useCallback((nextStatus) => {
     setStatus(nextStatus);
@@ -47,7 +51,9 @@ export function useMyOrders(roleName, page) {
     let cancelled = false;
     const load = async () => {
       if (!getAccessToken()) return fail('needs-login');
-      setStatus('loading');
+      // A reload keeps the current rows on screen instead of flashing the loader.
+      if (!reloading.current) setStatus('loading');
+      reloading.current = false;
       try {
         const res = await orderApi.getMyOrders(roleName, page, PAGE_SIZE);
         if (cancelled) return;
@@ -72,7 +78,12 @@ export function useMyOrders(roleName, page) {
       cancelled = true;
       window.removeEventListener('workgo-auth-changed', load);
     };
-  }, [roleName, page, fail]);
+  }, [roleName, page, fail, reloadKey]);
+
+  const reload = useCallback(() => {
+    reloading.current = true;
+    setReloadKey((k) => k + 1);
+  }, []);
 
   // Returns false when the move breaks canTransitionTo (caller shows a toast).
   // `extra` is merged into the order (e.g. cancelReason from the cancel form).
@@ -111,5 +122,5 @@ export function useMyOrders(roleName, page) {
     [orders]
   );
 
-  return { status, isLive: status === 'api', orders, pageInfo, transition, requestCancel };
+  return { status, isLive: status === 'api', orders, pageInfo, transition, requestCancel, reload };
 }

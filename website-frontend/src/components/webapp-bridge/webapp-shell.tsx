@@ -535,6 +535,7 @@ export default function WebAppShell() {
           onShowToast={showToast}
           onDone={() => handleNavigate("home")}
           onViewOrders={() => handleNavigate("orders")}
+          onOpenAddressBook={() => handleNavigate("address-book")}
         />
       )}
 

@@ -4,9 +4,23 @@ import { useMyOrders } from '../../hooks/useMyOrders';
 import OrderStatusBadge from './components/OrderStatusBadge';
 import OrderExecutionInfo from './components/OrderExecutionInfo';
 import WorkEvidencePanel from './components/WorkEvidencePanel';
+import DigitalDeliveryPanel from './components/DigitalDeliveryPanel';
+import OrderBriefPanel from './components/OrderBriefPanel';
+import {
+  CheckinCode,
+  CheckinCodeDialog,
+  CheckinDialog,
+  DeliveryDialog,
+  RequirementsDialog,
+  RevisionDialog,
+} from './components/OrderFlowDialogs';
+import flowStyles from './components/OrderFlow.module.css';
 import { useOrderExecution } from '../../hooks/useOrderExecution';
 import OrderCancelPage from '../OrderCancel/OrderCancelPage';
 import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
+import { orderApi, orderErrorMessage } from '../../api/orderApi';
+import { availabilityApi } from '../../api/availabilityApi';
+import { loadCheckinCode, saveCheckinCode } from '../../utils/checkinCodes';
 import styles from './OrderDashboardPage.module.css';
 
 const NOTICES = {
@@ -34,29 +48,53 @@ const EXECUTION = {
   APPOINTMENT: { label: 'Appointment', className: 'execAppointment' },
 };
 
-// Buttons per role and status; each `to` is checked against canTransitionTo in the hook.
-// `cancel` actions open the cancellation form instead of transitioning directly.
+// Buttons per role → status → execution type ('ALL' applies to every type).
+// `run` names a server call in runAction, `dialog` opens one of the flow dialogs,
+// `cancel` opens the cancellation form (cancelling stays local: no endpoint yet).
 const ACTIONS = {
   CLIENT: {
-    PENDING_PAYMENT: [
-      { to: 'CONFIRMED', label: 'Thanh toán', variant: 'primary', toast: 'Đã thanh toán, tiền được giữ Escrow' },
-      { to: 'CANCELLED', label: 'Hủy', variant: 'danger', cancel: true },
-    ],
-    CONFIRMED: [{ to: 'CANCELLED', label: 'Hủy', variant: 'danger', cancel: true }],
-    IN_PROGRESS: [{ to: 'CANCELLED', label: 'Yêu cầu hủy', variant: 'danger', cancel: true }],
-    DELIVERED: [
-      { to: 'COMPLETED', label: 'Nghiệm thu', variant: 'primary', toast: 'Đã nghiệm thu, Escrow giải ngân cho chuyên gia' },
-      { to: 'IN_PROGRESS', label: 'Yêu cầu sửa', variant: 'outline', toast: 'Đã gửi yêu cầu chỉnh sửa' },
-      { to: 'CANCELLED', label: 'Yêu cầu hủy', variant: 'danger', cancel: true },
-    ],
+    PENDING_PAYMENT: {
+      ALL: [
+        { id: 'pay', run: 'pay', label: 'Thanh toán', variant: 'primary' },
+        { id: 'cancel', label: 'Hủy', variant: 'danger', cancel: true },
+      ],
+    },
+    CONFIRMED: {
+      DIGITAL: [{ id: 'requirements', dialog: 'requirements', label: 'Gửi yêu cầu', variant: 'primary' }],
+      ALL: [{ id: 'cancel', label: 'Hủy', variant: 'danger', cancel: true }],
+    },
+    IN_PROGRESS: { ALL: [{ id: 'cancel', label: 'Yêu cầu hủy', variant: 'danger', cancel: true }] },
+    DELIVERED: {
+      ONSITE: [{ id: 'accept', run: 'acceptOnsite', label: 'Nghiệm thu', variant: 'primary' }],
+      DIGITAL: [
+        { id: 'accept', run: 'acceptDigital', label: 'Nghiệm thu', variant: 'primary' },
+        { id: 'revision', dialog: 'revision', label: 'Yêu cầu sửa', variant: 'outline' },
+      ],
+      ALL: [{ id: 'cancel', label: 'Yêu cầu hủy', variant: 'danger', cancel: true }],
+    },
   },
   PROVIDER: {
-    CONFIRMED: [
-      { to: 'IN_PROGRESS', label: 'Bắt đầu làm', variant: 'primary', toast: 'Đơn đã chuyển sang Đang thực hiện' },
-      { to: 'CANCELLED', label: 'Từ chối', variant: 'danger', cancel: true },
-    ],
-    IN_PROGRESS: [{ to: 'DELIVERED', label: 'Bàn giao', variant: 'primary', toast: 'Đã bàn giao, chờ khách nghiệm thu' }],
+    CONFIRMED: {
+      ONSITE: [{ id: 'checkin', dialog: 'checkin', label: 'Check-in', variant: 'primary' }],
+      ALL: [{ id: 'cancel', label: 'Từ chối', variant: 'danger', cancel: true }],
+    },
+    IN_PROGRESS: {
+      ONSITE: [{ id: 'complete', run: 'completeOnsite', label: 'Hoàn thành', variant: 'primary' }],
+      DIGITAL: [{ id: 'deliver', dialog: 'delivery', label: 'Nộp bài', variant: 'primary' }],
+    },
   },
+};
+
+const actionsFor = (role, order) => {
+  const byType = ACTIONS[role][order.orderStatus] || {};
+  return [...(byType[order.executionType] || []), ...(byType.ALL || [])];
+};
+
+const FLOW_DIALOGS = {
+  checkin: CheckinDialog,
+  requirements: RequirementsDialog,
+  revision: RevisionDialog,
+  delivery: DeliveryDialog,
 };
 
 const formatPrice = (num) => new Intl.NumberFormat('vi-VN').format(num || 0) + ' ₫';
@@ -88,7 +126,13 @@ function milestone(order, role) {
     case 'PENDING_PAYMENT':
       return { text: role === 'CLIENT' ? 'Thanh toán để xác nhận đơn' : 'Chờ khách thanh toán', warn: role === 'CLIENT' };
     case 'CONFIRMED':
-      return { text: role === 'CLIENT' ? 'Chờ chuyên gia bắt đầu' : 'Cần bắt đầu thực hiện', warn: role === 'PROVIDER' };
+      if (order.executionType === 'DIGITAL') {
+        return { text: role === 'CLIENT' ? 'Gửi yêu cầu để bắt đầu' : 'Chờ khách gửi yêu cầu', warn: role === 'CLIENT' };
+      }
+      return {
+        text: role === 'CLIENT' ? 'Chờ chuyên gia tới check-in' : 'Check-in khi tới nơi',
+        warn: role === 'PROVIDER',
+      };
     case 'IN_PROGRESS':
       return { text: `Bắt đầu ${formatDate(order.startedAt)}` };
     case 'DELIVERED':
@@ -111,13 +155,39 @@ const paymentLabel = (order) => {
   return order.paymentStatus === 'SUCCEEDED' ? 'Đã thanh toán · Escrow' : 'Chưa thanh toán';
 };
 
+// Client side of a paid ONSITE order: the code the provider needs to check in.
+function CheckinCodeCard({ orderId }) {
+  const code = loadCheckinCode(orderId);
+  return (
+    <section className={`${flowStyles.panel} ${flowStyles.codeCard}`} aria-label="Mã check-in">
+      <strong className={flowStyles.panelTitle}>Mã check-in</strong>
+      {code ? (
+        <>
+          <CheckinCode code={code} />
+          <span className={flowStyles.note}>Đọc mã này cho chuyên gia khi họ tới nơi.</span>
+        </>
+      ) : (
+        <span className={flowStyles.note}>
+          Mã chỉ hiển thị một lần khi thanh toán và không được lưu trên trình duyệt này.
+        </span>
+      )}
+    </section>
+  );
+}
+
 // Server-side progress of an expanded order: execution info for every order,
-// plus on-site work evidence for ONSITE orders (both read the same execution).
+// plus the flow panel of its type (on-site evidence / digital deliveries).
+// The dashboard remounts it (key) after a flow action so everything refetches.
 function OrderLiveDetails({ order, role, onShowToast }) {
   const executionState = useOrderExecution(order.orderId);
   return (
     <>
       <OrderExecutionInfo state={executionState} />
+      <OrderBriefPanel order={order} role={role} />
+      {order.executionType === 'ONSITE' && role === 'CLIENT' && order.orderStatus === 'CONFIRMED' && (
+        <CheckinCodeCard orderId={order.orderId} />
+      )}
+      {order.executionType === 'DIGITAL' && <DigitalDeliveryPanel orderId={order.orderId} role={role} />}
       {order.executionType === 'ONSITE' && (
         <WorkEvidencePanel
           orderId={order.orderId}
@@ -138,7 +208,13 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
   const [query, setQuery] = useState('');
   const [expandedId, setExpandedId] = useState(null);
   const [cancelTargetId, setCancelTargetId] = useState(null);
-  const { status, isLive, orders, pageInfo, transition, requestCancel } = useMyOrders(role, page);
+  // Open flow dialog { type, order } and the order whose server call is running.
+  const [dialog, setDialog] = useState(null);
+  const [busyId, setBusyId] = useState(null);
+  const [paidCode, setPaidCode] = useState(null);
+  // Bumped after every flow action so the expanded details refetch.
+  const [detailsVersion, setDetailsVersion] = useState(0);
+  const { status, isLive, orders, pageInfo, transition, requestCancel, reload } = useMyOrders(role, page);
   const cancelTarget = cancelTargetId ? orders.find((o) => o.orderId === cancelTargetId) : null;
 
   const toast = (msg) => onShowToast && onShowToast(msg);
@@ -191,18 +267,75 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
     setExpandedId(null);
   };
 
-  const runAction = (order, action) => {
+  const afterFlowAction = (order, message) => {
+    toast(`${order.orderNumber}: ${message}`);
+    setExpandedId(order.orderId);
+    setDetailsVersion((v) => v + 1);
+    reload();
+  };
+
+  // DEV payment: confirm the order inside order-service, then book the held slot
+  // of an ONSITE order and keep its one-time check-in code.
+  const pay = async (order) => {
+    const res = await orderApi.confirmPayment(order.orderId);
+    if (order.executionType !== 'ONSITE') return 'Đã thanh toán, tiền được giữ Escrow';
+    const code = res?.checkinCode ?? res?.result?.checkinCode;
+    if (code) {
+      saveCheckinCode(order.orderId, code);
+      setPaidCode(code);
+    }
+    try {
+      const execution = await orderApi.getExecution(order.orderId);
+      const slotId = execution?.result?.onsite?.bookingSlotId;
+      if (slotId) await availabilityApi.confirmSlot(slotId, order.orderId);
+    } catch {
+      return 'Đã thanh toán, nhưng chưa chốt được khung giờ. Hãy nhắn tin để chuyên gia xác nhận lịch.';
+    }
+    return 'Đã thanh toán, khung giờ hẹn đã được chốt';
+  };
+
+  const SERVER_ACTIONS = {
+    pay,
+    completeOnsite: async (order) => {
+      await orderApi.completeOnsite(order.orderId);
+      return 'Đã báo hoàn thành, chờ khách nghiệm thu';
+    },
+    acceptOnsite: async (order) => {
+      await orderApi.acceptOnsite(order.orderId);
+      return 'Đã nghiệm thu, Escrow giải ngân cho chuyên gia';
+    },
+    acceptDigital: async (order) => {
+      await orderApi.acceptDigital(order.orderId);
+      return 'Đã nghiệm thu bản bàn giao, Escrow giải ngân cho chuyên gia';
+    },
+  };
+
+  const ACCEPT_ACTIONS = ['acceptOnsite', 'acceptDigital'];
+
+  const runAction = async (order, action) => {
     if (action.cancel) {
       setCancelTargetId(order.orderId);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    if (transition(order.orderId, action.to)) {
-      toast(`${order.orderNumber}: ${action.toast}`);
-    } else {
-      toast('Trạng thái hiện tại không cho phép thao tác này.');
+    if (action.dialog) {
+      setDialog({ type: action.dialog, order });
+      return;
+    }
+    if (ACCEPT_ACTIONS.includes(action.run) && !window.confirm('Nghiệm thu đơn này? Tiền Escrow sẽ được giải ngân cho chuyên gia.')) {
+      return;
+    }
+    setBusyId(order.orderId);
+    try {
+      afterFlowAction(order, await SERVER_ACTIONS[action.run](order));
+    } catch (err) {
+      toast(`${order.orderNumber}: ${orderErrorMessage(err)}`);
+    } finally {
+      setBusyId(null);
     }
   };
+
+  const FlowDialog = dialog && FLOW_DIALOGS[dialog.type];
 
   const closeCancel = () => {
     setCancelTargetId(null);
@@ -306,7 +439,7 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
           <div className={`${styles.statCard} ${styles.statWarn}`}>
             <span className={styles.statLabel}>Chờ nghiệm thu</span>
             <strong className={styles.statValue}>{stats.delivered}</strong>
-            <span className={styles.statHint}>Tự hoàn tất sau 72 giờ</span>
+            <span className={styles.statHint}>Tự hoàn tất nếu không phản hồi</span>
           </div>
           <div className={styles.statCard}>
             <span className={styles.statLabel}>Hoàn tất tháng này</span>
@@ -373,9 +506,11 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
                   {visible.map((o) => {
                     const exec = EXECUTION[o.executionType];
                     const ms = milestone(o, role);
-                    const actions = (ACTIONS[role][o.orderStatus] || []).filter(
-                      (a) => !(a.cancel && o.cancelRequest)
+                    // Flow actions need the live order; local demo rows only get cancel.
+                    const actions = actionsFor(role, o).filter(
+                      (a) => !(a.cancel && o.cancelRequest) && (isLive || a.cancel)
                     );
+                    const busy = busyId === o.orderId;
                     const expanded = expandedId === o.orderId;
                     return (
                       <React.Fragment key={o.orderId}>
@@ -408,11 +543,14 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
                             <div className={styles.actionGroup}>
                             {actions.map((a) => (
                               <button
-                                key={a.to}
+                                key={a.id}
                                 type="button"
                                 className={`${styles.btn} ${styles[`btn_${a.variant}`]}`}
+                                disabled={busy}
+                                aria-busy={busy && Boolean(a.run)}
                                 onClick={() => runAction(o, a)}
                               >
+                                {busy && a.run && <Loader2 size={14} className={styles.spinner} aria-hidden="true" />}
                                 {a.label}
                               </button>
                             ))}
@@ -482,7 +620,14 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
                                     <dd>{formatDateTime(o.orderStatus === 'CANCELLED' ? o.cancelledAt : o.completedAt)}</dd>
                                   </div>
                                 </dl>
-                                {isLive && <OrderLiveDetails order={o} role={role} onShowToast={toast} />}
+                                {isLive && (
+                                  <OrderLiveDetails
+                                    key={`${o.orderId}-${o.orderStatus}-${detailsVersion}`}
+                                    order={o}
+                                    role={role}
+                                    onShowToast={toast}
+                                  />
+                                )}
                                 {(o.cancelRequest || o.cancelReason) && (
                                   <div className={styles.cancelInfo}>
                                     <strong>
@@ -551,6 +696,18 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
         </>
         )}
       </div>
+
+      {FlowDialog && (
+        <FlowDialog
+          order={dialog.order}
+          onClose={() => setDialog(null)}
+          onDone={(message) => {
+            setDialog(null);
+            afterFlowAction(dialog.order, message);
+          }}
+        />
+      )}
+      {paidCode && <CheckinCodeDialog code={paidCode} onClose={() => setPaidCode(null)} />}
     </div>
   );
 }

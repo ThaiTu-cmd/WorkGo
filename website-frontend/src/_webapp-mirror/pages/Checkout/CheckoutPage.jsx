@@ -12,7 +12,9 @@ import {
   CreditCard,
 } from 'lucide-react';
 import styles from './CheckoutPage.module.css';
-import { orderApi, isOrderable, NOT_ORDERABLE_MESSAGE } from '../../api/orderApi';
+import { orderApi, isOrderable, orderErrorMessage, NOT_ORDERABLE_MESSAGE } from '../../api/orderApi';
+import { availabilityApi } from '../../api/availabilityApi';
+import OnsiteBookingSection, { formatOrderAddress } from './OnsiteBookingSection';
 
 // Mirrors order-service `order.platform-fee-rate` (application.yaml).
 const PLATFORM_FEE_RATE = 0.1;
@@ -62,9 +64,11 @@ function buildPricingSnapshot(pkg, addons) {
   };
 }
 
-export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onViewOrders }) {
+export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onViewOrders, onOpenAddressBook }) {
   const [gateway, setGateway] = useState('vnpay');
   const [agreed, setAgreed] = useState(false);
+  // ONSITE only: { slot, address } picked in OnsiteBookingSection.
+  const [booking, setBooking] = useState({ slot: null, address: null });
   const [phase, setPhase] = useState('review'); // 'review' | 'creating' | 'success'
   // OrderResponse from POST /order/orders.
   const [createdOrder, setCreatedOrder] = useState(null);
@@ -112,25 +116,39 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
   // Creates the order; payment-service is not routed by the gateway yet,
   // so the order stays PENDING_PAYMENT (see BACKEND_GAPS.md).
   const orderable = isOrderable(service.executionType);
+  const isOnsite = service.executionType === 'ONSITE';
+  const bookingReady = !isOnsite || (booking.slot && booking.address);
 
   const handlePay = async () => {
-    if (!agreed || phase !== 'review' || !orderable) return;
+    if (!agreed || phase !== 'review' || !orderable || !bookingReady) return;
     setPhase('creating');
     try {
       const res = await orderApi.createOrder({
         serviceId: service.serviceId,
         packageId: pkg.id,
         addonIds: addons.map((a) => a.id),
+        ...(isOnsite && {
+          bookingSlotId: booking.slot.bookingSlotId,
+          address: formatOrderAddress(booking.address),
+        }),
       });
-      setCreatedOrder(res?.result ?? null);
+      const created = res?.result ?? null;
+      setCreatedOrder(created);
       setPhase('success');
+      // order-service does not reserve the slot itself: hold it for this order
+      // (30 minutes in catalog-service); paying confirms it.
+      if (isOnsite && created?.orderId) {
+        availabilityApi.holdSlot(booking.slot.bookingSlotId, created.orderId).catch(() => {
+          onShowToast?.('Đơn đã tạo nhưng chưa giữ được khung giờ. Hãy nhắn tin để chuyên gia xác nhận lịch.');
+        });
+      }
     } catch (err) {
       setPhase('review');
       if (onShowToast) {
         onShowToast(
           err?.status === 401
             ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
-            : `Không tạo được đơn hàng: ${err?.message || 'lỗi kết nối máy chủ'}`
+            : `Không tạo được đơn hàng: ${err?.status ? orderErrorMessage(err) : 'lỗi kết nối máy chủ'}`
         );
       }
     }
@@ -184,7 +202,9 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
             <p>
               Đơn <strong>{createdOrder?.orderNumber || createdOrder?.orderId}</strong> đã được tạo với tổng{' '}
               {formatPrice(pricing.totalAmount)}. Cổng thanh toán {currentGateway.name} chưa được kết nối nên đơn
-              đang ở trạng thái <strong>chờ thanh toán</strong>.
+              đang ở trạng thái <strong>chờ thanh toán</strong>. Bấm <strong>Thanh toán</strong> trong mục Đơn hàng để
+              xác nhận đơn
+              {isOnsite ? ' (khung giờ được giữ 30 phút) và nhận mã check-in cho chuyên gia' : ''}.
             </p>
             <div className={styles.successActions}>
               {onViewOrders && (
@@ -271,6 +291,15 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
                     <p className={styles.mutedText}>Không chọn dịch vụ bổ sung.</p>
                   )}
                 </section>
+
+                {isOnsite && (
+                  <OnsiteBookingSection
+                    serviceId={service.serviceId}
+                    value={booking}
+                    onChange={setBooking}
+                    onOpenAddressBook={onOpenAddressBook}
+                  />
+                )}
 
                 {/* Payment gateways */}
                 <section className={styles.card}>
@@ -372,11 +401,14 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
                     {NOT_ORDERABLE_MESSAGE}
                   </p>
                 )}
+                {orderable && !bookingReady && (
+                  <p className={styles.notOrderable}>Chọn khung giờ và địa chỉ để đặt dịch vụ tại nhà.</p>
+                )}
 
                 <button
                   type="button"
                   className={styles.btnPay}
-                  disabled={!agreed || phase !== 'review' || !orderable}
+                  disabled={!agreed || phase !== 'review' || !orderable || !bookingReady}
                   onClick={handlePay}
                 >
                   Đặt hàng {formatPrice(pricing.totalAmount)}

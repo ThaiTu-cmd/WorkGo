@@ -60,7 +60,13 @@ public class ExecutionService {
 
         tokenUtils.assertParticipant(order);
 
-        Execution execution = executionRepository.findByOrder_OrderId(orderId)
+        return getExecutionOfOrder(order);
+    }
+
+    //dung chung cho getExecution va order detail
+    public ExecutionResponse getExecutionOfOrder(Order order){
+
+        Execution execution = executionRepository.findByOrder_OrderId(order.getOrderId())
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_EXECUTION_NOT_FOUND));
 
         ExecutionResponse executionResponse = executionMapper.toExecutionResponse(execution);

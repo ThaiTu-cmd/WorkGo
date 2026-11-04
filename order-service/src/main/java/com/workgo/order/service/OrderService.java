@@ -2,7 +2,11 @@ package com.workgo.order.service;
 
 import com.workgo.order.dto.PageResponse;
 import com.workgo.order.dto.request.OrderCreationRequest;
+import com.workgo.order.dto.request.SlotActionRequest;
+import com.workgo.order.dto.response.OrderDetailResponse;
+import com.workgo.order.dto.response.OrderItemResponse;
 import com.workgo.order.dto.response.OrderResponse;
+import com.workgo.order.dto.response.OrderSnapshotResponse;
 import com.workgo.order.dto.response.OrderStatusHistoryResponse;
 import com.workgo.order.dto.response.PaymentConfirmationResponse;
 import com.workgo.order.dto.response.client.AddOnResponse;
@@ -19,11 +23,13 @@ import com.workgo.order.exception.AppException;
 import com.workgo.order.exception.ErrorCode;
 import com.workgo.order.mapper.OrderItemMapper;
 import com.workgo.order.mapper.OrderMapper;
+import com.workgo.order.mapper.OrderSnapshotMapper;
 import com.workgo.order.mapper.OrderStatusHistoryMapper;
 import com.workgo.order.reppository.*;
 import com.workgo.order.reppository.client.CatalogClient;
 import com.workgo.order.reppository.client.IdentityClient;
 import com.workgo.order.utils.TokenUtils;
+import feign.FeignException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -33,6 +39,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,6 +66,7 @@ public class OrderService {
     OrderStatusHistoryRepository orderStatusHistoryRepository;
     OrderItemRepository orderItemRepository;
     OrderItemMapper orderItemMapper;
+    OrderSnapshotMapper orderSnapshotMapper;
     ExecutionService executionService;
     ExecutionRepository executionRepository;
     OnsiteExecutionRepository onsiteExecutionRepository;
@@ -136,6 +144,8 @@ public class OrderService {
         //luu OrderItem
         List<OrderItem> orderItems = buildOrderItems(order, packageResponse, addOns, platformFee);
 
+        assertItemsTotalMatchesSubtotal(orderItems, subtotal);
+
         orderItemRepository.saveAll(orderItems);
 
         //tao digital/ onsite execution tuy loai executiontype cua order
@@ -178,6 +188,9 @@ public class OrderService {
                     .findByExecution_ExecutionId(execution.getExecutionId())
                     .orElseThrow(() -> new AppException(ErrorCode.ORDER_EXECUTION_NOT_FOUND));
 
+            //slot HELD -> BOOKED, loi thi rollback ca confirm
+            confirmSlot(onsite.getBookingSlotId(), orderId);
+
             checkinCode = generateCheckinCode();
             onsite.setCheckinCodeHash(passwordEncoder.encode(checkinCode));
             onsiteExecutionRepository.save(onsite);
@@ -197,6 +210,20 @@ public class OrderService {
     //sinh ra ma code checkin
     private String generateCheckinCode() {
         return String.format("%06d", new SecureRandom().nextInt(1_000_000));
+    }
+
+    private void confirmSlot(UUID slotId, UUID orderId) {
+        try {
+            catalogClient.confirmSlot(slotId, SlotActionRequest.builder()
+                    .orderId(orderId)
+                    .build());
+        } catch (FeignException e) {
+            //slot khong con duoc giu boi order nay
+            if (e.status() == HttpStatus.CONFLICT.value()) {
+                throw new AppException(ErrorCode.ORDER_SLOT_HOLD_EXPIRED);
+            }
+            throw new AppException(ErrorCode.CATALOG_UNAVAILABLE);
+        }
     }
 
     //loc ra addon duoc chon
@@ -314,17 +341,38 @@ public class OrderService {
                 .build();
     }
 
-    public OrderResponse getOrder(UUID orderId){
+    @Transactional(readOnly = true)
+    public OrderDetailResponse getOrder(UUID orderId){
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
         tokenUtils.assertParticipant(order);
 
-        return orderMapper.toOrderResponse(order);
+        List<OrderItemResponse> items = orderItemRepository
+                .findByOrder_OrderIdOrderBySortOrderAsc(orderId)
+                .stream()
+                .map(orderItemMapper::toOrderItemResponse)
+                .toList();
+
+        OrderSnapshotResponse snapshot = orderSnapshotRepository.findById(orderId)
+                .map(orderSnapshotMapper::toOrderSnapshotResponse)
+                .orElse(null);
+
+        return OrderDetailResponse.builder()
+                .order(orderMapper.toOrderResponse(order))
+                .items(items)
+                .snapshot(snapshot)
+                .execution(executionService.getExecutionOfOrder(order))
+                .build();
     }
 
     public PageResponse<OrderStatusHistoryResponse> getOrderHistory(UUID orderId, int page, int size){
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        tokenUtils.assertParticipant(order);
 
         Sort sort = Sort.by("createdAt").descending();
 
@@ -342,6 +390,20 @@ public class OrderService {
                         .toList())
                 .build();
 
+    }
+
+    //tong tien PACKAGE + ADDON phai bang subtotal
+    private void assertItemsTotalMatchesSubtotal(List<OrderItem> items, BigDecimal subtotal) {
+
+        BigDecimal itemsTotal = items.stream()
+                .filter(item -> item.getItemType() == ItemType.PACKAGE
+                        || item.getItemType() == ItemType.ADDON)
+                .map(OrderItem::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (itemsTotal.compareTo(subtotal) != 0) {
+            throw new AppException(ErrorCode.ORDER_ITEM_TOTAL_MISMATCH);
+        }
     }
 
     private String generateOrderNumber(){

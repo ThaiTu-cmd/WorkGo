@@ -59,7 +59,13 @@ public enum ErrorCode {
     ORDER_REQUIREMENTS_SUBMITTED(3006, "Requirements already submitted", HttpStatus.CONFLICT),
     ORDER_DELIVERY_FILE_REQUIRED(3007, "At least one delivery file is required", HttpStatus.BAD_REQUEST),
     ORDER_DELIVERY_NOT_FOUND(3008, "Delivery not found", HttpStatus.NOT_FOUND),
-    ORDER_REVISION_LIMIT_EXCEEDED(3009, "Revision limit exceeded", HttpStatus.CONFLICT);
+    ORDER_REVISION_LIMIT_EXCEEDED(3009, "Revision limit exceeded", HttpStatus.CONFLICT),
+
+    //===========BOOKING SLOT============
+    ORDER_SLOT_NOT_FOUND(3010, "Booking slot not found", HttpStatus.NOT_FOUND),
+    ORDER_SLOT_NOT_AVAILABLE(3011, "Booking slot is not available", HttpStatus.CONFLICT),
+    ORDER_SLOT_NOT_MATCH_SERVICE(3012, "Booking slot does not belong to this service", HttpStatus.BAD_REQUEST),
+    ORDER_SLOT_HOLD_EXPIRED(3013, "Booking slot hold has expired, please create a new order", HttpStatus.CONFLICT);
 
     private int code;
     private String message;

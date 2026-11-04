@@ -19,11 +19,31 @@
   overflow-wrap: break-word;
 }
 
-.cards {
+/* Two-column wallet: left summary (balances + actions), right full-width
+   history — fills the wide 1320px column instead of leaving half the row
+   empty. Collapses to one column alongside the other trung pages. */
+.walletGrid {
   margin-top: 20px;
   display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.summaryCol {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+}
+
+.historyCol {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .walletGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .balance {

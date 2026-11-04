@@ -1,5 +1,8 @@
+/* Page: toolbar band keeps the traditional centered container; the main
+   layout below goes FULL viewport width so the filter rail pins to the
+   left screen edge (0px) — see FilterSidebar.module.css rail styles. */
 .catalogPage {
-  padding-top: calc(var(--header-height) + 32px);
+  padding-top: calc(var(--header-height) + 16px);
   padding-bottom: 80px;
   background-color: var(--wg-bg);
   min-height: 80vh;
@@ -7,15 +10,13 @@
 
 .mainLayout {
   display: grid;
-  grid-template-columns: 290px 1fr;
-  gap: 32px;
+  grid-template-columns: 290px minmax(0, 1fr);
   align-items: flex-start;
 }
 
 @media (max-width: 992px) {
   .mainLayout {
-    grid-template-columns: 260px 1fr;
-    gap: 24px;
+    grid-template-columns: 260px minmax(0, 1fr);
   }
 }
 
@@ -36,11 +37,27 @@
   }
 }
 
-/* Services Column */
+/* Services Column — its own safe gutters against the viewport edge and the
+   rail; content capped so cards don't balloon on ultra-wide monitors. */
 .servicesColumn {
   width: 100%;
   display: flex;
   flex-direction: column;
+  padding-left: 48px;
+  padding-right: 48px;
+}
+
+.servicesInner {
+  width: 100%;
+  max-width: 1480px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .servicesColumn {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
 }
 
 .servicesGrid {

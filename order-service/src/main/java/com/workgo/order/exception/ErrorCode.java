@@ -65,7 +65,15 @@ public enum ErrorCode {
     ORDER_SLOT_NOT_FOUND(3010, "Booking slot not found", HttpStatus.NOT_FOUND),
     ORDER_SLOT_NOT_AVAILABLE(3011, "Booking slot is not available", HttpStatus.CONFLICT),
     ORDER_SLOT_NOT_MATCH_SERVICE(3012, "Booking slot does not belong to this service", HttpStatus.BAD_REQUEST),
-    ORDER_SLOT_HOLD_EXPIRED(3013, "Booking slot hold has expired, please create a new order", HttpStatus.CONFLICT);
+    ORDER_SLOT_HOLD_EXPIRED(3013, "Booking slot hold has expired, please create a new order", HttpStatus.CONFLICT),
+
+    //===========CANCELLATION============
+    ORDER_CANCEL_REASON_REQUIRED(3014, "Cancellation reason is required", HttpStatus.BAD_REQUEST),
+    ORDER_CANCELLATION_EXISTED(3015, "This order already has a cancellation request", HttpStatus.CONFLICT),
+    ORDER_CANCELLATION_NOT_FOUND(3016, "Cancellation request not found", HttpStatus.NOT_FOUND),
+    ORDER_CANCELLATION_NOT_PENDING(3017, "Cancellation request is not pending", HttpStatus.CONFLICT),
+    ORDER_CANCELLATION_SELF_RESPOND(3018, "You cannot respond to your own cancellation request", HttpStatus.FORBIDDEN),
+    ORDER_CANCEL_ANSWER_REQUIRED(3019, "Accept or reject is required", HttpStatus.BAD_REQUEST);
 
     private int code;
     private String message;

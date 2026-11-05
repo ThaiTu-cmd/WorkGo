@@ -1,13 +1,35 @@
+/* Base look shared by the desktop rail and the mobile drawer body. */
 .sidebar {
   background-color: var(--wg-surface);
-  border: 1px solid var(--wg-border);
-  border-radius: var(--radius-lg);
   padding: 24px 20px;
-  box-shadow: var(--shadow-sm);
-  position: sticky;
-  top: calc(var(--header-height) + 20px);
-  max-height: calc(100vh - var(--header-height) - 40px);
-  overflow-y: auto;
+}
+
+/* Desktop: a flat, edge-pinned rail — flush with the LEFT viewport edge,
+   full height under the fixed header, separated from results by a border.
+   Scoped to min-width 901px so the mobile drawer (<=900px) keeps its own
+   card styling below. */
+@media (min-width: 901px) {
+  .sidebar {
+    position: sticky;
+    top: var(--header-height);
+    height: calc(100vh - var(--header-height));
+    overflow-y: auto;
+    border-right: 1px solid var(--wg-border);
+    border-radius: 0;
+  }
+}
+
+/* Mobile drawer mode: a normal scrolling card inside the drawer body,
+   no pinned height (H8 guard: no nested-scroll trap). */
+@media (max-width: 900px) {
+  .sidebar {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+    border: 1px solid var(--wg-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
 }
 
 /* Custom scrollbar */
@@ -329,15 +351,7 @@
   font-weight: 500;
 }
 
-/* H8 guard: short viewports / mobile drawer mode — no nested-scroll trap */
-@media (max-width: 900px) {
-  .sidebar {
-    position: static;
-    max-height: none;
-    overflow-y: visible;
-  }
-}
-
+/* H8 guard: short viewports — relax the drawer card constraint */
 @media (max-height: 700px) {
   .sidebar {
     max-height: none;

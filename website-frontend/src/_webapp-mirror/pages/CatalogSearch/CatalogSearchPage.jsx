@@ -244,29 +244,8 @@ export default function CatalogSearchPage({
 
   return (
     <div className={styles.catalogPage}>
-      <div className="container">
-        {/* Top Search Toolbar */}
-        <SearchToolbar
-          categoryName={categoryName}
-          totalResults={sortedServices.length}
-          sortBy={sortBy}
-          onChangeSortBy={(val) => {
-            setSortBy(val);
-            setCurrentPage(1);
-          }}
-          activeFilterCount={activeFilters.length}
-          onOpenMobileFilter={() => setMobileFilterOpen(true)}
-          onGoHome={onGoHome}
-          searchQuery={searchQuery}
-          onClearSearchQuery={() => {
-            setSearchQuery('');
-            setCurrentPage(1);
-          }}
-          activeFilters={activeFilters}
-        />
-
-        {/* Main Content Layout: Sidebar + Grid */}
-        <div className={styles.mainLayout}>
+      {/* Main Content Layout: edge-pinned Filter Rail + Grid (full viewport width) */}
+      <div className={styles.mainLayout}>
           {/* Desktop Filter Sidebar */}
           <div className={styles.sidebarColumn}>
             <FilterSidebar
@@ -309,7 +288,28 @@ export default function CatalogSearchPage({
 
           {/* Services Grid Column */}
           <main className={styles.servicesColumn}>
-            {isFiltering || servicesStatus === 'loading' ? (
+            <div className={styles.servicesInner}>
+              <div className="container">
+                <SearchToolbar
+                  categoryName={categoryName}
+                  totalResults={sortedServices.length}
+                  sortBy={sortBy}
+                  onChangeSortBy={(val) => {
+                    setSortBy(val);
+                    setCurrentPage(1);
+                  }}
+                  activeFilterCount={activeFilters.length}
+                  onOpenMobileFilter={() => setMobileFilterOpen(true)}
+                  onGoHome={onGoHome}
+                  searchQuery={searchQuery}
+                  onClearSearchQuery={() => {
+                    setSearchQuery('');
+                    setCurrentPage(1);
+                  }}
+                  activeFilters={activeFilters}
+                />
+              </div>
+              {isFiltering || servicesStatus === 'loading' ? (
               <div className={styles.servicesGrid} aria-busy="true" aria-label="Đang tải dịch vụ">
                 <SkeletonServiceCard count={pageSize} />
               </div>
@@ -369,9 +369,9 @@ export default function CatalogSearchPage({
                 )}
               </div>
             )}
-          </main>
-        </div>
-      </div>
+            </div>
+            </main>
+          </div>
 
       {/* Mobile Drawer Filter Modal */}
       {mobileFilterOpen && (

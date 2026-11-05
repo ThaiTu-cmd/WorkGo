@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   BadgeCheck,
   BriefcaseBusiness,
+  Calendar,
   ChevronDown,
   ClipboardCheck,
   Contact,
@@ -67,6 +68,8 @@ export const ACCOUNT_GROUPS = [
     items: [
       { key: 'provider-onboarding', icon: BadgeCheck, label: 'Làm Provider' },
       { key: 'provider-profile', icon: Contact, label: 'Hồ sơ Provider' },
+      { key: 'booking-slots', icon: Calendar, label: 'Lịch rảnh & Slot' },
+      { key: 'verification-center', icon: ShieldCheck, label: 'Xác thực năng lực' },
     ],
   },
 ];
@@ -75,7 +78,10 @@ export const ACCOUNT_GROUPS = [
 // opened with a full navigation instead of onNavigate.
 const ADMIN_GROUP = {
   title: 'Quản trị',
-  items: [{ key: 'admin', icon: ShieldCheck, label: 'Trang Admin', href: 'admin' }],
+  items: [
+    { key: 'admin-console', icon: ShieldCheck, label: 'Admin Console' },
+    { key: 'admin', icon: ShieldCheck, label: 'Trang Admin', href: 'admin' },
+  ],
 };
 
 // Groups visible to the signed-in token (admin group only for ROLE_ADMIN).

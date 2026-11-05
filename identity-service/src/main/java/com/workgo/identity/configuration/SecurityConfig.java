@@ -42,6 +42,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request ->{
             request.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                    .requestMatchers(HttpMethod.GET, "/providers/myProfile").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/providers", "/providers/**").permitAll()
                     .anyRequest().authenticated();
         });
 

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { AlertTriangle, ArrowLeft, Upload } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Loader2, Upload } from 'lucide-react';
 import OrderStatusBadge from '../OrderDashboard/components/OrderStatusBadge';
+import { orderApi, orderErrorMessage } from '../../api/orderApi';
 import styles from './OrderCancelPage.module.css';
 
 const NOTE_MIN = 20;
@@ -31,22 +32,22 @@ export function getCancelPolicy(order, role) {
   if (!order) return null;
   const status = order.orderStatus;
   if (role === 'PROVIDER') {
-    return status === 'CONFIRMED'
-      ? { mode: 'immediate', paid: order.totalAmount, deducted: 0, refund: order.totalAmount }
+    return status === 'CONFIRMED' || status === 'IN_PROGRESS'
+      ? { mode: 'request', paid: order.totalAmount, deducted: 0, refund: order.totalAmount }
       : null;
   }
   if (status === 'PENDING_PAYMENT') return { mode: 'immediate', paid: 0, deducted: 0, refund: 0 };
   if (status === 'CONFIRMED') {
-    return { mode: 'immediate', paid: order.totalAmount, deducted: 0, refund: order.totalAmount };
+    return { mode: 'request', paid: order.totalAmount, deducted: 0, refund: order.totalAmount };
   }
-  if (status === 'IN_PROGRESS' || status === 'DELIVERED') {
+  if (status === 'IN_PROGRESS') {
     if (order.cancelRequest) return null;
     return { mode: 'request', paid: order.totalAmount, deducted: order.platformFee, refund: order.subtotal };
   }
   return null;
 }
 
-export default function OrderCancelPage({ order, role = 'CLIENT', onBack, onSubmit }) {
+export default function OrderCancelPage({ order, role = 'CLIENT', onBack, onSubmit, onShowToast }) {
   const policy = useMemo(() => getCancelPolicy(order, role), [order, role]);
   const reasons = REASONS[role] || REASONS.CLIENT;
 
@@ -54,13 +55,15 @@ export default function OrderCancelPage({ order, role = 'CLIENT', onBack, onSubm
   const [note, setNote] = useState('');
   const [noteTouched, setNoteTouched] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState(null);
 
   const isProvider = role === 'PROVIDER';
   const isRequest = policy?.mode === 'request';
   const noteRequired = isRequest || reasonCode === 'OTHER';
   const noteOk = !noteRequired || note.trim().length >= NOTE_MIN;
   const showNoteError = noteTouched && !noteOk;
-  const canSubmit = Boolean(reasonCode) && noteOk && confirmed;
+  const canSubmit = Boolean(reasonCode) && noteOk && confirmed && !isSubmitting;
 
   const title = isProvider ? 'Từ chối đơn hàng' : isRequest ? 'Yêu cầu hủy đơn hàng' : 'Hủy đơn hàng';
   const submitLabel = isProvider ? 'Từ chối đơn' : isRequest ? 'Gửi yêu cầu hủy' : 'Xác nhận hủy đơn';
@@ -72,12 +75,44 @@ export default function OrderCancelPage({ order, role = 'CLIENT', onBack, onSubm
       ? 'Đơn đang được thực hiện nên yêu cầu sẽ được gửi tới chuyên gia và WorkGo xem xét trong vòng 48 giờ.'
       : 'Chuyên gia chưa bắt đầu thực hiện, đơn sẽ được hủy ngay khi bạn xác nhận.';
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setNoteTouched(true);
-    if (!canSubmit || !policy) return;
-    const reason = reasons.find((r) => r.code === reasonCode);
-    onSubmit({ reasonCode, reasonLabel: reason?.label || reasonCode, note: note.trim(), mode: policy.mode });
+    if (!canSubmit || !policy || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setApiError(null);
+    try {
+      const res = await orderApi.cancelOrder(order.orderId, {
+        reasonCode,
+        note: note.trim() || undefined,
+      });
+      const result = res?.result;
+      if (result?.status === 'AUTO_APPROVED') {
+        if (onShowToast) onShowToast('Đơn hàng đã được hủy thành công.');
+      } else {
+        if (onShowToast) onShowToast('Đã gửi yêu cầu hủy đơn, chờ đối tác phản hồi.');
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('workgo-orders-changed'));
+      }
+      const reason = reasons.find((r) => r.code === reasonCode);
+      if (onSubmit) {
+        onSubmit({
+          reasonCode,
+          reasonLabel: reason?.label || reasonCode,
+          note: note.trim(),
+          mode: policy.mode,
+          result,
+        });
+      }
+    } catch (err) {
+      const msg = orderErrorMessage(err);
+      setApiError(msg);
+      if (onShowToast) onShowToast(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const breadcrumb = (
@@ -211,12 +246,25 @@ export default function OrderCancelPage({ order, role = 'CLIENT', onBack, onSubm
             </span>
           </label>
 
+          {apiError && (
+            <div className={styles.error} style={{ padding: '0.75rem', backgroundColor: '#fef2f2', borderRadius: '6px', color: '#dc2626', marginBottom: '1rem', border: '1px solid #fecaca' }} role="alert">
+              {apiError}
+            </div>
+          )}
+
           <div className={styles.formActions}>
-            <button type="button" className={`${styles.btn} ${styles.btnOutline}`} onClick={onBack}>
+            <button type="button" className={`${styles.btn} ${styles.btnOutline}`} onClick={onBack} disabled={isSubmitting}>
               Quay lại
             </button>
-            <button type="submit" className={`${styles.btn} ${styles.btnDanger}`} disabled={!canSubmit}>
-              {submitLabel}
+            <button type="submit" className={`${styles.btn} ${styles.btnDanger}`} disabled={!canSubmit || isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={16} className={styles.spinner || ''} style={{ display: 'inline', marginRight: '6px', animation: 'spin 1s linear infinite' }} />
+                  Đang xử lý...
+                </>
+              ) : (
+                submitLabel
+              )}
             </button>
           </div>
         </form>

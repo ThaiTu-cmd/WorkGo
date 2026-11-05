@@ -48,19 +48,27 @@ public class UserService {
     RoleMapper roleMapper;
 
     public UserCreationResponse createUser(UserCreationRequest request) {
+        String userName = request.getUserName() != null ? request.getUserName().trim() : "";
+        String email = request.getEmail() != null ? request.getEmail().trim() : "";
+        String phone = (request.getPhone() != null && !request.getPhone().isBlank()) ? request.getPhone().trim() : null;
+        String firstName = request.getFirstName() != null ? request.getFirstName().trim() : "";
+        String lastName = request.getLastName() != null ? request.getLastName().trim() : "";
 
-        if (userRepository.existsByUserName(request.getUserName()) || userRepository.existsByEmail(request.getEmail()))
+        if (userRepository.existsByUserNameIgnoreCase(userName) || userRepository.existsByEmailIgnoreCase(email))
             throw new AppException(ErrorCode.USER_EXISTED);
+
+        if (phone != null && userRepository.existsByPhone(phone))
+            throw new AppException(ErrorCode.PHONE_EXISTED);
 
         String hashedPassword = passwordEncoder.encode(request.getPassword());
 
         User user = User.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .userName(request.getUserName())
+                .firstName(firstName)
+                .lastName(lastName)
+                .userName(userName)
                 .password(hashedPassword)
-                .phone(request.getPhone())
-                .email(request.getEmail())
+                .phone(phone)
+                .email(email)
                 .status(UserStatus.ACTIVE)
                 .build();
 

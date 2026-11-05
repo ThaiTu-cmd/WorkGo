@@ -22,7 +22,7 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   sql:
     init:
-      mode: always
+      mode: never
 
 jwt:
   signerKey: ${JWT_SIGNER_KEY}

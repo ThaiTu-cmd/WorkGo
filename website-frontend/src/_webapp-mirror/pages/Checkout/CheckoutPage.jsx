@@ -4,16 +4,15 @@ import {
   BadgeCheck,
   CheckCircle2,
   Clock,
+  CreditCard,
   HelpCircle,
   Loader2,
   Lock,
   RotateCcw,
   ShieldCheck,
-  CreditCard,
 } from 'lucide-react';
 import styles from './CheckoutPage.module.css';
 import { orderApi, isOrderable, orderErrorMessage, NOT_ORDERABLE_MESSAGE } from '../../api/orderApi';
-import { availabilityApi } from '../../api/availabilityApi';
 import OnsiteBookingSection, { formatOrderAddress } from './OnsiteBookingSection';
 
 // Mirrors order-service `order.platform-fee-rate` (application.yaml).
@@ -135,12 +134,8 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
       const created = res?.result ?? null;
       setCreatedOrder(created);
       setPhase('success');
-      // order-service does not reserve the slot itself: hold it for this order
-      // (30 minutes in catalog-service); paying confirms it.
-      if (isOnsite && created?.orderId) {
-        availabilityApi.holdSlot(booking.slot.bookingSlotId, created.orderId).catch(() => {
-          onShowToast?.('Đơn đã tạo nhưng chưa giữ được khung giờ. Hãy nhắn tin để chuyên gia xác nhận lịch.');
-        });
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('workgo-orders-changed'));
       }
     } catch (err) {
       setPhase('review');

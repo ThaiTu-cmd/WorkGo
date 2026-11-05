@@ -19,12 +19,12 @@ export const orderApi = {
   getExecution: (orderId) => axiosClient.get(`/order/orders/${orderId}/execution`),
 
   // body: { serviceId, packageId, addonIds } — pricing is computed server-side.
-  // ONSITE also needs { bookingSlotId, address }.
+  // ONSITE also needs { bookingSlotId, address }; order-service holds the slot itself.
   createOrder: (body) => axiosClient.post('/order/orders', body),
 
   // DEV ONLY: payment-service has no payment flow yet, so the "Thanh toán" button
   // calls order-service's internal confirm directly (reachable through the gateway).
-  // PENDING_PAYMENT → CONFIRMED; ONSITE answers its one-time 6-digit checkinCode.
+  // PENDING_PAYMENT → CONFIRMED and books the held slot; ONSITE answers its one-time 6-digit checkinCode.
   // PaymentConfirmationResponse { orderId, orderStatus, paymentStatus, executionStatus, checkinCode }
   confirmPayment: (orderId) => axiosClient.post(`/order/internal/orders/${orderId}/confirm`),
 
@@ -55,6 +55,20 @@ export const orderApi = {
   getRevisions: (orderId) => axiosClient.get(`/order/orders/digital/${orderId}/revisions`),
 
   acceptDigital: (orderId) => axiosClient.post(`/order/orders/digital/${orderId}/accept`),
+
+  // Unpaid orders cancel at once (AUTO_APPROVED); paid ones wait for the other side.
+  // body: { reasonCode, note }
+  cancelOrder: (orderId, body) => axiosClient.post(`/order/orders/${orderId}/cancel`, body),
+
+  // body: { accept }
+  respondCancellation: (orderId, body) => axiosClient.post(`/order/orders/${orderId}/cancel/respond`, body),
+
+  // CancellationRequestResponse { status, requestedByRole, reasonCode, note, refundPercent, createdAt, ... }
+  getCancellation: (orderId) => axiosClient.get(`/order/orders/${orderId}/cancellation`),
+
+  // Work evidence (BEFORE / AFTER photos of an ONSITE order)
+  createEvidence: (orderId, body) => axiosClient.post(`/order/orders/${orderId}/evidence`, body),
+  getEvidence: (orderId, params) => axiosClient.get(`/order/orders/${orderId}/evidence`, { params }),
 };
 
 export const ORDERABLE_EXECUTION_TYPES = ['DIGITAL', 'ONSITE'];
@@ -67,6 +81,7 @@ const ERROR_MESSAGES = {
   1008: 'Bạn không có quyền thực hiện thao tác này trên đơn.',
   2002: 'Trạng thái hiện tại của đơn không cho phép thao tác này.',
   2004: 'Thao tác này không áp dụng cho loại dịch vụ của đơn.',
+  2005: 'Không thể hủy đơn ở trạng thái hiện tại.',
   2020: 'Đơn chưa có thông tin thực hiện.',
   3001: 'Vui lòng chọn khung giờ hẹn.',
   3002: 'Vui lòng chọn địa chỉ thực hiện.',
@@ -77,6 +92,16 @@ const ERROR_MESSAGES = {
   3007: 'Cần ít nhất một file bàn giao.',
   3008: 'Chưa có bản bàn giao nào.',
   3009: 'Đơn đã dùng hết lượt chỉnh sửa.',
+  3010: 'Không tìm thấy khung giờ đã chọn.',
+  3011: 'Khung giờ này vừa có người đặt. Vui lòng chọn khung giờ khác.',
+  3012: 'Khung giờ không thuộc dịch vụ này.',
+  3013: 'Khung giờ đã hết hạn giữ chỗ. Vui lòng đặt lại đơn mới.',
+  3014: 'Vui lòng chọn lý do hủy.',
+  3015: 'Đơn này đã có yêu cầu hủy.',
+  3016: 'Đơn này chưa có yêu cầu hủy.',
+  3017: 'Yêu cầu hủy này đã được xử lý.',
+  3018: 'Bạn không thể tự phản hồi yêu cầu hủy của mình.',
+  3019: 'Vui lòng chọn đồng ý hoặc từ chối.',
 };
 
 export const orderErrorMessage = (err) =>

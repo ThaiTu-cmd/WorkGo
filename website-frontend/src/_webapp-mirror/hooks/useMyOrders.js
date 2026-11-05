@@ -30,8 +30,8 @@ const AUTO_COMPLETE_HOURS = 72;
 // status: 'loading' | 'api' | 'needs-login' | 'error'
 //  - api                 : page of GET /order/orders for this role
 //  - needs-login / error : empty list, the page explains why
-// transition/requestCancel stay local (only cancellation has no order-service endpoint yet);
-// flow actions call the API and then reload().
+// Flow actions call the API and then reload(). transition/requestCancel are local
+// leftovers from before the cancellation endpoints; the dashboard no longer uses them.
 const EMPTY_PAGE = { currentPage: 0, totalPages: 1, totalElements: 0 };
 export function useMyOrders(roleName, page) {
   const [status, setStatus] = useState('loading');
@@ -74,9 +74,11 @@ export function useMyOrders(roleName, page) {
     };
     load();
     window.addEventListener('workgo-auth-changed', load);
+    window.addEventListener('workgo-orders-changed', load);
     return () => {
       cancelled = true;
       window.removeEventListener('workgo-auth-changed', load);
+      window.removeEventListener('workgo-orders-changed', load);
     };
   }, [roleName, page, fail, reloadKey]);
 

@@ -19,7 +19,6 @@ import { useOrderExecution } from '../../hooks/useOrderExecution';
 import OrderCancelPage from '../OrderCancel/OrderCancelPage';
 import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
 import { orderApi, orderErrorMessage } from '../../api/orderApi';
-import { availabilityApi } from '../../api/availabilityApi';
 import { loadCheckinCode, saveCheckinCode } from '../../utils/checkinCodes';
 import styles from './OrderDashboardPage.module.css';
 
@@ -50,7 +49,7 @@ const EXECUTION = {
 
 // Buttons per role → status → execution type ('ALL' applies to every type).
 // `run` names a server call in runAction, `dialog` opens one of the flow dialogs,
-// `cancel` opens the cancellation form (cancelling stays local: no endpoint yet).
+// `cancel` opens the cancellation form. order-service refuses to cancel a DELIVERED order.
 const ACTIONS = {
   CLIENT: {
     PENDING_PAYMENT: {
@@ -61,7 +60,7 @@ const ACTIONS = {
     },
     CONFIRMED: {
       DIGITAL: [{ id: 'requirements', dialog: 'requirements', label: 'Gửi yêu cầu', variant: 'primary' }],
-      ALL: [{ id: 'cancel', label: 'Hủy', variant: 'danger', cancel: true }],
+      ALL: [{ id: 'cancel', label: 'Yêu cầu hủy', variant: 'danger', cancel: true }],
     },
     IN_PROGRESS: { ALL: [{ id: 'cancel', label: 'Yêu cầu hủy', variant: 'danger', cancel: true }] },
     DELIVERED: {
@@ -70,7 +69,6 @@ const ACTIONS = {
         { id: 'accept', run: 'acceptDigital', label: 'Nghiệm thu', variant: 'primary' },
         { id: 'revision', dialog: 'revision', label: 'Yêu cầu sửa', variant: 'outline' },
       ],
-      ALL: [{ id: 'cancel', label: 'Yêu cầu hủy', variant: 'danger', cancel: true }],
     },
   },
   PROVIDER: {
@@ -81,6 +79,7 @@ const ACTIONS = {
     IN_PROGRESS: {
       ONSITE: [{ id: 'complete', run: 'completeOnsite', label: 'Hoàn thành', variant: 'primary' }],
       DIGITAL: [{ id: 'deliver', dialog: 'delivery', label: 'Nộp bài', variant: 'primary' }],
+      ALL: [{ id: 'cancel', label: 'Yêu cầu hủy', variant: 'danger', cancel: true }],
     },
   },
 };
@@ -182,7 +181,7 @@ function OrderLiveDetails({ order, role, onShowToast }) {
   const executionState = useOrderExecution(order.orderId);
   return (
     <>
-      <OrderExecutionInfo state={executionState} />
+      <OrderExecutionInfo state={executionState} order={order} role={role} onShowToast={onShowToast} />
       <OrderBriefPanel order={order} role={role} />
       {order.executionType === 'ONSITE' && role === 'CLIENT' && order.orderStatus === 'CONFIRMED' && (
         <CheckinCodeCard orderId={order.orderId} />
@@ -214,7 +213,7 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
   const [paidCode, setPaidCode] = useState(null);
   // Bumped after every flow action so the expanded details refetch.
   const [detailsVersion, setDetailsVersion] = useState(0);
-  const { status, isLive, orders, pageInfo, transition, requestCancel, reload } = useMyOrders(role, page);
+  const { status, isLive, orders, pageInfo, reload } = useMyOrders(role, page);
   const cancelTarget = cancelTargetId ? orders.find((o) => o.orderId === cancelTargetId) : null;
 
   const toast = (msg) => onShowToast && onShowToast(msg);
@@ -274,8 +273,8 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
     reload();
   };
 
-  // DEV payment: confirm the order inside order-service, then book the held slot
-  // of an ONSITE order and keep its one-time check-in code.
+  // DEV payment: order-service confirms the order and books the held slot of an
+  // ONSITE order; keep its one-time check-in code.
   const pay = async (order) => {
     const res = await orderApi.confirmPayment(order.orderId);
     if (order.executionType !== 'ONSITE') return 'Đã thanh toán, tiền được giữ Escrow';
@@ -283,13 +282,6 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
     if (code) {
       saveCheckinCode(order.orderId, code);
       setPaidCode(code);
-    }
-    try {
-      const execution = await orderApi.getExecution(order.orderId);
-      const slotId = execution?.result?.onsite?.bookingSlotId;
-      if (slotId) await availabilityApi.confirmSlot(slotId, order.orderId);
-    } catch {
-      return 'Đã thanh toán, nhưng chưa chốt được khung giờ. Hãy nhắn tin để chuyên gia xác nhận lịch.';
     }
     return 'Đã thanh toán, khung giờ hẹn đã được chốt';
   };
@@ -342,22 +334,12 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleCancelSubmit = (reason) => {
+  const handleCancelSubmit = () => {
     const order = cancelTarget;
     if (!order) return closeCancel();
-    const by = role === 'PROVIDER' ? 'Chuyên gia' : 'Khách hàng';
-    const { mode, ...detail } = reason;
-    if (mode === 'request') {
-      if (requestCancel(order.orderId, detail)) {
-        toast(`${order.orderNumber}: Đã gửi yêu cầu hủy, chờ phản hồi trong 48 giờ`);
-      }
-    } else if (transition(order.orderId, 'CANCELLED', { cancelReason: { ...detail, by } })) {
-      toast(`${order.orderNumber}: ${role === 'PROVIDER' ? 'Đã từ chối đơn, khách được hoàn tiền' : 'Đã hủy đơn'}`);
-      setTab('CANCELLED');
-    } else {
-      toast('Trạng thái hiện tại không cho phép hủy đơn này.');
-    }
     setExpandedId(order.orderId);
+    setDetailsVersion((v) => v + 1);
+    reload();
     closeCancel();
   };
 
@@ -379,7 +361,7 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
     <div className={styles.pageContainer}>
       <div className={styles.contentWrapper}>
         {cancelTarget ? (
-          <OrderCancelPage order={cancelTarget} role={role} onBack={closeCancel} onSubmit={handleCancelSubmit} />
+          <OrderCancelPage order={cancelTarget} role={role} onBack={closeCancel} onSubmit={handleCancelSubmit} onShowToast={toast} />
         ) : (
         <>
         {/* Breadcrumb */}
@@ -695,6 +677,7 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
         </section>
         </>
         )}
+
       </div>
 
       {FlowDialog && (

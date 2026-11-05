@@ -51,14 +51,20 @@ public class AuthenticationService {
     String SIGNER_KEY;
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) throws JOSEException {
+        String identifier = request.getUserName() != null ? request.getUserName().trim() : "";
+        if (identifier.isEmpty()) {
+            throw new AppException(ErrorCode.USERNAME_INVALID);
+        }
 
-        var user = userRepository.findByUserName(request.getUserName());
-        if(user == null) throw new AppException(ErrorCode.USER_NOT_EXISTED);
+        var user = userRepository.findByIdentifierIgnoreCase(identifier)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
 
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
-        if(!authenticated) throw new AppException(ErrorCode.UNAUTHENTICATED);
+        if (!authenticated) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
 
         var token = generateToken(user);
 
@@ -66,7 +72,6 @@ public class AuthenticationService {
                 .token(token)
                 .authenticated(authenticated)
                 .build();
-
     }
 
     public IntrospectResponse introspect(IntrospectRequest request){

@@ -29,14 +29,16 @@ export default function LoginPage({ onNavigate, onShowToast }: TrungPageProps) {
     setErrors({});
     setSubmitting(true);
     try {
-      await authApi.login(parsed.data.userName, parsed.data.password);
+      await authApi.login(parsed.data.userName.trim(), parsed.data.password);
     } catch (err) {
       const status = (err as { status?: number })?.status;
       setErrors({
         form:
           status === 401 || status === 404
-            ? "Sai tên đăng nhập hoặc mật khẩu."
-            : (err as Error)?.message || "Không kết nối được máy chủ. Vui lòng thử lại.",
+            ? "Sai tên đăng nhập/email hoặc mật khẩu."
+            : status === 0 || (status !== undefined && status >= 500)
+              ? "Không kết nối được máy chủ. Vui lòng kiểm tra backend rồi thử lại."
+              : (err as Error)?.message || "Không kết nối được máy chủ. Vui lòng thử lại.",
       });
       return;
     } finally {
@@ -56,14 +58,14 @@ export default function LoginPage({ onNavigate, onShowToast }: TrungPageProps) {
         <p className={styles.sub}>Chào mừng bạn quay trở lại sàn dịch vụ WorkGo.</p>
         <form onSubmit={submit} noValidate className={styles.form}>
           <label className={styles.field}>
-            <span>Tên đăng nhập</span>
+            <span>Tên đăng nhập hoặc Email</span>
             <input
               type="text"
               autoFocus
               autoComplete="username"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
-              placeholder="nguyenvana"
+              placeholder="VD: nguyenvana hoặc email của bạn"
               aria-invalid={errors.userName ? true : undefined}
             />
             {errors.userName ? <em className={styles.error}>{errors.userName}</em> : null}

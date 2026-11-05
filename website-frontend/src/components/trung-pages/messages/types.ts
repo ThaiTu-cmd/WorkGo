@@ -1,4 +1,4 @@
-// Shapes of the messaging store in _webapp-mirror/api/messageApi.js.
+// Shapes of the messaging store in messageApi.js.
 
 export type ParticipantRole = "CLIENT" | "PROVIDER";
 

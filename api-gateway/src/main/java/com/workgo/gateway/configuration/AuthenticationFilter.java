@@ -45,7 +45,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             "/identity/auth/refresh"
     };
 
-    // Read-only catalog data guests can browse without logging in.
+    // Read-only catalog and provider data guests can browse without logging in.
     private final String[] PUBLIC_GET_ENDPOINTS = {
             "/catalog/categories", "/catalog/categories/**",
             "/catalog/services", "/catalog/services/*",
@@ -53,12 +53,14 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             "/catalog/addons/**",
             "/catalog/medias/**",
             "/catalog/rules/**",
-            "/catalog/slots/**"
+            "/catalog/slots/**",
+            "/identity/providers", "/identity/providers/**"
     };
 
     // Matches PUBLIC_GET_ENDPOINTS but still needs the caller's identity.
     private final String[] PROTECTED_GET_ENDPOINTS = {
-            "/catalog/services/my-services"
+            "/catalog/services/my-services",
+            "/identity/providers/myProfile"
     };
 
     AntPathMatcher pathMatcher = new AntPathMatcher();

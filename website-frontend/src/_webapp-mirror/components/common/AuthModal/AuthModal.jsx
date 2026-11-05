@@ -41,10 +41,15 @@ export default function AuthModal({ initialMode = 'login', onClose, onLoginSucce
     setLoading(true);
     setFeedback(null);
 
+    const cleanUserName = (formData.userName || '').trim();
+    const cleanEmail = (formData.email || '').trim();
+    const cleanFirstName = (formData.firstName || '').trim();
+    const cleanLastName = (formData.lastName || '').trim();
+
     if (mode === 'login') {
       try {
         const res = await axiosClient.post('/identity/auth/token', {
-          userName: formData.userName,
+          userName: cleanUserName,
           password: formData.password,
         });
         const token = res?.result?.token;
@@ -52,7 +57,7 @@ export default function AuthModal({ initialMode = 'login', onClose, onLoginSucce
         setAccessToken(token);
         setFeedback({
           type: 'success',
-          message: `Đăng nhập thành công! Chào mừng ${formData.userName}.`
+          message: `Đăng nhập thành công! Chào mừng ${cleanUserName}.`
         });
         // Show the welcome feedback briefly, then close and let the shell land
         // on the signed-in default view (catalog).
@@ -65,19 +70,21 @@ export default function AuthModal({ initialMode = 'login', onClose, onLoginSucce
           type: 'error',
           message:
             err?.status === 401 || err?.status === 400 || err?.status === 404
-              ? 'Sai tên đăng nhập hoặc mật khẩu.'
-              : `Không đăng nhập được: ${err?.message || 'lỗi kết nối máy chủ'}`
+              ? 'Sai tên đăng nhập/email hoặc mật khẩu.'
+              : err?.status === 0 || (err?.status && err.status >= 500)
+                ? 'Không kết nối được máy chủ. Vui lòng kiểm tra backend rồi thử lại.'
+                : `Không đăng nhập được: ${err?.message || 'lỗi kết nối máy chủ'}`
         });
       }
     } else {
       try {
         // identity-service has no role field on registration (see BACKEND_GAPS.md).
         await authApi.register({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          userName: formData.userName,
+          firstName: cleanFirstName,
+          lastName: cleanLastName,
+          userName: cleanUserName,
           password: formData.password,
-          email: formData.email,
+          email: cleanEmail,
         });
         setFeedback({
           type: 'success',
@@ -175,14 +182,16 @@ export default function AuthModal({ initialMode = 'login', onClose, onLoginSucce
           )}
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel}>Tên tài khoản (Username)</label>
+            <label className={styles.inputLabel}>
+              {mode === 'login' ? 'Tên đăng nhập hoặc Email' : 'Tên tài khoản (Username)'}
+            </label>
             <div className={styles.fieldWithIcon}>
               <User size={18} className={styles.fieldIcon} />
               <input
                 type="text"
                 name="userName"
                 required
-                placeholder="VD: admin hoặc nguyenvana"
+                placeholder={mode === 'login' ? 'VD: nguyenvana hoặc email của bạn' : 'VD: admin hoặc nguyenvana'}
                 value={formData.userName}
                 onChange={handleChange}
                 className={styles.inputField}

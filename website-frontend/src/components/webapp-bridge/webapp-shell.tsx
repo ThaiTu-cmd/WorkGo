@@ -18,6 +18,9 @@ import ServiceFormPage from "@/_webapp-mirror/pages/ServiceForm/ServiceFormPage"
 import AvailabilityPage from "@/_webapp-mirror/pages/Availability/AvailabilityPage";
 import CheckoutPage from "@/_webapp-mirror/pages/Checkout/CheckoutPage";
 import OrderDashboardPage from "@/_webapp-mirror/pages/OrderDashboard/OrderDashboardPage";
+import BookingSlotsPage from "@/_webapp-mirror/pages/BackendParity/BookingSlotsPage";
+import VerificationCenterPage from "@/_webapp-mirror/pages/BackendParity/VerificationCenterPage";
+import AdminConsolePage from "@/_webapp-mirror/pages/BackendParity/AdminConsolePage";
 import RegisterPage from "../trung-pages/auth/RegisterPage";
 import LoginPage from "../trung-pages/auth/LoginPage";
 import ProfileSettingsPage from "../trung-pages/profile/ProfileSettingsPage";
@@ -69,6 +72,9 @@ export type TrungPageKey =
   | "availability"
   | "checkout"
   | "orders"
+  | "booking-slots"
+  | "verification-center"
+  | "admin-console"
   | "register"
   | "login"
   | "profile-settings"
@@ -130,6 +136,9 @@ const CORE_PAGE_KEYS = new Set<string>([
   "availability",
   "checkout",
   "orders",
+  "booking-slots",
+  "verification-center",
+  "admin-console",
 ]);
 
 const KNOWN_PAGE_KEYS = new Set<string>([...CORE_PAGE_KEYS, ...TRUNG_PAGE_KEYS]);
@@ -236,7 +245,9 @@ export default function WebAppShell() {
     }
     // Current page is "home" only on first mount here (later home visits set
     // the flag first), so this behaves as a mount-only redirect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage("catalog");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -580,6 +591,27 @@ export default function WebAppShell() {
             window.scrollTo({ top: 0, left: 0, behavior: "auto" });
           }}
           onSaveSuccess={handleServiceFormSuccess}
+          onShowToast={showToast}
+        />
+      )}
+
+      {currentPage === "booking-slots" && (
+        <BookingSlotsPage
+          onNavigate={(page: string) => handleNavigate(page as TrungPageKey)}
+          onShowToast={showToast}
+        />
+      )}
+
+      {currentPage === "verification-center" && (
+        <VerificationCenterPage
+          onNavigate={(page: string) => handleNavigate(page as TrungPageKey)}
+          onShowToast={showToast}
+        />
+      )}
+
+      {currentPage === "admin-console" && (
+        <AdminConsolePage
+          onNavigate={(page: string) => handleNavigate(page as TrungPageKey)}
           onShowToast={showToast}
         />
       )}

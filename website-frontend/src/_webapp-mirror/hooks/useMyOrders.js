@@ -43,6 +43,25 @@ export function useMyOrders(roleName, page) {
     setPageInfo(EMPTY_PAGE);
   }, []);
 
+  const reloadOrders = useCallback(async () => {
+    if (!getAccessToken()) return fail('needs-login');
+    setStatus('loading');
+    try {
+      const res = await orderApi.getMyOrders(roleName, page, PAGE_SIZE);
+      const result = res?.result ?? {};
+      setOrders(result.data ?? []);
+      setPageInfo({
+        currentPage: result.currentPage ?? page,
+        totalPages: Math.max(1, result.totalPages ?? 1),
+        totalElements: result.totalElements ?? 0,
+      });
+      setStatus('api');
+    } catch (err) {
+      if (err?.status === 403) fail('not-provider');
+      else fail(err?.status === 401 ? 'needs-login' : 'error');
+    }
+  }, [roleName, page, fail]);
+
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -68,9 +87,11 @@ export function useMyOrders(roleName, page) {
     };
     load();
     window.addEventListener('workgo-auth-changed', load);
+    window.addEventListener('workgo-orders-changed', load);
     return () => {
       cancelled = true;
       window.removeEventListener('workgo-auth-changed', load);
+      window.removeEventListener('workgo-orders-changed', load);
     };
   }, [roleName, page, fail]);
 
@@ -111,5 +132,5 @@ export function useMyOrders(roleName, page) {
     [orders]
   );
 
-  return { status, isLive: status === 'api', orders, pageInfo, transition, requestCancel };
+  return { status, isLive: status === 'api', orders, pageInfo, transition, requestCancel, reloadOrders, reload: reloadOrders };
 }

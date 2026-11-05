@@ -1,38 +1,94 @@
 import React, { useEffect, useState } from 'react';
-import {
-  MOCK_SERVICES,
-  getSlots,
-  holdSlot,
-  confirmSlot,
-  releaseSlot,
-} from './mockBookingSlots.js';
+import { availabilityApi } from '../../api/availabilityApi';
+import { catalogApi } from '../../api/catalogApi';
+import { Loader2 } from 'lucide-react';
 import styles from './BookingSlotsPage.module.css';
 
 /**
  * BookingSlotsPage: Trang Đặt lịch hẹn và Quản lý Slot giờ của Chuyên gia.
- * Hỗ trợ các trạng thái AVAILABLE -> HELD (giữ 30 phút) -> BOOKED (xác nhận) hoặc nhả lại AVAILABLE.
+ * Kết nối 100% backend API: availabilityApi (GET slots, POST hold, confirm, release).
  */
 export default function BookingSlotsPage({ onNavigate, onShowToast }) {
-  const [selectedServiceId, setSelectedServiceId] = useState(MOCK_SERVICES[0].id);
+  const [services, setServices] = useState([]);
+  const [selectedServiceId, setSelectedServiceId] = useState('');
   const [slots, setSlots] = useState([]);
+  const [loadingServices, setLoadingServices] = useState(true);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState(null);
   const [nowTime, setNowTime] = useState(Date.now());
 
-  const loadSlots = () => {
+  // 1. Tải danh sách dịch vụ từ backend
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingServices(true);
+
+    const loadServices = async () => {
+      try {
+        let list = [];
+        try {
+          const myRes = await availabilityApi.getMyServices();
+          const data = myRes?.result?.data || (Array.isArray(myRes?.result) ? myRes.result : []);
+          if (Array.isArray(data) && data.length > 0) {
+            list = data;
+          }
+        } catch {
+          // Fallback to public services if not provider
+        }
+
+        if (list.length === 0) {
+          const catRes = await catalogApi.listServices({ page: 0, size: 20 }).catch(() => null);
+          const data = catRes?.result?.data || (Array.isArray(catRes?.result) ? catRes.result : []);
+          if (Array.isArray(data)) list = data;
+        }
+
+        if (cancelled) return;
+        setServices(list);
+        if (list.length > 0) {
+          const initialId = list[0].serviceId || list[0].id;
+          setSelectedServiceId(initialId);
+        }
+      } catch (err) {
+        if (!cancelled && onShowToast) {
+          onShowToast('Không thể tải danh sách dịch vụ từ hệ thống.');
+        }
+      } finally {
+        if (!cancelled) setLoadingServices(false);
+      }
+    };
+
+    loadServices();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 2. Tải danh sách slots theo dịch vụ
+  const loadSlots = async (serviceId = selectedServiceId) => {
+    if (!serviceId) return;
     setNowTime(Date.now());
-    const data = getSlots(selectedServiceId);
-    setSlots(data);
+    setLoadingSlots(true);
+    try {
+      const res = await availabilityApi.getSlots(serviceId);
+      const data = res?.result?.data || (Array.isArray(res?.result) ? res.result : []);
+      setSlots(Array.isArray(data) ? data : []);
+    } catch {
+      setSlots([]);
+    } finally {
+      setLoadingSlots(false);
+    }
   };
 
   useEffect(() => {
-    loadSlots();
+    if (selectedServiceId) {
+      loadSlots(selectedServiceId);
+    }
 
-    // Cập nhật countdown mỗi 30s
     const timer = setInterval(() => {
-      loadSlots();
+      setNowTime(Date.now());
     }, 30000);
 
     const handleSync = () => {
-      loadSlots();
+      loadSlots(selectedServiceId);
     };
 
     if (typeof window !== 'undefined') {
@@ -47,38 +103,60 @@ export default function BookingSlotsPage({ onNavigate, onShowToast }) {
     };
   }, [selectedServiceId]);
 
-  const handleHold = (slotId) => {
-    const res = holdSlot(slotId, 30);
-    if (res) {
-      loadSlots();
+  const DUMMY_ORDER_ID = '00000000-0000-0000-0000-000000000000';
+
+  const handleHold = async (slotId) => {
+    setActionLoadingId(slotId);
+    try {
+      await availabilityApi.holdSlot(slotId, DUMMY_ORDER_ID);
+      await loadSlots();
       if (onShowToast) {
         onShowToast('Đã giữ chỗ trong 30 phút. Vui lòng xác nhận trước khi hết hạn!');
       }
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('workgo-slots-changed'));
+    } catch (err) {
+      if (onShowToast) onShowToast(`Không thể giữ slot: ${err?.message || 'Lỗi thao tác'}`);
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
-  const handleConfirm = (slotId) => {
-    const res = confirmSlot(slotId);
-    if (res) {
-      loadSlots();
+  const handleConfirm = async (slotId) => {
+    setActionLoadingId(slotId);
+    try {
+      await availabilityApi.confirmSlot(slotId, DUMMY_ORDER_ID);
+      await loadSlots();
       if (onShowToast) {
         onShowToast('Xác nhận đặt lịch thành công! Chuyên gia đã nhận được thông báo.');
       }
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('workgo-slots-changed'));
+    } catch (err) {
+      if (onShowToast) onShowToast(`Không thể xác nhận slot: ${err?.message || 'Lỗi thao tác'}`);
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
-  const handleRelease = (slotId) => {
-    if (releaseSlot(slotId)) {
-      loadSlots();
+  const handleRelease = async (slotId) => {
+    setActionLoadingId(slotId);
+    try {
+      await availabilityApi.releaseSlot(slotId, DUMMY_ORDER_ID);
+      await loadSlots();
       if (onShowToast) {
         onShowToast('Đã hủy giữ chỗ. Khung giờ hiện đã sẵn sàng cho người khác.');
       }
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('workgo-slots-changed'));
+    } catch (err) {
+      if (onShowToast) onShowToast(`Không thể nhả slot: ${err?.message || 'Lỗi thao tác'}`);
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
   const getRemainingMinutes = (holdExpiresAt) => {
     if (!holdExpiresAt) return 0;
-    const diff = holdExpiresAt - nowTime;
+    const expTime = new Date(holdExpiresAt).getTime();
+    const diff = expTime - nowTime;
     return Math.max(0, Math.ceil(diff / (60 * 1000)));
   };
 
@@ -90,10 +168,19 @@ export default function BookingSlotsPage({ onNavigate, onShowToast }) {
 
   // Gom nhóm slots theo ngày
   const slotsByDate = slots.reduce((acc, slot) => {
-    acc[slot.date] = acc[slot.date] || [];
-    acc[slot.date].push(slot);
+    const slotDate = slot.startedAt
+      ? new Date(slot.startedAt).toISOString().split('T')[0]
+      : (slot.date || 'Lịch hẹn chung');
+    acc[slotDate] = acc[slotDate] || [];
+    acc[slotDate].push(slot);
     return acc;
   }, {});
+
+  const formatTime = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     <div className={styles.container}>
@@ -120,7 +207,7 @@ export default function BookingSlotsPage({ onNavigate, onShowToast }) {
 
       {/* Header */}
       <header className={styles.header}>
-        <h1 className={styles.title}>Quản lý & Đặt lịch hẹn chuyên gia</h1>
+        <h1 className={styles.title}>Quản lý &amp; Đặt lịch hẹn chuyên gia</h1>
         <p className={styles.subtitle}>
           Đặt trước khung giờ tư vấn trực tuyến 1-1 với chuyên gia. Khung giờ được giữ tối đa 30 phút trong khi bạn hoàn tất thanh toán.
         </p>
@@ -131,39 +218,65 @@ export default function BookingSlotsPage({ onNavigate, onShowToast }) {
         <label htmlFor="service-select" className={styles.filterLabel}>
           Chọn dịch vụ chuyên gia:
         </label>
-        <select
-          id="service-select"
-          className={styles.select}
-          value={selectedServiceId}
-          onChange={(e) => setSelectedServiceId(e.target.value)}
-        >
-          {MOCK_SERVICES.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.title} — {s.provider}
-            </option>
-          ))}
-        </select>
+        {loadingServices ? (
+          <p className={styles.emptyText} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Đang tải danh sách dịch vụ...
+          </p>
+        ) : services.length === 0 ? (
+          <p className={styles.emptyText}>Chưa có dịch vụ nào trên hệ thống.</p>
+        ) : (
+          <select
+            id="service-select"
+            className={styles.select}
+            value={selectedServiceId}
+            onChange={(e) => setSelectedServiceId(e.target.value)}
+          >
+            {services.map((s) => {
+              const id = s.serviceId || s.id;
+              return (
+                <option key={id} value={id}>
+                  {s.title} {s.provider?.name ? `— ${s.provider.name}` : ''}
+                </option>
+              );
+            })}
+          </select>
+        )}
       </div>
 
       {/* Slots List */}
       <div className={styles.slotsArea}>
-        {Object.keys(slotsByDate).length === 0 ? (
-          <div className={styles.emptyCard}>
-            <p className={styles.emptyText}>Chưa có khung giờ nào được thiết lập cho dịch vụ này.</p>
+        {loadingSlots ? (
+          <div className={styles.emptyCard} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
+            <p className={styles.emptyText}>Đang tải danh sách khung giờ từ máy chủ...</p>
+          </div>
+        ) : Object.keys(slotsByDate).length === 0 ? (
+          <div className={styles.emptyCard} style={{ textAlign: 'center', padding: '36px 20px' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>🕒</div>
+            <p className={styles.emptyText} style={{ fontWeight: 600, color: '#334155', fontSize: '1rem', margin: '0 0 6px 0' }}>
+              Chuyên gia chưa thiết lập slot khả dụng cho dịch vụ này
+            </p>
+            <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+              Vui lòng chọn dịch vụ tận nơi khác hoặc liên hệ trực tiếp với chuyên gia để mở thêm ca làm việc.
+            </span>
           </div>
         ) : (
           Object.entries(slotsByDate).map(([date, dateSlots]) => (
             <div key={date} className={styles.dateGroup}>
               <h2 className={styles.dateHeading}>
-                📅 Ngày: {new Date(date).toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                📅 Ngày: {date !== 'Lịch hẹn chung' ? new Date(date).toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : date}
               </h2>
               <div className={styles.slotsGrid}>
                 {dateSlots.map((slot) => {
+                  const slotId = slot.bookingSlotId || slot.id;
                   const remMinutes = getRemainingMinutes(slot.holdExpiresAt);
+                  const isActing = actionLoadingId === slotId;
+                  const startTime = slot.startTime || formatTime(slot.startedAt);
+                  const endTime = slot.endTime || formatTime(slot.endAt);
 
                   return (
                     <div
-                      key={slot.id}
+                      key={slotId}
                       className={`
                         ${styles.slotCard}
                         ${slot.status === 'AVAILABLE' ? styles.slotAvailable : ''}
@@ -172,7 +285,7 @@ export default function BookingSlotsPage({ onNavigate, onShowToast }) {
                       `}
                     >
                       <div className={styles.slotTime}>
-                        ⏰ {slot.startTime} - {slot.endTime}
+                        ⏰ {startTime} - {endTime}
                       </div>
 
                       {/* Status Tag */}
@@ -195,10 +308,11 @@ export default function BookingSlotsPage({ onNavigate, onShowToast }) {
                         {slot.status === 'AVAILABLE' && (
                           <button
                             type="button"
-                            onClick={() => handleHold(slot.id)}
+                            disabled={isActing}
+                            onClick={() => handleHold(slotId)}
                             className={styles.btnPrimary}
                           >
-                            Giữ chỗ 30 phút
+                            {isActing ? 'Đang giữ...' : 'Giữ chỗ 30 phút'}
                           </button>
                         )}
 
@@ -206,17 +320,19 @@ export default function BookingSlotsPage({ onNavigate, onShowToast }) {
                           <div className={styles.heldActionGroup}>
                             <button
                               type="button"
-                              onClick={() => handleConfirm(slot.id)}
+                              disabled={isActing}
+                              onClick={() => handleConfirm(slotId)}
                               className={styles.btnConfirm}
                             >
-                              Xác nhận đặt
+                              {isActing ? '...' : 'Xác nhận đặt'}
                             </button>
                             <button
                               type="button"
-                              onClick={() => handleRelease(slot.id)}
+                              disabled={isActing}
+                              onClick={() => handleRelease(slotId)}
                               className={styles.btnRelease}
                             >
-                              Hủy giữ
+                              {isActing ? '...' : 'Hủy giữ'}
                             </button>
                           </div>
                         )}

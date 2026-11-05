@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useServiceDetail } from '../../hooks/useServiceDetail';
 import { isOrderable, NOT_ORDERABLE_MESSAGE } from '../../api/orderApi';
+import { availabilityApi } from '../../api/availabilityApi';
 import MediaGallery from './components/MediaGallery';
 import PackageSidebar from './components/PackageSidebar';
 import PackageComparisonTable from './components/PackageComparisonTable';
@@ -17,7 +18,9 @@ import {
   ShieldCheck, 
   ArrowLeft,
   Share2,
-  Heart
+  Heart,
+  Calendar,
+  Clock,
 } from 'lucide-react';
 import styles from './ServiceDetailPage.module.css';
 
@@ -35,6 +38,34 @@ export default function ServiceDetailPage({
   const [pickedPackageId, setSelectedPackageId] = useState(null);
   const [pickedAddonIds, setSelectedAddonIds] = useState([]);
   const [isSaved, setIsSaved] = useState(false);
+  const [onsiteSlots, setOnsiteSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
+  useEffect(() => {
+    if (service?.executionType !== 'ONSITE' || !service?.serviceId) return;
+    let cancelled = false;
+    setLoadingSlots(true);
+    availabilityApi
+      .getSlots(service.serviceId)
+      .then((res) => {
+        if (cancelled) return;
+        const pageData = res?.result;
+        const list = Array.isArray(pageData) ? pageData : (pageData?.data || []);
+        setOnsiteSlots(Array.isArray(list) ? list : []);
+      })
+      .catch(() => {
+        if (!cancelled) setOnsiteSlots([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingSlots(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [service?.executionType, service?.serviceId]);
+
+  const availableOnsiteSlots = onsiteSlots.filter((s) => s.status === 'AVAILABLE');
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -277,6 +308,60 @@ export default function ServiceDetailPage({
                 </div>
               </div>
             </section>
+
+            {/* 2.5 Onsite Booking Slots Available */}
+            {service.executionType === 'ONSITE' && (
+              <section className={styles.descriptionSection} style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                  <h2 className={styles.blockTitle} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Calendar size={18} color="#2563eb" /> Khung giờ Chuyên gia nhận việc khả dụng
+                  </h2>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#16a34a', backgroundColor: '#dcfce7', padding: '4px 10px', borderRadius: '12px' }}>
+                    {availableOnsiteSlots.length} khung giờ còn trống
+                  </span>
+                </div>
+
+                {loadingSlots ? (
+                  <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Đang tải lịch rảnh của chuyên gia...</p>
+                ) : availableOnsiteSlots.length === 0 ? (
+                  <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Chuyên gia hiện chưa mở thêm slot rảnh cho dịch vụ này.</p>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px', marginTop: '10px' }}>
+                    {availableOnsiteSlots.slice(0, 12).map((slot) => {
+                      const sid = slot.bookingSlotId || slot.id;
+                      const start = slot.startAt ? new Date(slot.startAt) : null;
+                      const end = slot.endAt ? new Date(slot.endAt) : null;
+                      const timeStr = start && end
+                        ? `${start.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`
+                        : 'Giờ linh hoạt';
+                      const dateStr = start
+                        ? start.toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' })
+                        : '';
+
+                      return (
+                        <div
+                          key={sid}
+                          style={{
+                            padding: '10px 12px',
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                            backgroundColor: '#f8fafc',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px',
+                          }}
+                        >
+                          <span style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Clock size={14} color="#64748b" /> {timeStr}
+                          </span>
+                          <span style={{ fontSize: '0.78rem', color: '#64748b' }}>{dateStr}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            )}
 
             {/* 3. 3-Package Side-by-Side Comparison Matrix */}
             <PackageComparisonTable

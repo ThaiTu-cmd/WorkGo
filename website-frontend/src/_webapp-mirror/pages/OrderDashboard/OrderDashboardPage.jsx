@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Info, Loader2, MessageSquare, Search, Package } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Info, Loader2, MessageSquare, Search, Package, X } from 'lucide-react';
 import { useMyOrders } from '../../hooks/useMyOrders';
 import OrderStatusBadge from './components/OrderStatusBadge';
 import OrderExecutionInfo from './components/OrderExecutionInfo';
 import WorkEvidencePanel from './components/WorkEvidencePanel';
 import { useOrderExecution } from '../../hooks/useOrderExecution';
 import OrderCancelPage from '../OrderCancel/OrderCancelPage';
+import { orderApi } from '../../api/orderApi';
 import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
 import styles from './OrderDashboardPage.module.css';
 
@@ -34,28 +35,36 @@ const EXECUTION = {
   APPOINTMENT: { label: 'Appointment', className: 'execAppointment' },
 };
 
-// Buttons per role and status; each `to` is checked against canTransitionTo in the hook.
-// `cancel` actions open the cancellation form instead of transitioning directly.
+// Buttons per role and status; each action can call backend API or open modal/cancellation.
 const ACTIONS = {
   CLIENT: {
     PENDING_PAYMENT: [
-      { to: 'CONFIRMED', label: 'Thanh toán', variant: 'primary', toast: 'Đã thanh toán, tiền được giữ Escrow' },
-      { to: 'CANCELLED', label: 'Hủy', variant: 'danger', cancel: true },
+      { to: 'CONFIRMED', label: 'Thanh toán (Escrow)', variant: 'primary', pay: true, toast: 'Đã thanh toán, tiền được giữ Escrow' },
+      { to: 'CANCELLED', label: 'Hủy đơn', variant: 'danger', cancel: true },
     ],
-    CONFIRMED: [{ to: 'CANCELLED', label: 'Hủy', variant: 'danger', cancel: true }],
-    IN_PROGRESS: [{ to: 'CANCELLED', label: 'Yêu cầu hủy', variant: 'danger', cancel: true }],
+    CONFIRMED: [
+      { action: 'SUBMIT_REQUIREMENTS', label: 'Gửi yêu cầu', variant: 'primary', digitalOnly: true },
+      { to: 'CANCELLED', label: 'Yêu cầu hủy', variant: 'danger', cancel: true },
+    ],
+    IN_PROGRESS: [
+      { to: 'CANCELLED', label: 'Yêu cầu hủy', variant: 'danger', cancel: true },
+    ],
     DELIVERED: [
-      { to: 'COMPLETED', label: 'Nghiệm thu', variant: 'primary', toast: 'Đã nghiệm thu, Escrow giải ngân cho chuyên gia' },
-      { to: 'IN_PROGRESS', label: 'Yêu cầu sửa', variant: 'outline', toast: 'Đã gửi yêu cầu chỉnh sửa' },
+      { action: 'ACCEPT', label: 'Nghiệm thu hoàn tất', variant: 'primary', toast: 'Đã nghiệm thu, Escrow giải ngân cho chuyên gia' },
+      { action: 'REQUEST_REVISION', label: 'Yêu cầu sửa', variant: 'outline', digitalOnly: true, toast: 'Đã gửi yêu cầu chỉnh sửa' },
       { to: 'CANCELLED', label: 'Yêu cầu hủy', variant: 'danger', cancel: true },
     ],
   },
   PROVIDER: {
     CONFIRMED: [
-      { to: 'IN_PROGRESS', label: 'Bắt đầu làm', variant: 'primary', toast: 'Đơn đã chuyển sang Đang thực hiện' },
+      { action: 'CHECKIN_ONSITE', label: 'Check-in điểm hẹn', variant: 'primary', onsiteOnly: true },
       { to: 'CANCELLED', label: 'Từ chối', variant: 'danger', cancel: true },
     ],
-    IN_PROGRESS: [{ to: 'DELIVERED', label: 'Bàn giao', variant: 'primary', toast: 'Đã bàn giao, chờ khách nghiệm thu' }],
+    IN_PROGRESS: [
+      { action: 'SUBMIT_DELIVERY', label: 'Bàn giao kết quả', variant: 'primary', digitalOnly: true },
+      { action: 'COMPLETE_ONSITE', label: 'Báo xong việc', variant: 'primary', onsiteOnly: true },
+      { to: 'CANCELLED', label: 'Yêu cầu hủy', variant: 'danger', cancel: true },
+    ],
   },
 };
 
@@ -117,7 +126,7 @@ function OrderLiveDetails({ order, role, onShowToast }) {
   const executionState = useOrderExecution(order.orderId);
   return (
     <>
-      <OrderExecutionInfo state={executionState} />
+      <OrderExecutionInfo state={executionState} order={order} role={role} onShowToast={onShowToast} />
       {order.executionType === 'ONSITE' && (
         <WorkEvidencePanel
           orderId={order.orderId}
@@ -138,7 +147,13 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
   const [query, setQuery] = useState('');
   const [expandedId, setExpandedId] = useState(null);
   const [cancelTargetId, setCancelTargetId] = useState(null);
-  const { status, isLive, orders, pageInfo, transition, requestCancel } = useMyOrders(role, page);
+  const [activeModal, setActiveModal] = useState(null); // { type, order }
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState(null);
+  const [modalText, setModalText] = useState('');
+  const [modalExtra, setModalExtra] = useState('');
+
+  const { status, isLive, orders, pageInfo, transition, requestCancel, reloadOrders } = useMyOrders(role, page);
   const cancelTarget = cancelTargetId ? orders.find((o) => o.orderId === cancelTargetId) : null;
 
   const toast = (msg) => onShowToast && onShowToast(msg);
@@ -191,16 +206,110 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
     setExpandedId(null);
   };
 
-  const runAction = (order, action) => {
+  const runAction = async (order, action) => {
     if (action.cancel) {
       setCancelTargetId(order.orderId);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (action.pay) {
+      try {
+        await orderApi.confirmPayment(order.orderId);
+        toast(`${order.orderNumber}: Đã thanh toán Escrow thành công! Đơn chuyển sang Đã xác nhận.`);
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('workgo-orders-changed'));
+        if (reloadOrders) reloadOrders();
+      } catch (err) {
+        toast(`Không thể thanh toán: ${err?.message || 'Lỗi kết nối máy chủ'}`);
+      }
+      return;
+    }
+    if (action.action === 'ACCEPT') {
+      try {
+        if (order.executionType === 'ONSITE') {
+          await orderApi.acceptOnsite(order.orderId);
+        } else {
+          await orderApi.acceptDelivery(order.orderId);
+        }
+        toast(`${order.orderNumber}: Đã nghiệm thu hoàn tất! Escrow giải ngân cho chuyên gia.`);
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('workgo-orders-changed'));
+        if (reloadOrders) reloadOrders();
+      } catch (err) {
+        toast(`Không thể nghiệm thu: ${err?.message || 'Lỗi kết nối máy chủ'}`);
+      }
+      return;
+    }
+    if (action.action === 'COMPLETE_ONSITE') {
+      try {
+        await orderApi.completeOnsite(order.orderId);
+        toast(`${order.orderNumber}: Đã báo xong việc! Chờ khách nghiệm thu tại chỗ.`);
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('workgo-orders-changed'));
+        if (reloadOrders) reloadOrders();
+      } catch (err) {
+        toast(`Không thể báo xong việc: ${err?.message || 'Lỗi kết nối máy chủ'}`);
+      }
+      return;
+    }
+    if (['SUBMIT_REQUIREMENTS', 'SUBMIT_DELIVERY', 'REQUEST_REVISION', 'CHECKIN_ONSITE'].includes(action.action)) {
+      setActiveModal({ type: action.action, order });
+      setModalText('');
+      setModalExtra('');
+      setModalError(null);
       return;
     }
     if (transition(order.orderId, action.to)) {
       toast(`${order.orderNumber}: ${action.toast}`);
     } else {
       toast('Trạng thái hiện tại không cho phép thao tác này.');
+    }
+  };
+
+  const handleModalSubmit = async (e) => {
+    e.preventDefault();
+    if (!activeModal || modalLoading) return;
+    const { type, order } = activeModal;
+    setModalLoading(true);
+    setModalError(null);
+    try {
+      if (type === 'SUBMIT_REQUIREMENTS') {
+        if (!modalText.trim()) throw new Error('Vui lòng nhập mô tả yêu cầu thực hiện');
+        const url = modalExtra ? modalExtra.trim() : '';
+        if (url && !/^https?:\/\/.+/i.test(url)) {
+          throw new Error('Đường dẫn tệp đính kèm phải bắt đầu bằng http:// hoặc https://');
+        }
+        await orderApi.submitRequirements(order.orderId, {
+          note: modalText.trim(),
+          values: { note: modalText.trim(), attachmentUrls: url ? [url] : [] },
+        });
+        toast('Đã gửi yêu cầu thực hiện đơn hàng!');
+      } else if (type === 'SUBMIT_DELIVERY') {
+        const url = modalExtra ? modalExtra.trim() : '';
+        if (url && !/^https?:\/\/.+/i.test(url)) {
+          throw new Error('Đường dẫn tệp đính kèm phải bắt đầu bằng http:// hoặc https://');
+        }
+        await orderApi.submitDelivery(order.orderId, {
+          message: modalText.trim() || 'Bàn giao kết quả đơn hàng',
+          attachmentUrls: url ? [url] : ['https://workgo.vn/demo-delivery'],
+        });
+        toast('Đã nộp bài bàn giao kết quả thành công!');
+      } else if (type === 'REQUEST_REVISION') {
+        if (!modalText.trim()) throw new Error('Vui lòng nhập lý do/yêu cầu chỉnh sửa');
+        await orderApi.requestRevision(order.orderId, {
+          reason: modalText.trim(),
+          note: modalText.trim(),
+        });
+        toast('Đã gửi yêu cầu chỉnh sửa thành công!');
+      } else if (type === 'CHECKIN_ONSITE') {
+        if (!modalText.trim()) throw new Error('Vui lòng nhập mã check-in');
+        await orderApi.checkinOnsite(order.orderId, { code: modalText.trim() });
+        toast('Check-in tại điểm hẹn thành công!');
+      }
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('workgo-orders-changed'));
+      if (reloadOrders) reloadOrders();
+      setActiveModal(null);
+    } catch (err) {
+      setModalError(err?.message || 'Có lỗi xảy ra khi thực hiện thao tác.');
+    } finally {
+      setModalLoading(false);
     }
   };
 
@@ -212,18 +321,7 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
   const handleCancelSubmit = (reason) => {
     const order = cancelTarget;
     if (!order) return closeCancel();
-    const by = role === 'PROVIDER' ? 'Chuyên gia' : 'Khách hàng';
-    const { mode, ...detail } = reason;
-    if (mode === 'request') {
-      if (requestCancel(order.orderId, detail)) {
-        toast(`${order.orderNumber}: Đã gửi yêu cầu hủy, chờ phản hồi trong 48 giờ`);
-      }
-    } else if (transition(order.orderId, 'CANCELLED', { cancelReason: { ...detail, by } })) {
-      toast(`${order.orderNumber}: ${role === 'PROVIDER' ? 'Đã từ chối đơn, khách được hoàn tiền' : 'Đã hủy đơn'}`);
-      setTab('CANCELLED');
-    } else {
-      toast('Trạng thái hiện tại không cho phép hủy đơn này.');
-    }
+    if (reloadOrders) reloadOrders();
     setExpandedId(order.orderId);
     closeCancel();
   };
@@ -373,9 +471,12 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
                   {visible.map((o) => {
                     const exec = EXECUTION[o.executionType];
                     const ms = milestone(o, role);
-                    const actions = (ACTIONS[role][o.orderStatus] || []).filter(
-                      (a) => !(a.cancel && o.cancelRequest)
-                    );
+                    const actions = (ACTIONS[role][o.orderStatus] || []).filter((a) => {
+                      if (a.cancel && (o.cancelRequest || o.orderStatus === 'CANCELLED')) return false;
+                      if (a.digitalOnly && o.executionType !== 'DIGITAL') return false;
+                      if (a.onsiteOnly && o.executionType !== 'ONSITE') return false;
+                      return true;
+                    });
                     const expanded = expandedId === o.orderId;
                     return (
                       <React.Fragment key={o.orderId}>
@@ -549,6 +650,211 @@ export default function OrderDashboardPage({ onGoHome, onShowToast, onOpenChat }
           </div>
         </section>
         </>
+        )}
+
+        {/* Action Modal for Digital & Onsite flows */}
+        {activeModal && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(15, 23, 42, 0.6)',
+              backdropFilter: 'blur(3px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              padding: '1rem',
+            }}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                width: '100%',
+                maxWidth: '520px',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                overflow: 'hidden',
+                animation: 'scaleIn 0.2s ease-out',
+              }}
+            >
+              <div
+                style={{
+                  padding: '16px 20px',
+                  borderBottom: '1px solid #e2e8f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: '#0f172a' }}>
+                  {activeModal.type === 'SUBMIT_REQUIREMENTS' && 'Gửi yêu cầu thực hiện đơn hàng'}
+                  {activeModal.type === 'SUBMIT_DELIVERY' && 'Bàn giao kết quả đơn hàng'}
+                  {activeModal.type === 'REQUEST_REVISION' && 'Yêu cầu chỉnh sửa sản phẩm'}
+                  {activeModal.type === 'CHECKIN_ONSITE' && 'Check-in điểm hẹn dịch vụ tận nơi'}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => !modalLoading && setActiveModal(null)}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    color: '#64748b',
+                    padding: '4px',
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleModalSubmit} style={{ padding: '20px' }}>
+                <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: '#64748b' }}>
+                  Đơn hàng: <strong>{activeModal.order?.orderNumber}</strong> ({activeModal.order?.title})
+                </p>
+
+                {modalError && (
+                  <div
+                    style={{
+                      padding: '10px 14px',
+                      backgroundColor: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      color: '#dc2626',
+                      borderRadius: '6px',
+                      fontSize: '0.82rem',
+                      marginBottom: '14px',
+                    }}
+                    role="alert"
+                  >
+                    {modalError}
+                  </div>
+                )}
+
+                {activeModal.type === 'CHECKIN_ONSITE' ? (
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500, color: '#334155', marginBottom: '6px' }}>
+                      Mã xác nhận Check-in <span style={{ color: '#dc2626' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Nhập mã check-in gồm 6 chữ số..."
+                      value={modalText}
+                      onChange={(e) => setModalText(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '6px',
+                        fontSize: '0.9rem',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                    <small style={{ display: 'block', color: '#64748b', marginTop: '6px', fontSize: '0.78rem' }}>
+                      Mã check-in được cấp cho khách hàng sau khi thanh toán đơn hàng.
+                    </small>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ marginBottom: '16px' }}>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500, color: '#334155', marginBottom: '6px' }}>
+                        {activeModal.type === 'SUBMIT_REQUIREMENTS' && 'Nội dung chi tiết yêu cầu *'}
+                        {activeModal.type === 'SUBMIT_DELIVERY' && 'Ghi chú bàn giao *'}
+                        {activeModal.type === 'REQUEST_REVISION' && 'Lý do & Chi tiết cần chỉnh sửa *'}
+                      </label>
+                      <textarea
+                        rows={4}
+                        required
+                        value={modalText}
+                        onChange={(e) => setModalText(e.target.value)}
+                        placeholder={
+                          activeModal.type === 'SUBMIT_REQUIREMENTS'
+                            ? 'Mô tả chi tiết mong muốn, phong cách, mục tiêu sản phẩm...'
+                            : activeModal.type === 'SUBMIT_DELIVERY'
+                            ? 'Mô tả kết quả đã hoàn thành, hướng dẫn xem hoặc sử dụng...'
+                            : 'Nêu rõ những điểm chưa đạt yêu cầu cần làm lại...'
+                        }
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '6px',
+                          fontSize: '0.9rem',
+                          fontFamily: 'inherit',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+
+                    {(activeModal.type === 'SUBMIT_REQUIREMENTS' || activeModal.type === 'SUBMIT_DELIVERY') && (
+                      <div style={{ marginBottom: '16px' }}>
+                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500, color: '#334155', marginBottom: '6px' }}>
+                          Đường dẫn tệp / liên kết đính kèm (URL)
+                        </label>
+                        <input
+                          type="url"
+                          placeholder="https://drive.google.com/... hoặc link lưu trữ"
+                          value={modalExtra}
+                          onChange={(e) => setModalExtra(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '6px',
+                            fontSize: '0.9rem',
+                            boxSizing: 'border-box',
+                          }}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                  <button
+                    type="button"
+                    disabled={modalLoading}
+                    onClick={() => setActiveModal(null)}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      backgroundColor: '#ffffff',
+                      color: '#334155',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={modalLoading}
+                    style={{
+                      padding: '8px 20px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      backgroundColor: '#2563eb',
+                      color: '#ffffff',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    {modalLoading && <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />}
+                    Xác nhận
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
       </div>
     </div>

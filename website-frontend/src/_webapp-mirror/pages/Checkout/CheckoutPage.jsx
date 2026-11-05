@@ -2,17 +2,21 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   BadgeCheck,
+  Calendar,
   CheckCircle2,
   Clock,
+  CreditCard,
   HelpCircle,
   Loader2,
   Lock,
+  MapPin,
   RotateCcw,
   ShieldCheck,
-  CreditCard,
 } from 'lucide-react';
 import styles from './CheckoutPage.module.css';
 import { orderApi, isOrderable, NOT_ORDERABLE_MESSAGE } from '../../api/orderApi';
+import { availabilityApi } from '../../api/availabilityApi';
+import { addressApi } from '../../api/addressApi';
 
 // Mirrors order-service `order.platform-fee-rate` (application.yaml).
 const PLATFORM_FEE_RATE = 0.1;
@@ -109,21 +113,105 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
   const { service, pkg, addons } = order;
   const currentGateway = GATEWAYS.find((g) => g.id === gateway) || GATEWAYS[0];
 
+  const isOnsite = service?.executionType === 'ONSITE';
+  const [selectedSlotId, setSelectedSlotId] = useState(order?.bookingSlotId || null);
+  const [addressInput, setAddressInput] = useState(order?.address || '');
+  const [slots, setSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slotError, setSlotError] = useState(null);
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedSavedAddressId, setSelectedSavedAddressId] = useState('');
+
+  useEffect(() => {
+    if (!isOnsite) return;
+    let cancelled = false;
+    addressApi
+      .getMy()
+      .then((res) => {
+        if (cancelled) return;
+        const pageData = res?.result;
+        const list = Array.isArray(pageData) ? pageData : (pageData?.data || []);
+        if (Array.isArray(list) && list.length > 0) {
+          setSavedAddresses(list);
+          const def = list.find((a) => a.isDefault) || list[0];
+          if (def && !addressInput) {
+            setSelectedSavedAddressId(def.addressId || def.id);
+            const formatted = [def.street, def.ward, def.district, def.city].filter(Boolean).join(', ');
+            setAddressInput(formatted);
+          }
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSavedAddresses([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOnsite]);
+
+  useEffect(() => {
+    if (!isOnsite || !service?.serviceId) return;
+    let cancelled = false;
+    setLoadingSlots(true);
+    setSlotError(null);
+    availabilityApi
+      .getSlots(service.serviceId)
+      .then((res) => {
+        if (cancelled) return;
+        const pageData = res?.result;
+        const list = Array.isArray(pageData) ? pageData : (pageData?.data || []);
+        setSlots(list);
+        if (!selectedSlotId) {
+          const firstAvail = list.find((s) => s.status === 'AVAILABLE');
+          if (firstAvail) setSelectedSlotId(firstAvail.bookingSlotId || firstAvail.id);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setSlotError(err?.message || 'Không thể tải lịch rảnh của chuyên gia');
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingSlots(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOnsite, service?.serviceId]);
+
   // Creates the order; payment-service is not routed by the gateway yet,
   // so the order stays PENDING_PAYMENT (see BACKEND_GAPS.md).
   const orderable = isOrderable(service.executionType);
+  const canSubmit = agreed && phase === 'review' && orderable && (!isOnsite || (Boolean(selectedSlotId) && Boolean(addressInput.trim())));
 
   const handlePay = async () => {
     if (!agreed || phase !== 'review' || !orderable) return;
+    if (isOnsite) {
+      if (!selectedSlotId) {
+        if (onShowToast) onShowToast('Vui lòng chọn khung giờ hẹn thực hiện dịch vụ.');
+        return;
+      }
+      if (!addressInput.trim()) {
+        if (onShowToast) onShowToast('Vui lòng nhập địa chỉ thực hiện dịch vụ tại nhà.');
+        return;
+      }
+    }
     setPhase('creating');
     try {
       const res = await orderApi.createOrder({
         serviceId: service.serviceId,
         packageId: pkg.id,
         addonIds: addons.map((a) => a.id),
+        ...(isOnsite ? {
+          bookingSlotId: selectedSlotId,
+          address: addressInput.trim(),
+        } : {}),
       });
       setCreatedOrder(res?.result ?? null);
       setPhase('success');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('workgo-orders-changed'));
+      }
     } catch (err) {
       setPhase('review');
       if (onShowToast) {
@@ -272,6 +360,158 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
                   )}
                 </section>
 
+                {isOnsite && (
+                  <>
+                    {/* Onsite Booking Slot Picker */}
+                    <section className={styles.card}>
+                      <div className={styles.cardHead}>
+                        <h2 className={styles.cardTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Calendar size={18} /> Chọn khung giờ hẹn (Booking Slot) <span style={{ color: '#dc2626' }}>*</span>
+                        </h2>
+                      </div>
+                      <p className={styles.cardSub}>
+                        Chọn khung giờ chuyên gia sẽ đến địa chỉ của bạn để tiến hành công việc.
+                      </p>
+
+                      {loadingSlots ? (
+                        <p className={styles.mutedText} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Đang tải các khung giờ khả dụng...
+                        </p>
+                      ) : slotError ? (
+                        <p className={styles.notOrderable} role="alert">{slotError}</p>
+                      ) : slots.length === 0 ? (
+                        <div style={{ padding: '14px', borderRadius: '8px', backgroundColor: '#fffbeb', border: '1px solid #fde68a', color: '#b45309', fontSize: '0.88rem' }}>
+                          Chuyên gia hiện chưa mở lịch rảnh cho dịch vụ này. Vui lòng liên hệ chuyên gia hoặc chọn dịch vụ khác.
+                        </div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px', marginTop: '12px' }}>
+                          {slots.map((s) => {
+                            const slotId = s.bookingSlotId || s.id;
+                            const isAvail = s.status === 'AVAILABLE';
+                            const isSelected = selectedSlotId === slotId;
+                            const dStart = s.startedAt ? new Date(s.startedAt) : null;
+                            const dEnd = s.endAt ? new Date(s.endAt) : null;
+                            const timeStr = dStart && dEnd
+                              ? `${dStart.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - ${dEnd.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`
+                              : 'Khung giờ rảnh';
+                            const dateStr = dStart ? dStart.toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+                            return (
+                              <label
+                                key={slotId}
+                                style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  padding: '10px 12px',
+                                  borderRadius: '8px',
+                                  border: isSelected ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                                  backgroundColor: !isAvail ? '#f1f5f9' : (isSelected ? '#eff6ff' : '#ffffff'),
+                                  cursor: isAvail ? 'pointer' : 'not-allowed',
+                                  opacity: isAvail ? 1 : 0.6,
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                  <input
+                                    type="radio"
+                                    name="bookingSlot"
+                                    disabled={!isAvail}
+                                    value={slotId}
+                                    checked={isSelected}
+                                    onChange={() => setSelectedSlotId(slotId)}
+                                    style={{ cursor: isAvail ? 'pointer' : 'not-allowed' }}
+                                  />
+                                  <span style={{ fontSize: '0.72rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', backgroundColor: isAvail ? '#dcfce7' : '#fecaca', color: isAvail ? '#15803d' : '#b91c1c' }}>
+                                    {s.status}
+                                  </span>
+                                </div>
+                                <strong style={{ fontSize: '0.88rem', color: '#0f172a' }}>
+                                  {timeStr}
+                                </strong>
+                                <small style={{ color: '#64748b', fontSize: '0.78rem', marginTop: '2px' }}>
+                                  {dateStr}
+                                </small>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </section>
+
+                    {/* Onsite Address Input */}
+                    <section className={styles.card}>
+                      <div className={styles.cardHead}>
+                        <h2 className={styles.cardTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <MapPin size={18} /> Địa chỉ thực hiện dịch vụ tận nơi <span style={{ color: '#dc2626' }}>*</span>
+                        </h2>
+                      </div>
+                      <p className={styles.cardSub}>
+                        Chọn từ sổ địa chỉ của bạn hoặc nhập địa chỉ chính xác nơi chuyên gia sẽ đến làm việc.
+                      </p>
+
+                      {savedAddresses.length > 0 && (
+                        <div style={{ marginBottom: '10px' }}>
+                          <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                            Chọn nhanh từ Sổ địa chỉ đã lưu:
+                          </label>
+                          <select
+                            value={selectedSavedAddressId}
+                            onChange={(e) => {
+                              const aid = e.target.value;
+                              setSelectedSavedAddressId(aid);
+                              if (aid) {
+                                const found = savedAddresses.find((a) => (a.addressId || a.id) === aid);
+                                if (found) {
+                                  const parts = [found.street, found.ward, found.district, found.city].filter(Boolean);
+                                  setAddressInput(parts.join(', '));
+                                }
+                              }
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '8px 12px',
+                              borderRadius: '8px',
+                              border: '1px solid #cbd5e1',
+                              fontSize: '0.88rem',
+                              backgroundColor: '#f8fafc',
+                              color: '#0f172a',
+                            }}
+                          >
+                            <option value="">-- Chọn địa chỉ có sẵn --</option>
+                            {savedAddresses.map((addr) => {
+                              const aid = addr.addressId || addr.id;
+                              const text = [addr.street, addr.ward, addr.district, addr.city].filter(Boolean).join(', ');
+                              return (
+                                <option key={aid} value={aid}>
+                                  {addr.isDefault ? '⭐ [Mặc định] ' : ''}{text}
+                                </option>
+                              );
+                            })}
+                          </select>
+                        </div>
+                      )}
+
+                      <input
+                        type="text"
+                        required
+                        placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố..."
+                        value={addressInput}
+                        onChange={(e) => {
+                          setAddressInput(e.target.value);
+                          setSelectedSavedAddressId('');
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '0.9rem',
+                          boxSizing: 'border-box',
+                          marginTop: '6px',
+                        }}
+                      />
+                    </section>
+                  </>
+                )}
+
                 {/* Payment gateways */}
                 <section className={styles.card}>
                   <h2 className={styles.cardTitle}>Chọn cổng thanh toán</h2>
@@ -376,7 +616,7 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
                 <button
                   type="button"
                   className={styles.btnPay}
-                  disabled={!agreed || phase !== 'review' || !orderable}
+                  disabled={!canSubmit}
                   onClick={handlePay}
                 >
                   Đặt hàng {formatPrice(pricing.totalAmount)}

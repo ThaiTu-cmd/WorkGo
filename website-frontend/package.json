@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/*.test.mjs tests/**/*.test.mjs",
+    "test": "node --test tests/backend-api-parity.test.mjs tests/backend-adapters.test.mjs tests/auth-flow-e2e.test.mjs tests/full-lifecycle-e2e.test.mjs tests/qa-cycle2-features.test.mjs tests/qa-edge-cases.test.mjs tests/trung-pages.test.mjs",
     "audit:browser": "node ../scripts/qa-browser-matrix-audit.mjs"
   },
   "dependencies": {

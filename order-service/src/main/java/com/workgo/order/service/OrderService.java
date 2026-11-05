@@ -2,6 +2,7 @@ package com.workgo.order.service;
 
 import com.workgo.order.dto.PageResponse;
 import com.workgo.order.dto.request.OrderCreationRequest;
+import com.workgo.order.dto.request.SlotActionRequest;
 import com.workgo.order.dto.response.OrderDetailResponse;
 import com.workgo.order.dto.response.OrderItemResponse;
 import com.workgo.order.dto.response.OrderResponse;
@@ -28,6 +29,7 @@ import com.workgo.order.reppository.*;
 import com.workgo.order.reppository.client.CatalogClient;
 import com.workgo.order.reppository.client.IdentityClient;
 import com.workgo.order.utils.TokenUtils;
+import feign.FeignException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -37,6 +39,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -185,6 +188,9 @@ public class OrderService {
                     .findByExecution_ExecutionId(execution.getExecutionId())
                     .orElseThrow(() -> new AppException(ErrorCode.ORDER_EXECUTION_NOT_FOUND));
 
+            //slot HELD -> BOOKED, loi thi rollback ca confirm
+            confirmSlot(onsite.getBookingSlotId(), orderId);
+
             checkinCode = generateCheckinCode();
             onsite.setCheckinCodeHash(passwordEncoder.encode(checkinCode));
             onsiteExecutionRepository.save(onsite);
@@ -204,6 +210,20 @@ public class OrderService {
     //sinh ra ma code checkin
     private String generateCheckinCode() {
         return String.format("%06d", new SecureRandom().nextInt(1_000_000));
+    }
+
+    private void confirmSlot(UUID slotId, UUID orderId) {
+        try {
+            catalogClient.confirmSlot(slotId, SlotActionRequest.builder()
+                    .orderId(orderId)
+                    .build());
+        } catch (FeignException e) {
+            //slot khong con duoc giu boi order nay
+            if (e.status() == HttpStatus.CONFLICT.value()) {
+                throw new AppException(ErrorCode.ORDER_SLOT_HOLD_EXPIRED);
+            }
+            throw new AppException(ErrorCode.CATALOG_UNAVAILABLE);
+        }
     }
 
     //loc ra addon duoc chon

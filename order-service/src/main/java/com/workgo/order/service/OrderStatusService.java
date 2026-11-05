@@ -43,6 +43,8 @@ public class OrderStatusService {
 
         Instant now = Instant.now();
 
+        order.setOrderStatus(toStatus);
+
         switch (toStatus){
             case CONFIRMED -> order.setConfirmedAt(now);
             case IN_PROGRESS -> order.setStartedAt(now);

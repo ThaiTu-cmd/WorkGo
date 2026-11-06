@@ -92,3 +92,8 @@ Thumbs.db
 .playwright-cli/
 test-results/
 playwright-report/
+
+# Ignore tests in api-gateway
+api-gateway/src/test/
+api-gateway/test/
+

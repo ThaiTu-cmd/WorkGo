@@ -93,6 +93,9 @@ export default function DisputeCenterPage({ onShowToast }: TrungPageProps) {
       <h1 className={styles.title}>
         <ShieldAlert size={24} className={styles.titleIcon} aria-hidden="true" /> Trung tâm tranh chấp & báo cáo
       </h1>
+      <div style={{ padding: "10px 14px", backgroundColor: "#fef3c7", border: "1px solid #fde68a", borderRadius: "8px", color: "#92400e", fontSize: "0.85rem", marginBottom: "16px", fontWeight: 500 }}>
+        ⚠️ Trung Tâm Khiếu Nại Demo - Hồ sơ khiếu nại lưu trữ cục bộ, chưa gửi tới ban quản trị sàn
+      </div>
       <p className={styles.sub}>Gửi báo cáo vi phạm hoặc yêu cầu hòa giải tranh chấp đơn hàng.</p>
 
       <form onSubmit={submit} noValidate className={styles.form}>

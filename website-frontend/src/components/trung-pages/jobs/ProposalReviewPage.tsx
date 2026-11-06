@@ -118,6 +118,9 @@ export default function ProposalReviewPage({ onNavigate, onShowToast, jobId }: T
       <h1 className={styles.title}>
         <ClipboardCheck size={24} className={styles.titleIcon} aria-hidden="true" /> Duyệt đề xuất
       </h1>
+      <div style={{ padding: "10px 14px", backgroundColor: "#fef3c7", border: "1px solid #fde68a", borderRadius: "8px", color: "#92400e", fontSize: "0.85rem", marginBottom: "16px", fontWeight: 500 }}>
+        ⚠️ Tính năng Chào giá Đang Thử Nghiệm (Prototype Mode)
+      </div>
       <p className={styles.sub}>Client chọn 1 provider duy nhất cho mỗi việc, tiền được giữ hộ an toàn.</p>
       <label className={styles.field}>
         <span>Lọc theo việc</span>

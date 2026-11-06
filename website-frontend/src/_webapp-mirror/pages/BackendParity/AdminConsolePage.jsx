@@ -417,7 +417,15 @@ export default function AdminConsolePage({ onNavigate, onShowToast }) {
           </div>
 
           {providers.length === 0 ? (
-            <p className={styles.emptyText}>Không tìm thấy hồ sơ chuyên gia nào theo bộ lọc.</p>
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>💼</div>
+              <p style={{ fontWeight: 600, color: '#334155', fontSize: '1rem', margin: '0 0 4px 0' }}>
+                Không tìm thấy hồ sơ chuyên gia nào
+              </p>
+              <span style={{ fontSize: '0.85rem' }}>
+                Chưa có chuyên gia nào phù hợp với bộ lọc trạng thái đã chọn.
+              </span>
+            </div>
           ) : (
             <div className={styles.tableResponsive}>
               <table className={styles.table}>
@@ -509,7 +517,15 @@ export default function AdminConsolePage({ onNavigate, onShowToast }) {
         <section className={styles.sectionCard}>
           <h2 className={styles.sectionTitle}>Danh mục Dịch vụ Hệ thống (Categories)</h2>
           {categories.length === 0 ? (
-            <p className={styles.emptyText}>Chưa có danh mục dịch vụ nào trong hệ thống.</p>
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>🗂️</div>
+              <p style={{ fontWeight: 600, color: '#334155', fontSize: '1rem', margin: '0 0 4px 0' }}>
+                Chưa có danh mục dịch vụ nào
+              </p>
+              <span style={{ fontSize: '0.85rem' }}>
+                Hệ thống chưa ghi nhận danh mục dịch vụ nào trong cơ sở dữ liệu.
+              </span>
+            </div>
           ) : (
             <div className={styles.tableResponsive}>
               <table className={styles.table}>

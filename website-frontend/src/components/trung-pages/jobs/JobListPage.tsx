@@ -79,6 +79,10 @@ export default function JobListPage({ onNavigate }: TrungPageProps) {
         </button>
       </div>
 
+      <div style={{ padding: "10px 14px", backgroundColor: "#fef3c7", border: "1px solid #fde68a", borderRadius: "8px", color: "#92400e", fontSize: "0.85rem", marginBottom: "16px", fontWeight: 500 }}>
+        ⚠️ Chế độ Thử Nghiệm Sàn Việc Làm - Dữ liệu lưu trong phiên trình duyệt, chưa kết nối job-service backend
+      </div>
+
       <div className={styles.toolbar}>
         <input
           type="search"

@@ -6,6 +6,46 @@ server:
 spring:
   application:
     name: payment-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    url: jdbc:postgresql://localhost:${PAYMENT_DB_PORT:5436}/${PAYMENT_DB:payment_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:admin123}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: 3000
+            read-timeout: 5000
 
-# TODO: Thêm datasource khi payment-service có DB
-# TODO: Thêm kafka config khi cần
+app:
+  services:
+    order: ${ORDER_SERVICE_URL:http://localhost:8083/order}
+  internal-key: ${INTERNAL_API_KEY:dev-internal-key}
+  frontend-result-url: ${PAYMENT_RESULT_URL:http://localhost:3000/payment/result}
+
+payment:
+  expire-minutes: 15
+  slot-min-remaining-minutes: 2
+  sync:
+    max-retry: 10
+  vnpay:
+    tmn-code: ${VNPAY_TMN_CODE:}
+    hash-secret: ${VNPAY_HASH_SECRET:}
+    pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+    api-url: https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
+    return-url: ${VNPAY_RETURN_URL:http://localhost:8888/api/v1/payment/gateway/vnpay/return}
+  momo:
+    partner-code: ${MOMO_PARTNER_CODE:}
+    access-key: ${MOMO_ACCESS_KEY:}
+    secret-key: ${MOMO_SECRET_KEY:}
+    endpoint: https://test-payment.momo.vn/v2/gateway/api
+    redirect-url: ${MOMO_REDIRECT_URL:http://localhost:8888/api/v1/payment/gateway/momo/return}
+    ipn-url: ${MOMO_IPN_URL:}

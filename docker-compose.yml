@@ -75,12 +75,34 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres-payment:
+    image: postgres:16-alpine
+    container_name: payment-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${PAYMENT_DB:-payment_db}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    ports:
+      - "${PAYMENT_DB_PORT:-5436}:5432"
+    volumes:
+      - payment_pgdata:/var/lib/postgresql/data
+    networks:
+      - payment-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${PAYMENT_DB:-payment_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   identity_pgdata:
     driver: local
   catalog_pgdata:
     driver: local
   order_pgdata:
+    driver: local
+  payment_pgdata:
     driver: local
 
 networks:
@@ -89,4 +111,6 @@ networks:
   catalog-net:
     driver: bridge
   order-net:
+    driver: bridge
+  payment-net:
     driver: bridge

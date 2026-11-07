@@ -24,6 +24,7 @@ jwt:
   signerKey: ${JWT_SIGNER_KEY}
 
 app:
+  internal-api-key: ${INTERNAL_API_KEY:}
   services:
     identity: ${IDENTITY_SERVICE_URL:http://localhost:8081/identity}
     catalog: ${CATALOG_SERVICE_URL:http://localhost:8082/catalog}

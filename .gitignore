@@ -97,3 +97,7 @@ playwright-report/
 api-gateway/src/test/
 api-gateway/test/
 
+# Local tests for job-service
+job-service/src/test/
+job-service/test/
+

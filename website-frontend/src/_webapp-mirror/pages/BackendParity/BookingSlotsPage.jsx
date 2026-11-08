@@ -5,8 +5,8 @@ import { Loader2 } from 'lucide-react';
 import styles from './BookingSlotsPage.module.css';
 
 /**
- * BookingSlotsPage: Trang Đặt lịch hẹn và Quản lý Slot giờ của Chuyên gia.
- * Kết nối 100% backend API: availabilityApi (GET slots, POST hold, confirm, release).
+ * BookingSlotsPage: Trang xem tình trạng khung giờ của dịch vụ.
+ * Chỉ đọc: order-service tự giữ, chốt và nhả slot theo vòng đời đơn hàng.
  */
 export default function BookingSlotsPage({ onNavigate, onShowToast }) {
   const [services, setServices] = useState([]);
@@ -14,7 +14,6 @@ export default function BookingSlotsPage({ onNavigate, onShowToast }) {
   const [slots, setSlots] = useState([]);
   const [loadingServices, setLoadingServices] = useState(true);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [actionLoadingId, setActionLoadingId] = useState(null);
   const [nowTime, setNowTime] = useState(Date.now());
 
   // 1. Tải danh sách dịch vụ từ backend
@@ -103,56 +102,6 @@ export default function BookingSlotsPage({ onNavigate, onShowToast }) {
     };
   }, [selectedServiceId]);
 
-  const DUMMY_ORDER_ID = '00000000-0000-0000-0000-000000000000';
-
-  const handleHold = async (slotId) => {
-    setActionLoadingId(slotId);
-    try {
-      await availabilityApi.holdSlot(slotId, DUMMY_ORDER_ID);
-      await loadSlots();
-      if (onShowToast) {
-        onShowToast('Đã giữ chỗ trong 30 phút. Vui lòng xác nhận trước khi hết hạn!');
-      }
-      if (typeof window !== 'undefined') window.dispatchEvent(new Event('workgo-slots-changed'));
-    } catch (err) {
-      if (onShowToast) onShowToast(`Không thể giữ slot: ${err?.message || 'Lỗi thao tác'}`);
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
-
-  const handleConfirm = async (slotId) => {
-    setActionLoadingId(slotId);
-    try {
-      await availabilityApi.confirmSlot(slotId, DUMMY_ORDER_ID);
-      await loadSlots();
-      if (onShowToast) {
-        onShowToast('Xác nhận đặt lịch thành công! Chuyên gia đã nhận được thông báo.');
-      }
-      if (typeof window !== 'undefined') window.dispatchEvent(new Event('workgo-slots-changed'));
-    } catch (err) {
-      if (onShowToast) onShowToast(`Không thể xác nhận slot: ${err?.message || 'Lỗi thao tác'}`);
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
-
-  const handleRelease = async (slotId) => {
-    setActionLoadingId(slotId);
-    try {
-      await availabilityApi.releaseSlot(slotId, DUMMY_ORDER_ID);
-      await loadSlots();
-      if (onShowToast) {
-        onShowToast('Đã hủy giữ chỗ. Khung giờ hiện đã sẵn sàng cho người khác.');
-      }
-      if (typeof window !== 'undefined') window.dispatchEvent(new Event('workgo-slots-changed'));
-    } catch (err) {
-      if (onShowToast) onShowToast(`Không thể nhả slot: ${err?.message || 'Lỗi thao tác'}`);
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
-
   const getRemainingMinutes = (holdExpiresAt) => {
     if (!holdExpiresAt) return 0;
     const expTime = new Date(holdExpiresAt).getTime();
@@ -202,14 +151,14 @@ export default function BookingSlotsPage({ onNavigate, onShowToast }) {
           Dịch vụ
         </button>
         <span className={styles.breadcrumbSep}>/</span>
-        <span className={styles.breadcrumbCurrent}>Đặt lịch hẹn (Booking Slots)</span>
+        <span className={styles.breadcrumbCurrent}>Khung giờ (Booking Slots)</span>
       </nav>
 
       {/* Header */}
       <header className={styles.header}>
-        <h1 className={styles.title}>Quản lý &amp; Đặt lịch hẹn chuyên gia</h1>
+        <h1 className={styles.title}>Khung giờ của dịch vụ</h1>
         <p className={styles.subtitle}>
-          Đặt trước khung giờ tư vấn trực tuyến 1-1 với chuyên gia. Khung giờ được giữ tối đa 30 phút trong khi bạn hoàn tất thanh toán.
+          Xem tình trạng các khung giờ. Hệ thống tự giữ chỗ khi khách tạo đơn và chốt lịch sau khi khách thanh toán.
         </p>
       </header>
 
@@ -270,7 +219,6 @@ export default function BookingSlotsPage({ onNavigate, onShowToast }) {
                 {dateSlots.map((slot) => {
                   const slotId = slot.bookingSlotId || slot.id;
                   const remMinutes = getRemainingMinutes(slot.holdExpiresAt);
-                  const isActing = actionLoadingId === slotId;
                   const startTime = slot.startTime || formatTime(slot.startedAt);
                   const endTime = slot.endTime || formatTime(slot.endAt);
 
@@ -300,47 +248,6 @@ export default function BookingSlotsPage({ onNavigate, onShowToast }) {
                         )}
                         {slot.status === 'BOOKED' && (
                           <span className={styles.badgeBooked}>Đã đặt (BOOKED)</span>
-                        )}
-                      </div>
-
-                      {/* Actions */}
-                      <div className={styles.slotActions}>
-                        {slot.status === 'AVAILABLE' && (
-                          <button
-                            type="button"
-                            disabled={isActing}
-                            onClick={() => handleHold(slotId)}
-                            className={styles.btnPrimary}
-                          >
-                            {isActing ? 'Đang giữ...' : 'Giữ chỗ 30 phút'}
-                          </button>
-                        )}
-
-                        {slot.status === 'HELD' && (
-                          <div className={styles.heldActionGroup}>
-                            <button
-                              type="button"
-                              disabled={isActing}
-                              onClick={() => handleConfirm(slotId)}
-                              className={styles.btnConfirm}
-                            >
-                              {isActing ? '...' : 'Xác nhận đặt'}
-                            </button>
-                            <button
-                              type="button"
-                              disabled={isActing}
-                              onClick={() => handleRelease(slotId)}
-                              className={styles.btnRelease}
-                            >
-                              {isActing ? '...' : 'Hủy giữ'}
-                            </button>
-                          </div>
-                        )}
-
-                        {slot.status === 'BOOKED' && (
-                          <button type="button" disabled className={styles.btnDisabled}>
-                            Khung giờ đã kín
-                          </button>
                         )}
                       </div>
                     </div>

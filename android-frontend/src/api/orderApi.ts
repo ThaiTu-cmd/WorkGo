@@ -1,5 +1,5 @@
 import { http } from './client';
-import type { ApiResponse, CancellationBody, CancellationDto, ExecutionDto, OrderCreationRequest, OrderDto, OrderHistoryDto, OrderRole, Paged } from './types';
+import type { ApiResponse, CancellationBody, CancellationDto, ExecutionDto, OrderCreationRequest, OrderDetailDto, OrderDto, OrderHistoryDto, OrderRole, Paged } from './types';
 
 // order-service endpoints via gateway (/api/v1/order/**).
 export const orderApi = {
@@ -7,7 +7,7 @@ export const orderApi = {
   getMyOrders: (roleName: OrderRole, page = 0, size = 10) =>
     http.get<Paged<OrderDto>>('/order/orders', { params: { roleName, page, size } }),
 
-  getOrder: (orderId: string) => http.get<ApiResponse<OrderDto>>(`/order/orders/${orderId}`),
+  getOrder: (orderId: string) => http.get<ApiResponse<OrderDetailDto>>(`/order/orders/${orderId}`),
 
   getHistory: (orderId: string) => http.get<ApiResponse<OrderHistoryDto[]> | Paged<OrderHistoryDto>>(`/order/orders/${orderId}/history`),
 

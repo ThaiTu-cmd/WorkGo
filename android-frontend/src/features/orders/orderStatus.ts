@@ -38,6 +38,15 @@ export function canAddEvidence(order: OrderDto, execution: ExecutionDto | null, 
   );
 }
 
+const FINISHED: OrderStatus[] = ['COMPLETED', 'CANCELLED'];
+
+// The order the home screen surfaces: newest one still in flight.
+export function pickActiveOrder(orders: OrderDto[]): OrderDto | null {
+  const active = orders.filter((o) => !FINISHED.includes(o.orderStatus));
+  active.sort((a, b) => Date.parse(b.createdAt ?? b.placedAt ?? '') - Date.parse(a.createdAt ?? a.placedAt ?? ''));
+  return active[0] ?? null;
+}
+
 // /orders/{id}/history may answer a plain list or a page.
 export function historyItems(res: unknown): OrderHistoryDto[] {
   const result = (res as { result?: unknown } | null | undefined)?.result;

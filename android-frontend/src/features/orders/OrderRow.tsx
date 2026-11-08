@@ -10,8 +10,13 @@ export function OrderRow({ order, onPress }: { order: OrderDto; onPress: () => v
   return (
     <Card onPress={onPress} accessibilityLabel={order.title}>
       <View style={styles.head}>
-        <Text style={styles.number}>{order.orderNumber ?? order.orderId.slice(0, 8)}</Text>
-        <Badge label={ORDER_STATUS_LABEL[order.orderStatus]} tone={ORDER_STATUS_TONE[order.orderStatus]} />
+        {/* Order numbers are long (WG + timestamp + UUID): one line, so the status badge keeps its room. */}
+        <Text style={styles.number} numberOfLines={1} ellipsizeMode="middle">
+          {order.orderNumber ?? order.orderId.slice(0, 8)}
+        </Text>
+        <View style={styles.badge}>
+          <Badge label={ORDER_STATUS_LABEL[order.orderStatus]} tone={ORDER_STATUS_TONE[order.orderStatus]} />
+        </View>
       </View>
       <Text style={styles.title} numberOfLines={2}>
         {order.title}
@@ -26,7 +31,8 @@ export function OrderRow({ order, onPress }: { order: OrderDto; onPress: () => v
 
 const styles = StyleSheet.create({
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
-  number: { fontSize: font.small, color: colors.muted, fontWeight: '600' },
+  number: { flexShrink: 1, fontSize: font.small, color: colors.muted, fontWeight: '600' },
+  badge: { flexShrink: 0 },
   title: { fontSize: font.body, fontWeight: '700', color: colors.text },
   muted: { fontSize: font.small, color: colors.muted },
   amount: { fontSize: font.body, fontWeight: '700', color: colors.primaryDark },

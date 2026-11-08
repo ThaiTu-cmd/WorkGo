@@ -54,7 +54,7 @@ export function AccountScreen() {
         {isProvider ? (
           <>
             <MenuItem icon="briefcase-outline" label="Dịch vụ của tôi" href="/provider/services" />
-            <MenuItem icon="receipt-outline" label="Đơn khách đặt" href="/orders" />
+            <MenuItem icon="receipt-outline" label="Đơn khách đặt" href="/orders?role=PROVIDER" />
           </>
         ) : (
           <MenuItem icon="ribbon-outline" label="Trở thành chuyên gia" href="/provider/onboarding" />

@@ -142,6 +142,14 @@ export type OrderDto = {
   createdAt?: string;
 };
 
+// GET /orders/{orderId} wraps the order with its items, snapshot and execution.
+export type OrderDetailDto = {
+  order: OrderDto;
+  items?: unknown[];
+  snapshot?: unknown;
+  execution?: ExecutionDto | null;
+};
+
 export type OnsiteStatus = 'SCHEDULED' | 'IN_SERVICE' | 'SERVICE_DONE' | 'ACCEPT' | 'CANCELLED';
 
 export type ExecutionDto = {

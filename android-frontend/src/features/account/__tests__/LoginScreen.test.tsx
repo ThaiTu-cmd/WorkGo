@@ -62,6 +62,15 @@ test('maps 401 to "Sai tên đăng nhập hoặc mật khẩu." and keeps form',
   expect(mockReplace).not.toHaveBeenCalled();
 });
 
+test('an unknown username gets the same message as a wrong password', async () => {
+  signIn.mockRejectedValueOnce(new ApiError(404, { code: 1006, message: 'User dose not exist' }));
+  await render(<LoginScreen />);
+  await fill('khongtontai', 'pw');
+  await fireEvent.press(screen.getByRole('button', { name: 'Đăng nhập' }));
+  expect(await screen.findByText('Sai tên đăng nhập hoặc mật khẩu.')).toBeTruthy();
+  expect(screen.queryByText('User dose not exist')).toBeNull();
+});
+
 test('shows UNREACHABLE_MESSAGE when backend is down', async () => {
   signIn.mockRejectedValueOnce(new ApiError(0, null));
   await render(<LoginScreen />);

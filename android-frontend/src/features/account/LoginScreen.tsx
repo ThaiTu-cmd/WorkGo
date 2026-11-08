@@ -37,7 +37,9 @@ export function LoginScreen() {
       else if (router.canGoBack()) router.back();
       else router.replace('/');
     } catch (err) {
-      setFormError(err instanceof ApiError && err.status === 401 ? 'Sai tên đăng nhập hoặc mật khẩu.' : errorMessage(err));
+      // Unknown user (404, code 1006) reads like a wrong password: don't reveal which usernames exist.
+      const badCredentials = err instanceof ApiError && (err.status === 401 || (err.status === 404 && err.code === 1006));
+      setFormError(badCredentials ? 'Sai tên đăng nhập hoặc mật khẩu.' : errorMessage(err));
     }
   });
 

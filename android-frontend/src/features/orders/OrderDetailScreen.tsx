@@ -57,7 +57,9 @@ export function OrderDetailScreen({
     <Screen edges={['bottom']} onRefresh={refresh} refreshing={order.isRefetching}>
       <Card>
         <View style={styles.row}>
-          <Text style={styles.muted}>{o.orderNumber ?? o.orderId}</Text>
+          <Text style={styles.muted} numberOfLines={1} ellipsizeMode="middle">
+            {o.orderNumber ?? o.orderId}
+          </Text>
           <Badge label={ORDER_STATUS_LABEL[o.orderStatus]} tone={ORDER_STATUS_TONE[o.orderStatus]} />
         </View>
         <Text style={styles.title}>{o.title}</Text>

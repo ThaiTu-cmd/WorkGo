@@ -1,6 +1,6 @@
 import type { ExecutionDto, OrderDto } from '@/api/types';
 
-import { canAddEvidence, historyItems, ORDER_STATUS_LABEL, upcomingAvailableSlots } from '../orderStatus';
+import { canAddEvidence, historyItems, ORDER_STATUS_LABEL, pickActiveOrder, upcomingAvailableSlots } from '../orderStatus';
 
 const order = (over: Partial<OrderDto> = {}): OrderDto => ({
   orderId: 'o1',
@@ -45,4 +45,19 @@ test('upcomingAvailableSlots keeps future AVAILABLE slots sorted by start', () =
     { bookingSlotId: 'a', startedAt: '2026-11-01T01:00:00Z', endAt: '2026-11-01T02:00:00Z', status: 'AVAILABLE' as const },
   ];
   expect(upcomingAvailableSlots(slots, now).map((s) => s.bookingSlotId)).toEqual(['a', 'b']);
+});
+
+test('pickActiveOrder returns the newest order that is not finished', () => {
+  const orders = [
+    order({ orderId: 'done', orderStatus: 'COMPLETED', createdAt: '2026-10-05T00:00:00Z' }),
+    order({ orderId: 'older', orderStatus: 'IN_PROGRESS', createdAt: '2026-10-01T00:00:00Z' }),
+    order({ orderId: 'newer', orderStatus: 'PENDING_PAYMENT', createdAt: '2026-10-03T00:00:00Z' }),
+    order({ orderId: 'cancel', orderStatus: 'CANCELLED', createdAt: '2026-10-04T00:00:00Z' }),
+  ];
+  expect(pickActiveOrder(orders)?.orderId).toBe('newer');
+});
+
+test('pickActiveOrder returns null when every order is finished or there are none', () => {
+  expect(pickActiveOrder([order({ orderStatus: 'COMPLETED' }), order({ orderStatus: 'CANCELLED' })])).toBeNull();
+  expect(pickActiveOrder([])).toBeNull();
 });

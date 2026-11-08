@@ -7,7 +7,7 @@ import { orderApi } from '@/api/orderApi';
 import { qk } from '@/api/queryKeys';
 import type { CancellationBody, CancellationDto, EvidenceDto, OrderDto, OrderRole, PageResponse } from '@/api/types';
 
-import { historyItems } from './orderStatus';
+import { historyItems, pickActiveOrder } from './orderStatus';
 
 const PAGE_SIZE = 10;
 
@@ -25,11 +25,21 @@ export function useOrders(role: OrderRole, enabled: boolean) {
   });
 }
 
+// Child key of qk.orders('CLIENT') (an infinite query with another shape), so
+// invalidating the client's orders after checkout refreshes it too.
+export function useActiveOrder(enabled: boolean) {
+  return useQuery({
+    queryKey: [...qk.orders('CLIENT'), 'active'],
+    enabled,
+    queryFn: async () => pickActiveOrder(pageItems<OrderDto>(await orderApi.getMyOrders('CLIENT', 0, PAGE_SIZE))),
+  });
+}
+
 export function useOrderDetail(orderId: string, enabled: boolean) {
   const order = useQuery({
     queryKey: qk.order(orderId),
     enabled,
-    queryFn: async () => (await orderApi.getOrder(orderId)).result,
+    queryFn: async () => (await orderApi.getOrder(orderId)).result.order,
   });
   const history = useQuery({
     queryKey: qk.orderHistory(orderId),

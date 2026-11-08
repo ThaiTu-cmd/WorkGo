@@ -1,4 +1,4 @@
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,7 +19,15 @@ export function OrdersScreen() {
   const { claims } = useAuth();
   const router = useRouter();
   const isProvider = hasRole(claims, 'PROVIDER');
-  const [role, setRole] = React.useState<OrderRole>('CLIENT');
+  // `role=PROVIDER` (home shortcut "Đơn nhận", account menu) opens the received-orders side.
+  const params = useLocalSearchParams<{ role?: string; t?: string }>();
+  const [role, setRole] = React.useState<OrderRole>(params.role === 'PROVIDER' ? 'PROVIDER' : 'CLIENT');
+  const roleKey = `${params.role ?? ''}|${params.t ?? ''}`;
+  const [seenRoleKey, setSeenRoleKey] = React.useState(roleKey);
+  if (roleKey !== seenRoleKey) {
+    setSeenRoleKey(roleKey);
+    if (params.role === 'PROVIDER' || params.role === 'CLIENT') setRole(params.role);
+  }
   const activeRole: OrderRole = isProvider ? role : 'CLIENT';
   const orders = useOrders(activeRole, signedIn);
 

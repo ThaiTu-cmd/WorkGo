@@ -6,6 +6,7 @@ const card = (over: Partial<ServiceCard>): ServiceCard => ({
   serviceId: 's',
   providerId: 'p',
   categoryId: 'c',
+  categorySlug: null,
   categoryName: 'Điện lạnh',
   title: 'Sửa máy lạnh',
   executionType: 'ONSITE',

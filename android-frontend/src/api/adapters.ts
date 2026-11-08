@@ -43,6 +43,7 @@ export type ServiceCard = {
   serviceId: string;
   providerId: string;
   categoryId: string;
+  categorySlug: string | null;
   categoryName: string;
   title: string;
   executionType: ServiceDto['executionType'];
@@ -121,6 +122,7 @@ export function toServiceCard(dto: ServiceDto, { category = null, provider = nul
     serviceId: dto.serviceId,
     providerId: dto.providerId,
     categoryId: dto.categoryId,
+    categorySlug: category?.slug ?? null,
     categoryName: category?.name ?? '',
     title: dto.title,
     executionType: dto.executionType,

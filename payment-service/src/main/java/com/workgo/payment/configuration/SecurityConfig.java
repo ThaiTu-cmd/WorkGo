@@ -3,6 +3,7 @@ package com.workgo.payment.configuration;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -12,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -23,6 +25,9 @@ public class SecurityConfig {
     @Autowired
     CustomJwtDecoder customJwtDecoder;
 
+    @Value("${app.internal-key}")
+    String internalKey;
+
     private final String[] PUBLIC_GET_ENDPOINTS = {
         "/gateway/vnpay/ipn",
         "/gateway/vnpay/return",
@@ -33,7 +38,6 @@ public class SecurityConfig {
         "/gateway/momo/ipn"
     };
 
-    //TODO P2: thay bang InternalKeyFilter check X-Internal-Key
     private final String[] INTERNAL_ENDPOINTS = {
         "/internal/**"
     };
@@ -52,6 +56,8 @@ public class SecurityConfig {
                             .jwtAuthenticationConverter(jwtAuthenticationConverter()))
                 .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
         );
+
+        httpSecurity.addFilterBefore(new InternalKeyFilter(internalKey), BearerTokenAuthenticationFilter.class);
 
         httpSecurity.csrf(AbstractHttpConfigurer::disable);
 

@@ -45,6 +45,8 @@ public class OnsiteExecution {
     @Column(name = "service_completed_at")
     Instant serviceCompletedAt;
 
+    @Column(name = "slot_hold_expires_at")
+    Instant slotHoldExpiresAt;
 
     //============FK===============
 

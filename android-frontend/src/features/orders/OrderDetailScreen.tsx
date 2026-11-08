@@ -8,6 +8,7 @@ import { useRequireAuth } from '@/auth/useRequireAuth';
 import { formatDateTime, formatVnd } from '@/lib/format';
 import { Badge, Card, colors, ErrorState, font, Screen, SkeletonList, spacing } from '@/ui';
 
+import { CancellationCard } from './CancellationCard';
 import { EvidenceGrid } from './EvidenceGrid';
 import { useOrderDetail } from './hooks';
 import { ONSITE_STATUS_LABEL, ORDER_STATUS_LABEL, ORDER_STATUS_TONE } from './orderStatus';
@@ -25,7 +26,7 @@ export function OrderDetailScreen({
   const { id, role: roleParam } = useLocalSearchParams<{ id: string; role?: string }>();
   const role: OrderRole = roleParam === 'PROVIDER' ? 'PROVIDER' : 'CLIENT';
   const detail = useOrderDetail(id, signedIn);
-  const { order, history, execution } = detail;
+  const { order, history, execution, cancellation } = detail;
 
   if (!signedIn) return <LoginRequired edges={['bottom']} />;
   if (order.isPending) {
@@ -49,6 +50,7 @@ export function OrderDetailScreen({
     void order.refetch();
     void history.refetch();
     void execution.refetch();
+    void cancellation.refetch();
   };
 
   return (
@@ -63,6 +65,8 @@ export function OrderDetailScreen({
           <Text style={styles.muted}>Đơn đang chờ thanh toán. Thanh toán trong ứng dụng sẽ có ở phiên bản sau.</Text>
         ) : null}
       </Card>
+
+      <CancellationCard order={o} role={role} cancellation={cancellation} />
 
       <Card>
         <Line label="Tạm tính" value={money(o.subtotal)} />

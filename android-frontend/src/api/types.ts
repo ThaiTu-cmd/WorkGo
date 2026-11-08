@@ -167,6 +167,21 @@ export type OrderHistoryDto = {
   createdAt: string;
 };
 
+export type CancellationStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'AUTO_APPROVED';
+
+export type CancellationDto = {
+  cancellationRequestId: string;
+  orderId: string;
+  requestedByRole: OrderRole;
+  reasonCode: string;
+  note?: string | null;
+  status: CancellationStatus;
+  respondedAt?: string | null;
+  createdAt: string;
+};
+
+export type CancellationBody = { reasonCode: string; note?: string };
+
 export type EvidencePhase = 'BEFORE' | 'DURING' | 'AFTER' | 'ISSUE';
 
 export type EvidenceDto = {

@@ -45,11 +45,25 @@ const EVIDENCE_MESSAGES: Record<number, string> = {
   2023: 'Vui lòng chụp hoặc chọn một ảnh.',
 };
 
-export function evidenceErrorMessage(err: unknown): string {
+const CANCELLATION_MESSAGES: Record<number, string> = {
+  2005: 'Không thể huỷ đơn ở trạng thái hiện tại.',
+  3014: 'Vui lòng chọn lý do huỷ.',
+  3015: 'Đơn này đã có yêu cầu huỷ.',
+  3016: 'Đơn này chưa có yêu cầu huỷ.',
+  3017: 'Yêu cầu huỷ này đã được xử lý.',
+  3018: 'Bạn không thể tự phản hồi yêu cầu huỷ của mình.',
+  3019: 'Vui lòng chọn đồng ý hoặc từ chối.',
+};
+
+function mappedMessage(err: unknown, messages: Record<number, string>, fallback: string): string {
   const apiErr = err instanceof ApiError ? err : null;
-  return (
-    (apiErr?.code !== undefined && EVIDENCE_MESSAGES[apiErr.code]) ||
-    (err instanceof Error && err.message) ||
-    'Không gửi được bằng chứng. Vui lòng thử lại.'
-  );
+  return (apiErr?.code !== undefined && messages[apiErr.code]) || (err instanceof Error && err.message) || fallback;
+}
+
+export function evidenceErrorMessage(err: unknown): string {
+  return mappedMessage(err, EVIDENCE_MESSAGES, 'Không gửi được bằng chứng. Vui lòng thử lại.');
+}
+
+export function cancellationErrorMessage(err: unknown): string {
+  return mappedMessage(err, CANCELLATION_MESSAGES, 'Không xử lý được yêu cầu huỷ. Vui lòng thử lại.');
 }

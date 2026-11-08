@@ -13,6 +13,7 @@ export const qk = {
   order: (id: string) => ['order', id] as const,
   orderHistory: (id: string) => ['order-history', id] as const,
   orderExecution: (id: string) => ['order-execution', id] as const,
+  orderCancellation: (id: string) => ['order-cancellation', id] as const,
   evidence: (orderId: string) => ['evidence', orderId] as const,
   myServices: () => ['my-services'] as const,
   rules: (serviceId: string) => ['rules', serviceId] as const,

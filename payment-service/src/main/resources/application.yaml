@@ -36,6 +36,8 @@ payment:
   slot-min-remaining-minutes: 2
   sync:
     max-retry: 10
+  mock:
+    base-url: ${PAYMENT_PUBLIC_URL:http://localhost:8888/api/v1/payment}
   vnpay:
     tmn-code: ${VNPAY_TMN_CODE:}
     hash-secret: ${VNPAY_HASH_SECRET:}

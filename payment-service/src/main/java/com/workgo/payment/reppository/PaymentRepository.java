@@ -21,6 +21,8 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
     List<Payment> findAllByOrderIdOrderByCreatedAtDesc(UUID orderId);
 
+    List<Payment> findAllByOrderIdAndPayerIdOrderByCreatedAtDesc(UUID orderId, UUID payerId);
+
     Optional<Payment> findFirstByOrderIdAndStatusInOrderByCreatedAtDesc(
             UUID orderId, Collection<PaymentStatus> statuses);
 

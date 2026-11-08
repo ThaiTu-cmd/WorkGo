@@ -92,6 +92,9 @@ export default function MessagesPage({ onNavigate, onShowToast, conversationId }
 
   return (
     <main className={active ? `${styles.wrap} ${styles.wrapChatOpen}` : styles.wrap}>
+      <div style={{ padding: "8px 14px", backgroundColor: "#fef3c7", border: "1px solid #fde68a", borderRadius: "8px", color: "#92400e", fontSize: "0.82rem", marginBottom: "12px", fontWeight: 500 }}>
+        ⚠️ Hệ Thống Trò Chuyện Giả Lập - Tin nhắn phản hồi tự động, chưa kết nối máy chủ tin nhắn thời gian thực
+      </div>
       <div className={styles.shell}>
         <ConversationList conversations={conversations} activeId={activeId} onSelect={setActiveId} />
         {active ? (

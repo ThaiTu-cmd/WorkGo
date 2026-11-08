@@ -33,6 +33,9 @@ export default function WalletPage({ onNavigate }: TrungPageProps) {
       <h1 className={styles.title}>
         <Wallet size={24} className={styles.titleIcon} aria-hidden="true" /> Ví của tôi
       </h1>
+      <div style={{ padding: "10px 14px", backgroundColor: "#fef3c7", border: "1px solid #fde68a", borderRadius: "8px", color: "#92400e", fontSize: "0.85rem", marginBottom: "16px", fontWeight: 500 }}>
+        ⚠️ Dữ liệu số dư và lịch sử giao dịch đang ở chế độ giả lập (Mock Data lưu cục bộ trình duyệt)
+      </div>
       <p className={styles.sub}>Tiền giữ hộ (escrow) và lịch sử giao dịch của bạn.</p>
       <div className={styles.walletGrid}>
         <div className={styles.summaryCol}>

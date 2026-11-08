@@ -141,7 +141,49 @@ const CORE_PAGE_KEYS = new Set<string>([
   "admin-console",
 ]);
 
-const KNOWN_PAGE_KEYS = new Set<string>([...CORE_PAGE_KEYS, ...TRUNG_PAGE_KEYS]);
+export const KNOWN_PAGE_KEYS = new Set<string>([...CORE_PAGE_KEYS, ...TRUNG_PAGE_KEYS]);
+
+export function buildTargetUrl(page: TrungPageKey, params: CatalogFilterParams = {}): string {
+  if (typeof window === "undefined") return "";
+  const q = new URLSearchParams();
+  if (page !== "home") q.set("page", page);
+  if (params.category && params.category !== "ALL") q.set("category", params.category);
+  if (params.executionType && params.executionType !== "ALL") q.set("executionType", params.executionType);
+  if (params.query) q.set("query", params.query);
+  if (params.serviceId) q.set("serviceId", params.serviceId);
+  if (params.jobId) q.set("jobId", params.jobId);
+  if (params.providerId) q.set("providerId", params.providerId);
+  if (params.orderId) q.set("orderId", params.orderId);
+  if (params.tab) q.set("tab", params.tab);
+
+  const pathname = window.location.pathname;
+  const localePrefix = pathname.startsWith("/en") ? "/en" : "/vi";
+  const qs = q.toString();
+  const hash = params.section ? `#${params.section}` : "";
+  return qs ? `${localePrefix}?${qs}${hash}` : `${localePrefix}${hash}`;
+}
+
+export function parseUrlParams(search: string = typeof window !== "undefined" ? window.location.search : ""): {
+  page: TrungPageKey;
+  params: CatalogFilterParams;
+} {
+  const searchParams = new URLSearchParams(search);
+  const pageParam = searchParams.get("page") as TrungPageKey | null;
+  const targetPage = pageParam && KNOWN_PAGE_KEYS.has(pageParam) ? pageParam : "home";
+
+  const params: CatalogFilterParams = {
+    category: searchParams.get("category") || "ALL",
+    executionType: searchParams.get("executionType") || "ALL",
+    query: searchParams.get("query") || "",
+    serviceId: searchParams.get("serviceId") || "",
+    jobId: searchParams.get("jobId") || "",
+    providerId: searchParams.get("providerId") || "",
+    orderId: searchParams.get("orderId") || "",
+    tab: searchParams.get("tab") || "wallet",
+  };
+
+  return { page: targetPage, params };
+}
 
 // Explicit "home" visits while signed in: one-shot override for R7 redirect.
 const HOME_INTENT_KEY = "workgo-home-intent";
@@ -231,25 +273,6 @@ export default function WebAppShell() {
   const toastIdRef = useRef(0);
   const toastTimersRef = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 
-  // R7: signed-in users open the catalog, not the guest landing. Server render
-  // cannot see localStorage, so a mount-only effect switches to "catalog" after
-  // hydration. An explicit visit to Trang chủ during the session sets a flag
-  // once so that specific "home" intent is honoured instead of redirected.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!getAccessToken()) return;
-    if (currentPage !== "home") return;
-    if (window.sessionStorage.getItem(HOME_INTENT_KEY)) {
-      window.sessionStorage.removeItem(HOME_INTENT_KEY);
-      return;
-    }
-    // Current page is "home" only on first mount here (later home visits set
-    // the flag first), so this behaves as a mount-only redirect.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCurrentPage("catalog");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   useEffect(() => {
     const timers = toastTimersRef.current;
     return () => Object.values(timers).forEach((t) => clearTimeout(t));
@@ -268,6 +291,85 @@ export default function WebAppShell() {
     const id = ++toastIdRef.current;
     setToasts((prev) => [...prev.slice(-2), { id, message }]);
     toastTimersRef.current[id] = setTimeout(() => dismissToast(id), 3500);
+  }, []);
+
+  // 1. Mount effect: Sync with URL parameters or fallback to signed-in catalog
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const { page: targetPage, params: parsedParams } = parseUrlParams(window.location.search);
+    const searchParams = new URLSearchParams(window.location.search);
+    const hasPageParam = searchParams.has("page");
+
+    if (hasPageParam && KNOWN_PAGE_KEYS.has(targetPage)) {
+      if ((targetPage === "messages" || targetPage === "finance") && !getAccessToken()) {
+        showToast(targetPage === "messages" ? "Vui lòng đăng nhập để nhắn tin." : "Vui lòng đăng nhập để dùng Tài chính.");
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setAuthModal("login");
+        setCurrentPage("home");
+        return;
+      }
+      if (targetPage === "detail" && !parsedParams.serviceId) {
+        showToast("Vui lòng chọn dịch vụ để xem chi tiết.");
+        setCurrentPage("catalog");
+        return;
+      }
+
+      setCurrentPage(targetPage);
+      if (targetPage === "catalog") {
+        setCatalogFilters({
+          category: parsedParams.category || "ALL",
+          executionType: parsedParams.executionType || "ALL",
+          query: parsedParams.query || "",
+        });
+      }
+      if (parsedParams.serviceId) setSelectedServiceId(parsedParams.serviceId);
+      if (parsedParams.jobId) setSelectedJobId(parsedParams.jobId);
+      if (parsedParams.providerId) setSelectedProviderId(parsedParams.providerId);
+      if (parsedParams.orderId) setSelectedOrderId(parsedParams.orderId);
+      if (parsedParams.tab) {
+        const t = parsedParams.tab;
+        if (t === "wallet" || t === "deposit" || t === "payout") setFinanceTab(t as FinanceTab);
+      }
+      return;
+    }
+
+    // R7: signed-in users without specific page param default to catalog
+    if (getAccessToken()) {
+      if (window.sessionStorage.getItem(HOME_INTENT_KEY)) {
+        window.sessionStorage.removeItem(HOME_INTENT_KEY);
+        return;
+      }
+      setCurrentPage("catalog");
+    }
+  }, [showToast]);
+
+  // 2. Popstate effect: Listen to browser Back / Forward buttons
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onPopState = () => {
+      const { page: targetPage, params: parsedParams } = parseUrlParams(window.location.search);
+      setCurrentPage(targetPage);
+      if (targetPage === "catalog") {
+        setCatalogFilters({
+          category: parsedParams.category || "ALL",
+          executionType: parsedParams.executionType || "ALL",
+          query: parsedParams.query || "",
+        });
+      }
+      if (parsedParams.serviceId) setSelectedServiceId(parsedParams.serviceId);
+      if (parsedParams.jobId) setSelectedJobId(parsedParams.jobId);
+      if (parsedParams.providerId) setSelectedProviderId(parsedParams.providerId);
+      if (parsedParams.orderId) setSelectedOrderId(parsedParams.orderId);
+      if (parsedParams.tab) {
+        const t = parsedParams.tab;
+        if (t === "wallet" || t === "deposit" || t === "payout") setFinanceTab(t as FinanceTab);
+      }
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
   // Reset scroll to top on every page change and manage landmark focus
@@ -338,6 +440,15 @@ export default function WebAppShell() {
       const { chat } = params;
       setChatConversationId(chat ? messageApi.openConversation(chat, chat.context) : "");
     }
+
+    // Synchronize browser history (pushState)
+    if (typeof window !== "undefined") {
+      const targetUrl = buildTargetUrl(page, params);
+      if (targetUrl) {
+        window.history.pushState({ page, params }, "", targetUrl);
+      }
+    }
+
     if (params.section) {
       if (typeof window !== "undefined") {
         window.location.hash = params.section;
@@ -387,51 +498,38 @@ export default function WebAppShell() {
     keyword?: string;
     executionType?: string;
   }) => {
-    setPreviousPage("home");
-    setCurrentPage("catalog");
-    setCatalogFilters({
+    handleNavigate("catalog", {
       category: "ALL",
       executionType: executionType || "ALL",
       query: keyword || "",
     });
     showToast(`Đang tìm: "${keyword || "Tất cả dịch vụ"}"`);
-    scrollToTopInstant();
   };
 
   // Select category from Home Category Grid
   const handleSelectCategory = (category: CategorySelection) => {
-    setPreviousPage(currentPage);
-    setCurrentPage("catalog");
-    setCatalogFilters({
+    handleNavigate("catalog", {
       category: category.slug,
       executionType: category.executionType || "ALL",
       query: "",
     });
     showToast(`Xem danh mục: ${category.name}`);
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   };
 
   const handleSelectService = (service: ServiceSelection) => {
-    setPreviousPage(currentPage);
-    setSelectedServiceId(service.serviceId);
-    setCurrentPage("detail");
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    handleNavigate("detail", { serviceId: service.serviceId });
   };
 
   const handleOpenCreateForm = () => {
     setServiceFormMode("create");
     setEditServiceId(null);
-    setPreviousPage(currentPage);
-    setCurrentPage("service-form");
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    handleNavigate("service-form");
   };
 
   const handleOpenEditForm = (serviceId: string) => {
     setServiceFormMode("edit");
     setEditServiceId(serviceId);
-    setPreviousPage(currentPage);
-    setCurrentPage("service-form");
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    handleNavigate("service-form", { serviceId });
   };
 
   const handleServiceFormSuccess = (savedService: SavedService, isEdit: boolean) => {
@@ -440,8 +538,7 @@ export default function WebAppShell() {
         ? `Đã cập nhật dịch vụ "${savedService.title}"!`
         : `Đã tạo thành công dịch vụ mới "${savedService.title}"!`
     );
-    setCurrentPage("my-services");
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    handleNavigate("my-services");
   };
 
   return (

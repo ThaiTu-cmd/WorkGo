@@ -433,6 +433,9 @@ export default function PublicInfoPage({ pageKey, onNavigate, onShowToast }: Pro
                     <button type="submit" className={styles.btnPrimary}>
                       Gửi yêu cầu hỗ trợ ngay
                     </button>
+                    <p style={{ marginTop: "12px", fontSize: "0.8rem", color: "#64748b", fontStyle: "italic" }}>
+                      * Biểu mẫu đang chạy ở chế độ demo, thông tin gửi đi được lưu trong bộ nhớ trình duyệt.
+                    </p>
                   </form>
                 )}
               </div>
@@ -515,6 +518,9 @@ export default function PublicInfoPage({ pageKey, onNavigate, onShowToast }: Pro
                 </div>
               ))}
             </div>
+            <p style={{ marginTop: "16px", fontSize: "0.8rem", color: "#64748b", fontStyle: "italic", textAlign: "center" }}>
+              * Biểu mẫu đang chạy ở chế độ demo, thông tin gửi đi được lưu trong bộ nhớ trình duyệt.
+            </p>
           </div>
         )}
 
@@ -536,6 +542,9 @@ export default function PublicInfoPage({ pageKey, onNavigate, onShowToast }: Pro
                 </div>
               ))}
             </div>
+            <p style={{ marginTop: "16px", fontSize: "0.8rem", color: "#64748b", fontStyle: "italic", textAlign: "center" }}>
+              * Biểu mẫu đang chạy ở chế độ demo, thông tin gửi đi được lưu trong bộ nhớ trình duyệt.
+            </p>
           </div>
         )}
 

@@ -73,6 +73,9 @@ export default function PaymentGatewayPage({ onNavigate, onShowToast }: TrungPag
         <h1 className={styles.title}>
           <CreditCard size={24} className={styles.titleIcon} aria-hidden="true" /> Nạp tiền / Thanh toán
         </h1>
+        <div style={{ padding: "10px 14px", backgroundColor: "#fef3c7", border: "1px solid #fde68a", borderRadius: "8px", color: "#92400e", fontSize: "0.85rem", marginBottom: "16px", fontWeight: 500 }}>
+          ⚠️ Bản Thử Nghiệm Giao Diện (Mock Demo) - Không thực hiện thanh toán tiền thật
+        </div>
         <p className={styles.sub}>Bản demo giao diện, không kết nối cổng thanh toán thật.</p>
         <div className={styles.tabs} role="tablist" aria-label="Chọn cổng thanh toán">
           {(["STRIPE", "VNPAY", "MOMO"] as const).map((t) => (
@@ -92,9 +95,9 @@ export default function PaymentGatewayPage({ onNavigate, onShowToast }: TrungPag
           <span className={styles.qrText}>{tab} • QR MOCK</span>
           <span className={styles.qrSub}>Quét mã trong ứng dụng {tab === "STRIPE" ? "Stripe" : tab === "VNPAY" ? "VNPay" : "Momo"} (demo)</span>
         </div>
-        <label className={styles.field}>
+        <label className={styles.field} htmlFor="wg-payment-amount">
           <span>Số tiền (₫)</span>
-          <input value={amountRaw} onChange={(e) => setAmountRaw(e.target.value)} placeholder="500000" inputMode="numeric" />
+          <input id="wg-payment-amount" value={amountRaw} onChange={(e) => setAmountRaw(e.target.value)} placeholder="500000" inputMode="numeric" />
         </label>
         {error ? <em className={styles.error}>{error}</em> : null}
         <button type="button" className={styles.submit} onClick={confirm}>

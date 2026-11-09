@@ -78,6 +78,7 @@ public class OnsiteExecutionHandler implements ExecutionHandler{
                 .bookingSlotId(slot.getBookingSlotId())
                 .scheduledStart(slot.getStartedAt())
                 .scheduledEnd(slot.getEndAt())
+                .slotHoldExpiresAt(slot.getHoldExpiresAt())
                 .execution(execution)
                 .build());
 

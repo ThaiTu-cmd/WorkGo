@@ -5,6 +5,7 @@ import com.workgo.order.dto.request.OrderCreationRequest;
 import com.workgo.order.dto.request.SlotActionRequest;
 import com.workgo.order.dto.response.OrderDetailResponse;
 import com.workgo.order.dto.response.OrderItemResponse;
+import com.workgo.order.dto.response.OrderPaymentInfoResponse;
 import com.workgo.order.dto.response.OrderResponse;
 import com.workgo.order.dto.response.OrderSnapshotResponse;
 import com.workgo.order.dto.response.OrderStatusHistoryResponse;
@@ -204,6 +205,40 @@ public class OrderService {
                 .paymentStatus(order.getPaymentStatus())
                 .executionStatus(executionStatus)
                 .checkinCode(checkinCode)
+                .build();
+    }
+
+    //lay so tien + han thanh toan cua order
+    @Transactional(readOnly = true)
+    public OrderPaymentInfoResponse getPaymentInfo(UUID orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        Instant payableUntil = null;
+
+        //neu la onsite chi duoc thanh toan khi slot con duoc giu
+        if (order.getExecutionType() == ExecutionType.ONSITE) {
+            payableUntil = executionRepository.findByOrder_OrderId(orderId)
+                    .flatMap(execution -> onsiteExecutionRepository
+                            .findByExecution_ExecutionId(execution.getExecutionId()))
+                    .map(OnsiteExecution::getSlotHoldExpiresAt)
+                    .orElse(null);
+        }
+
+        return OrderPaymentInfoResponse.builder()
+                .orderId(order.getOrderId())
+                .orderNumber(order.getOrderNumber())
+                .clientId(order.getClientId())
+                .providerId(order.getProviderId())
+                .orderStatus(order.getOrderStatus())
+                .executionType(order.getExecutionType())
+                .title(order.getTitle())
+                .totalAmount(order.getTotalAmount())
+                .platformFee(order.getPlatformFee())
+                .providerNetAmount(order.getProviderNetAmount())
+                .currency(order.getCurrency())
+                .payableUntil(payableUntil)
                 .build();
     }
 

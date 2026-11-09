@@ -45,7 +45,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             "/identity/auth/refresh"
     };
 
-    // Read-only catalog and provider data guests can browse without logging in.
+    // Read-only catalog and job data guests can browse without logging in.
     private final String[] PUBLIC_GET_ENDPOINTS = {
             "/catalog/categories", "/catalog/categories/**",
             "/catalog/services", "/catalog/services/*",
@@ -54,13 +54,13 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             "/catalog/medias/**",
             "/catalog/rules/**",
             "/catalog/slots/**",
-            "/identity/providers", "/identity/providers/**"
+            "/job/jobs", "/job/jobs/*"
     };
 
     // Matches PUBLIC_GET_ENDPOINTS but still needs the caller's identity.
     private final String[] PROTECTED_GET_ENDPOINTS = {
             "/catalog/services/my-services",
-            "/identity/providers/myProfile"
+            "/job/jobs/my-jobs"
     };
 
     AntPathMatcher pathMatcher = new AntPathMatcher();
@@ -102,6 +102,9 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     private boolean isPublicEndpoint(ServerHttpRequest request){
         String path = request.getURI().getPath();
+        // MVC ignores matrix parameters; match protected paths with the same
+        // segment rules as the public wildcard (including repeated slashes).
+        String protectedPath = path.replaceAll(";[^/]*", "");
 
         if (Arrays.stream(PUBLIC_ENDPOINTS)
                 .anyMatch(publicEndpoint -> path.equals(apiPrefix + publicEndpoint))) {
@@ -110,7 +113,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
         return HttpMethod.GET.equals(request.getMethod())
                 && Arrays.stream(PROTECTED_GET_ENDPOINTS)
-                        .noneMatch(endpoint -> path.equals(apiPrefix + endpoint))
+                        .noneMatch(endpoint -> pathMatcher.match(apiPrefix + endpoint, protectedPath))
                 && Arrays.stream(PUBLIC_GET_ENDPOINTS)
                         .anyMatch(pattern -> pathMatcher.match(apiPrefix + pattern, path));
     }

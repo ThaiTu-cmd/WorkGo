@@ -26,7 +26,7 @@ const ICON_MAP = {
   Default: FolderTree,
 };
 
-const DEFAULT_ACCENT = "#1dbf73";
+const DEFAULT_ACCENT = "#1677FF";
 
 export default function FeaturedCategories({ onSelectCategory }) {
   // Root categories from catalog-service (CategoryResponse: name, slug, description, children).

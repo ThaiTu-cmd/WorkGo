@@ -21,13 +21,13 @@ test('TC-URL-01: Gỡ bỏ triệt để dependency "22" khỏi package.json và
   assert.equal(pkgLock.packages?.['node_modules/22'], undefined, 'package-lock node_modules must not contain "22"');
 });
 
-// TC-402: Locale redirection check
-test('TC-URL-02: Kiểm tra route locale /en chuyển hướng nhất quán về /vi', () => {
+// TC-402: Locale bilingual support check
+test('TC-URL-02: Kiểm tra route locale /en hỗ trợ song ngữ đồng thời, không redirect ép buộc về /vi', () => {
   const pagePath = path.join(frontendRoot, 'src', 'app', '[locale]', 'page.tsx');
   const pageContent = fs.readFileSync(pagePath, 'utf-8');
 
-  assert.ok(pageContent.includes('redirect("/vi")') || pageContent.includes("redirect('/vi')"), 'LocaleRootPage must redirect /en to /vi');
-  assert.ok(pageContent.includes('locale === "en"') || pageContent.includes("locale === 'en'"), 'Must check for locale === "en"');
+  assert.ok(!pageContent.includes('redirect("/vi")') && !pageContent.includes("redirect('/vi')"), 'LocaleRootPage must not force redirect /en to /vi');
+  assert.ok(pageContent.includes('WebAppShell'), 'Must render WebAppShell for all valid locales');
 });
 
 // TC-403: .env.example exists and contains API_GATEWAY_URL

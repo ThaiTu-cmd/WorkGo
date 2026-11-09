@@ -8,13 +8,13 @@
 .title {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #222325;
+  color: var(--wg-text);
   overflow-wrap: break-word;
 }
 
 .sub {
   margin-top: 6px;
-  color: #62646a;
+  color: var(--wg-text-secondary);
   font-size: 0.92rem;
   overflow-wrap: break-word;
 }
@@ -47,24 +47,24 @@
 }
 
 .balance {
-  border: 1px solid #e4e5e7;
+  border: 1px solid var(--wg-border);
   border-radius: 12px;
   padding: 20px;
-  background: #ffffff;
+  background: var(--wg-surface);
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
 .balanceLabel {
-  color: #62646a;
+  color: var(--wg-text-secondary);
   font-size: 0.85rem;
   font-weight: 600;
 }
 
 .balanceValue {
   font-size: 1.4rem;
-  color: #158852;
+  color: var(--wg-primary-active);
   overflow-wrap: break-word;
 }
 
@@ -78,52 +78,52 @@
 .primary {
   min-height: 44px;
   border-radius: 10px;
-  background: #1dbf73;
+  background: var(--wg-primary);
   color: #ffffff;
   font-weight: 700;
   padding: 12px 18px;
 }
 
 .primary:hover {
-  background: #19a463;
+  background: var(--wg-primary-hover);
 }
 
 .primary:focus-visible,
 .ghost:focus-visible {
-  outline: 2px solid #158852;
+  outline: 2px solid var(--wg-primary-active);
   outline-offset: 2px;
 }
 
 .ghost {
   min-height: 44px;
-  border: 1px solid #e4e5e7;
+  border: 1px solid var(--wg-border);
   border-radius: 10px;
   padding: 12px 18px;
   font-weight: 600;
-  background: #ffffff;
+  background: var(--wg-surface);
 }
 
 .sectionTitle {
   margin-top: 24px;
   font-size: 1.1rem;
   font-weight: 700;
-  color: #222325;
+  color: var(--wg-text);
 }
 
 .empty {
   margin-top: 12px;
   padding: 32px 20px;
   text-align: center;
-  border: 1px dashed #e4e5e7;
+  border: 1px dashed var(--wg-border);
   border-radius: 16px;
-  color: #62646a;
+  color: var(--wg-text-secondary);
   overflow-wrap: break-word;
 }
 
 .tableWrap {
   margin-top: 12px;
   overflow-x: auto;
-  border: 1px solid #e4e5e7;
+  border: 1px solid var(--wg-border);
   border-radius: 12px;
 }
 
@@ -138,13 +138,13 @@
 .table td {
   text-align: left;
   padding: 12px 14px;
-  border-bottom: 1px solid #efeff0;
+  border-bottom: 1px solid var(--wg-border-light);
   overflow-wrap: break-word;
 }
 
 .table th {
-  background: #fafafa;
-  color: #62646a;
+  background: var(--wg-bg);
+  color: var(--wg-text-secondary);
   font-size: 0.8rem;
   text-transform: uppercase;
 }

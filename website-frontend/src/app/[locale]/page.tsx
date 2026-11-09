@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import WebAppShell from "@/components/webapp-bridge/webapp-shell";
 
 export const metadata: Metadata = {
@@ -13,9 +12,6 @@ export default async function LocaleRootPage({
 }: {
   params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
-  if (locale === "en") {
-    redirect("/vi");
-  }
+  await params;
   return <WebAppShell />;
 }

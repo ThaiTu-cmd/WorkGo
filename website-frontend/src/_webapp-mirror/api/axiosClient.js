@@ -60,10 +60,26 @@ export class ApiError extends Error {
   }
 }
 
+const AUTH_GUARD_PATHS = [
+  '/identity/users/myInfo',
+  '/identity/providers',
+  '/identity/provider-verifications',
+];
+
+export function isAuthGuarded(url) {
+  return AUTH_GUARD_PATHS.some((path) => url.startsWith(path));
+}
+
 async function request(method, url, { params, data } = {}) {
+  const token = getAccessToken();
+
+  // Guard: Avoid firing unauthenticated requests to protected identity endpoints
+  if (!token && isAuthGuarded(url)) {
+    return null;
+  }
+
   const query = params ? `?${new URLSearchParams(params)}` : '';
   const headers = { 'Content-Type': 'application/json' };
-  const token = getAccessToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
   let res;
@@ -80,7 +96,13 @@ async function request(method, url, { params, data } = {}) {
   const body = await res.json().catch(() => null);
   if (!res.ok) {
     const error = new ApiError(res.status, body, contentType);
-    if (error.status === 401 && token) setAccessToken(null);
+    if (error.status === 401) {
+      if (token) setAccessToken(null);
+      // Suppress unhandled 401 rejection only for GET background/guest reads to guarded identity endpoints
+      if (method.toUpperCase() === 'GET' && isAuthGuarded(url)) {
+        return null;
+      }
+    }
     throw error;
   }
   return body;

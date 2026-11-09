@@ -89,7 +89,7 @@ export function useCatalogCategories() {
           return {
             ...cat,
             iconName: meta.iconName || 'Default',
-            accentColor: meta.accentColor || '#1dbf73',
+            accentColor: meta.accentColor || '#1677FF',
             executionType: meta.executionType || 'DIGITAL',
             executionLabel: meta.executionLabel || null,
             popularTags: meta.popularTags || (cat.children || []).map((c) => c.name),

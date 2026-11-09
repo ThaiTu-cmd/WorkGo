@@ -18,6 +18,8 @@ import { useFocusTrap } from '../../../hooks/useFocusTrap';
 import { useAuthToken } from '../../../hooks/useAuthToken';
 import { authApi } from '../../../api/authApi';
 import AccountMenu, { accountGroupsFor, openAccountItem } from './AccountMenu';
+import ThemeToggle from '@/components/common/ThemeToggle';
+import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -157,6 +159,8 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
 
         {/* Action Buttons */}
         <div className={styles.actionButtons}>
+          <LanguageSwitcher variant="pill" className={styles.headerLangSwitcher} />
+          <ThemeToggle className={styles.headerThemeToggle} />
           {isLoggedIn ? (
             <AccountMenu onNavigate={onNavigate} activePage={activePage} />
           ) : (
@@ -196,6 +200,10 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
       {mobileMenuOpen && (
         <div className={styles.mobileDrawer} ref={drawerRef}>
           <div className={styles.mobileDrawerContent}>
+            <div className={styles.mobileDrawerControls}>
+              <LanguageSwitcher variant="pill" />
+              <ThemeToggle showLabel />
+            </div>
             {[
               { key: 'catalog', icon: LayoutGrid, label: 'Danh mục' },
               { key: 'home', icon: House, label: 'Trang chủ' },

@@ -58,7 +58,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "test": "jest",
+    "test": "jest --runInBand --forceExit",
     "build:apk": "node scripts/build-apk.mjs",
     "icons": "node scripts/render-icons.mjs"
   },

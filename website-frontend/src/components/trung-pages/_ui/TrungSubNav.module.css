@@ -7,8 +7,8 @@
   right: 0;
   z-index: 999;
   height: var(--subnav-height, 56px);
-  background: #ffffff;
-  border-bottom: 1px solid #e4e5e7;
+  background: var(--wg-surface);
+  border-bottom: 1px solid var(--wg-border);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   overflow: hidden;
 }
@@ -38,25 +38,25 @@
   padding: 8px 14px;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #62646a;
+  color: var(--wg-text-secondary);
   border-radius: 9999px;
   white-space: nowrap;
   overflow-wrap: break-word;
 }
 
 .link:hover {
-  background: #f5f5f5;
-  color: #222325;
+  background: var(--wg-surface-alt);
+  color: var(--wg-text);
 }
 
 .link:focus-visible {
-  outline: 2px solid #1dbf73;
+  outline: 2px solid var(--wg-primary);
   outline-offset: 2px;
 }
 
 .active {
-  background: #f0fbf5;
-  color: #158852;
+  background: var(--wg-primary-light);
+  color: var(--wg-primary-active);
 }
 
 @media (max-width: 768px) {

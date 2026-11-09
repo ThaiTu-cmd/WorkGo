@@ -1,6 +1,7 @@
 import React from 'react';
-import { Globe, Shield } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { FOOTER_COLUMNS } from './footerLinks.js';
+import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 import styles from './Footer.module.css';
 
 export default function Footer({ onNavigate }) {
@@ -60,10 +61,7 @@ export default function Footer({ onNavigate }) {
             © 2026 WorkGo Marketplace Inc. Bảo lưu mọi quyền.
           </span>
           <div className={styles.rightBottom}>
-            <span className={styles.localeItemStatic}>
-              <Globe size={16} />
-              <span>Tiếng Việt</span>
-            </span>
+            <LanguageSwitcher variant="footer" />
             <span className={styles.localeItemStatic}>
               <span>₫ VND</span>
             </span>

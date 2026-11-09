@@ -730,11 +730,11 @@ input[type="submit"]:not(:disabled):active,
   top: 0;
   left: 0;
   height: 3px;
-  background: linear-gradient(90deg, #1dbf73 0%, #38bdf8 50%, #1677ff 100%);
+  background: linear-gradient(90deg, #1677FF 0%, #38BDF8 50%, #0B4DBB 100%);
   z-index: 99999;
   pointer-events: none;
   transition: width 80ms ease-out;
-  box-shadow: 0 0 8px rgba(29, 191, 115, 0.45);
+  box-shadow: 0 0 8px rgba(22, 119, 255, 0.45);
 }
 
 /* Floating Back-to-Top Button */
@@ -746,7 +746,7 @@ input[type="submit"]:not(:disabled):active,
   height: 44px;
   border-radius: 9999px;
   background: var(--wg-surface, #ffffff);
-  color: var(--wg-primary, #1dbf73);
+  color: var(--wg-primary, #1677FF);
   border: 1px solid var(--wg-border, #e4e5e7);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
   display: flex;
@@ -772,11 +772,11 @@ input[type="submit"]:not(:disabled):active,
 }
 
 .back-to-top-fab:hover {
-  background: var(--wg-primary, #1dbf73);
+  background: var(--wg-primary, #1677FF);
   color: #ffffff;
-  border-color: var(--wg-primary, #1dbf73);
+  border-color: var(--wg-primary, #1677FF);
   transform: translateY(-3px) scale(1.06);
-  box-shadow: 0 8px 24px rgba(29, 191, 115, 0.38);
+  box-shadow: 0 8px 24px rgba(22, 119, 255, 0.38);
 }
 
 .back-to-top-fab:active {

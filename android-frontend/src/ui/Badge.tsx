@@ -6,8 +6,8 @@ export type Tone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
 
 const TONES: Record<Tone, { bg: string; fg: string }> = {
   neutral: { bg: '#f3f4f6', fg: colors.muted },
-  info: { bg: '#dbeafe', fg: colors.info },
-  success: { bg: '#dcfce7', fg: colors.primaryDark },
+  info: { bg: '#e6f4ff', fg: colors.primary },
+  success: { bg: '#dcfce7', fg: colors.success },
   warning: { bg: '#fef3c7', fg: colors.warning },
   danger: { bg: '#fee2e2', fg: colors.danger },
 };

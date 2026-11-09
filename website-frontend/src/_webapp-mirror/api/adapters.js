@@ -12,7 +12,7 @@ export const initialAvatar = (name) => {
   const letter = (String(name || '?').trim()[0] || '?').toUpperCase();
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96">` +
-    `<rect width="96" height="96" fill="#1dbf73"/>` +
+    `<rect width="96" height="96" fill="#1677FF"/>` +
     `<text x="50%" y="54%" font-family="sans-serif" font-size="44" fill="#fff" ` +
     `text-anchor="middle" dominant-baseline="middle">${letter}</text></svg>`;
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;

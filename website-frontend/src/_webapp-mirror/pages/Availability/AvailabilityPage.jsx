@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import React, { useState } from 'react';
 import { ArrowLeft, CalendarClock, Info, Loader2 } from 'lucide-react';
 import { useAvailability } from '../../hooks/useAvailability';
@@ -5,21 +6,31 @@ import WeekGrid from './components/WeekGrid';
 import RuleForm, { emptyRule } from './components/RuleForm';
 import SlotList from './components/SlotList';
 import styles from './AvailabilityPage.module.css';
-
 const NOTICES = {
-  'needs-login': 'Đăng nhập bằng tài khoản Chuyên gia để quản lý lịch rảnh.',
-  forbidden: 'Tài khoản của bạn chưa có quyền Chuyên gia (PROVIDER) nên không có dịch vụ để đặt lịch rảnh.',
-  error: 'Không kết nối được máy chủ — chưa tải được lịch rảnh.',
+  'needs-login': "Sign in with your Professional account to manage your availability.",
+  forbidden: "Your account does not have PROVIDER rights, so there is no service to book free time.",
+  error: "Unable to connect to server \u2014 unable to download free calendar."
 };
-
-export default function AvailabilityPage({ onGoBack, onShowToast }) {
-  const { status, isLive, busy, services, serviceId, setServiceId, rules, slots, saveRule, deleteRule } =
-    useAvailability();
+export default function AvailabilityPage({
+  onGoBack,
+  onShowToast
+}) {
+  const tr = useTranslations("misc");
+  const {
+    status,
+    isLive,
+    busy,
+    services,
+    serviceId,
+    setServiceId,
+    rules,
+    slots,
+    saveRule,
+    deleteRule
+  } = useAvailability();
   const [editing, setEditing] = useState(() => emptyRule());
   const [saving, setSaving] = useState(false);
-
-  const toast = (msg) => onShowToast && onShowToast(msg);
-
+  const toast = msg => onShowToast && onShowToast(msg);
   const run = async (fn, okMsg) => {
     setSaving(true);
     try {
@@ -27,106 +38,74 @@ export default function AvailabilityPage({ onGoBack, onShowToast }) {
       toast(okMsg);
       setEditing(emptyRule(editing.dayOfWeek));
     } catch (err) {
-      toast(`Không lưu được: ${err?.message || 'lỗi máy chủ'}`);
+      toast(tr("m169", {
+        p0: err?.message || tr("m1466")
+      }));
     } finally {
       setSaving(false);
     }
   };
-
-  const activeHours = rules
-    .filter((r) => r.status === 'ACTIVE')
-    .reduce((sum, r) => {
-      const [sh, sm] = r.start.split(':').map(Number);
-      const [eh, em] = r.end.split(':').map(Number);
-      return sum + (eh * 60 + em - sh * 60 - sm) / 60;
-    }, 0);
-
-  return (
-    <div className={styles.pageContainer}>
+  const activeHours = rules.filter(r => r.status === 'ACTIVE').reduce((sum, r) => {
+    const [sh, sm] = r.start.split(':').map(Number);
+    const [eh, em] = r.end.split(':').map(Number);
+    return sum + (eh * 60 + em - sh * 60 - sm) / 60;
+  }, 0);
+  return <div className={styles.pageContainer}>
       <div className={styles.contentWrapper}>
         <div className={styles.breadcrumbNav}>
           <button type="button" className={styles.backBtn} onClick={onGoBack}>
-            <ArrowLeft size={16} /> Quản lý dịch vụ
-          </button>
+            <ArrowLeft size={16} />{tr("m176")}</button>
           <span className={styles.bcSep}>/</span>
-          <span>Kênh Chuyên gia</span>
+          <span>{tr("m177")}</span>
           <span className={styles.bcSep}>/</span>
-          <span className={styles.bcCurrent}>Lịch rảnh</span>
+          <span className={styles.bcCurrent}>{tr("m178")}</span>
         </div>
 
         <div className={styles.pageHeader}>
           <div>
             <h1 className={styles.pageTitle}>
-              <CalendarClock size={26} className={styles.titleIcon} /> Lịch rảnh
-            </h1>
-            <p className={styles.pageSubtitle}>
-              Thiết lập khung giờ nhận lịch hằng tuần. Hệ thống chia mỗi khung thành các Booking Slot để khách đặt.
-            </p>
+              <CalendarClock size={26} className={styles.titleIcon} />{tr("m178")}</h1>
+            <p className={styles.pageSubtitle}>{tr("m179")}</p>
           </div>
 
           <div className={styles.servicePicker}>
-            <label htmlFor="availability-service">Dịch vụ</label>
-            <select
-              id="availability-service"
-              value={serviceId ?? ''}
-              onChange={(e) => {
-                setServiceId(e.target.value);
-                setEditing(emptyRule());
-              }}
-              disabled={status === 'loading' || !services.length}
-            >
-              {services.length === 0 && <option value="">Chưa có dịch vụ</option>}
-              {services.map((s) => (
-                <option key={s.serviceId} value={s.serviceId}>
+            <label htmlFor="availability-service">{tr("m84")}</label>
+            <select id="availability-service" value={serviceId ?? ''} onChange={e => {
+            setServiceId(e.target.value);
+            setEditing(emptyRule());
+          }} disabled={status === 'loading' || !services.length}>
+              {services.length === 0 && <option value="">{tr("m180")}</option>}
+              {services.map(s => <option key={s.serviceId} value={s.serviceId}>
                   {s.title}
-                </option>
-              ))}
+                </option>)}
             </select>
           </div>
         </div>
 
-        {NOTICES[status] && (
-          <div className={styles.notice} role="status">
+        {NOTICES[status] && <div className={styles.notice} role="status">
             <Info size={16} /> <span>{NOTICES[status]}</span>
-          </div>
-        )}
+          </div>}
 
         <div className={styles.summaryRow}>
           <span>
             <strong>{rules.length}</strong> khung giờ
           </span>
           <span>
-            <strong>{activeHours}</strong> giờ rảnh / tuần
-          </span>
-          <span className={isLive ? styles.liveDot : styles.mockDot}>{isLive ? 'Dữ liệu máy chủ' : 'Chưa có dữ liệu'}</span>
-          {(busy || status === 'loading') && <Loader2 size={16} className={styles.spin} aria-label="Đang tải" />}
+            <strong>{activeHours}</strong>{tr("m181")}</span>
+          <span className={isLive ? styles.liveDot : styles.mockDot}>{isLive ? tr("m170") : tr("m171")}</span>
+          {(busy || status === 'loading') && <Loader2 size={16} className={styles.spin} aria-label={tr("m172")} />}
         </div>
 
         <div className={styles.layout}>
           <div className={styles.gridCard}>
-            <WeekGrid
-              rules={rules}
-              selectedRuleId={editing.id}
-              onSelectRule={(r) => setEditing(r)}
-              onAddAt={(day, hour) => setEditing(emptyRule(day, hour))}
-            />
+            <WeekGrid rules={rules} selectedRuleId={editing.id} onSelectRule={r => setEditing(r)} onAddAt={(day, hour) => setEditing(emptyRule(day, hour))} />
           </div>
 
           <aside className={styles.sidePanels}>
-            <RuleForm
-              rule={editing}
-              rules={rules}
-              saving={saving}
-              onCancel={() => setEditing(emptyRule(editing.dayOfWeek))}
-              onSave={(rule) =>
-                run(() => saveRule(rule), rule.id ? 'Đã cập nhật khung giờ' : 'Đã thêm khung giờ mới')
-              }
-              onDelete={(id) => run(() => deleteRule(id), 'Đã xoá khung giờ')}
-            />
+            <RuleForm rule={editing} rules={rules} saving={saving} onCancel={() => setEditing(emptyRule(editing.dayOfWeek))} onSave={rule => run(() => saveRule(rule), rule.id ? tr("m173") : tr("m174"))} onDelete={id => run(() => deleteRule(id), tr("m175"))} />
             <SlotList slots={slots} />
           </aside>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 }

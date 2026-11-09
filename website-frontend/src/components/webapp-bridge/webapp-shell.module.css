@@ -111,21 +111,21 @@
    Scoped under .webapp-scope so bridge pages never leak tokens into the host site.
    Light (default) + Dark (responds to host <html data-theme>). */
 .webapp-scope {
-  --wg-primary: #1677FF;
-  --wg-primary-hover: #0B4DBB;
-  --wg-primary-active: #0A2F7A;
-  --wg-primary-light: #E3EFFF;
-  --wg-primary-glow: rgba(22, 119, 255, 0.25);
+  --wg-primary: #1dbf73;
+  --wg-primary-hover: #19a463;
+  --wg-primary-active: #158852;
+  --wg-primary-light: #f0fbf5;
+  --wg-primary-glow: rgba(29, 191, 115, 0.25);
 
   --wg-secondary: #0d1117;
-  --wg-hero-bg: #06142F;
+  --wg-hero-bg: #012b1d;
   --wg-hero-gradient: linear-gradient(
     135deg,
-    #030B1C 0%,
-    #06142F 55%,
-    #0B4DBB 100%
+    #032115 0%,
+    #063923 55%,
+    #0b4e33 100%
   );
-  --wg-hero-banner-accent: #0B4DBB;
+  --wg-hero-banner-accent: #0f6844;
 
   --wg-accent: #ff7640;
   --wg-accent-hover: #e86330;
@@ -188,29 +188,29 @@
 /* Dark mode: override tokens when host is in dark theme */
 :global([data-theme="dark"]) .webapp-scope,
 :global(.dark) .webapp-scope {
-  --wg-primary: #1677FF;
-  --wg-primary-hover: #2EA8FF;
-  --wg-primary-active: #0B4DBB;
-  --wg-primary-light: rgba(22, 119, 255, 0.14);
-  --wg-primary-glow: rgba(22, 119, 255, 0.35);
+  --wg-primary: #1dbf73;
+  --wg-primary-hover: #34d399;
+  --wg-primary-active: #158852;
+  --wg-primary-light: rgba(29, 191, 115, 0.14);
+  --wg-primary-glow: rgba(29, 191, 115, 0.35);
 
-  --wg-hero-bg: #030B1C;
+  --wg-hero-bg: #000000;
   --wg-hero-gradient: linear-gradient(
     135deg,
-    #030B1C 0%,
-    #06142F 55%,
-    #0B4DBB 100%
+    #000000 0%,
+    #0a0a0a 55%,
+    #158852 100%
   );
-  --wg-hero-banner-accent: #0B4DBB;
+  --wg-hero-banner-accent: #158852;
 
-  --wg-bg: #030B1C;
-  --wg-surface: #06142F;
-  --wg-surface-alt: #0A1F4D;
-  --wg-text: #F8FCFF;
-  --wg-text-secondary: #B8CCF0;
-  --wg-text-muted: #7A8DB5;
-  --wg-border: rgba(148, 184, 255, 0.14);
-  --wg-border-light: rgba(148, 184, 255, 0.10);
+  --wg-bg: #000000;
+  --wg-surface: #0a0a0a;
+  --wg-surface-alt: #141414;
+  --wg-text: #FFFFFF;
+  --wg-text-secondary: #D4D4D8;
+  --wg-text-muted: #A1A1AA;
+  --wg-border: rgba(255, 255, 255, 0.14);
+  --wg-border-light: rgba(255, 255, 255, 0.08);
 
   color-scheme: dark;
 }

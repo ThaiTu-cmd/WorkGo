@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from 'react';
 import { Loader2, X } from 'lucide-react';
 import { orderErrorMessage } from '../../../api/orderApi';
@@ -10,31 +11,29 @@ import styles from './WorkEvidence.module.css';
 export default function OrderFlowDialog({
   title,
   submitLabel,
-  submittingLabel = 'Đang gửi...',
+  submittingLabel = "Sending...",
   canSubmit = true,
   onSubmit,
   onClose,
-  closeLabel = 'Hủy',
-  children,
+  closeLabel = "Cancel",
+  children
 }) {
+  const tr = useTranslations("misc");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const dialogRef = useRef(null);
   useFocusTrap(dialogRef, true);
-
   useEffect(() => {
-    dialogRef.current?.querySelector('input,textarea,button:not([aria-label="Đóng"])')?.focus();
+    dialogRef.current?.querySelector(tr("m763"))?.focus();
   }, []);
-
   useEffect(() => {
-    const onKey = (e) => {
+    const onKey = e => {
       if (e.key === 'Escape' && !submitting) onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose, submitting]);
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     if (!onSubmit || !canSubmit || submitting) return;
     setSubmitting(true);
@@ -46,37 +45,24 @@ export default function OrderFlowDialog({
       setSubmitting(false);
     }
   };
-
-  return (
-    <div className={styles.overlay} onClick={() => !submitting && onClose()}>
-      <form
-        ref={dialogRef}
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="order-flow-dialog-title"
-        onClick={(e) => e.stopPropagation()}
-        onSubmit={handleSubmit}
-      >
+  return <div className={styles.overlay} onClick={() => !submitting && onClose()}>
+      <form ref={dialogRef} className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="order-flow-dialog-title" onClick={e => e.stopPropagation()} onSubmit={handleSubmit}>
         <header className={styles.dialogHeader}>
           <h3 id="order-flow-dialog-title">{title}</h3>
-          <button type="button" className={styles.iconBtn} onClick={onClose} disabled={submitting} aria-label="Đóng">
+          <button type="button" className={styles.iconBtn} onClick={onClose} disabled={submitting} aria-label={tr("m688")}>
             <X size={18} />
           </button>
         </header>
 
         <div className={styles.dialogBody}>
           {children}
-          {error && (
-            <p className={styles.error} role="alert">
+          {error && <p className={styles.error} role="alert">
               {error}
-            </p>
-          )}
+            </p>}
         </div>
 
         <footer className={styles.dialogFooter}>
-          {onSubmit ? (
-            <>
+          {onSubmit ? <>
               <button type="button" className={styles.secondaryBtn} onClick={onClose} disabled={submitting}>
                 {closeLabel}
               </button>
@@ -84,14 +70,10 @@ export default function OrderFlowDialog({
                 {submitting && <Loader2 size={15} className={styles.spin} aria-hidden="true" />}
                 {submitting ? submittingLabel : submitLabel}
               </button>
-            </>
-          ) : (
-            <button type="button" className={styles.primaryBtn} onClick={onClose}>
+            </> : <button type="button" className={styles.primaryBtn} onClick={onClose}>
               {closeLabel}
-            </button>
-          )}
+            </button>}
         </footer>
       </form>
-    </div>
-  );
+    </div>;
 }

@@ -1,64 +1,54 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Shield } from 'lucide-react';
 import { FOOTER_COLUMNS } from './footerLinks.js';
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 import styles from './Footer.module.css';
-
-export default function Footer({ onNavigate }) {
+export default function Footer({
+  onNavigate
+}) {
+  const tr = useTranslations("misc");
+  const tf = useTranslations('footer');
+  const th = useTranslations('header');
   const go = (page, params = {}) => {
     if (typeof onNavigate !== 'function') return;
     onNavigate(page, params);
   };
-
-  return (
-    <footer className={styles.footer}>
+  return <footer className={styles.footer}>
       <div className="container">
         <div className={styles.topGrid}>
           {/* Brand column */}
           <div className={styles.brandCol}>
-            <button
-              type="button"
-              className={styles.footerLogo}
-              aria-label="WorkGo — về trang chủ"
-              onClick={() => go('home')}
-            >
+            <button type="button" className={styles.footerLogo} aria-label={tr("m45")} onClick={() => go('home')}>
               WorkGo
             </button>
             <p className={styles.brandDesc}>
-              Nền tảng kết nối khách hàng với chuyên gia và freelancer uy tín — thanh toán an toàn qua ký quỹ.
+              {th('brandDesc')}
             </p>
             <span className={styles.escrowBadge}>
               <Shield size={15} />
-              Được bảo vệ bởi Escrow
+              {th('escrowProtected')}
             </span>
             <span className={styles.shortcutHint}>
-              Mẹo bàn phím: Tab di chuyển • Esc đóng nhanh
+              {th('keyboardHint')}
             </span>
           </div>
 
-          {FOOTER_COLUMNS.map((col) => (
-            <div key={col.title} className={styles.col}>
-              <h4 className={styles.colTitle}>{col.title}</h4>
+          {FOOTER_COLUMNS.map(col => <div key={col.title} className={styles.col}>
+              <h4 className={styles.colTitle}>{tf(col.titleKey)}</h4>
               <ul className={styles.linkList}>
-                {col.links.map((link) => (
-                  <li key={link.label}>
-                    <button
-                      type="button"
-                      className={styles.footerLink}
-                      onClick={() => go(link.page, link.params)}
-                    >
-                      {link.label}
+                {col.links.map(link => <li key={link.labelKey}>
+                    <button type="button" className={styles.footerLink} onClick={() => go(link.page, link.params)}>
+                      {tf(link.labelKey)}
                     </button>
-                  </li>
-                ))}
+                  </li>)}
               </ul>
-            </div>
-          ))}
+            </div>)}
         </div>
 
         <div className={styles.bottomBar}>
           <span className={styles.copyright}>
-            © 2026 WorkGo Marketplace Inc. Bảo lưu mọi quyền.
+            {th('copyright')}
           </span>
           <div className={styles.rightBottom}>
             <LanguageSwitcher variant="footer" />
@@ -68,6 +58,5 @@ export default function Footer({ onNavigate }) {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 }

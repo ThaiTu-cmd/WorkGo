@@ -16,11 +16,12 @@
 }
 
 .headerScrolled {
-  background-color: rgba(255, 255, 255, 0.98);
+  background-color: var(--wg-surface);
   backdrop-filter: blur(8px);
   color: var(--wg-text);
   box-shadow: var(--shadow-header);
   border-bottom: 1px solid var(--wg-border);
+  opacity: 0.98;
 }
 
 /* Gutter-inset: scoped 0,2,0 beats global .container (0,1,0) regardless of

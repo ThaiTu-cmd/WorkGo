@@ -12,7 +12,7 @@ export const initialAvatar = (name) => {
   const letter = (String(name || '?').trim()[0] || '?').toUpperCase();
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96">` +
-    `<rect width="96" height="96" fill="#1677FF"/>` +
+    `<rect width="96" height="96" fill="#1dbf73"/>` +
     `<text x="50%" y="54%" font-family="sans-serif" font-size="44" fill="#fff" ` +
     `text-anchor="middle" dominant-baseline="middle">${letter}</text></svg>`;
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
@@ -77,8 +77,10 @@ export const DB_PROVIDERS = {
 export const toProvider = (profile, fallbackProviderId = null) => {
   const providerId = profile?.providerProfileId || fallbackProviderId;
   const known = providerId ? DB_PROVIDERS[providerId] : null;
+  const hasRealProfile = Boolean(profile?.businessName || profile?.bio || profile?.verificationStatus);
   const name = profile?.businessName || known?.businessName || 'Nhà cung cấp';
   const isVerified = (profile?.verificationStatus || known?.verificationStatus) === 'VERIFIED';
+  const source = hasRealProfile ? 'real' : (known ? 'fallback' : 'mock');
   return {
     providerId: providerId ?? null,
     name,
@@ -90,6 +92,7 @@ export const toProvider = (profile, fallbackProviderId = null) => {
     providerType: profile?.providerType ?? null,
     verificationStatus: profile?.verificationStatus || known?.verificationStatus || null,
     joinedAt: profile?.joinedAt ?? null,
+    source,
   };
 };
 
@@ -97,6 +100,7 @@ export const toProvider = (profile, fallbackProviderId = null) => {
 // PopularServices. `provider` is the ProviderProfileResponse when known.
 export const toServiceCard = (dto, { category = null, provider = null } = {}) => {
   const providerView = toProvider(provider, dto.providerId);
+  const hasRealCover = Boolean(dto.coverImage);
   const coverImage = dto.coverImage || (dto.slug ? `https://picsum.photos/seed/${dto.slug}-1/1200/800` : initialAvatar(dto.title));
   return {
     serviceId: dto.serviceId,
@@ -108,7 +112,9 @@ export const toServiceCard = (dto, { category = null, provider = null } = {}) =>
     slug: dto.slug,
     executionType: dto.executionType,
     coverImage,
+    imageSource: hasRealCover ? 'real' : 'placeholder',
     provider: providerView,
+    providerSource: providerView.source,
     avgRating: toNumber(dto.avgRating),
     reviewCount: toNumber(dto.reviewCount),
     orderCount: toNumber(dto.orderCount),
@@ -123,10 +129,11 @@ export const toServiceDetail = ({ service, packages = [], addons = [], medias = 
   const providerView = toProvider(provider, service.providerId);
   const mediaList = toMediaList(medias, service.title);
   const pkgs = toPackages(packages);
+  const hasRealMedia = mediaList.length > 0 || Boolean(service.coverImage);
   const coverUrl = mediaList[0]?.url || (service.slug ? `https://picsum.photos/seed/${service.slug}-1/1200/800` : initialAvatar(service.title));
   const fullMediaList = mediaList.length > 0 ? mediaList : [
-    { id: 'cover-1', url: coverUrl, isCover: true, alt: service.title },
-    { id: 'cover-2', url: `https://picsum.photos/seed/${service.slug}-2/1200/800`, isCover: false, alt: service.title },
+    { id: 'cover-1', url: coverUrl, isCover: true, alt: service.title, source: 'placeholder' },
+    { id: 'cover-2', url: `https://picsum.photos/seed/${service.slug}-2/1200/800`, isCover: false, alt: service.title, source: 'placeholder' },
   ];
   return {
     serviceId: service.serviceId,
@@ -141,9 +148,12 @@ export const toServiceDetail = ({ service, packages = [], addons = [], medias = 
     status: service.status,
     currency: service.currency,
     coverImage: coverUrl,
+    imageSource: hasRealMedia ? 'real' : 'placeholder',
     basePrice: pkgs[0]?.price ?? toNumber(service.basePrice),
     provider: providerView,
-    // 0 rating with no reviews means "not rated yet" → hide the stars.
+    providerSource: providerView.source,
+    // Fields below are not yet provided by backend → rendered as illustrative placeholders.
+    mockFields: ['responseTime', 'lastDelivery', 'memberSince', 'languages', 'sellerBio', 'faqs', 'ordersInQueue'],
     avgRating: toNumber(service.reviewCount) > 0 ? toNumber(service.avgRating) : null,
     reviewCount: toNumber(service.reviewCount),
     orderCount: toNumber(service.orderCount),

@@ -12,12 +12,10 @@ export default function LanguageSwitcher({
   className = "",
   variant = "pill",
 }: LanguageSwitcherProps) {
-  // 1. Khởi tạo ổn định trên cả Server và Client render đầu tiên
   const [currentLocale, setCurrentLocale] = useState<"vi" | "en">("vi");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // 2. Chỉ đọc window.location sau khi component đã mount trên Client
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     if (typeof window !== "undefined") {
@@ -49,8 +47,6 @@ export default function LanguageSwitcher({
     }
 
     const targetUrl = `${newPathname}${search}${hash}`;
-    // Điều hướng toàn trang để Next.js nạp lại dictionary locale chuẩn
-    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = targetUrl;
   };
 
@@ -58,37 +54,69 @@ export default function LanguageSwitcher({
     handleSwitchLanguage(currentLocale === "vi" ? "en" : "vi");
   };
 
-  // Render an toàn chống hydration mismatch
   if (variant === "footer") {
     return (
       <button
         type="button"
         onClick={toggleLanguage}
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-300 hover:text-white transition-colors cursor-pointer rounded border border-slate-700 hover:border-slate-500 bg-slate-800/60 min-h-[44px] min-w-[44px] justify-center ${className}`}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer rounded border min-h-[44px] min-w-[44px] justify-center ${className}`}
+        style={{
+          color: "var(--text-secondary, #62646a)",
+          background: "var(--bg-surface, #ffffff)",
+          borderColor: "var(--border-default, #e4e5e7)",
+        }}
         aria-label={`Ngôn ngữ: ${mounted && currentLocale === "en" ? "English" : "Tiếng Việt"}. Nhấn để đổi.`}
         title="Chuyển đổi ngôn ngữ / Switch language"
         suppressHydrationWarning
       >
-        <Globe size={15} className="text-blue-400 shrink-0" aria-hidden="true" />
+        <Globe size={15} style={{ color: "var(--primary, #1dbf73)" }} className="shrink-0" aria-hidden="true" />
         <span>{mounted && currentLocale === "en" ? "English (EN)" : "Tiếng Việt (VI)"}</span>
+      </button>
+    );
+  }
+
+  if (variant === "button") {
+    return (
+      <button
+        type="button"
+        onClick={toggleLanguage}
+        className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg transition-all min-h-[44px] cursor-pointer border ${className}`}
+        style={{
+          color: "var(--text-primary)",
+          background: "var(--bg-muted)",
+          borderColor: "var(--border-default)",
+        }}
+        aria-label={`Ngôn ngữ: ${mounted && currentLocale === "en" ? "English" : "Tiếng Việt"}. Nhấn để đổi.`}
+        title="Chuyển đổi ngôn ngữ / Switch language"
+        suppressHydrationWarning
+      >
+        <Globe size={16} style={{ color: "var(--primary, #1dbf73)" }} aria-hidden="true" />
+        <span className="text-sm font-medium">
+          {mounted && currentLocale === "en" ? "English" : "Tiếng Việt"}
+        </span>
       </button>
     );
   }
 
   return (
     <div
-      className={`inline-flex items-center rounded-lg bg-slate-800/70 border border-slate-700/80 p-0.5 shadow-sm text-xs select-none ${className}`}
+      className={`inline-flex items-center rounded-lg border p-0.5 shadow-sm text-xs select-none ${className}`}
+      style={{
+        background: "var(--bg-muted)",
+        borderColor: "var(--border-default)",
+      }}
       role="group"
       aria-label="Language selection"
     >
       <button
         type="button"
         onClick={() => handleSwitchLanguage("vi")}
-        className={`flex items-center justify-center px-2 py-1.5 rounded-md min-h-[44px] min-w-[44px] text-xs font-semibold transition-all cursor-pointer ${
-          (!mounted || currentLocale === "vi")
-            ? "bg-blue-600 text-white shadow-sm font-bold"
-            : "text-slate-400 hover:text-slate-200"
-        }`}
+        className="flex items-center justify-center px-2 py-1.5 rounded-md min-h-[44px] min-w-[44px] text-xs font-semibold transition-all cursor-pointer"
+        style={
+          !mounted || currentLocale === "vi"
+            ? { background: "var(--primary, #1dbf73)", color: "#FFFFFF" }
+            : { color: "var(--text-secondary)" }
+        }
         aria-pressed={!mounted || currentLocale === "vi"}
         aria-label="Tiếng Việt"
         suppressHydrationWarning
@@ -98,11 +126,12 @@ export default function LanguageSwitcher({
       <button
         type="button"
         onClick={() => handleSwitchLanguage("en")}
-        className={`flex items-center justify-center px-2 py-1.5 rounded-md min-h-[44px] min-w-[44px] text-xs font-semibold transition-all cursor-pointer ${
+        className="flex items-center justify-center px-2 py-1.5 rounded-md min-h-[44px] min-w-[44px] text-xs font-semibold transition-all cursor-pointer"
+        style={
           mounted && currentLocale === "en"
-            ? "bg-blue-600 text-white shadow-sm font-bold"
-            : "text-slate-400 hover:text-slate-200"
-        }`}
+            ? { background: "var(--primary, #1dbf73)", color: "#FFFFFF" }
+            : { color: "var(--text-secondary)" }
+        }
         aria-pressed={mounted && currentLocale === "en"}
         aria-label="English"
         suppressHydrationWarning

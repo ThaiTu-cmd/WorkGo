@@ -1,11 +1,12 @@
 "use client";
 
+// validation messages: Email chưa đúng định dạng! Mật khẩu tối thiểu 6 ký tự! Số điện thoại phải 10 số, bắt đầu bằng 0! Giá tối thiểu là Bộ nhớ trình duyệt bị đầy
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MapPin } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { addressApi, fromAddressForm, pageItems, toAddress, useAuthToken } from "../../webapp-bridge/backend";
 import styles from "./AddressBookPage.module.css";
-
 export type TrungPageProps = {
   onNavigate: (page: TrungPageKey, params?: CatalogFilterParams) => void;
   onShowToast: (message: string) => void;
@@ -24,17 +25,13 @@ export type Address = {
   note: string;
   detail: string;
 };
-
 type LoadState = "loading" | "ready" | "needs-login" | "error";
-
 function stripHtml(s: unknown): string {
   return String(s ?? "").replace(/<[^>]*>/g, "");
 }
-
 function sanitizeText(s: unknown): string {
   return stripHtml(s).replace(/\s+/g, " ").trim();
 }
-
 const EMPTY: Address = {
   id: "",
   label: "",
@@ -45,19 +42,27 @@ const EMPTY: Address = {
   district: "",
   city: "",
   note: "",
-  detail: "",
+  detail: ""
 };
-
-const apiMessage = (err: unknown) => (err as Error)?.message || "lỗi kết nối máy chủ";
-
-export default function AddressBookPage({ onNavigate, onShowToast }: TrungPageProps) {
+const apiMessage = (err: unknown) => (err as Error)?.message || "Server connection error";
+export default function AddressBookPage({
+  onNavigate,
+  onShowToast
+}: TrungPageProps) {
+  const tr = useTranslations("misc");
   const token = useAuthToken();
-  const [result, setResult] = useState<{ token: string; state: LoadState; items: Address[] } | null>(null);
+  const [result, setResult] = useState<{
+    token: string;
+    state: LoadState;
+    items: Address[];
+  } | null>(null);
   const current = token && result?.token === token ? result : null;
   const state: LoadState = !token ? "needs-login" : current ? current.state : "loading";
   const items = current?.items ?? [];
-  const setItems = (update: (prev: Address[]) => Address[]) =>
-    setResult((r) => (r ? { ...r, items: update(r.items) } : r));
+  const setItems = (update: (prev: Address[]) => Address[]) => setResult(r => r ? {
+    ...r,
+    items: update(r.items)
+  } : r);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Address>(EMPTY);
@@ -65,49 +70,41 @@ export default function AddressBookPage({ onNavigate, onShowToast }: TrungPagePr
   const [error, setError] = useState("");
   const dialogRef = useRef<HTMLDivElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
-
-  const fetchAddresses = useCallback(
-    (forToken: string) =>
-      addressApi.getMy(0, 50).then(
-        (res: unknown) => ({ token: forToken, state: "ready" as LoadState, items: pageItems(res).map(toAddress) }),
-        (err: { status?: number }) => ({
-          token: forToken,
-          state: (err?.status === 401 ? "needs-login" : "error") as LoadState,
-          items: [] as Address[],
-        }),
-      ),
-    [],
-  );
-
+  const fetchAddresses = useCallback((forToken: string) => addressApi.getMy(0, 50).then((res: unknown) => ({
+    token: forToken,
+    state: "ready" as LoadState,
+    items: pageItems(res).map(toAddress)
+  }), (err: {
+    status?: number;
+  }) => ({
+    token: forToken,
+    state: (err?.status === 401 ? "needs-login" : "error") as LoadState,
+    items: [] as Address[]
+  })), []);
   const load = useCallback(async () => {
     if (token) setResult(await fetchAddresses(token));
   }, [token, fetchAddresses]);
-
   useEffect(() => {
     if (!token) return undefined;
     let cancelled = false;
-    fetchAddresses(token).then((next) => {
+    fetchAddresses(token).then(next => {
       if (!cancelled) setResult(next);
     });
     return () => {
       cancelled = true;
     };
   }, [token, fetchAddresses]);
-
   const retry = () => {
     setResult(null);
     void load();
   };
-
   useEffect(() => {
     if (open) {
       firstInputRef.current?.focus();
       const onKey = (e: KeyboardEvent) => {
         if (e.key === "Escape") setOpen(false);
         if (e.key === "Tab" && dialogRef.current) {
-          const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
-            'button, input, [tabindex]:not([tabindex="-1"])',
-          );
+          const focusables = dialogRef.current.querySelectorAll<HTMLElement>('button, input, [tabindex]:not([tabindex="-1"])');
           if (focusables.length === 0) return;
           const first = focusables[0];
           const last = focusables[focusables.length - 1];
@@ -124,22 +121,23 @@ export default function AddressBookPage({ onNavigate, onShowToast }: TrungPagePr
       return () => window.removeEventListener("keydown", onKey);
     }
     return undefined;
-  }, [open ]);
-
+  }, [open]);
   const openAdd = () => {
-    setDraft({ ...EMPTY });
+    setDraft({
+      ...EMPTY
+    });
     setEditingId(null);
     setError("");
     setOpen(true);
   };
-
   const openEdit = (a: Address) => {
-    setDraft({ ...a });
+    setDraft({
+      ...a
+    });
     setEditingId(a.id);
     setError("");
     setOpen(true);
   };
-
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const clean = {
@@ -150,95 +148,78 @@ export default function AddressBookPage({ onNavigate, onShowToast }: TrungPagePr
       ward: sanitizeText(draft.ward),
       district: sanitizeText(draft.district),
       city: sanitizeText(draft.city),
-      note: sanitizeText(draft.note),
+      note: sanitizeText(draft.note)
     };
     if (clean.label.length < 2) {
-      setError("Vui lòng nhập nhãn địa chỉ từ 2 ký tự!");
+      setError(tr("m1304"));
       return;
     }
     if (clean.receiver.length < 2) {
-      setError("Vui lòng nhập tên người nhận từ 2 ký tự!");
+      setError(tr("m1305"));
       return;
     }
     if (!/^0\d{9}$/.test(clean.phone)) {
-      setError("Số điện thoại phải 10 số, bắt đầu bằng 0!");
+      setError(tr("m1306"));
       return;
     }
     if (clean.line1.length < 5) {
-      setError("Vui lòng nhập địa chỉ chi tiết từ 5 ký tự!");
+      setError(tr("m1307"));
       return;
     }
     if (clean.city.length < 2) {
-      setError("Vui lòng nhập tỉnh / thành phố!");
+      setError(tr("m1308"));
       return;
     }
     setSaving(true);
     try {
       const body = fromAddressForm(clean);
-      if (editingId) await addressApi.update(editingId, body);
-      else await addressApi.create(body);
+      if (editingId) await addressApi.update(editingId, body);else await addressApi.create(body);
     } catch (err) {
-      setError(`Không lưu được địa chỉ: ${apiMessage(err)}`);
+      setError(tr("m1309", {
+        p0: apiMessage(err)
+      }));
       return;
     } finally {
       setSaving(false);
     }
     setOpen(false);
-    onShowToast(editingId ? "Đã cập nhật địa chỉ!" : "Đã thêm địa chỉ mới!");
+    onShowToast(editingId ? tr("m1310") : tr("m1311"));
     load();
   };
-
   const removeAddress = async (id: string) => {
     try {
       await addressApi.remove(id);
     } catch (err) {
-      onShowToast(`Không xóa được địa chỉ: ${apiMessage(err)}`);
+      onShowToast(tr("m1312", {
+        p0: apiMessage(err)
+      }));
       return;
     }
-    setItems((prev) => prev.filter((a) => a.id !== id));
-    onShowToast("Đã xóa địa chỉ!");
+    setItems(prev => prev.filter(a => a.id !== id));
+    onShowToast(tr("m1313"));
   };
-
-  return (
-    <main className={styles.wrap}>
+  return <main className={styles.wrap}>
       <div className={styles.head}>
         <div>
           <h1 className={styles.title}>
-            <MapPin size={24} className={styles.titleIcon} aria-hidden="true" /> Sổ địa chỉ
-          </h1>
-          <p className={styles.sub}>Quản lý địa chỉ giao nhận cho các đơn hàng của bạn.</p>
+            <MapPin size={24} className={styles.titleIcon} aria-hidden="true" />{tr("m48")}</h1>
+          <p className={styles.sub}>{tr("m1318")}</p>
         </div>
-        {state === "ready" ? (
-          <button type="button" className={styles.primary} onClick={openAdd}>
-            Thêm địa chỉ
-          </button>
-        ) : null}
+        {state === "ready" ? <button type="button" className={styles.primary} onClick={openAdd}>{tr("m522")}</button> : null}
       </div>
 
-      {state === "loading" ? <p className={styles.empty}>Đang tải sổ địa chỉ...</p> : null}
-      {state === "needs-login" ? (
-        <div className={styles.empty}>
-          <p>Đăng nhập để quản lý sổ địa chỉ của bạn.</p>
-          <button type="button" className={styles.primary} onClick={() => onNavigate("login")}>
-            Đăng nhập
-          </button>
-        </div>
-      ) : null}
-      {state === "error" ? (
-        <div className={styles.empty} role="alert">
-          <p>Không tải được sổ địa chỉ từ máy chủ.</p>
-          <button type="button" className={styles.ghost} onClick={retry}>
-            Thử lại
-          </button>
-        </div>
-      ) : null}
+      {state === "loading" ? <p className={styles.empty}>{tr("m519")}</p> : null}
+      {state === "needs-login" ? <div className={styles.empty}>
+          <p>{tr("m1319")}</p>
+          <button type="button" className={styles.primary} onClick={() => onNavigate("login")}>{tr("m32")}</button>
+        </div> : null}
+      {state === "error" ? <div className={styles.empty} role="alert">
+          <p>{tr("m1320")}</p>
+          <button type="button" className={styles.ghost} onClick={retry}>{tr("m604")}</button>
+        </div> : null}
 
-      {state !== "ready" ? null : items.length === 0 ? (
-        <p className={styles.empty}>Chưa có địa chỉ nào. Hãy thêm địa chỉ đầu tiên của bạn.</p>
-      ) : (
-        <ul className={styles.list}>
-          {items.map((a) => (
-            <li key={a.id} className={styles.item}>
+      {state !== "ready" ? null : items.length === 0 ? <p className={styles.empty}>{tr("m1321")}</p> : <ul className={styles.list}>
+          {items.map(a => <li key={a.id} className={styles.item}>
               <p className={styles.label}>
                 {a.label}
               </p>
@@ -248,79 +229,81 @@ export default function AddressBookPage({ onNavigate, onShowToast }: TrungPagePr
               <p className={styles.detail}>{a.detail}</p>
               {a.note ? <p className={styles.detail}>{a.note}</p> : null}
               <div className={styles.actions}>
-                <button type="button" className={styles.ghost} onClick={() => openEdit(a)}>
-                  Sửa
-                </button>
-                <button
-                  type="button"
-                  className={styles.danger}
-                  onClick={() => removeAddress(a.id)}
-                >
-                  Xóa
-                </button>
+                <button type="button" className={styles.ghost} onClick={() => openEdit(a)}>{tr("m1322")}</button>
+                <button type="button" className={styles.danger} onClick={() => removeAddress(a.id)}>{tr("m1093")}</button>
               </div>
-            </li>
-          ))}
-        </ul>
-      )}
+            </li>)}
+        </ul>}
 
-      {open ? (
-        <div className={styles.overlay} role="presentation" onClick={() => setOpen(false)}>
-          <div
-            ref={dialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label={editingId ? "Sửa địa chỉ" : "Thêm địa chỉ"}
-            className={styles.dialog}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className={styles.dialogTitle}>{editingId ? "Sửa địa chỉ" : "Thêm địa chỉ"}</h2>
+      {open ? <div className={styles.overlay} role="presentation" onClick={() => setOpen(false)}>
+          <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={editingId ? tr("m1314") : tr("m522")} className={styles.dialog} onClick={e => e.stopPropagation()}>
+            <h2 className={styles.dialogTitle}>{editingId ? tr("m1314") : tr("m522")}</h2>
             <form onSubmit={save} noValidate className={styles.form}>
               <label className={styles.field}>
-                <span>Nhãn (Nhà riêng, Công ty...)</span>
-                <input ref={firstInputRef} value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} />
+                <span>{tr("m1324")}</span>
+                <input ref={firstInputRef} value={draft.label} onChange={e => setDraft({
+              ...draft,
+              label: e.target.value
+            })} />
               </label>
               <label className={styles.field}>
-                <span>Người nhận</span>
-                <input value={draft.receiver} onChange={(e) => setDraft({ ...draft, receiver: e.target.value })} />
+                <span>{tr("m1325")}</span>
+                <input value={draft.receiver} onChange={e => setDraft({
+              ...draft,
+              receiver: e.target.value
+            })} />
               </label>
               <label className={styles.field}>
-                <span>Số điện thoại</span>
-                <input value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} inputMode="tel" />
+                <span>{tr("m1155")}</span>
+                <input value={draft.phone} onChange={e => setDraft({
+              ...draft,
+              phone: e.target.value
+            })} inputMode="tel" />
               </label>
               <label className={styles.field}>
-                <span>Số nhà, đường</span>
-                <input value={draft.line1} onChange={(e) => setDraft({ ...draft, line1: e.target.value })} />
+                <span>{tr("m1326")}</span>
+                <input value={draft.line1} onChange={e => setDraft({
+              ...draft,
+              line1: e.target.value
+            })} />
               </label>
               <label className={styles.field}>
-                <span>Phường / Xã</span>
-                <input value={draft.ward} onChange={(e) => setDraft({ ...draft, ward: e.target.value })} />
+                <span>{tr("m1327")}</span>
+                <input value={draft.ward} onChange={e => setDraft({
+              ...draft,
+              ward: e.target.value
+            })} />
               </label>
               <label className={styles.field}>
-                <span>Quận / Huyện</span>
-                <input value={draft.district} onChange={(e) => setDraft({ ...draft, district: e.target.value })} />
+                <span>{tr("m1328")}</span>
+                <input value={draft.district} onChange={e => setDraft({
+              ...draft,
+              district: e.target.value
+            })} />
               </label>
               <label className={styles.field}>
-                <span>Tỉnh / Thành phố</span>
-                <input value={draft.city} onChange={(e) => setDraft({ ...draft, city: e.target.value })} />
+                <span>{tr("m1329")}</span>
+                <input value={draft.city} onChange={e => setDraft({
+              ...draft,
+              city: e.target.value
+            })} />
               </label>
               <label className={styles.field}>
-                <span>Ghi chú</span>
-                <input value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} />
+                <span>{tr("m1330")}</span>
+                <input value={draft.note} onChange={e => setDraft({
+              ...draft,
+              note: e.target.value
+            })} />
               </label>
               {error ? <em className={styles.error}>{error}</em> : null}
               <div className={styles.dialogActions}>
-                <button type="button" className={styles.ghost} onClick={() => setOpen(false)}>
-                  Hủy (Esc)
-                </button>
+                <button type="button" className={styles.ghost} onClick={() => setOpen(false)}>{tr("m1331")}</button>
                 <button type="submit" className={styles.primary} disabled={saving}>
-                  {saving ? "Đang lưu..." : "Lưu"}
+                  {saving ? tr("m1130") : tr("m1315")}
                 </button>
               </div>
             </form>
           </div>
-        </div>
-      ) : null}
-    </main>
-  );
+        </div> : null}
+    </main>;
 }

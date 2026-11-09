@@ -1,34 +1,34 @@
 :root {
-  /* Brand Identity - WorkGo Trust Blue (Option A) */
-  --wg-primary: #1677FF;
-  --wg-primary-hover: #0B4DBB;
-  --wg-primary-active: #0A2F7A;
-  --wg-primary-light: #E3EFFF;
-  --wg-primary-glow: rgba(22, 119, 255, 0.25);
+  /* Brand Identity - WorkGo Green (legacy) */
+  --wg-primary: #1dbf73;
+  --wg-primary-hover: #19a463;
+  --wg-primary-active: #158852;
+  --wg-primary-light: #f0fbf5;
+  --wg-primary-glow: rgba(29, 191, 115, 0.25);
 
   --wg-secondary: #0d1117;
-  --wg-hero-bg: #06142F;
+  --wg-hero-bg: #012b1d;
   --wg-hero-gradient: linear-gradient(
     135deg,
-    #030B1C 0%,
-    #06142F 55%,
-    #0B4DBB 100%
+    #032115 0%,
+    #063923 55%,
+    #0b4e33 100%
   );
-  --wg-hero-banner-accent: #0B4DBB;
+  --wg-hero-banner-accent: #0f6844;
 
   --wg-accent: #ff7640;
   --wg-accent-hover: #e86330;
   --wg-star: #ffb33e;
 
   /* Neutrals - Light */
-  --wg-bg: #F5F9FF;
+  --wg-bg: #fafafa;
   --wg-surface: #ffffff;
-  --wg-surface-alt: #EDF5FF;
-  --wg-text: #06142F;
-  --wg-text-secondary: #3D4E73;
-  --wg-text-muted: #7A8DB5;
-  --wg-border: #D3E3F8;
-  --wg-border-light: #E4EEFB;
+  --wg-surface-alt: #f5f5f5;
+  --wg-text: #222325;
+  --wg-text-secondary: #62646a;
+  --wg-text-muted: #95979d;
+  --wg-border: #e4e5e7;
+  --wg-border-light: #efeff0;
 
   /* Badges - Execution Type */
   --badge-digital-bg: #e0f2fe;
@@ -53,12 +53,12 @@
   --font-heading: var(--font-sans);
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(3, 11, 28, 0.05);
-  --shadow-card: 0 2px 8px rgba(3, 11, 28, 0.07);
-  --shadow-card-hover: 0 12px 28px rgba(3, 11, 28, 0.12);
-  --shadow-header: 0 2px 10px rgba(3, 11, 28, 0.06);
-  --shadow-search: 0 8px 30px rgba(3, 11, 28, 0.22);
-  --shadow-dropdown: 0 10px 30px rgba(3, 11, 28, 0.12);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.07);
+  --shadow-card-hover: 0 12px 28px rgba(0, 0, 0, 0.12);
+  --shadow-header: 0 2px 10px rgba(0, 0, 0, 0.06);
+  --shadow-search: 0 8px 30px rgba(0, 0, 0, 0.22);
+  --shadow-dropdown: 0 10px 30px rgba(0, 0, 0, 0.12);
 
   /* Radius */
   --radius-xs: 4px;
@@ -78,33 +78,33 @@
   --header-height: 76px;
 }
 
-/* Dark mode overrides (mirrors globals.css [data-theme="dark"]) */
+/* Dark mode overrides */
 [data-theme="dark"],
 .dark {
-  --wg-primary: #1677FF;
-  --wg-primary-hover: #2EA8FF;
-  --wg-primary-active: #0B4DBB;
-  --wg-primary-light: rgba(22, 119, 255, 0.14);
-  --wg-primary-glow: rgba(22, 119, 255, 0.35);
+  --wg-primary: #1dbf73;
+  --wg-primary-hover: #34d399;
+  --wg-primary-active: #158852;
+  --wg-primary-light: rgba(29, 191, 115, 0.14);
+  --wg-primary-glow: rgba(29, 191, 115, 0.35);
 
   --wg-secondary: #0d1117;
-  --wg-hero-bg: #030B1C;
+  --wg-hero-bg: #000000;
   --wg-hero-gradient: linear-gradient(
     135deg,
-    #030B1C 0%,
-    #06142F 55%,
-    #0B4DBB 100%
+    #000000 0%,
+    #0a0a0a 55%,
+    #158852 100%
   );
-  --wg-hero-banner-accent: #0B4DBB;
+  --wg-hero-banner-accent: #158852;
 
-  --wg-bg: #030B1C;
-  --wg-surface: #06142F;
-  --wg-surface-alt: #0A1F4D;
-  --wg-text: #F8FCFF;
-  --wg-text-secondary: #B8CCF0;
-  --wg-text-muted: #7A8DB5;
-  --wg-border: rgba(148, 184, 255, 0.14);
-  --wg-border-light: rgba(148, 184, 255, 0.10);
+  --wg-bg: #000000;
+  --wg-surface: #0a0a0a;
+  --wg-surface-alt: #141414;
+  --wg-text: #FFFFFF;
+  --wg-text-secondary: #D4D4D8;
+  --wg-text-muted: #A1A1AA;
+  --wg-border: rgba(255, 255, 255, 0.14);
+  --wg-border-light: rgba(255, 255, 255, 0.08);
 }
 
 @media (max-width: 900px) {
@@ -115,5 +115,3 @@
     --header-height: 64px;
   }
 }
-path">
-D:/E/WorkGo/website-frontend/src/_webapp-mirror/styles/variables.css

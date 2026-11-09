@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Menu,
   X,
@@ -22,6 +23,7 @@ import ThemeToggle from '@/components/common/ThemeToggle';
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) {
+  const t = useTranslations('header');
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [miniSearchQuery, setMiniSearchQuery] = useState('');
@@ -112,10 +114,10 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
                 type="text"
                 value={miniSearchQuery}
                 onChange={(e) => setMiniSearchQuery(e.target.value)}
-                placeholder="Bạn muốn tìm dịch vụ gì?"
+                placeholder={t('searchPlaceholder')}
                 className={styles.navSearchInput}
               />
-              <button className={styles.navSearchBtn} type="submit" aria-label="Tìm kiếm">
+              <button className={styles.navSearchBtn} type="submit" aria-label={t('searchAria')}>
                 <Search size={15} />
               </button>
             </form>
@@ -129,7 +131,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
             onClick={() => onNavigate && onNavigate('catalog')}
           >
             <LayoutGrid size={18} aria-hidden="true" />
-            Danh mục
+            {t('navCatalog')}
           </button>
           <button
             type="button"
@@ -137,7 +139,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
             onClick={() => onNavigate && onNavigate('orders')}
           >
             <Package size={18} aria-hidden="true" />
-            Đơn hàng
+            {t('navOrders')}
           </button>
           <button
             type="button"
@@ -145,7 +147,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
             onClick={() => onNavigate && onNavigate('finance')}
           >
             <Wallet size={18} aria-hidden="true" />
-            Tài chính
+            {t('navFinance')}
           </button>
           <button
             type="button"
@@ -171,7 +173,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
                 onClick={() => onOpenAuth && onOpenAuth('login')}
               >
                 <LogIn size={18} aria-hidden="true" />
-                Đăng nhập
+                {t('signIn')}
               </button>
               <button
                 type="button"
@@ -179,7 +181,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
                 onClick={() => onOpenAuth && onOpenAuth('register')}
               >
                 <UserPlus size={18} aria-hidden="true" />
-                Đăng ký
+                {t('signUp')}
               </button>
             </>
           )}
@@ -205,11 +207,11 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
               <ThemeToggle showLabel />
             </div>
             {[
-              { key: 'catalog', icon: LayoutGrid, label: 'Danh mục' },
-              { key: 'home', icon: House, label: 'Trang chủ' },
-              { key: 'finance', icon: Wallet, label: 'Tài chính' },
-              { key: 'orders', icon: Package, label: 'Đơn hàng' },
-              { key: 'availability', icon: CalendarClock, label: 'Lịch rảnh' },
+              { key: 'catalog', icon: LayoutGrid, label: t('mobileCatalog') },
+              { key: 'home', icon: House, label: t('mobileHome') },
+              { key: 'finance', icon: Wallet, label: t('mobileFinance') },
+              { key: 'orders', icon: Package, label: t('mobileOrders') },
+              { key: 'availability', icon: CalendarClock, label: t('mobileAvailability') },
             ].map(({ key, icon: Icon, label }) => (
               <button
                 key={key}
@@ -230,7 +232,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
               onClick={() => setMobileMenuOpen(false)}
             >
               <Sparkles size={18} aria-hidden="true" />
-              Trở thành Provider
+              {t('becomeProvider')}
             </a>
 
             {isLoggedIn ? (
@@ -266,7 +268,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
                     }}
                   >
                     <LogOut size={18} aria-hidden="true" />
-                    Đăng xuất
+                    {t('logout')}
                   </button>
                 </div>
               </>
@@ -281,7 +283,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
                   }}
                 >
                   <LogIn size={18} aria-hidden="true" />
-                  Đăng nhập
+                  {t('signIn')}
                 </button>
                 <button
                   type="button"
@@ -292,7 +294,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
                   }}
                 >
                   <UserPlus size={18} aria-hidden="true" />
-                  Đăng ký miễn phí
+                  {t('registerFree')}
                 </button>
               </div>
             )}

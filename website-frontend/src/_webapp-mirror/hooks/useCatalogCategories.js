@@ -13,7 +13,7 @@ export const CATEGORY_META = {
   },
   'lap-trinh-it': {
     iconName: 'Code2',
-    accentColor: '#1677FF',
+    accentColor: '#1dbf73',
     executionType: 'DIGITAL',
     executionLabel: 'Online',
     popularTags: ['Web Next.js', 'App Mobile', 'API & Cloud'],
@@ -89,7 +89,7 @@ export function useCatalogCategories() {
           return {
             ...cat,
             iconName: meta.iconName || 'Default',
-            accentColor: meta.accentColor || '#1677FF',
+            accentColor: meta.accentColor || '#1dbf73',
             executionType: meta.executionType || 'DIGITAL',
             executionLabel: meta.executionLabel || null,
             popularTags: meta.popularTags || (cat.children || []).map((c) => c.name),

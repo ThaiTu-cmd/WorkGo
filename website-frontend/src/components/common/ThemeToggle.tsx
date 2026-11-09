@@ -59,12 +59,15 @@ export default function ThemeToggle({
     }
   };
 
+  const isDark = theme === "dark";
+
   // Prevent hydration mismatch: render placeholder until mounted
   if (!mounted) {
     return (
       <button
         type="button"
-        className={`inline-flex items-center justify-center p-2 rounded-lg text-slate-400 min-h-[44px] min-w-[44px] cursor-pointer opacity-70 ${className}`}
+        className={`inline-flex items-center justify-center p-2 rounded-lg min-h-[44px] min-w-[44px] cursor-pointer opacity-70 ${className}`}
+        style={{ color: "var(--text-secondary, #94a3b8)" }}
         aria-label="Chuyển chế độ giao diện Sáng / Tối"
         disabled
       >
@@ -73,20 +76,23 @@ export default function ThemeToggle({
     );
   }
 
-  const isDark = theme === "dark";
-
   return (
     <button
       type="button"
       onClick={toggleTheme}
-      className={`inline-flex items-center justify-center gap-2 p-2 rounded-lg text-slate-300 hover:text-white bg-slate-800/70 hover:bg-slate-700/80 border border-slate-700/80 transition-all min-h-[44px] min-w-[44px] cursor-pointer shadow-sm ${className}`}
+      className={`inline-flex items-center justify-center gap-2 p-2 rounded-lg transition-all min-h-[44px] min-w-[44px] cursor-pointer shadow-sm ${className}`}
+      style={{
+        color: isDark ? "var(--text-primary, #F8FCFF)" : "var(--text-primary, #06142F)",
+        background: isDark ? "var(--bg-muted, #0A1F4D)" : "var(--bg-muted, #EDF5FF)",
+        border: "1px solid var(--border-default, #D3E3F8)",
+      }}
       aria-label={`Chuyển sang giao diện ${isDark ? "Sáng" : "Tối"}`}
       title={`Đang dùng giao diện ${isDark ? "Tối" : "Sáng"}. Nhấn để đổi sang ${isDark ? "Sáng" : "Tối"}.`}
     >
       {isDark ? (
-        <Sun size={18} className="text-amber-400 transition-transform hover:rotate-45" aria-hidden="true" />
+        <Sun size={18} style={{ color: "#F59E0B" }} className="transition-transform hover:rotate-45" aria-hidden="true" />
       ) : (
-        <Moon size={18} className="text-blue-500 transition-transform hover:-rotate-12" aria-hidden="true" />
+        <Moon size={18} style={{ color: "#1dbf73" }} className="transition-transform hover:-rotate-12" aria-hidden="true" />
       )}
       {showLabel && (
         <span className="text-xs font-medium">

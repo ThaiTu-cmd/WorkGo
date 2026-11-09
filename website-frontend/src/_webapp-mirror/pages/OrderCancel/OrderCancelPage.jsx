@@ -1,30 +1,46 @@
+import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from 'react';
 import { AlertTriangle, ArrowLeft, Loader2, Upload } from 'lucide-react';
 import OrderStatusBadge from '../OrderDashboard/components/OrderStatusBadge';
 import { orderApi, orderErrorMessage } from '../../api/orderApi';
 import styles from './OrderCancelPage.module.css';
-
 const NOTE_MIN = 20;
 const NOTE_MAX = 500;
-
 const REASONS = {
-  CLIENT: [
-    { code: 'CHANGED_MIND', label: 'Đổi ý / không còn nhu cầu' },
-    { code: 'LATE', label: 'Chuyên gia chậm tiến độ' },
-    { code: 'QUALITY', label: 'Chất lượng không như mô tả' },
-    { code: 'NO_CONTACT', label: 'Không liên lạc được chuyên gia' },
-    { code: 'WRONG_ORDER', label: 'Đặt nhầm gói / dịch vụ' },
-    { code: 'OTHER', label: 'Lý do khác' },
-  ],
-  PROVIDER: [
-    { code: 'OVERLOADED', label: 'Quá tải lịch, không kịp nhận đơn' },
-    { code: 'OUT_OF_SCOPE', label: 'Yêu cầu ngoài phạm vi gói' },
-    { code: 'MISSING_INFO', label: 'Thiếu thông tin từ khách hàng' },
-    { code: 'OTHER', label: 'Lý do khác' },
-  ],
+  CLIENT: [{
+    code: 'CHANGED_MIND',
+    label: "Changed mind / no longer needed"
+  }, {
+    code: 'LATE',
+    label: "Experts are behind schedule"
+  }, {
+    code: 'QUALITY',
+    label: "Quality is not as described"
+  }, {
+    code: 'NO_CONTACT',
+    label: "Unable to contact specialist"
+  }, {
+    code: 'WRONG_ORDER',
+    label: "Ordered the wrong package/service"
+  }, {
+    code: 'OTHER',
+    label: "Other reasons"
+  }],
+  PROVIDER: [{
+    code: 'OVERLOADED',
+    label: "Overcrowded schedule, unable to receive applications in time"
+  }, {
+    code: 'OUT_OF_SCOPE',
+    label: "Request outside package scope"
+  }, {
+    code: 'MISSING_INFO',
+    label: "Lack of information from customers"
+  }, {
+    code: 'OTHER',
+    label: "Other reasons"
+  }]
 };
-
-const formatPrice = (num) => new Intl.NumberFormat('vi-VN').format(num || 0) + ' ₫';
+const formatPrice = num => new Intl.NumberFormat('vi-VN').format(num || 0) + ' ₫';
 
 // What cancelling means for this order/role. null → cancelling is not allowed
 // (order-service ErrorCode.ORDER_CANCEL_NOT_ALLOWED).
@@ -32,78 +48,92 @@ export function getCancelPolicy(order, role) {
   if (!order) return null;
   const status = order.orderStatus;
   if (role === 'PROVIDER') {
-    return status === 'CONFIRMED' || status === 'IN_PROGRESS'
-      ? { mode: 'request', paid: order.totalAmount, deducted: 0, refund: order.totalAmount }
-      : null;
+    return status === 'CONFIRMED' || status === 'IN_PROGRESS' ? {
+      mode: 'request',
+      paid: order.totalAmount,
+      deducted: 0,
+      refund: order.totalAmount
+    } : null;
   }
-  if (status === 'PENDING_PAYMENT') return { mode: 'immediate', paid: 0, deducted: 0, refund: 0 };
+  if (status === 'PENDING_PAYMENT') return {
+    mode: 'immediate',
+    paid: 0,
+    deducted: 0,
+    refund: 0
+  };
   if (status === 'CONFIRMED') {
-    return { mode: 'request', paid: order.totalAmount, deducted: 0, refund: order.totalAmount };
+    return {
+      mode: 'request',
+      paid: order.totalAmount,
+      deducted: 0,
+      refund: order.totalAmount
+    };
   }
   if (status === 'IN_PROGRESS') {
     if (order.cancelRequest) return null;
-    return { mode: 'request', paid: order.totalAmount, deducted: order.platformFee, refund: order.subtotal };
+    return {
+      mode: 'request',
+      paid: order.totalAmount,
+      deducted: order.platformFee,
+      refund: order.subtotal
+    };
   }
   return null;
 }
-
-export default function OrderCancelPage({ order, role = 'CLIENT', onBack, onSubmit, onShowToast }) {
+export default function OrderCancelPage({
+  order,
+  role = 'CLIENT',
+  onBack,
+  onSubmit,
+  onShowToast
+}) {
+  const tr = useTranslations("misc");
   const policy = useMemo(() => getCancelPolicy(order, role), [order, role]);
   const reasons = REASONS[role] || REASONS.CLIENT;
-
   const [reasonCode, setReasonCode] = useState('');
   const [note, setNote] = useState('');
   const [noteTouched, setNoteTouched] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState(null);
-
   const isProvider = role === 'PROVIDER';
   const isRequest = policy?.mode === 'request';
   const noteRequired = isRequest || reasonCode === 'OTHER';
   const noteOk = !noteRequired || note.trim().length >= NOTE_MIN;
   const showNoteError = noteTouched && !noteOk;
   const canSubmit = Boolean(reasonCode) && noteOk && confirmed && !isSubmitting;
-
-  const title = isProvider ? 'Từ chối đơn hàng' : isRequest ? 'Yêu cầu hủy đơn hàng' : 'Hủy đơn hàng';
-  const submitLabel = isProvider ? 'Từ chối đơn' : isRequest ? 'Gửi yêu cầu hủy' : 'Xác nhận hủy đơn';
-  const partnerLabel = isProvider ? 'Khách hàng' : 'Chuyên gia';
-
-  const subtitle = isProvider
-    ? 'Khách hàng sẽ được hoàn 100% số tiền đã thanh toán. Từ chối thường xuyên có thể ảnh hưởng tới xếp hạng của bạn.'
-    : isRequest
-      ? 'Đơn đang được thực hiện nên yêu cầu sẽ được gửi tới chuyên gia và WorkGo xem xét trong vòng 48 giờ.'
-      : 'Chuyên gia chưa bắt đầu thực hiện, đơn sẽ được hủy ngay khi bạn xác nhận.';
-
-  const handleSubmit = async (e) => {
+  const title = isProvider ? tr("m619") : isRequest ? tr("m620") : tr("m621");
+  const submitLabel = isProvider ? tr("m622") : isRequest ? tr("m623") : tr("m624");
+  const partnerLabel = isProvider ? tr("m625") : tr("m60");
+  const subtitle = isProvider ? tr("m626") : isRequest ? tr("m627") : tr("m628");
+  const handleSubmit = async e => {
     e.preventDefault();
     setNoteTouched(true);
     if (!canSubmit || !policy || isSubmitting) return;
-
     setIsSubmitting(true);
     setApiError(null);
     try {
       const res = await orderApi.cancelOrder(order.orderId, {
         reasonCode,
-        note: note.trim() || undefined,
+        note: note.trim() || undefined
       });
       const result = res?.result;
       if (result?.status === 'AUTO_APPROVED') {
-        if (onShowToast) onShowToast('Đơn hàng đã được hủy thành công.');
+        if (onShowToast) onShowToast(tr("m629"));
       } else {
-        if (onShowToast) onShowToast('Đã gửi yêu cầu hủy đơn, chờ đối tác phản hồi.');
+        if (onShowToast) onShowToast(tr("m630"));
       }
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('workgo-orders-changed'));
       }
-      const reason = reasons.find((r) => r.code === reasonCode);
+      const reason = reasons.find(r => r.code === reasonCode);
       if (onSubmit) {
         onSubmit({
           reasonCode,
           reasonLabel: reason?.label || reasonCode,
           note: note.trim(),
           mode: policy.mode,
-          result,
+          result
         });
       }
     } catch (err) {
@@ -114,54 +144,44 @@ export default function OrderCancelPage({ order, role = 'CLIENT', onBack, onSubm
       setIsSubmitting(false);
     }
   };
-
-  const breadcrumb = (
-    <nav className={styles.breadcrumbNav} aria-label="Breadcrumb">
+  const breadcrumb = <nav className={styles.breadcrumbNav} aria-label="Breadcrumb">
       <button type="button" className={styles.backBtn} onClick={onBack}>
-        <ArrowLeft size={16} /> Đơn hàng
-      </button>
+        <ArrowLeft size={16} />{tr("m49")}</button>
       <span className={styles.sep}>/</span>
       <span>{order?.orderNumber}</span>
       <span className={styles.sep}>/</span>
-      <span className={styles.current}>{isProvider ? 'Từ chối' : 'Yêu cầu hủy'}</span>
-    </nav>
-  );
-
+      <span className={styles.current}>{isProvider ? tr("m631") : tr("m632")}</span>
+    </nav>;
   if (!policy) {
-    return (
-      <div>
+    return <div>
         {breadcrumb}
         <section className={styles.blocked} role="alert">
           <AlertTriangle size={40} className={styles.blockedIcon} />
-          <h1 className={styles.pageTitle}>Không thể hủy đơn này</h1>
+          <h1 className={styles.pageTitle}>{tr("m655")}</h1>
           <p>
-            {order?.cancelRequest
-              ? 'Đơn đã có yêu cầu hủy đang chờ xử lý.'
-              : 'Đơn đã hoàn tất, đã hủy hoặc bạn không có quyền hủy ở trạng thái hiện tại.'}
+            {order?.cancelRequest ? tr("m633") : tr("m634")}
           </p>
-          <button type="button" className={`${styles.btn} ${styles.btnOutline}`} onClick={onBack}>
-            Quay lại danh sách
-          </button>
+          <button type="button" className={`${styles.btn} ${styles.btnOutline}`} onClick={onBack}>{tr("m657")}</button>
         </section>
-      </div>
-    );
+      </div>;
   }
-
-  const steps = isRequest
-    ? [
-        { title: 'Gửi yêu cầu', desc: 'Đơn được gắn trạng thái "Đang yêu cầu hủy"' },
-        { title: 'Chuyên gia phản hồi', desc: 'Trong vòng 48 giờ, quá hạn WorkGo sẽ xử lý' },
-        { title: 'Hoàn tiền từ Escrow', desc: 'Về nguồn thanh toán sau 3–5 ngày làm việc' },
-      ]
-    : [
-        { title: 'Hủy đơn ngay', desc: 'Đơn chuyển sang "Đã hủy"' },
-        ...(policy.paid > 0
-          ? [{ title: 'Hoàn tiền từ Escrow', desc: 'Về nguồn thanh toán sau 3–5 ngày làm việc' }]
-          : []),
-      ];
-
-  return (
-    <div>
+  const steps = isRequest ? [{
+    title: tr("m635"),
+    desc: tr("m636")
+  }, {
+    title: tr("m637"),
+    desc: tr("m638")
+  }, {
+    title: tr("m639"),
+    desc: tr("m640")
+  }] : [{
+    title: tr("m641"),
+    desc: tr("m642")
+  }, ...(policy.paid > 0 ? [{
+    title: tr("m639"),
+    desc: tr("m640")
+  }] : [])];
+  return <div>
       {breadcrumb}
       <h1 className={styles.pageTitle}>{title}</h1>
       <p className={styles.pageSubtitle}>{subtitle}</p>
@@ -170,160 +190,110 @@ export default function OrderCancelPage({ order, role = 'CLIENT', onBack, onSubm
         {/* ===== Form ===== */}
         <form className={styles.card} onSubmit={handleSubmit} noValidate>
           <fieldset className={styles.field}>
-            <legend className={styles.fieldLabel}>
-              Lý do {isProvider ? 'từ chối' : 'hủy'} <span className={styles.req}>*</span>
+            <legend className={styles.fieldLabel}>{tr("m1503")}{isProvider ? tr("m643") : tr("m644")} <span className={styles.req}>*</span>
             </legend>
             <div className={styles.reasonList}>
-              {reasons.map((r) => (
-                <label
-                  key={r.code}
-                  className={`${styles.reasonCard} ${reasonCode === r.code ? styles.reasonSelected : ''}`}
-                >
-                  <input
-                    type="radio"
-                    name="cancel-reason"
-                    value={r.code}
-                    checked={reasonCode === r.code}
-                    onChange={() => setReasonCode(r.code)}
-                  />
+              {reasons.map(r => <label key={r.code} className={`${styles.reasonCard} ${reasonCode === r.code ? styles.reasonSelected : ''}`}>
+                  <input type="radio" name="cancel-reason" value={r.code} checked={reasonCode === r.code} onChange={() => setReasonCode(r.code)} />
                   <span>{r.label}</span>
-                </label>
-              ))}
+                </label>)}
             </div>
           </fieldset>
 
           <div className={styles.field}>
-            <label className={styles.fieldLabel} htmlFor="cancel-note">
-              Mô tả chi tiết {noteRequired ? <span className={styles.req}>*</span> : <span className={styles.optional}>(tùy chọn)</span>}
+            <label className={styles.fieldLabel} htmlFor="cancel-note">{tr("m1504")}{noteRequired ? <span className={styles.req}>*</span> : <span className={styles.optional}>{tr("m661")}</span>}
             </label>
-            <textarea
-              id="cancel-note"
-              rows={5}
-              maxLength={NOTE_MAX}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              onBlur={() => setNoteTouched(true)}
-              className={`${styles.textarea} ${showNoteError ? styles.textareaInvalid : ''}`}
-              placeholder={
-                isProvider
-                  ? 'Giải thích ngắn gọn cho khách hàng lý do bạn không thể nhận đơn...'
-                  : `Nêu rõ vấn đề bạn gặp, các mốc đã trao đổi với chuyên gia... (tối thiểu ${NOTE_MIN} ký tự)`
-              }
-              aria-invalid={showNoteError}
-              aria-describedby="cancel-note-hint cancel-note-error"
-            />
+            <textarea id="cancel-note" rows={5} maxLength={NOTE_MAX} value={note} onChange={e => setNote(e.target.value)} onBlur={() => setNoteTouched(true)} className={`${styles.textarea} ${showNoteError ? styles.textareaInvalid : ''}`} placeholder={isProvider ? tr("m645") : tr("m646", {
+            p0: NOTE_MIN
+          })} aria-invalid={showNoteError} aria-describedby="cancel-note-hint cancel-note-error" />
             <div className={styles.fieldFoot}>
-              {showNoteError && (
-                <span id="cancel-note-error" className={styles.error}>
-                  Vui lòng mô tả ít nhất {NOTE_MIN} ký tự.
-                </span>
-              )}
+              {showNoteError && <span id="cancel-note-error" className={styles.error}>{tr("m1505")}{NOTE_MIN}{tr("m1506")}</span>}
               <span id="cancel-note-hint" className={styles.counter}>
                 {note.length}/{NOTE_MAX}
               </span>
             </div>
           </div>
 
-          {isRequest && (
-            <div className={styles.field}>
-              <span className={styles.fieldLabel}>Bằng chứng (tùy chọn)</span>
+          {isRequest && <div className={styles.field}>
+              <span className={styles.fieldLabel}>{tr("m663")}</span>
               <label className={styles.upload}>
                 <input type="file" multiple accept="image/*,.pdf" className={styles.uploadInput} />
                 <Upload size={22} />
-                <span>
-                  Kéo thả hoặc <strong>chọn tệp</strong> — ảnh chụp tin nhắn, file bàn giao (PNG, JPG, PDF ≤ 5MB)
-                </span>
+                <span>{tr("m664")}<strong>{tr("m665")}</strong>{tr("m666")}</span>
               </label>
-            </div>
-          )}
+            </div>}
 
           <label className={styles.confirm}>
-            <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
+            <input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />
             <span>
-              {isRequest
-                ? 'Tôi hiểu rằng khi yêu cầu được chấp nhận, đơn sẽ bị hủy và không thể khôi phục.'
-                : 'Tôi hiểu rằng đơn sẽ bị hủy ngay và không thể khôi phục.'}
+              {isRequest ? tr("m647") : tr("m648")}
             </span>
           </label>
 
-          {apiError && (
-            <div className={styles.error} style={{ padding: '0.75rem', backgroundColor: '#fef2f2', borderRadius: '6px', color: '#dc2626', marginBottom: '1rem', border: '1px solid #fecaca' }} role="alert">
+          {apiError && <div className={styles.error} style={{
+          padding: '0.75rem',
+          backgroundColor: '#fef2f2',
+          borderRadius: '6px',
+          color: '#dc2626',
+          marginBottom: '1rem',
+          border: '1px solid #fecaca'
+        }} role="alert">
               {apiError}
-            </div>
-          )}
+            </div>}
 
           <div className={styles.formActions}>
-            <button type="button" className={`${styles.btn} ${styles.btnOutline}`} onClick={onBack} disabled={isSubmitting}>
-              Quay lại
-            </button>
+            <button type="button" className={`${styles.btn} ${styles.btnOutline}`} onClick={onBack} disabled={isSubmitting}>{tr("m465")}</button>
             <button type="submit" className={`${styles.btn} ${styles.btnDanger}`} disabled={!canSubmit || isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={16} className={styles.spinner || ''} style={{ display: 'inline', marginRight: '6px', animation: 'spin 1s linear infinite' }} />
-                  Đang xử lý...
-                </>
-              ) : (
-                submitLabel
-              )}
+              {isSubmitting ? <>
+                  <Loader2 size={16} className={styles.spinner || ''} style={{
+                display: 'inline',
+                marginRight: '6px',
+                animation: 'spin 1s linear infinite'
+              }} />{tr("m26")}</> : submitLabel}
             </button>
           </div>
         </form>
 
         {/* ===== Summary ===== */}
-        <aside className={styles.summary} aria-label="Tóm tắt đơn hàng">
-          <h2 className={styles.cardTitle}>Đơn hàng</h2>
+        <aside className={styles.summary} aria-label={tr("m649")}>
+          <h2 className={styles.cardTitle}>{tr("m49")}</h2>
           <div className={styles.orderHead}>
             <span className={styles.orderNo}>{order.orderNumber}</span>
             <OrderStatusBadge status={order.orderStatus} />
           </div>
           <p className={styles.svcTitle}>{order.title}</p>
-          {order.counterpartName && (
-            <p className={styles.partner}>
+          {order.counterpartName && <p className={styles.partner}>
               {partnerLabel}: <strong>{order.counterpartName}</strong>
-            </p>
-          )}
+            </p>}
 
           <div className={styles.refund}>
-            <h3>{isProvider ? 'Khách được hoàn' : 'Hoàn tiền dự kiến'}</h3>
-            {policy.paid === 0 ? (
-              <p className={styles.refundNote}>Đơn chưa thanh toán nên không phát sinh hoàn tiền.</p>
-            ) : (
-              <>
+            <h3>{isProvider ? tr("m650") : tr("m651")}</h3>
+            {policy.paid === 0 ? <p className={styles.refundNote}>{tr("m669")}</p> : <>
                 <dl>
                   <div>
-                    <dt>Đã thanh toán</dt>
+                    <dt>{tr("m670")}</dt>
                     <dd>{formatPrice(policy.paid)}</dd>
                   </div>
-                  {policy.deducted > 0 && (
-                    <div>
-                      <dt>Phí nền tảng (không hoàn)</dt>
+                  {policy.deducted > 0 && <div>
+                      <dt>{tr("m671")}</dt>
                       <dd>−{formatPrice(policy.deducted)}</dd>
-                    </div>
-                  )}
+                    </div>}
                   <div className={styles.refundTotal}>
-                    <dt>{isRequest ? 'Hoàn tối đa' : 'Hoàn 100%'}</dt>
+                    <dt>{isRequest ? tr("m652") : tr("m653")}</dt>
                     <dd>{formatPrice(policy.refund)}</dd>
                   </div>
                 </dl>
-                {isRequest && (
-                  <p className={styles.refundNote}>
-                    Mức hoàn cuối cùng phụ thuộc phần việc chuyên gia đã thực hiện và kết quả đối soát.
-                  </p>
-                )}
-              </>
-            )}
+                {isRequest && <p className={styles.refundNote}>{tr("m673")}</p>}
+              </>}
           </div>
 
           <ol className={styles.timeline}>
-            {steps.map((s, i) => (
-              <li key={s.title} className={i === 0 ? styles.tlActive : ''}>
+            {steps.map((s, i) => <li key={s.title} className={i === 0 ? styles.tlActive : ''}>
                 <strong>{s.title}</strong>
                 <span>{s.desc}</span>
-              </li>
-            ))}
+              </li>)}
           </ol>
         </aside>
       </div>
-    </div>
-  );
+    </div>;
 }

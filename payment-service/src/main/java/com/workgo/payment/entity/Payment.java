@@ -127,4 +127,7 @@ public class Payment {
     @Column(name = "payer_id", nullable = false)
     UUID payerId;
 
+    @Column(name = "provider_id")
+    UUID providerId;
+
 }

@@ -2,6 +2,7 @@ package com.workgo.order.service;
 
 import com.workgo.order.dto.PageResponse;
 import com.workgo.order.dto.request.OrderCreationRequest;
+import com.workgo.order.dto.request.PaymentConfirmedRequest;
 import com.workgo.order.dto.request.SlotActionRequest;
 import com.workgo.order.dto.response.OrderDetailResponse;
 import com.workgo.order.dto.response.OrderItemResponse;
@@ -41,6 +42,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,6 +74,8 @@ public class OrderService {
     ExecutionRepository executionRepository;
     OnsiteExecutionRepository onsiteExecutionRepository;
     PasswordEncoder passwordEncoder;
+    TextEncryptor checkinCodeEncryptor;
+    CancellationService cancellationService;
     TokenUtils tokenUtils;
 
     @NonFinal
@@ -163,20 +167,25 @@ public class OrderService {
     }
 
     @Transactional
-    public PaymentConfirmationResponse<Object> confirmPayment(UUID orderId) {
+    public PaymentConfirmationResponse<Object> confirmPayment(UUID orderId, PaymentConfirmedRequest request) {
+
+        if (request.getPaymentId() == null) {
+            throw new AppException(ErrorCode.ORDER_PAYMENT_ID_REQUIRED);
+        }
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        //da confirm roi hoac don da huy -> tra trang thai hien tai, payment tu xu ly
+        if (order.getPaymentStatus() == PaymentStatus.SUCCEEDED
+                || order.getOrderStatus() == OrderStatus.CANCELLED) {
+            return toConfirmationResponse(order, null);
+        }
 
         if (order.getOrderStatus() != OrderStatus.PENDING_PAYMENT) {
             throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
         }
 
-        order.setPaymentStatus(PaymentStatus.SUCCEEDED);
-
-        orderStatusService.transition(order, OrderStatus.CONFIRMED, null, RoleName.SYSTEM);
-
-        String checkinCode = null;
         Object executionStatus = null;
 
         //chi on site
@@ -189,23 +198,26 @@ public class OrderService {
                     .findByExecution_ExecutionId(execution.getExecutionId())
                     .orElseThrow(() -> new AppException(ErrorCode.ORDER_EXECUTION_NOT_FOUND));
 
-            //slot HELD -> BOOKED, loi thi rollback ca confirm
-            confirmSlot(onsite.getBookingSlotId(), orderId);
+            //slot HELD -> BOOKED, slot het han giu -> huy don, payment refund
+            if (!confirmSlot(onsite.getBookingSlotId(), orderId)) {
+                cancellationService.cancelBySystem(order);
+                return toConfirmationResponse(order, onsite.getStatus());
+            }
 
-            checkinCode = generateCheckinCode();
+            String checkinCode = generateCheckinCode();
             onsite.setCheckinCodeHash(passwordEncoder.encode(checkinCode));
+            onsite.setCheckinCodeEncrypted(checkinCodeEncryptor.encrypt(checkinCode));
             onsiteExecutionRepository.save(onsite);
 
             executionStatus = onsite.getStatus();
         }
 
-        return PaymentConfirmationResponse.builder()
-                .orderId(order.getOrderId())
-                .orderStatus(order.getOrderStatus())
-                .paymentStatus(order.getPaymentStatus())
-                .executionStatus(executionStatus)
-                .checkinCode(checkinCode)
-                .build();
+        order.setPaymentStatus(PaymentStatus.SUCCEEDED);
+        order.setPaymentId(request.getPaymentId());
+
+        orderStatusService.transition(order, OrderStatus.CONFIRMED, null, RoleName.SYSTEM);
+
+        return toConfirmationResponse(order, executionStatus);
     }
 
     //lay so tien + han thanh toan cua order
@@ -247,18 +259,27 @@ public class OrderService {
         return String.format("%06d", new SecureRandom().nextInt(1_000_000));
     }
 
-    private void confirmSlot(UUID slotId, UUID orderId) {
+    private boolean confirmSlot(UUID slotId, UUID orderId) {
         try {
             catalogClient.confirmSlot(slotId, SlotActionRequest.builder()
                     .orderId(orderId)
                     .build());
+            return true;
         } catch (FeignException e) {
-            //slot khong con duoc giu boi order nay
             if (e.status() == HttpStatus.CONFLICT.value()) {
-                throw new AppException(ErrorCode.ORDER_SLOT_HOLD_EXPIRED);
+                return false;
             }
             throw new AppException(ErrorCode.CATALOG_UNAVAILABLE);
         }
+    }
+
+    private PaymentConfirmationResponse<Object> toConfirmationResponse(Order order, Object executionStatus) {
+        return PaymentConfirmationResponse.builder()
+                .orderId(order.getOrderId())
+                .orderStatus(order.getOrderStatus())
+                .paymentStatus(order.getPaymentStatus())
+                .executionStatus(executionStatus)
+                .build();
     }
 
     //loc ra addon duoc chon

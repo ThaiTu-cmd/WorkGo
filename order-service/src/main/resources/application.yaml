@@ -33,3 +33,6 @@ app:
 
 order:
   platform-fee-rate: 0.10
+  checkin-code:
+    secret: ${CHECKIN_CODE_SECRET:dev-checkin-code-secret}
+    salt: ${CHECKIN_CODE_SALT:5c0744940b5c369b}

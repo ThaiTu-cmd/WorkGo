@@ -44,7 +44,7 @@ import java.util.UUID;
 @Slf4j
 public class PaymentService {
 
-    private static final List<PaymentStatus> WAITING_STATUSES =
+    public static final List<PaymentStatus> WAITING_STATUSES =
             List.of(PaymentStatus.INITIATED, PaymentStatus.PENDING);
 
     PaymentRepository paymentRepository;
@@ -53,6 +53,7 @@ public class PaymentService {
     OrderClient orderClient;
     Map<PaymentGateway, PaymentGatewayClient> gatewayClients;
     PaymentCodeGenerator paymentCodeGenerator;
+    PaymentStatusService paymentStatusService;
     TokenUtils tokenUtils;
 
     @NonFinal
@@ -132,6 +133,7 @@ public class PaymentService {
                 .paymentCode(paymentCodeGenerator.generate())
                 .orderId(order.getOrderId())
                 .payerId(payerId)
+                .providerId(order.getProviderId())
                 .amount(order.getTotalAmount())
                 .platformFeeAmount(order.getPlatformFee())
                 .providerNetAmount(order.getProviderNetAmount())
@@ -159,17 +161,15 @@ public class PaymentService {
             payment.setPaymentUrl(result.getPaymentUrl());
             payment.setQrCodeUrl(result.getQrCodeUrl());
             payment.setDeeplink(result.getDeeplink());
-            changeStatus(payment, PaymentStatus.PENDING);
+            paymentStatusService.transition(payment, PaymentStatus.PENDING);
 
         } catch (Exception e) {
-            log.warn("Create payment {} on {} failed", payment.getPaymentCode(), payment.getGateway(), e);
 
             payment.setFailureCode("GATEWAY_CREATE_FAILED");
             payment.setFailureMessage(e.getMessage());
-            changeStatus(payment, PaymentStatus.FAILED);
+            paymentStatusService.transition(payment, PaymentStatus.FAILED);
             paymentRepository.save(payment);
 
-            //client tao lai voi Idempotency-Key moi
             throw new AppException(ErrorCode.GATEWAY_UNAVAILABLE);
         }
 
@@ -198,6 +198,21 @@ public class PaymentService {
                 .toList();
     }
 
+    @Transactional
+    public void expirePayment(UUID paymentId) {
+
+        Payment payment = loadPayment(paymentId);
+
+        //IPN vua ve truoc job -> bo qua
+        if (!WAITING_STATUSES.contains(payment.getStatus())
+                || payment.getExpiresAt().isAfter(Instant.now())) {
+            return;
+        }
+
+        paymentStatusService.transition(payment, PaymentStatus.EXPIRED);
+        paymentRepository.save(payment);
+    }
+
     //=====================================
 
     //onsite: payment het han truoc khi slot het han
@@ -211,7 +226,6 @@ public class PaymentService {
 
         Instant payableUntil = order.getPayableUntil();
 
-        //slot het han / sap het han -> khong cho thanh toan
         if (payableUntil == null
                 || payableUntil.isBefore(now.plus(Duration.ofMinutes(slotMinRemainingMinutes)))) {
             throw new AppException(ErrorCode.PAYMENT_SLOT_HOLD_EXPIRED);
@@ -226,7 +240,7 @@ public class PaymentService {
                 ? PaymentStatus.CANCELLED
                 : PaymentStatus.EXPIRED;
 
-        changeStatus(payment, toStatus);
+        paymentStatusService.transition(payment, toStatus);
         paymentRepository.save(payment);
     }
 
@@ -237,16 +251,6 @@ public class PaymentService {
         }
 
         return paymentMapper.toResponse(payment);
-    }
-
-    private void changeStatus(Payment payment, PaymentStatus toStatus) {
-
-        if (!payment.getStatus().canTransitionTo(toStatus)) {
-            throw new AppException(ErrorCode.PAYMENT_INVALID_STATUS_TRANSITION);
-        }
-
-        payment.setStatus(toStatus);
-        payment.setUpdatedAt(Instant.now());
     }
 
     private OrderPaymentInfoResponse loadOrderInfo(UUID orderId) {

@@ -11,6 +11,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.encrypt.Encryptors;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
@@ -29,6 +31,12 @@ public class SecurityConfig {
     @Value("${app.internal-key}")
     String internalKey;
 
+    @Value("${order.checkin-code.secret}")
+    String checkinCodeSecret;
+
+    @Value("${order.checkin-code.salt}")
+    String checkinCodeSalt;
+
     private final String[] PUBLIC_ENDPOINTS = {
         "/internal/**"
     };
@@ -36,7 +44,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request ->{
-            //internal khong dung JWT, InternalKeyFilter check X-Internal-Key
             request.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                     .anyRequest().authenticated();
         });
@@ -56,6 +63,11 @@ public class SecurityConfig {
     @Bean
     PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder(10);
+    }
+
+    @Bean
+    TextEncryptor checkinCodeEncryptor(){
+        return Encryptors.delux(checkinCodeSecret, checkinCodeSalt);
     }
 
     @Bean

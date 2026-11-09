@@ -128,6 +128,9 @@ public class Order {
     @Column(name = "package_id")
     UUID packageId;
 
+    @Column(name = "payment_id")
+    UUID paymentId;
+
     @Builder.Default
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<OrderItem> orderItem = new HashSet<>();

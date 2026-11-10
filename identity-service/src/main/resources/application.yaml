@@ -22,3 +22,6 @@ spring:
 
 jwt:
   signerKey: ${JWT_SIGNER_KEY}
+
+app:
+  internal-api-key: ${INTERNAL_API_KEY:}

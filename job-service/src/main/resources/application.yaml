@@ -25,6 +25,9 @@ jwt:
 
 app:
   internal-api-key: ${INTERNAL_API_KEY:}
+  clients:
+    connect-timeout-millis: ${JOB_CLIENT_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-millis: ${JOB_CLIENT_READ_TIMEOUT_MS:5000}
   services:
     identity: ${IDENTITY_SERVICE_URL:http://localhost:8081/identity}
     catalog: ${CATALOG_SERVICE_URL:http://localhost:8082/catalog}

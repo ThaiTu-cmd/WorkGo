@@ -101,6 +101,7 @@ api-gateway/test/
 job-service/src/test/
 job-service/test/
 
-
-# Local Identity regression tests
+# Local inter-service verification
 identity-service/src/test/
+order-service/src/test/
+.worktrees/

@@ -23,12 +23,13 @@
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-card);
-  transition: all var(--transition-base);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
 }
 
 .ctaCard:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.28);
 }
 
 .clientCard {
@@ -55,6 +56,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ctaCard:hover .iconCircle {
+  transform: scale(1.1) rotate(6deg);
 }
 
 .clientCard .iconCircle {
@@ -100,8 +106,24 @@
   font-size: 1rem;
   padding: 16px 28px;
   border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
+  transition: background-color 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
   width: fit-content;
+  cursor: pointer;
+}
+
+.clientBtn svg,
+.providerBtn svg {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.clientBtn:hover svg,
+.providerBtn:hover svg {
+  transform: translateX(4px);
+}
+
+.clientBtn:active,
+.providerBtn:active {
+  transform: scale(0.96);
 }
 
 .clientBtn {
@@ -112,7 +134,7 @@
 
 .clientBtn:hover {
   background-color: var(--wg-primary-hover);
-  transform: translateX(4px);
+  box-shadow: 0 6px 18px rgba(29, 191, 115, 0.45);
 }
 
 .providerBtn {
@@ -123,5 +145,17 @@
 
 .providerBtn:hover {
   background-color: #f3f4f6;
-  transform: translateX(4px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctaCard,
+  .iconCircle,
+  .clientBtn,
+  .providerBtn,
+  .clientBtn svg,
+  .providerBtn svg {
+    transition: none !important;
+    transform: none !important;
+  }
 }

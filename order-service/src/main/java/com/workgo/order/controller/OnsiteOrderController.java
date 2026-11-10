@@ -2,6 +2,7 @@ package com.workgo.order.controller;
 
 import com.workgo.order.dto.ApiResponse;
 import com.workgo.order.dto.request.CheckinRequest;
+import com.workgo.order.dto.response.CheckinCodeResponse;
 import com.workgo.order.dto.response.OnsiteExecutionResponse;
 import com.workgo.order.exception.ErrorCode;
 import com.workgo.order.service.OnsiteFlowService;
@@ -19,6 +20,17 @@ import java.util.UUID;
 public class OnsiteOrderController {
 
     OnsiteFlowService onsiteFlowService;
+
+    //client xem ma checkin sau khi thanh toan
+    @GetMapping("/{orderId}/checkin-code")
+    ApiResponse<CheckinCodeResponse> getCheckinCode(@PathVariable UUID orderId) {
+
+        return ApiResponse.<CheckinCodeResponse>builder()
+                .code(ErrorCode.SUCCESS.getCode())
+                .message(ErrorCode.SUCCESS.getMessage())
+                .result(onsiteFlowService.getCheckinCode(orderId))
+                .build();
+    }
 
     //provider checkin da toi
     @PostMapping("/{orderId}/checkin")

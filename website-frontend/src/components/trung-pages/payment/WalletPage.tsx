@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Wallet } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { KEYS } from "../_stores/keys";
 import { mockWallet, type WalletState } from "../_mocks/mockWallet";
@@ -29,7 +30,9 @@ export default function WalletPage({ onNavigate }: TrungPageProps) {
 
   return (
     <main className={styles.wrap}>
-      <h1 className={styles.title}>Ví của tôi</h1>
+      <h1 className={styles.title}>
+        <Wallet size={24} className={styles.titleIcon} aria-hidden="true" /> Ví của tôi
+      </h1>
       <p className={styles.sub}>Tiền giữ hộ (escrow) và lịch sử giao dịch của bạn.</p>
       <div className={styles.cards}>
         <section className={styles.balance} aria-label="Tiền đang giữ hộ">

@@ -85,7 +85,7 @@
   align-items: center;
   justify-content: center;
   font-family: var(--font-heading);
-  font-weight: 800;
+  font-weight: 900;
   font-size: 1.4rem;
   margin-bottom: 14px;
 }
@@ -200,12 +200,6 @@
   outline: none;
   transition: border-color var(--transition-fast);
   background-color: var(--wg-surface);
-  color: var(--wg-text);
-}
-
-.inputField::placeholder {
-  color: var(--wg-text-muted);
-  opacity: 1;
 }
 
 .fieldWithIcon .inputField {
@@ -242,6 +236,33 @@
   margin-top: 24px;
   padding-top: 18px;
   border-top: 1px solid var(--wg-border-light);
+}
+
+.demoBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 16px;
+}
+
+.demoFillBtn {
+  background-color: var(--wg-primary);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.demoFillBtn:hover {
+  background-color: var(--wg-primary-hover);
 }
 
 .helperText {

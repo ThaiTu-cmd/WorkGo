@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -151,6 +152,11 @@ public class CancellationService {
         return cancellationRequestRepository.findByOrder_OrderId(orderId)
                 .map(cancellationRequestMapper::toResponse)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_CANCELLATION_NOT_FOUND));
+    }
+
+    //he thong tu huy don
+    public void cancelBySystem(Order order) {
+        cancelOrder(order, null, RoleName.SYSTEM);
     }
 
     //=====================================

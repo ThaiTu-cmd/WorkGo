@@ -10,12 +10,12 @@ import {
   validateDescription,
   validatePrice,
   clampPrice,
-} from "../../web-app/src/pages/ServiceForm/formValidation.js";
+} from "../src/_webapp-mirror/pages/ServiceForm/formValidation.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO = path.resolve(__dirname, "../../");
-const SRC = path.join(REPO, "web-app", "src");
+const SRC = path.join(REPO, "website-frontend", "src", "_webapp-mirror");
 
 const read = (p) => fs.readFileSync(p, "utf-8");
 
@@ -108,7 +108,7 @@ test("S3: footer bottom-bar shows the keyboard hint as plain text", () => {
 });
 
 // ---------- S5: zero console noise outside QA scripts ----------
-test("S5: no console.log/warn/error in web-app src and bridge non-mirror code", () => {
+test("S5: no console.log/warn/error in mirror src and bridge code", () => {
   const roots = [
     path.join(SRC),
     path.join(REPO, "website-frontend/src/components/webapp-bridge"),
@@ -122,14 +122,15 @@ test("S5: no console.log/warn/error in web-app src and bridge non-mirror code", 
   assert.deepEqual(hits, [], `console noise found: ${hits.join(", ")}`);
 });
 
-// ---------- S6: REPORT carries the CLOSE mark ----------
-test("S6: REPORT.md has ops quickstart, gates, keys and the CLOSE mark", () => {
+// ---------- S6: REPORT.md carries the rotation-cycle handoff contract ----------
+// (Chu kỳ 1/3: REVIEWER viết lại REPORT.md → gate cũ /CYCLE 3\/3/ + /CLOSE/ không còn đúng.
+//  Chu kỳ 3/3 kết thúc có thể chỉnh lại gate này lần nữa cho trạng thái CLOSE.)
+test("S6: REPORT.md carries cycle handoff state, gates summary and mirror totals", () => {
   const report = read(path.join(REPO, "REPORT.md"));
-  assert.match(report, /CYCLE 3\/3/);
-  assert.match(report, /CLOSE/);
-  assert.match(report, /5173/);
-  assert.match(report, /3000/);
-  assert.match(report, /workgo_provider_services_overrides/);
+  assert.match(report, /CHU KỲ 1\/3/);
+  assert.match(report, /CYCLE_STATUS:\s*CONTINUE_NEXT_CYCLE/);
+  assert.match(report, /218\s*\/\s*218/);
+  assert.match(report, /380[.,]949/);
 });
 
 // ---------- S7: trung-pages edge cases (15 Excel pages) ----------

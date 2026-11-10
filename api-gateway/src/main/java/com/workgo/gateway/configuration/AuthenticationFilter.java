@@ -15,10 +15,12 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -43,6 +45,26 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             "/identity/auth/refresh"
     };
 
+    // Read-only catalog and job data guests can browse without logging in.
+    private final String[] PUBLIC_GET_ENDPOINTS = {
+            "/catalog/categories", "/catalog/categories/**",
+            "/catalog/services", "/catalog/services/*",
+            "/catalog/packages/**",
+            "/catalog/addons/**",
+            "/catalog/medias/**",
+            "/catalog/rules/**",
+            "/catalog/slots/**",
+            "/job/jobs", "/job/jobs/*"
+    };
+
+    // Matches PUBLIC_GET_ENDPOINTS but still needs the caller's identity.
+    private final String[] PROTECTED_GET_ENDPOINTS = {
+            "/catalog/services/my-services",
+            "/job/jobs/my-jobs"
+    };
+
+    AntPathMatcher pathMatcher = new AntPathMatcher();
+
     @Value("${app.api-prefix}")
     @NonFinal
     private String apiPrefix;
@@ -61,12 +83,15 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         String token = authHeader.getFirst().replace("Bearer ", "");
         log.info("Token: {}", token);
 
-        return identityService.introspect(token).flatMap(introspectResponse -> {
-            if(introspectResponse.getResult().isValid())
-                return chain.filter(exchange);
-            else
-                return unauthenticated(exchange.getResponse());
-        }).onErrorResume(throwable -> unauthenticated(exchange.getResponse()));
+        // Only a failed/invalid introspection means "unauthenticated". Errors from the
+        // downstream service (e.g. it is down) must not become 401, or clients drop
+        // a perfectly valid token and log the user out.
+        return identityService.introspect(token)
+                .map(introspectResponse -> introspectResponse.getResult().isValid())
+                .onErrorReturn(false)
+                .flatMap(valid -> valid
+                        ? chain.filter(exchange)
+                        : unauthenticated(exchange.getResponse()));
 
     }
 
@@ -77,9 +102,20 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     private boolean isPublicEndpoint(ServerHttpRequest request){
         String path = request.getURI().getPath();
+        // MVC ignores matrix parameters; match protected paths with the same
+        // segment rules as the public wildcard (including repeated slashes).
+        String protectedPath = path.replaceAll(";[^/]*", "");
 
-        return Arrays.stream(PUBLIC_ENDPOINTS)
-                .anyMatch(publicEndpoint -> path.equals(apiPrefix + publicEndpoint));
+        if (Arrays.stream(PUBLIC_ENDPOINTS)
+                .anyMatch(publicEndpoint -> path.equals(apiPrefix + publicEndpoint))) {
+            return true;
+        }
+
+        return HttpMethod.GET.equals(request.getMethod())
+                && Arrays.stream(PROTECTED_GET_ENDPOINTS)
+                        .noneMatch(endpoint -> pathMatcher.match(apiPrefix + endpoint, protectedPath))
+                && Arrays.stream(PUBLIC_GET_ENDPOINTS)
+                        .anyMatch(pattern -> pathMatcher.match(apiPrefix + pattern, path));
     }
 
     Mono<Void> unauthenticated(ServerHttpResponse response){

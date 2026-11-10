@@ -9,8 +9,10 @@ import {
   Lock,
   RotateCcw,
   ShieldCheck,
+  CreditCard,
 } from 'lucide-react';
 import styles from './CheckoutPage.module.css';
+import { orderApi, isOrderable, NOT_ORDERABLE_MESSAGE } from '../../api/orderApi';
 
 // Mirrors order-service `order.platform-fee-rate` (application.yaml).
 const PLATFORM_FEE_RATE = 0.1;
@@ -43,7 +45,8 @@ const formatTime = (date) =>
     year: 'numeric',
   }).format(date);
 
-// Same shape as order-service PricingSnapshot.
+// Same shape as order-service PricingSnapshot. Used as the preview until the
+// order is created; afterwards the server's OrderResponse amounts win.
 function buildPricingSnapshot(pkg, addons) {
   const subtotal = (pkg.price || 0) + addons.reduce((sum, a) => sum + a.price, 0);
   const platformFee = Math.round(subtotal * PLATFORM_FEE_RATE);
@@ -51,7 +54,9 @@ function buildPricingSnapshot(pkg, addons) {
     subtotal,
     platformFeeRate: PLATFORM_FEE_RATE,
     platformFee,
-    totalAmount: subtotal + platformFee,
+    // Same as order-service: the client pays the listed price; the platform
+    // fee comes out of the provider's share.
+    totalAmount: subtotal,
     providerNetAmount: subtotal - platformFee,
     currency: 'VND',
   };
@@ -60,26 +65,26 @@ function buildPricingSnapshot(pkg, addons) {
 export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onViewOrders }) {
   const [gateway, setGateway] = useState('vnpay');
   const [agreed, setAgreed] = useState(false);
-  const [phase, setPhase] = useState('review'); // 'review' | 'redirecting' | 'success'
+  const [phase, setPhase] = useState('review'); // 'review' | 'creating' | 'success'
+  // OrderResponse from POST /order/orders.
+  const [createdOrder, setCreatedOrder] = useState(null);
 
-  // Snapshot is taken once when the page opens; later package edits don't change it.
   const [snapshotAt] = useState(() => new Date());
-  const [orderNumber] = useState(() => {
-    const pad = (n) => String(n).padStart(2, '0');
-    const ymd = `${snapshotAt.getFullYear()}${pad(snapshotAt.getMonth() + 1)}${pad(snapshotAt.getDate())}`;
-    return `WG-${ymd}-${String(snapshotAt.getTime()).slice(-4)}`;
-  });
 
-  const pricing = useMemo(
-    () => (order ? buildPricingSnapshot(order.pkg, order.addons) : null),
-    [order]
-  );
-
-  useEffect(() => {
-    if (phase !== 'redirecting') return undefined;
-    const timer = setTimeout(() => setPhase('success'), 1500);
-    return () => clearTimeout(timer);
-  }, [phase]);
+  const pricing = useMemo(() => {
+    if (!order) return null;
+    const preview = buildPricingSnapshot(order.pkg, order.addons);
+    if (!createdOrder) return preview;
+    const num = (v, fallback) => (v === null || v === undefined ? fallback : Number(v));
+    return {
+      ...preview,
+      subtotal: num(createdOrder.subtotal, preview.subtotal),
+      platformFee: num(createdOrder.platformFee, preview.platformFee),
+      totalAmount: num(createdOrder.totalAmount, preview.totalAmount),
+      providerNetAmount: num(createdOrder.providerNetAmount, preview.providerNetAmount),
+      currency: createdOrder.currency || preview.currency,
+    };
+  }, [order, createdOrder]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -104,10 +109,31 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
   const { service, pkg, addons } = order;
   const currentGateway = GATEWAYS.find((g) => g.id === gateway) || GATEWAYS[0];
 
-  const handlePay = () => {
-    if (!agreed || phase !== 'review') return;
-    setPhase('redirecting');
-    if (onShowToast) onShowToast(`Đang chuyển tới cổng ${currentGateway.name}...`);
+  // Creates the order; payment-service is not routed by the gateway yet,
+  // so the order stays PENDING_PAYMENT (see BACKEND_GAPS.md).
+  const orderable = isOrderable(service.executionType);
+
+  const handlePay = async () => {
+    if (!agreed || phase !== 'review' || !orderable) return;
+    setPhase('creating');
+    try {
+      const res = await orderApi.createOrder({
+        serviceId: service.serviceId,
+        packageId: pkg.id,
+        addonIds: addons.map((a) => a.id),
+      });
+      setCreatedOrder(res?.result ?? null);
+      setPhase('success');
+    } catch (err) {
+      setPhase('review');
+      if (onShowToast) {
+        onShowToast(
+          err?.status === 401
+            ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+            : `Không tạo được đơn hàng: ${err?.message || 'lỗi kết nối máy chủ'}`
+        );
+      }
+    }
   };
 
   const steps = [
@@ -154,11 +180,11 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
         {phase === 'success' ? (
           <section className={styles.successCard} aria-live="polite">
             <CheckCircle2 size={56} className={styles.successIcon} />
-            <h1 className={styles.pageTitle}>Thanh toán thành công</h1>
+            <h1 className={styles.pageTitle}>Đặt hàng thành công</h1>
             <p>
-              Đơn <strong>{orderNumber}</strong> đã được thanh toán {formatPrice(pricing.totalAmount)} qua{' '}
-              {currentGateway.name}. Tiền đang được WorkGo giữ <strong>Escrow</strong> và chỉ giải ngân cho chuyên gia
-              sau khi bạn nghiệm thu.
+              Đơn <strong>{createdOrder?.orderNumber || createdOrder?.orderId}</strong> đã được tạo với tổng{' '}
+              {formatPrice(pricing.totalAmount)}. Cổng thanh toán {currentGateway.name} chưa được kết nối nên đơn
+              đang ở trạng thái <strong>chờ thanh toán</strong>.
             </p>
             <div className={styles.successActions}>
               {onViewOrders && (
@@ -173,7 +199,9 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
           </section>
         ) : (
           <>
-            <h1 className={styles.pageTitle}>Xác nhận &amp; thanh toán</h1>
+            <h1 className={styles.pageTitle}>
+              <CreditCard size={26} className={styles.titleIcon} aria-hidden="true" /> Xác nhận &amp; thanh toán
+            </h1>
 
             <div className={styles.checkoutGrid}>
               {/* ===== Left column ===== */}
@@ -191,9 +219,7 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
                         <span className={styles.execBadge}>
                           {EXECUTION_LABELS[service.executionType] || service.executionType}
                         </span>
-                        <span className={styles.orderCode}>
-                          Mã đơn tạm: <strong>{orderNumber}</strong>
-                        </span>
+                        <span className={styles.orderCode}>Mã đơn được cấp khi đặt hàng</span>
                       </div>
                       <h3 className={styles.serviceTitle}>{service.title}</h3>
                       <p className={styles.provider}>
@@ -306,12 +332,12 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
                   </div>
                   <div className={styles.priceRow}>
                     <dt>
-                      Phí nền tảng ({Math.round(pricing.platformFeeRate * 100)}%)
+                      Phí nền tảng ({Math.round(pricing.platformFeeRate * 100)}%, trừ vào phần chuyên gia)
                       <span
                         className={styles.tip}
                         tabIndex={0}
-                        data-tip="Phí duy trì Escrow, hỗ trợ khiếu nại và bảo vệ giao dịch"
-                        aria-label="Phí duy trì Escrow, hỗ trợ khiếu nại và bảo vệ giao dịch"
+                        data-tip="Phí duy trì Escrow, hỗ trợ khiếu nại và bảo vệ giao dịch — khách không phải trả thêm"
+                        aria-label="Phí duy trì Escrow, hỗ trợ khiếu nại và bảo vệ giao dịch — khách không phải trả thêm"
                       >
                         <HelpCircle size={14} />
                       </span>
@@ -341,13 +367,19 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
                   <span>Tôi đồng ý với Điều khoản dịch vụ và Chính sách Escrow của WorkGo.</span>
                 </label>
 
+                {!orderable && (
+                  <p className={styles.notOrderable} role="alert">
+                    {NOT_ORDERABLE_MESSAGE}
+                  </p>
+                )}
+
                 <button
                   type="button"
                   className={styles.btnPay}
-                  disabled={!agreed || phase !== 'review'}
+                  disabled={!agreed || phase !== 'review' || !orderable}
                   onClick={handlePay}
                 >
-                  Thanh toán {formatPrice(pricing.totalAmount)} qua {currentGateway.name}
+                  Đặt hàng {formatPrice(pricing.totalAmount)}
                 </button>
                 <p className={styles.snapshotTime}>
                   Snapshot tạo lúc {formatTime(snapshotAt)} — giá không đổi nếu chuyên gia cập nhật gói.
@@ -358,13 +390,11 @@ export default function CheckoutPage({ order, onGoBack, onShowToast, onDone, onV
         )}
       </div>
 
-      {phase === 'redirecting' && (
+      {phase === 'creating' && (
         <div className={styles.overlay} role="status" aria-live="polite">
           <div className={styles.overlayBox}>
             <Loader2 size={36} className={styles.spinner} />
-            <p>
-              Đang chuyển tới cổng <strong>{currentGateway.name}</strong>…
-            </p>
+            <p>Đang tạo đơn hàng…</p>
           </div>
         </div>
       )}

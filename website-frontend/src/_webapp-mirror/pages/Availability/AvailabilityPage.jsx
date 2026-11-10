@@ -7,10 +7,9 @@ import SlotList from './components/SlotList';
 import styles from './AvailabilityPage.module.css';
 
 const NOTICES = {
-  'needs-login': 'Bạn chưa đăng nhập — đang hiển thị dữ liệu mẫu, thay đổi không được lưu lên máy chủ.',
-  'seed-services':
-    'Không lấy được danh sách dịch vụ của tài khoản (thiếu quyền Chuyên gia). Đang dùng các dịch vụ có sẵn trong hệ thống; lịch rảnh vẫn được lưu lên máy chủ.',
-  error: 'Không kết nối được máy chủ — đang hiển thị dữ liệu mẫu.',
+  'needs-login': 'Đăng nhập bằng tài khoản Chuyên gia để quản lý lịch rảnh.',
+  forbidden: 'Tài khoản của bạn chưa có quyền Chuyên gia (PROVIDER) nên không có dịch vụ để đặt lịch rảnh.',
+  error: 'Không kết nối được máy chủ — chưa tải được lịch rảnh.',
 };
 
 export default function AvailabilityPage({ onGoBack, onShowToast }) {
@@ -99,7 +98,7 @@ export default function AvailabilityPage({ onGoBack, onShowToast }) {
           <span>
             <strong>{activeHours}</strong> giờ rảnh / tuần
           </span>
-          <span className={isLive ? styles.liveDot : styles.mockDot}>{isLive ? 'Dữ liệu máy chủ' : 'Dữ liệu mẫu'}</span>
+          <span className={isLive ? styles.liveDot : styles.mockDot}>{isLive ? 'Dữ liệu máy chủ' : 'Chưa có dữ liệu'}</span>
           {(busy || status === 'loading') && <Loader2 size={16} className={styles.spin} aria-label="Đang tải" />}
         </div>
 

@@ -128,3 +128,14 @@
 .availabilityBtn:hover {
   background-color: var(--wg-primary-light);
 }
+
+.pageTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.titleIcon {
+  flex-shrink: 0;
+  color: var(--wg-primary);
+}

@@ -726,3 +726,26 @@
     display: none;
   }
 }
+
+.pageTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.titleIcon {
+  flex-shrink: 0;
+  color: var(--wg-primary);
+}
+
+/* Service type order-service can't take yet (ONSITE). */
+.notOrderable {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--badge-onsite-bg);
+  border: 1px solid var(--badge-onsite-border);
+  color: var(--badge-onsite-text);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}

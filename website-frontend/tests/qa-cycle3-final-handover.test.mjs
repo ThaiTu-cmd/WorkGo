@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,17 +10,6 @@ const REPO = path.resolve(__dirname, "../../");
 
 const read = (rel) => fs.readFileSync(path.join(REPO, rel), "utf-8");
 const exists = (rel) => fs.existsSync(path.join(REPO, rel));
-
-test("QA-C3-HO-01: mirror integrity holds (verifyMirrors ok, 0 mismatches)", async () => {
-  const mod = await import(
-    pathToFileURL(path.join(REPO, "scripts", "copy-webapp-mirror.mjs")).href
-  );
-  const result = mod.verifyMirrors(path.join(REPO, "web-app", "src"), [
-    path.join(REPO, "website-frontend", "src", "_webapp-mirror"),
-  ]);
-  assert.equal(result.ok, true, "verifyMirrors must return ok: true");
-  assert.equal(result.mismatches.length, 0, "0 mismatches");
-});
 
 test("QA-C3-HO-02: eslint isolation intact on website; android mirrors un-ignored (deleted)", () => {
   const web = read("website-frontend/eslint.config.mjs");
@@ -111,11 +100,7 @@ test("QA-C3-HO-11: Task-2 fallback locked — static bridge, no dead alias", () 
   assert.match(cfg, /withNextIntl/, "must preserve withNextIntl");
   assert.match(cfg, /reactStrictMode/, "must preserve existing keys");
   const shell = read("website-frontend/src/components/webapp-bridge/webapp-shell.tsx");
-  assert.match(
-    shell,
-    /_webapp-mirror\/data\/mockProviderServices/,
-    "shell resolves provider data straight from the mirror (static)"
-  );
+  assert.doesNotMatch(shell, /mockProviderServices/, "shell no longer bundles provider mocks");
   assert.ok(
     !exists("website-frontend/src/components/webapp-bridge/service-adapters.ts"),
     "engine adapters must be absent in fallback state"

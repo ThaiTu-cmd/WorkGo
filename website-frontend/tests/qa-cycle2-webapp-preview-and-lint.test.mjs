@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,9 +11,6 @@ const REPO = path.resolve(__dirname, "../../");
 
 const WEB_ESLINT = path.join(REPO, "website-frontend", "eslint.config.mjs");
 const AND_ESLINT = path.join(REPO, "android-frontend", "eslint.config.js");
-const COPY_SCRIPT = path.join(REPO, "scripts", "copy-webapp-mirror.mjs");
-const SRC_ROOT = path.join(REPO, "web-app", "src");
-const WEBSITE_MIRROR = path.join(REPO, "website-frontend", "src", "_webapp-mirror");
 
 test("C2-EC-01: ESLint isolation is surgical and does not over-ignore production codebase", () => {
   const webEslint = fs.readFileSync(WEB_ESLINT, "utf-8");
@@ -45,13 +42,6 @@ test("C2-EC-02: Baseline configuration files remain strictly untouched (Zero Ove
     const hash = crypto.createHash("sha256").update(fs.readFileSync(abs)).digest("hex");
     assert.equal(hash, expectedHash, `Configuration file ${relPath} has been modified!`);
   }
-});
-
-test("C2-EC-03: Mirror verify check reports 0 mismatches for the website mirror", async () => {
-  const mod = await import(pathToFileURL(COPY_SCRIPT).href);
-  const result = mod.verifyMirrors(SRC_ROOT, [WEBSITE_MIRROR]);
-  assert.equal(result.ok, true, "Mirrors must be verified ok");
-  assert.equal(result.mismatches.length, 0, "There must be 0 mismatches between source and mirrors");
 });
 
 test("C2-EC-04: default locale route renders bridge shell (promoted from /webapp)", () => {

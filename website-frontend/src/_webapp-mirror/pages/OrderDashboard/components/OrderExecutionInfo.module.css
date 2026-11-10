@@ -1,0 +1,45 @@
+.box {
+  grid-column: 1 / -1;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background-color: var(--wg-surface-alt);
+}
+
+.title {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  color: var(--wg-text);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.82rem;
+}
+
+.list dt {
+  color: var(--wg-text-secondary);
+}
+
+.list dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--wg-text);
+  text-align: right;
+}
+
+.muted {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--wg-text-muted);
+}

@@ -1,12 +1,53 @@
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import * as React from 'react';
+import { AppState } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-// Minimal stack: WebView home + preserved static-prototypes preview screen
-// (kept because no dev-build toolchain exists in this environment).
+import { AuthProvider } from '@/auth/AuthProvider';
+import { colors, OfflineBanner } from '@/ui';
+
+// React Query refetches stale data when the app comes back to the foreground.
+focusManager.setEventListener((setFocused) => {
+  const sub = AppState.addEventListener('change', (s) => setFocused(s === 'active'));
+  return () => sub.remove();
+});
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
+});
+
 export default function RootLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="webapp-preview" />
-    </Stack>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider queryClient={queryClient}>
+          <StatusBar style="dark" />
+          <OfflineBanner />
+          <Stack
+            screenOptions={{
+              headerTintColor: colors.text,
+              headerBackTitle: 'Quay lại',
+              contentStyle: { backgroundColor: colors.bg },
+            }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="auth/login" options={{ title: 'Đăng nhập' }} />
+            <Stack.Screen name="auth/register" options={{ title: 'Đăng ký' }} />
+            <Stack.Screen name="service/[id]" options={{ title: 'Chi tiết dịch vụ' }} />
+            <Stack.Screen name="checkout" options={{ title: 'Đặt dịch vụ' }} />
+            <Stack.Screen name="orders/[id]" options={{ title: 'Chi tiết đơn hàng' }} />
+            <Stack.Screen name="account/profile" options={{ title: 'Thông tin cá nhân' }} />
+            <Stack.Screen name="account/addresses/index" options={{ title: 'Sổ địa chỉ' }} />
+            <Stack.Screen name="account/addresses/[id]" options={{ title: 'Địa chỉ' }} />
+            <Stack.Screen name="provider/onboarding" options={{ title: 'Trở thành chuyên gia' }} />
+            <Stack.Screen name="provider/services/index" options={{ title: 'Dịch vụ của tôi' }} />
+            <Stack.Screen name="provider/services/new" options={{ title: 'Tạo dịch vụ' }} />
+            <Stack.Screen name="provider/services/[id]/edit" options={{ title: 'Sửa dịch vụ' }} />
+            <Stack.Screen name="provider/services/[id]/availability" options={{ title: 'Lịch trống' }} />
+          </Stack>
+        </AuthProvider>
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }

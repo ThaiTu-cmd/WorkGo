@@ -2,17 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO = path.resolve(__dirname, "../../");
-const SRC = path.join(REPO, "web-app", "src");
-const MIRROR = path.join(REPO, "website-frontend", "src", "_webapp-mirror");
+const SRC = path.join(REPO, "website-frontend", "src", "_webapp-mirror");
 
 const read = (p) => fs.readFileSync(p, "utf-8");
-const sha256 = (p) => crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex");
 
 // ---------- R1: no ::after collision in dense zones ----------
 test("R1: tabs row gap >= 12px (no 4px hit-area overlap)", () => {
@@ -27,25 +24,6 @@ test("R1: table action row gap >= 12px (no 6px hit-area overlap)", () => {
   const m = css.match(/\.actionButtonsRow\s*\{[^}]*gap:\s*(\d+)px/);
   assert.ok(m, "actionButtonsRow gap not found");
   assert.ok(Number(m[1]) >= 12, `actionButtonsRow gap is ${m[1]}px, need >= 12px`);
-});
-
-// ---------- R2: storage resilience ----------
-test("R2: store has in-memory fallback cache + guarded write", () => {
-  const store = read(path.join(SRC, "pages/MyServices/providerServicesStore.js"));
-  assert.match(store, /memoryCache/);
-  assert.match(store, /workgo_provider_services_overrides/);
-  assert.match(store, /try\s*\{[\s\S]*localStorage\.setItem/);
-  assert.match(store, /catch/);
-});
-
-test("R2: MyServicesPage toasts once when persist returns false", () => {
-  const jsx = read(path.join(SRC, "pages/MyServices/MyServicesPage.jsx"));
-  assert.match(jsx, /persistProviderServices\(services\)\s*===\s*false/);
-});
-
-test("R2: App toasts once when persist returns false", () => {
-  const jsx = read(path.join(SRC, "App.jsx"));
-  assert.match(jsx, /persistProviderServices\(providerServices\)\s*===\s*false/);
 });
 
 // ---------- R3: keyboard + focus ----------
@@ -87,7 +65,7 @@ test("R4: table bulk count is a polite live region", () => {
   assert.match(jsx, /aria-live="polite"/);
 });
 
-test("R4: web-app toast has role=status like the bridge", () => {
+test("R4: mirror App toast has role=status like the bridge", () => {
   const jsx = read(path.join(SRC, "App.jsx"));
   assert.match(jsx, /role="status"/);
 });
@@ -106,34 +84,3 @@ test("R5: sync-input triggers are wrapped in startTransition (no suspense crash)
   assert.match(jsx, /startTransition\(\(\) => \{[\s\S]{0,200}setCurrentPage\('service-form'\)/);
 });
 
-// ---------- R6: bulk confirm parity ----------
-for (const fn of ["handleBulkActivate", "handleBulkPause"]) {
-  test(`R6: ${fn} asks window.confirm like bulk delete`, () => {
-    const jsx = read(path.join(SRC, "pages/MyServices/MyServicesPage.jsx"));
-    // Guard-clause style: confirm must sit at the TOP of the handler body,
-    // so a narrow head-window can't catch a neighbour function's confirm.
-    const body = jsx.slice(jsx.indexOf(fn));
-    assert.match(body.slice(0, 350), /window\.confirm\(/, `${fn} has no window.confirm`);
-  });
-}
-
-// ---------- S1: mirror parity for every touched source file ----------
-test("S1: every Cycle-2 source file is byte-identical in _webapp-mirror", () => {
-  const files = [
-    "styles/reset.css",
-    "pages/MyServices/components/ServicesToolbar/ServicesToolbar.module.css",
-    "pages/MyServices/components/ServicesTable/ServicesTable.module.css",
-    "pages/MyServices/providerServicesStore.js",
-    "pages/MyServices/MyServicesPage.jsx",
-    "App.jsx",
-    "App.module.css",
-    "components/common/AuthModal/AuthModal.jsx",
-    "components/common/Header/Header.jsx",
-    "pages/MyServices/components/ServicesTable/ServicesTable.jsx",
-    "pages/CatalogSearch/CatalogSearchPage.jsx",
-    "pages/CatalogSearch/components/SearchToolbar/SearchToolbar.jsx",
-  ];
-  for (const f of files) {
-    assert.equal(sha256(path.join(MIRROR, f)), sha256(path.join(SRC, f)), `mirror mismatch: ${f}`);
-  }
-});

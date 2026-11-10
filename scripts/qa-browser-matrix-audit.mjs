@@ -38,12 +38,11 @@ async function runAudit() {
   ];
 
   const origins = [
-    { name: "web-app (:5173)", url: "http://localhost:5173/" },
     { name: "website-frontend (:3000/vi)", url: "http://localhost:3000/vi" },
   ];
 
   // ==========================================
-  // B1 & B3 (Header reachability) across 5 viewports x 2 origins
+  // B1 & B3 (Header reachability) across 5 viewports
   // ==========================================
   console.log("\n--- B1: Horizontal Overflow & Reachability ---");
   for (const origin of origins) {
@@ -104,12 +103,12 @@ async function runAudit() {
   }
 
   // ==========================================
-  // B2: Hit Area Measurement (Mobile @ 320x568 on :5173)
+  // B2: Hit Area Measurement (Mobile @ 320x568 on :3000/vi)
   // ==========================================
   console.log("\n--- B2: Button & Control Hit Area ---");
   {
     const page = await browser.newPage({ viewport: { width: 320, height: 568 } });
-    await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
+    await page.goto("http://localhost:3000/vi", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(500);
 
     const hitAreas = await page.evaluate(() => {
@@ -143,7 +142,7 @@ async function runAudit() {
   console.log("\n--- B3: P1 Hamburger & Drawer Interaction @ 320x568 ---");
   {
     const page = await browser.newPage({ viewport: { width: 320, height: 568 } });
-    await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
+    await page.goto("http://localhost:3000/vi", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(500);
 
     // Find hamburger button
@@ -185,7 +184,7 @@ async function runAudit() {
   console.log("\n--- B3: P2 MyServices Toolbar Reachability @ 390x844 ---");
   {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-    await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
+    await page.goto("http://localhost:3000/vi", { waitUntil: "domcontentloaded" });
 
     // Navigate to MyServices via header/nav
     await page.evaluate(() => {
@@ -248,7 +247,7 @@ async function runAudit() {
   console.log("\n--- B3: H1 Dropdown Menu On Last Row @ 1440x900 ---");
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-    await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
+    await page.goto("http://localhost:3000/vi", { waitUntil: "domcontentloaded" });
 
     // Navigate to MyServices
     await page.evaluate(() => {
@@ -302,7 +301,7 @@ async function runAudit() {
   console.log("\n--- B3: P3 AuthModal Login & Register @ 320x568 ---");
   {
     const page = await browser.newPage({ viewport: { width: 320, height: 568 } });
-    await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
+    await page.goto("http://localhost:3000/vi", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(500);
 
     // Open login modal
@@ -333,42 +332,6 @@ async function runAudit() {
     console.log("AuthModal metrics @ 320x568:", JSON.stringify(modalMetrics, null, 2));
     await page.screenshot({ path: path.join(EVIDENCE_DIR, "qa-verify-320-authmodal-register.png") });
     await page.close();
-  }
-
-  // ==========================================
-  // B4: Parity Check between :5173 and :3000/vi @ 1440x900
-  // ==========================================
-  console.log("\n--- B4: Parity Check (:5173 vs :3000/vi) ---");
-  {
-    const pageA = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-    await pageA.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
-    await pageA.waitForTimeout(500);
-
-    const sectionsA = await pageA.evaluate(() => {
-      return Array.from(document.querySelectorAll("section, header, footer")).map((s) => ({
-        tag: s.tagName,
-        className: (s.className || "").toString().slice(0, 30),
-        h2: (s.querySelector("h1, h2, h3")?.textContent || "").trim().slice(0, 30),
-      }));
-    });
-
-    const pageB = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-    await pageB.goto("http://localhost:3000/vi", { waitUntil: "domcontentloaded" });
-    await pageB.waitForTimeout(500);
-
-    const sectionsB = await pageB.evaluate(() => {
-      return Array.from(document.querySelectorAll("section, header, footer")).map((s) => ({
-        tag: s.tagName,
-        className: (s.className || "").toString().slice(0, 30),
-        h2: (s.querySelector("h1, h2, h3")?.textContent || "").trim().slice(0, 30),
-      }));
-    });
-
-    console.log(`Sections count: :5173=${sectionsA.length}, :3000/vi=${sectionsB.length}`);
-    await pageA.screenshot({ path: path.join(EVIDENCE_DIR, "qa-parity-5173-1440.png") });
-    await pageB.screenshot({ path: path.join(EVIDENCE_DIR, "qa-parity-3000-1440.png") });
-    await pageA.close();
-    await pageB.close();
   }
 
   // ==========================================

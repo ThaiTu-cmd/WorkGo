@@ -30,7 +30,7 @@ async function verifyCycle3OnOrigin(browser, originName, originUrl) {
 
   // Trigger 3 toasts
   const toastResult = await page.evaluate(() => {
-    // In web-app App.jsx / webapp-shell.tsx:
+    // In webapp-shell.tsx:
     // Can dispatch multiple toasts if helper available, or toggle service multiple times
     const sw = document.querySelector('table tbody tr:first-child [class*="switch"], [class*="switch"]');
     return { hasSwitch: !!sw };
@@ -116,13 +116,12 @@ async function main() {
   });
 
   try {
-    const r1 = await verifyCycle3OnOrigin(browser, "webapp-5173", "http://localhost:5173/");
     const r2 = await verifyCycle3OnOrigin(browser, "website-3000-vi", "http://localhost:3000/vi");
 
     console.log("\n=== CYCLE 3 QA FLOW VERIFICATION RESULTS ===");
-    console.log(JSON.stringify({ "web-app :5173": r1, "website-frontend :3000/vi": r2 }, null, 2));
+    console.log(JSON.stringify({ "website-frontend :3000/vi": r2 }, null, 2));
 
-    if (r1.focusTrapped && r1.modalClosed && r2.focusTrapped && r2.modalClosed) {
+    if (r2.focusTrapped && r2.modalClosed) {
       console.log("\n>>> ALL CYCLE 3 INTERACTION FLOWS PASSED (100%) <<<");
     } else {
       console.error("\n>>> FAILURES DETECTED IN CYCLE 3 FLOWS <<<");

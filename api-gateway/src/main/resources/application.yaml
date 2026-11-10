@@ -30,3 +30,17 @@ spring:
             - Path=${app.api-prefix}/order/**
           filters:
             - StripPrefix=2
+
+        - id: payment_service
+          uri: http://localhost:8084
+          predicates:
+            - Path=${app.api-prefix}/payment/**
+          filters:
+            - StripPrefix=2
+
+        - id: job_service
+          uri: http://localhost:8085
+          predicates:
+            - Path=${app.api-prefix}/job/**
+          filters:
+            - StripPrefix=2

@@ -50,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -81,6 +82,10 @@ public class OrderService {
     @NonFinal
     @Value("${order.platform-fee-rate}")
     BigDecimal platformFeeRate;
+
+    @NonFinal
+    @Value("${order.payment-timeout-minutes}")
+    long paymentTimeoutMinutes;
 
     @Transactional
     public OrderResponse createOrder(OrderCreationRequest request){
@@ -176,8 +181,8 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
-        //da confirm roi hoac don da huy -> tra trang thai hien tai, payment tu xu ly
-        if (order.getPaymentStatus() == PaymentStatus.SUCCEEDED
+        //da confirm roi (SUCCEEDED / RELEASED) hoac don da huy -> tra trang thai hien tai, payment tu xu ly
+        if (order.getPaymentStatus() != PaymentStatus.PENDING
                 || order.getOrderStatus() == OrderStatus.CANCELLED) {
             return toConfirmationResponse(order, null);
         }
@@ -227,15 +232,20 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
-        Instant payableUntil = null;
+        //qua han nay PaymentTimeoutJob se huy don
+        Instant payableUntil = order.getCreatedAt().plus(Duration.ofMinutes(paymentTimeoutMinutes));
 
         //neu la onsite chi duoc thanh toan khi slot con duoc giu
         if (order.getExecutionType() == ExecutionType.ONSITE) {
-            payableUntil = executionRepository.findByOrder_OrderId(orderId)
+            Instant slotHoldExpiresAt = executionRepository.findByOrder_OrderId(orderId)
                     .flatMap(execution -> onsiteExecutionRepository
                             .findByExecution_ExecutionId(execution.getExecutionId()))
                     .map(OnsiteExecution::getSlotHoldExpiresAt)
                     .orElse(null);
+
+            if (slotHoldExpiresAt != null && slotHoldExpiresAt.isBefore(payableUntil)) {
+                payableUntil = slotHoldExpiresAt;
+            }
         }
 
         return OrderPaymentInfoResponse.builder()

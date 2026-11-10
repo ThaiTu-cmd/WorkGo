@@ -1,7 +1,9 @@
 package com.workgo.payment.service.gateway;
 
 import com.workgo.payment.dto.gateway.GatewayCreateResult;
+import com.workgo.payment.dto.gateway.GatewayRefundResult;
 import com.workgo.payment.entity.Payment;
+import com.workgo.payment.entity.Refund;
 import com.workgo.payment.enumeration.PaymentGateway;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
@@ -28,6 +30,15 @@ public class MockGatewayClient implements PaymentGatewayClient {
         return GatewayCreateResult.builder()
                 .paymentUrl(paymentUrl)
                 .qrCodeUrl(paymentUrl)
+                .build();
+    }
+
+    //mock luon hoan tien thanh cong
+    @Override
+    public GatewayRefundResult refund(Payment payment, Refund refund) {
+        return GatewayRefundResult.builder()
+                .success(true)
+                .gatewayRef("MOCK-REFUND-" + payment.getPaymentCode())
                 .build();
     }
 

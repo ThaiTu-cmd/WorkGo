@@ -1,9 +1,12 @@
 package com.workgo.payment.service;
 
+import com.workgo.payment.dto.request.EscrowReleaseRequest;
 import com.workgo.payment.dto.response.EscrowAccountResponse;
 import com.workgo.payment.entity.EscrowAccount;
 import com.workgo.payment.entity.EscrowTransaction;
 import com.workgo.payment.entity.Payment;
+import com.workgo.payment.entity.Refund;
+import com.workgo.payment.enumeration.EscrowStatus;
 import com.workgo.payment.enumeration.EscrowTxnType;
 import com.workgo.payment.enumeration.TriggeredBy;
 import com.workgo.payment.exception.AppException;
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,7 +37,7 @@ public class EscrowService {
     EscrowMapper escrowMapper;
     TokenUtils tokenUtils;
 
-    //giu tien sau khi thanh toan thanh cong, empty = order da co escrow (thanh toan trung)
+    //giu tien sau khi thanh toan thanh cong
     @Transactional(propagation = Propagation.MANDATORY)
     public Optional<EscrowAccount> hold(Payment payment) {
 
@@ -64,6 +68,67 @@ public class EscrowService {
         return Optional.of(escrow);
     }
 
+    //order COMPLETED -> tru phi nen tang, phan con lai tra provider
+    @Transactional
+    public EscrowAccountResponse release(EscrowReleaseRequest request) {
+
+        if (request.getOrderId() == null) {
+            throw new AppException(ErrorCode.PAYMENT_ORDER_ID_REQUIRED);
+        }
+
+        EscrowAccount escrow = escrowAccountRepository.findByOrderId(request.getOrderId())
+                .orElseThrow(() -> new AppException(ErrorCode.ESCROW_NOT_FOUND));
+
+        //order goi lai -> tra ket qua cu, khong ghi txn moi
+        if (escrow.getStatus() == EscrowStatus.RELEASED) {
+            return escrowMapper.toResponse(escrow);
+        }
+
+        if (!escrow.getStatus().canTransitionTo(EscrowStatus.RELEASED)) {
+            throw new AppException(ErrorCode.ESCROW_INVALID_STATUS);
+        }
+
+        BigDecimal fee = escrow.getPlatformFeeAmount() == null
+                ? BigDecimal.ZERO : escrow.getPlatformFeeAmount();
+        BigDecimal balance = escrow.getHeldAmount().subtract(fee);
+
+        if (fee.signum() > 0) {
+            addTransaction(escrow, EscrowTxnType.FEE, fee, balance, TriggeredBy.ORDER, "ORDER_COMPLETED");
+        }
+
+        addTransaction(escrow, EscrowTxnType.RELEASE, balance, BigDecimal.ZERO, TriggeredBy.ORDER, "ORDER_COMPLETED");
+
+        Instant now = Instant.now();
+
+        escrow.setReleasedAmount(escrow.getHeldAmount());
+        escrow.setReleasedAt(now);
+        escrow.setStatus(EscrowStatus.RELEASED);
+        escrow.setUpdatedAt(now);
+
+        return escrowMapper.toResponse(escrowAccountRepository.save(escrow));
+    }
+
+    //tra lai toan bo tien dang giu cho client, RefundService goi sau khi gateway hoan tien xong
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void refund(EscrowAccount escrow, Refund refund) {
+
+        if (!escrow.getStatus().canTransitionTo(EscrowStatus.REFUNDED)) {
+            throw new AppException(ErrorCode.ESCROW_INVALID_STATUS);
+        }
+
+        addTransaction(escrow, EscrowTxnType.REFUND, refund.getAmount(), BigDecimal.ZERO,
+                refund.getInitiatedBy(), refund.getReasonCode().name());
+
+        Instant now = Instant.now();
+
+        escrow.setRefundedAmount(refund.getAmount());
+        escrow.setRefundedAt(now);
+        escrow.setStatus(EscrowStatus.REFUNDED);
+        escrow.setUpdatedAt(now);
+
+        escrowAccountRepository.save(escrow);
+    }
+
     //client hoac provider cua order xem tien dang giu
     @Transactional(readOnly = true)
     public EscrowAccountResponse getEscrowOfOrder(UUID orderId) {
@@ -77,6 +142,20 @@ public class EscrowService {
     }
 
     //=====================================
+
+    //them vao list de response tra ve du txn vua ghi
+    private void addTransaction(EscrowAccount escrow, EscrowTxnType type, BigDecimal amount,
+                                BigDecimal balanceAfter, TriggeredBy triggeredBy, String reasonCode) {
+
+        escrow.getTransactions().add(escrowTransactionRepository.save(EscrowTransaction.builder()
+                .txnType(type)
+                .amount(amount)
+                .balanceAfter(balanceAfter)
+                .triggeredBy(triggeredBy)
+                .reasonCode(reasonCode)
+                .escrowAccount(escrow)
+                .build()));
+    }
 
     //nguoi ngoai -> bao not found de khong lo escrow cua nguoi khac
     private void assertParticipant(EscrowAccount escrow) {

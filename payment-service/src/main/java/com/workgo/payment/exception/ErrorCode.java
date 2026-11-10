@@ -39,6 +39,10 @@ public enum ErrorCode {
 
     //===============ESCROW===================
     ESCROW_NOT_FOUND(3101, "Escrow not found", HttpStatus.NOT_FOUND),
+    ESCROW_INVALID_STATUS(3102, "Escrow cannot be released or refunded in its current status", HttpStatus.CONFLICT),
+
+    //===============REFUND===================
+    REFUND_PERCENT_NOT_SUPPORTED(3201, "Only 100 percent refund is supported", HttpStatus.BAD_REQUEST),
 
     //===============GATEWAY==================
     GATEWAY_UNAVAILABLE(3301, "Payment gateway is unavailable, please try again", HttpStatus.SERVICE_UNAVAILABLE);

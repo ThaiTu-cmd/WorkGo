@@ -2,6 +2,7 @@ package com.workgo.order.reppository;
 
 import com.workgo.order.entity.Order;
 import com.workgo.order.enumeration.OrderStatus;
+import com.workgo.order.enumeration.PaymentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,4 +21,13 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     List<Order> findTop50ByOrderStatusAndAutoCompleteAtLessThanEqualOrderByAutoCompleteAtAsc(
             OrderStatus orderStatus, Instant now);
+
+    List<Order> findTop50ByOrderStatusAndPaymentStatusAndCompletedAtLessThanEqualOrderByCompletedAtAsc(
+            OrderStatus orderStatus, PaymentStatus paymentStatus, Instant completedBefore);
+
+    List<Order> findTop50ByOrderStatusAndPaymentStatusAndCancelledAtLessThanEqualOrderByCancelledAtAsc(
+            OrderStatus orderStatus, PaymentStatus paymentStatus, Instant cancelledBefore);
+
+    List<Order> findTop50ByOrderStatusAndCreatedAtLessThanEqualOrderByCreatedAtAsc(
+            OrderStatus orderStatus, Instant createdBefore);
 }

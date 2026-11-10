@@ -215,20 +215,23 @@ public class PaymentService {
 
     //=====================================
 
-    //onsite: payment het han truoc khi slot het han
+    //payment het han truoc khi slot het han (onsite) / truoc khi order tu huy (PaymentTimeoutJob)
     private Instant resolveExpiresAt(OrderPaymentInfoResponse order, Instant now) {
 
         Instant expiresAt = now.plus(Duration.ofMinutes(expireMinutes));
+        boolean onsite = order.getExecutionType() == ExecutionType.ONSITE;
+        Instant payableUntil = order.getPayableUntil();
 
-        if (order.getExecutionType() != ExecutionType.ONSITE) {
+        //digital chua co han -> +15'
+        if (!onsite && payableUntil == null) {
             return expiresAt;
         }
 
-        Instant payableUntil = order.getPayableUntil();
-
         if (payableUntil == null
                 || payableUntil.isBefore(now.plus(Duration.ofMinutes(slotMinRemainingMinutes)))) {
-            throw new AppException(ErrorCode.PAYMENT_SLOT_HOLD_EXPIRED);
+            throw new AppException(onsite
+                    ? ErrorCode.PAYMENT_SLOT_HOLD_EXPIRED
+                    : ErrorCode.PAYMENT_ORDER_NOT_PAYABLE);
         }
 
         return payableUntil.isBefore(expiresAt) ? payableUntil : expiresAt;

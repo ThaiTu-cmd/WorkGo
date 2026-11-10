@@ -89,7 +89,7 @@
 .updatedAt {
   display: inline-flex;
   align-items: center;
-  background-color: #f1f5f9;
+  background-color: var(--wg-surface);
   padding: 4px 10px;
   border-radius: 9999px;
   font-weight: 500;
@@ -169,7 +169,7 @@
 .faqDetails {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   overflow: hidden;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -234,7 +234,7 @@
 }
 
 .formCard {
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 28px;
@@ -275,7 +275,7 @@
   border-radius: 6px;
   font-size: 0.95rem;
   color: #1e293b;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   box-sizing: border-box;
   font-family: inherit;
   min-height: 44px;
@@ -349,7 +349,7 @@
   align-items: flex-start;
   gap: 14px;
   padding: 16px;
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 8px;
 }
@@ -380,7 +380,7 @@
 }
 
 .quickLinks {
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 18px;
@@ -420,7 +420,7 @@
 }
 
 .valueCard {
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 20px;
@@ -457,7 +457,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 22px;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
@@ -523,7 +523,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 24px;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -548,7 +548,7 @@
 .disclaimerBox {
   margin-top: 36px;
   padding: 16px 20px;
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   border-left: 4px solid #94a3b8;
   border-radius: 4px;
 }
@@ -588,7 +588,7 @@
 }
 
 .btnSecondary {
-  background-color: #f1f5f9;
+  background-color: var(--wg-surface);
   color: #1e293b;
   border: 1px solid #cbd5e1;
   padding: 10px 20px;

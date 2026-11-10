@@ -18,98 +18,99 @@ const tokenUserName = token => {
 
 // Signed-in destinations that used to live in the Trung sub-nav. Pages that
 // need an id (submit-proposal, review-form) are opened from their parent page.
-export const ACCOUNT_GROUPS = [{
-  title: "Account",
+// Labels/titles are localized via the passed translator (misc namespace).
+export const buildAccountGroups = tr => [{
+  title: tr("m46"),
   items: [{
     key: 'profile-settings',
     icon: UserCog,
-    label: "File"
+    label: tr("m47")
   }, {
     key: 'address-book',
     icon: MapPin,
-    label: "Address book"
+    label: tr("m48")
   }, {
     key: 'orders',
     icon: Package,
-    label: "Order"
+    label: tr("m49")
   }, {
     key: 'messages',
     icon: MessageSquare,
-    label: "Message"
+    label: tr("m50")
   }]
 }, {
-  title: "Finance",
+  title: tr("m51"),
   items: [{
     key: 'wallet',
     icon: Wallet,
-    label: "Wallet"
+    label: tr("m52")
   }, {
     key: 'payment-gateway',
     icon: CreditCard,
-    label: "Deposit money"
+    label: tr("m53")
   }, {
     key: 'payout-settings',
     icon: Landmark,
-    label: "Withdraw money"
+    label: tr("m54")
   }]
 }, {
-  title: "Job",
+  title: tr("m55"),
   items: [{
     key: 'job-list',
     icon: BriefcaseBusiness,
-    label: "Find a job"
+    label: tr("m56")
   }, {
     key: 'job-post',
     icon: FilePlus2,
-    label: "Post a job"
+    label: tr("m57")
   }, {
     key: 'proposal-review',
     icon: ClipboardCheck,
-    label: "Browse suggestions"
+    label: tr("m58")
   }, {
     key: 'dispute-center',
     icon: ShieldAlert,
-    label: "Dispute"
+    label: tr("m59")
   }]
 }, {
-  title: "Expert",
+  title: tr("m60"),
   items: [{
     key: 'provider-onboarding',
     icon: BadgeCheck,
-    label: "Become a Provider"
+    label: tr("m61")
   }, {
     key: 'provider-profile',
     icon: Contact,
-    label: "Provider Profile"
+    label: tr("m62")
   }, {
     key: 'booking-slots',
     icon: Calendar,
-    label: "Free Schedule & Slots"
+    label: tr("m63")
   }, {
     key: 'verification-center',
     icon: ShieldCheck,
-    label: "Verify capacity"
+    label: tr("m64")
   }]
 }];
 
 // Admin area is its own route (/[locale]/admin), not a shell page key, so it is
 // opened with a full navigation instead of onNavigate.
-const ADMIN_GROUP = {
-  title: "Administration",
+export const buildAdminGroup = tr => ({
+  title: tr("m65"),
   items: [{
     key: 'admin-console',
     icon: ShieldCheck,
-    label: 'Admin Console'
+    label: tr("m65")
   }, {
     key: 'admin',
     icon: ShieldCheck,
-    label: 'Trang Admin',
+    label: tr("m65"),
     href: 'admin'
   }]
-};
+});
 
 // Groups visible to the signed-in token (admin group only for ROLE_ADMIN).
-export const accountGroupsFor = token => hasRole(token, 'ADMIN') ? [...ACCOUNT_GROUPS, ADMIN_GROUP] : ACCOUNT_GROUPS;
+export const accountGroupsFor = (token, tr) => hasRole(token, 'ADMIN') ? [...buildAccountGroups(tr), buildAdminGroup(tr)] : buildAccountGroups(tr);
 
 // Shell page keys go through onNavigate; items with `href` are separate routes.
 // The three wallet destinations open the Finance hub on the matching tab (Ví /
@@ -143,7 +144,7 @@ export default function AccountMenu({
   const rootRef = useRef(null);
   const triggerRef = useRef(null);
   const token = useAuthToken();
-  const groups = accountGroupsFor(token);
+  const groups = accountGroupsFor(token, tr);
   const unread = totalUnread(useMessages());
   // Trigger shows who is signed in: "Nguyễn Văn A" (myInfo) with the login id
   // as fallback while the profile is unavailable.

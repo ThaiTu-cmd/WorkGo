@@ -6,7 +6,7 @@
 }
 
 .statCard {
-  background: #ffffff;
+  background: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 20px;
@@ -39,7 +39,7 @@
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -97,7 +97,7 @@
   font-size: 0.72rem;
   font-weight: 600;
   color: #64748b;
-  background-color: #f1f5f9;
+  background-color: var(--wg-surface);
   padding: 2px 7px;
   border-radius: 10px;
   white-space: nowrap;

@@ -1,5 +1,5 @@
 .pageContainer {
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   min-height: 100vh;
   padding: 24px 0 60px 0;
 }
@@ -33,7 +33,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   color: #1e293b;
@@ -44,7 +44,7 @@
 }
 
 .backBtn:hover {
-  background-color: #f1f5f9;
+  background-color: var(--wg-surface);
   border-color: #94a3b8;
 }
 
@@ -118,7 +118,7 @@
   padding: 0 16px;
   border: 1px solid var(--wg-primary);
   border-radius: var(--radius-sm);
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   color: var(--wg-primary-active);
   font-size: 0.9rem;
   font-weight: 700;

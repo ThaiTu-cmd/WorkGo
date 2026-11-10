@@ -1,0 +1,9 @@
+[
+  "SearchBar-module__lwOiPq__divider :: rgba(255, 255, 255, 0.14)",
+  "HeroBanner-module__nkgIIa__tagBtn :: rgba(255, 255, 255, 0.12)",
+  "HeroBanner-module__nkgIIa__trustItem :: rgba(255, 255, 255, 0.05)",
+  "ServiceCard-module__JlU6-q__imageWrapper :: rgba(255, 255, 255, 0.08)",
+  "ServiceCard-module__JlU6-q__cardDivider :: rgba(255, 255, 255, 0.08)",
+  "DualCTA-module__aaP_xG__iconCircle :: rgba(255, 255, 255, 0.12)",
+  "DualCTA-module__aaP_xG__providerBtn :: rgb(255, 255, 255)"
+]

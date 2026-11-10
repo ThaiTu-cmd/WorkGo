@@ -84,7 +84,7 @@
 }
 
 .card {
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 24px;
@@ -126,7 +126,7 @@
   border-radius: 6px;
   font-size: 0.95rem;
   color: #1e293b;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   box-sizing: border-box;
   font-family: inherit;
   min-height: 44px;
@@ -183,7 +183,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 18px;
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
 }
 
 .verifHeader {
@@ -333,7 +333,7 @@
   max-width: 480px;
   margin: 40px auto;
   text-align: center;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 40px 24px;
@@ -397,7 +397,7 @@
 }
 
 .btnSecondary {
-  background-color: #f1f5f9;
+  background-color: var(--wg-surface);
   color: #1e293b;
   border: 1px solid #cbd5e1;
   padding: 10px 20px;

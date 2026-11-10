@@ -29,6 +29,20 @@ export default function ThemeToggle({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
 
+    // Re-apply theme on mount: soft navigations (language switch) do not re-run
+    // the beforeInteractive script, so data-theme/class may be missing.
+    try {
+      const savedTheme = localStorage.getItem("workgo_theme") as "dark" | "light" | null;
+      const domTheme = document.documentElement.getAttribute("data-theme") as "dark" | "light" | null;
+      const initial = savedTheme || domTheme || "dark";
+      setTheme(initial);
+      document.documentElement.setAttribute("data-theme", initial);
+      document.documentElement.classList.remove("light", "dark");
+      document.documentElement.classList.add(initial);
+    } catch {
+      // storage blocked
+    }
+
     const handleThemeChange = (e: Event) => {
       const detail = (e as CustomEvent<{ theme: "dark" | "light" }>).detail;
       if (detail?.theme) {
@@ -41,6 +55,7 @@ export default function ThemeToggle({
   }, []);
 
   const toggleTheme = () => {
+    if (typeof window !== "undefined" && (window as unknown as { __workgoNavigating?: boolean }).__workgoNavigating) return;
     const nextTheme = theme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
 
@@ -55,7 +70,11 @@ export default function ThemeToggle({
     }
 
     if (typeof window !== "undefined") {
+      (window as unknown as { __workgoThemeSwitching?: boolean }).__workgoThemeSwitching = true;
       window.dispatchEvent(new CustomEvent("workgo-theme-changed", { detail: { theme: nextTheme } }));
+      window.setTimeout(() => {
+        (window as unknown as { __workgoThemeSwitching?: boolean }).__workgoThemeSwitching = false;
+      }, 500);
     }
   };
 

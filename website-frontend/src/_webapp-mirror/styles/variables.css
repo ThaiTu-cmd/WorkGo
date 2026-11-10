@@ -10,11 +10,11 @@
   --wg-hero-bg: #012b1d;
   --wg-hero-gradient: linear-gradient(
     135deg,
-    #032115 0%,
-    #063923 55%,
-    #0b4e33 100%
+    #012b1d 0%,
+    #032115 55%,
+    #158852 100%
   );
-  --wg-hero-banner-accent: #0f6844;
+  --wg-hero-banner-accent: #158852;
 
   --wg-accent: #ff7640;
   --wg-accent-hover: #e86330;
@@ -88,23 +88,40 @@
   --wg-primary-glow: rgba(29, 191, 115, 0.35);
 
   --wg-secondary: #0d1117;
-  --wg-hero-bg: #000000;
+  --wg-hero-bg: #121212;
   --wg-hero-gradient: linear-gradient(
     135deg,
-    #000000 0%,
-    #0a0a0a 55%,
+    #121212 0%,
+    #1e1e1e 55%,
     #158852 100%
   );
   --wg-hero-banner-accent: #158852;
 
-  --wg-bg: #000000;
-  --wg-surface: #0a0a0a;
-  --wg-surface-alt: #141414;
-  --wg-text: #FFFFFF;
+  --wg-bg: #121212;
+  --wg-surface: #1e1e1e;
+  --wg-surface-alt: #2a2a2a;
+  --wg-text: #e8e8e8;
   --wg-text-secondary: #D4D4D8;
   --wg-text-muted: #A1A1AA;
   --wg-border: rgba(255, 255, 255, 0.14);
   --wg-border-light: rgba(255, 255, 255, 0.08);
+
+  /* Badges - dark variants */
+  --badge-digital-bg: rgba(3, 105, 161, 0.22);
+  --badge-digital-text: #7dd3fc;
+  --badge-digital-border: rgba(125, 211, 252, 0.35);
+
+  --badge-onsite-bg: rgba(180, 83, 9, 0.22);
+  --badge-onsite-text: #fcd34d;
+  --badge-onsite-border: rgba(252, 211, 77, 0.35);
+
+  --badge-delivery-bg: rgba(21, 128, 61, 0.22);
+  --badge-delivery-text: #86efac;
+  --badge-delivery-border: rgba(134, 239, 172, 0.35);
+
+  --badge-appointment-bg: rgba(124, 58, 237, 0.22);
+  --badge-appointment-text: #c4b5fd;
+  --badge-appointment-border: rgba(196, 181, 253, 0.35);
 }
 
 @media (max-width: 900px) {

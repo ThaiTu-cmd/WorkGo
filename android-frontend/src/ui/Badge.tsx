@@ -1,18 +1,18 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, font, radius, spacing } from './theme';
+import { font, radius, spacing, useColors } from './theme';
 
 export type Tone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
 
-const TONES: Record<Tone, { bg: string; fg: string }> = {
-  neutral: { bg: '#f3f4f6', fg: colors.muted },
-  info: { bg: '#e6f4ff', fg: colors.primary },
-  success: { bg: '#dcfce7', fg: colors.success },
-  warning: { bg: '#fef3c7', fg: colors.warning },
-  danger: { bg: '#fee2e2', fg: colors.danger },
-};
-
 export function Badge({ label, tone = 'neutral' }: { label: string; tone?: Tone }) {
+  const c = useColors();
+  const TONES: Record<Tone, { bg: string; fg: string }> = {
+    neutral: { bg: c.bg, fg: c.muted },
+    info: { bg: c.primaryLight, fg: c.primary },
+    success: { bg: '#dcfce7', fg: c.success },
+    warning: { bg: '#fef3c7', fg: c.warning },
+    danger: { bg: '#fee2e2', fg: c.danger },
+  };
   const t = TONES[tone];
   return (
     <View style={[styles.badge, { backgroundColor: t.bg }]}>

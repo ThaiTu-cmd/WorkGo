@@ -39,7 +39,7 @@
 
 /* Paused */
 .badgePaused {
-  background-color: #f1f5f9;
+  background-color: var(--wg-surface);
   color: #475569;
   border: 1px solid #cbd5e1;
 }
@@ -68,7 +68,7 @@
 }
 
 .badgeDefault {
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   color: #64748b;
   border: 1px solid #e2e8f0;
 }

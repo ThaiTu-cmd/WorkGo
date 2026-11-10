@@ -1,0 +1,5 @@
+[
+  "OrderDashboardPage-module__AXJspq__notice :: rgb(255, 251, 235)",
+  "OrderDashboardPage-module__AXJspq__statCard :: rgb(255, 251, 245)",
+  "OrderDashboardPage-module__AXJspq__tabCount :: rgba(255, 255, 255, 0.08)"
+]

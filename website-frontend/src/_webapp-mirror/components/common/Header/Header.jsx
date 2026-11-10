@@ -24,6 +24,7 @@ import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) {
   const t = useTranslations('header');
+  const tMisc = useTranslations('misc');
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [miniSearchQuery, setMiniSearchQuery] = useState('');
@@ -237,7 +238,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
 
             {isLoggedIn ? (
               <>
-                {accountGroupsFor(token).map((group) => (
+                {accountGroupsFor(token, tMisc).map((group) => (
                   <div key={group.title} className={styles.mobileGroup}>
                     <p className={styles.mobileGroupTitle}>{group.title}</p>
                     {/* "Đơn hàng của tôi" is already listed above in the drawer. */}

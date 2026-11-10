@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Header from "@/_webapp-mirror/components/common/Header/Header";
 import HeroBanner from "@/_webapp-mirror/components/home/HeroBanner/HeroBanner";
 import TrustedBy from "@/_webapp-mirror/components/home/TrustedBy/TrustedBy";
@@ -228,8 +228,12 @@ function scrollToTopInstant() {
 // which carries the Turbopack-impure `main` selector). Data import resolves
 // through turbopack.resolveAlias to engine-backed shims; without the alias
 // it falls back to the mirror's own web-app mocks.
-export default function WebAppShell() {
-  const [currentPage, setCurrentPage] = useState<TrungPageKey>("home"); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form' | 'availability' | 'checkout' | 'orders' + 16 trung-pages
+export default function WebAppShell({ initialPage }: { initialPage?: string } = {}) {
+  const [currentPage, setCurrentPage] = useState<TrungPageKey>(() => {
+    if (typeof window !== "undefined") return parseUrlParams(window.location.search).page;
+    if (initialPage && KNOWN_PAGE_KEYS.has(initialPage)) return initialPage as TrungPageKey;
+    return "home";
+  }); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form' | 'availability' | 'checkout' | 'orders' + 16 trung-pages
   const [previousPage, setPreviousPage] = useState<TrungPageKey>("home");
   const [financeTab, setFinanceTab] = useState<FinanceTab>("wallet");
   const [selectedServiceId, setSelectedServiceId] = useState("");
@@ -259,12 +263,41 @@ export default function WebAppShell() {
       window.removeEventListener("offline", goOffline);
     };
   }, []);
+  // Keep theme (data-theme + html class) in sync even on soft client navigations
+  // (e.g. language switch via window.location.href), where beforeInteractive
+  // scripts do not re-run.
+  useLayoutEffect(() => {
+    try {
+      const saved = localStorage.getItem("workgo_theme");
+      const t =
+        saved === "light" || saved === "dark"
+          ? saved
+          : document.documentElement.getAttribute("data-theme") === "light"
+            ? "light"
+            : "dark";
+      document.documentElement.setAttribute("data-theme", t);
+      document.documentElement.classList.remove("light", "dark");
+      document.documentElement.classList.add(t);
+    } catch {
+      // storage / DOM blocked
+    }
+  }, []);
+
   const [serviceFormMode, setServiceFormMode] = useState<"create" | "edit">("create");
   const [editServiceId, setEditServiceId] = useState<string | null>(null);
-  const [catalogFilters, setCatalogFilters] = useState({
-    category: "ALL",
-    executionType: "ALL",
-    query: "",
+  const [catalogFilters, setCatalogFilters] = useState(() => {
+    if (typeof window === "undefined") {
+      return { category: "ALL", executionType: "ALL", query: "" };
+    }
+    const { page, params } = parseUrlParams(window.location.search);
+    if (page === "catalog") {
+      return {
+        category: params.category || "ALL",
+        executionType: params.executionType || "ALL",
+        query: params.query || "",
+      };
+    }
+    return { category: "ALL", executionType: "ALL", query: "" };
   });
 
   const [authModal, setAuthModal] = useState<"login" | "register" | null>(null);

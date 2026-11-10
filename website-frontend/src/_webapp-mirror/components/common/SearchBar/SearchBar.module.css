@@ -142,7 +142,7 @@
 }
 
 .optionSelected .optionIcon {
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   color: var(--wg-primary);
 }
 

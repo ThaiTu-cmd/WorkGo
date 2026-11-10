@@ -13,7 +13,7 @@
 }
 
 .cardContainer {
-  background: #ffffff;
+  background: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 24px;
@@ -48,7 +48,7 @@
   position: absolute;
   bottom: 0;
   right: 0;
-  background: #ffffff;
+  background: var(--wg-surface);
   color: #10b981;
   border-radius: 50%;
   display: flex;
@@ -148,7 +148,7 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   padding: 16px;
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   border-radius: 8px;
   border: 1px solid #f1f5f9;
 }
@@ -190,7 +190,7 @@
 
 .contactBtn {
   padding: 11px 20px;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   border: 1px solid #cbd5e1;
   color: #0f172a;
   border-radius: 8px;
@@ -205,7 +205,7 @@
 }
 
 .contactBtn:hover {
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   border-color: #94a3b8;
 }
 

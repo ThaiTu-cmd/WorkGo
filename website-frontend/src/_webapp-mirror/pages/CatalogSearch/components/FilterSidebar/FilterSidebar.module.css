@@ -242,7 +242,7 @@
   flex-shrink: 0;
   transition: all var(--transition-fast);
   color: #ffffff;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
 }
 
 .checkboxInput:checked + .checkboxCustom {

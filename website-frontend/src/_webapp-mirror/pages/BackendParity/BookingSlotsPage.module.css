@@ -72,7 +72,7 @@
 
 /* Filter Card */
 .filterCard {
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 16px 20px;
@@ -103,7 +103,7 @@
   border-radius: 6px;
   font-size: 0.95rem;
   color: #1e293b;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   min-height: 44px;
 }
 
@@ -121,7 +121,7 @@
 }
 
 .dateGroup {
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 24px;
@@ -155,7 +155,7 @@
 }
 
 .slotAvailable {
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   border-color: #cbd5e1;
 }
 
@@ -170,7 +170,7 @@
 }
 
 .slotBooked {
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   border-color: #e2e8f0;
   opacity: 0.75;
 }
@@ -219,7 +219,7 @@
 .emptyCard {
   text-align: center;
   padding: 40px;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 8px;
 }

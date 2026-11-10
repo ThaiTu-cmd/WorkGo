@@ -2,7 +2,7 @@ import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as React from 'react';
-import { AppState } from 'react-native';
+import { AppState, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from '@/auth/AuthProvider';
@@ -19,17 +19,19 @@ const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider queryClient={queryClient}>
-          <StatusBar style="dark" />
+          <StatusBar style={isDark ? 'light' : 'dark'} />
           <OfflineBanner />
           <Stack
             screenOptions={{
-              headerTintColor: colors.text,
+              headerTintColor: isDark ? '#f8fafc' : colors.text,
               headerBackTitle: 'Quay lại',
-              contentStyle: { backgroundColor: colors.bg },
+              contentStyle: { backgroundColor: isDark ? '#121212' : colors.bg },
             }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="auth/login" options={{ title: 'Đăng nhập' }} />

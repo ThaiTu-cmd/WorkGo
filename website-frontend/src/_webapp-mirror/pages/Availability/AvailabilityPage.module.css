@@ -1,5 +1,5 @@
 .pageContainer {
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   min-height: 100vh;
   padding: calc(var(--header-height) + 24px) 0 60px 0;
 }
@@ -26,7 +26,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   border: 1px solid #cbd5e1;
   border-radius: var(--radius-sm);
   color: #1e293b;
@@ -36,7 +36,7 @@
 }
 
 .backBtn:hover {
-  background-color: #f1f5f9;
+  background-color: var(--wg-surface);
 }
 
 .bcSep {
@@ -96,7 +96,7 @@
   padding: 0 12px;
   border: 1px solid #cbd5e1;
   border-radius: var(--radius-sm);
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   color: var(--wg-text);
   font-size: 0.9rem;
   font-weight: 500;
@@ -191,7 +191,7 @@
 
 .gridCard,
 .panel {
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   border: 1px solid var(--wg-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
@@ -301,7 +301,7 @@
 .ruleInactive {
   border-color: #e2e8f0;
   border-left-color: #94a3b8;
-  background-color: #f1f5f9;
+  background-color: var(--wg-surface);
   background-image: repeating-linear-gradient(
     -45deg,
     transparent 0 6px,
@@ -378,7 +378,7 @@
   height: 34px;
   border-radius: var(--radius-sm);
   border: 1px solid #cbd5e1;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--wg-text);
@@ -450,7 +450,7 @@
 .dangerBtn {
   border: 1px solid #fecaca;
   color: #dc2626;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
 }
 
 .dangerBtn:hover:not(:disabled) {

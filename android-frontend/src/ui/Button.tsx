@@ -1,6 +1,6 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, type ViewStyle } from 'react-native';
 
-import { colors, font, radius, spacing } from './theme';
+import { colors, font, radius, spacing, useColors } from './theme';
 
 type Props = {
   title: string;
@@ -12,7 +12,14 @@ type Props = {
 };
 
 export function Button({ title, onPress, variant = 'primary', loading = false, disabled = false, style }: Props) {
+  const c = useColors();
   const inactive = disabled || loading;
+  const variantStyle =
+    variant === 'primary'
+      ? { backgroundColor: c.primary }
+      : variant === 'secondary'
+      ? { backgroundColor: c.card, borderWidth: 1, borderColor: c.border }
+      : { backgroundColor: c.danger };
   return (
     <Pressable
       accessibilityRole="button"
@@ -20,11 +27,11 @@ export function Button({ title, onPress, variant = 'primary', loading = false, d
       accessibilityState={{ disabled: inactive, busy: loading }}
       disabled={inactive}
       onPress={onPress}
-      style={({ pressed }) => [styles.base, styles[variant], inactive && styles.inactive, pressed && styles.pressed, style]}>
+      style={({ pressed }) => [styles.base, variantStyle, inactive && styles.inactive, pressed && styles.pressed, style]}>
       {loading ? (
-        <ActivityIndicator color={variant === 'secondary' ? colors.text : colors.white} />
+        <ActivityIndicator color={variant === 'secondary' ? c.text : c.white} />
       ) : (
-        <Text style={[styles.label, variant === 'secondary' && styles.labelSecondary]}>{title}</Text>
+        <Text style={[styles.label, variant === 'secondary' && { color: c.text }]}>{title}</Text>
       )}
     </Pressable>
   );
@@ -38,11 +45,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primary: { backgroundColor: colors.primary },
-  secondary: { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border },
-  danger: { backgroundColor: colors.danger },
   inactive: { opacity: 0.5 },
   pressed: { opacity: 0.8 },
   label: { color: colors.white, fontSize: font.body, fontWeight: '600' },
-  labelSecondary: { color: colors.text },
 });

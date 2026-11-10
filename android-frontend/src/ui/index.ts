@@ -8,4 +8,5 @@ export { OptionRow } from './OptionRow';
 export { Screen } from './Screen';
 export { EmptyState, ErrorState, Skeleton, SkeletonList } from './States';
 export { TextField } from './TextField';
-export { colors, font, radius, spacing } from './theme';
+export { colors, font, getColors, radius, spacing, useColors } from './theme';
+export type { ThemeColors } from './theme';

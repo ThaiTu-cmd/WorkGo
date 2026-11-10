@@ -29,7 +29,7 @@
   overflow-x: auto;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  background: #ffffff;
+  background: var(--wg-surface);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
@@ -43,7 +43,7 @@
 /* Headers */
 .comparisonTable th {
   padding: 20px 16px;
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   border-bottom: 2px solid #e2e8f0;
   vertical-align: top;
 }
@@ -145,7 +145,7 @@
 /* Footer Action Buttons */
 .comparisonTable tfoot td {
   padding: 20px 16px;
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   border-top: 2px solid #e2e8f0;
 }
 
@@ -153,7 +153,7 @@
   width: 100%;
   max-width: 150px;
   padding: 9px 12px;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   border: 1px solid #cbd5e1;
   color: #334155;
   border-radius: 6px;

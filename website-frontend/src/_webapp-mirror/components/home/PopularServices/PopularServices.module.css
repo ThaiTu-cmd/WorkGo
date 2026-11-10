@@ -19,7 +19,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background-color: #fff1eb;
+  background-color: var(--wg-surface-alt);
   color: var(--wg-accent);
   padding: 4px 12px;
   border-radius: var(--radius-full);
@@ -132,9 +132,9 @@
 }
 
 .tabActive {
-  background-color: var(--wg-text) !important;
+  background-color: var(--wg-primary) !important;
   color: #ffffff !important;
-  border-color: var(--wg-text) !important;
+  border-color: var(--wg-primary) !important;
 }
 
 .servicesGrid {

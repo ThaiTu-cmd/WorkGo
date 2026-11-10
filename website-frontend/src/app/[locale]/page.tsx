@@ -9,9 +9,13 @@ export const metadata: Metadata = {
 
 export default async function LocaleRootPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   await params;
-  return <WebAppShell />;
+  const sp = await searchParams;
+  const pageParam = typeof sp?.page === "string" ? sp.page : undefined;
+  return <WebAppShell initialPage={pageParam} />;
 }

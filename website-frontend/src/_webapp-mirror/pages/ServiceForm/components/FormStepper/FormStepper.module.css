@@ -1,5 +1,5 @@
 .stepperSection {
-  background: #ffffff;
+  background: var(--wg-surface);
   border-bottom: 1px solid var(--border-color, #e2e8f0);
   padding: 1.25rem 0;
   margin-bottom: 2rem;
@@ -23,7 +23,7 @@
   cursor: pointer;
   position: relative;
   z-index: 2;
-  background: #ffffff;
+  background: var(--wg-surface);
   padding: 0 0.5rem;
   user-select: none;
 }
@@ -37,7 +37,7 @@
   justify-content: center;
   font-weight: 700;
   font-size: 0.875rem;
-  background: #ffffff;
+  background: var(--wg-surface);
   border: 2px solid #cbd5e1;
   color: #64748b;
   transition: all 0.25s ease;

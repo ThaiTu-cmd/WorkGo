@@ -32,6 +32,9 @@ export default function LanguageSwitcher({
   const handleSwitchLanguage = (targetLocale: "vi" | "en") => {
     if (typeof window === "undefined") return;
     if (targetLocale === currentLocale) return;
+    if ((window as unknown as { __workgoThemeSwitching?: boolean }).__workgoThemeSwitching) return;
+
+    (window as unknown as { __workgoNavigating?: boolean }).__workgoNavigating = true;
 
     const { pathname, search, hash } = window.location;
     let newPathname = pathname;

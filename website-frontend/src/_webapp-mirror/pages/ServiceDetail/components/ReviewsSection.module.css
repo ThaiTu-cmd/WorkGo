@@ -14,7 +14,7 @@
 
 /* Summary Card */
 .summaryCard {
-  background: #ffffff;
+  background: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 24px;
@@ -80,7 +80,7 @@
 .barTrack {
   flex: 1;
   height: 8px;
-  background-color: #f1f5f9;
+  background-color: var(--wg-surface);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -106,7 +106,7 @@
 
 .filterBtn {
   padding: 7px 14px;
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   border: 1px solid #e2e8f0;
   color: #475569;
   border-radius: 20px;
@@ -117,7 +117,7 @@
 }
 
 .filterBtn:hover {
-  background-color: #f1f5f9;
+  background-color: var(--wg-surface);
   color: #0f172a;
 }
 
@@ -135,7 +135,7 @@
 }
 
 .reviewCard {
-  background: #ffffff;
+  background: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 20px;
@@ -211,7 +211,7 @@
 .packageUsedBadge {
   font-size: 0.8rem;
   color: #475569;
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   padding: 4px 10px;
   border-radius: 6px;
   align-self: flex-start;
@@ -246,7 +246,7 @@
 }
 
 .helpfulBtn:hover {
-  background-color: #f1f5f9;
+  background-color: var(--wg-surface);
   color: #0f172a;
 }
 

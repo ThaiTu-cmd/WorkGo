@@ -77,7 +77,10 @@ public enum ErrorCode {
 
     //===========PAYMENT============
     ORDER_CHECKIN_CODE_NOT_FOUND(3020, "Checkin code is not available for this order", HttpStatus.NOT_FOUND),
-    ORDER_PAYMENT_ID_REQUIRED(3021, "Payment id is required", HttpStatus.BAD_REQUEST);
+    ORDER_PAYMENT_ID_REQUIRED(3021, "Payment id is required", HttpStatus.BAD_REQUEST),
+    PROPOSAL_ORDER_INVALID_REQUEST(3022, "Invalid proposal order request or idempotency key", HttpStatus.BAD_REQUEST),
+    PROPOSAL_ORDER_CONFLICT(3023, "Proposal source or order payload does not match", HttpStatus.CONFLICT),
+    JOB_SERVICE_UNAVAILABLE(3024, "Job service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
 
     private int code;
     private String message;

@@ -27,6 +27,10 @@ public class OrderSnapshot {
     UUID orderId;
 
     @Type(JsonType.class)
+    @Column(name = "proposal_snapshot", columnDefinition = "jsonb")
+    ProposalSnapshot proposalSnapshot;
+
+    @Type(JsonType.class)
     @Column(name = "service_snapshot", columnDefinition = "jsonb")
     ServiceSnapshot serviceSnapshot;
 

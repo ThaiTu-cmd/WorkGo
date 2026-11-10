@@ -73,7 +73,10 @@ public enum ErrorCode {
     ORDER_CANCELLATION_NOT_FOUND(3016, "Cancellation request not found", HttpStatus.NOT_FOUND),
     ORDER_CANCELLATION_NOT_PENDING(3017, "Cancellation request is not pending", HttpStatus.CONFLICT),
     ORDER_CANCELLATION_SELF_RESPOND(3018, "You cannot respond to your own cancellation request", HttpStatus.FORBIDDEN),
-    ORDER_CANCEL_ANSWER_REQUIRED(3019, "Accept or reject is required", HttpStatus.BAD_REQUEST);
+    ORDER_CANCEL_ANSWER_REQUIRED(3019, "Accept or reject is required", HttpStatus.BAD_REQUEST),
+    PROPOSAL_ORDER_INVALID_REQUEST(3022, "Invalid proposal order request or idempotency key", HttpStatus.BAD_REQUEST),
+    PROPOSAL_ORDER_CONFLICT(3023, "Proposal source or order payload does not match", HttpStatus.CONFLICT),
+    JOB_SERVICE_UNAVAILABLE(3024, "Job service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
 
     private int code;
     private String message;

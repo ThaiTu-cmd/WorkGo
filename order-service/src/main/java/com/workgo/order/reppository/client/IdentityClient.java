@@ -7,7 +7,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.UUID;
 
-@FeignClient(name = "identity-service", url = "${app.services.identity}")
+@FeignClient(name = "identity-service", contextId = "orderIdentityClient", url = "${app.services.identity}",
+        configuration = InternalFeignConfiguration.class)
 public interface IdentityClient {
 
     @GetMapping("/internal/providers/{providerId}")

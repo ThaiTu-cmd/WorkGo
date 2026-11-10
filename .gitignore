@@ -66,5 +66,14 @@ cookie.txt
 AGENTS.md
 CLAUDE.md
 /deepseek
+
+# Local verification artifacts
+*.log
+api-gateway/src/test/
+job-service/src/test/
+job-service/test/
+identity-service/src/test/
+order-service/src/test/
+.worktrees/
 mvnw
 mvnw.cmd

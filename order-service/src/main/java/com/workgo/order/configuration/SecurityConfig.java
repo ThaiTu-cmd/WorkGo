@@ -15,6 +15,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration
 @EnableWebSecurity
@@ -25,15 +30,23 @@ public class SecurityConfig {
     @Autowired
     CustomJwtDecoder customJwtDecoder;
 
-    private final String[] PUBLIC_ENDPOINTS = {
-        "/internal/**"
-    };
+    @Bean
+    @Order(1)
+    SecurityFilterChain internalSecurity(HttpSecurity http, ObjectMapper mapper,
+            @Value("${app.internal-key:}") String internalKey) throws Exception {
+        return http.securityMatcher("/internal/**").csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .requestCache(AbstractHttpConfigurer::disable)
+                .addFilterBefore(new InternalApiKeyFilter(internalKey, mapper), AnonymousAuthenticationFilter.class)
+                .authorizeHttpRequests(auth -> auth.anyRequest().hasAuthority("INTERNAL_SERVICE"))
+                .build();
+    }
 
     @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request ->{
-            request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
-                    .anyRequest().authenticated();
+            request.anyRequest().authenticated();
         });
 
         httpSecurity.oauth2ResourceServer(oAuth2 -> oAuth2.jwt(JwtConfigurer -> JwtConfigurer

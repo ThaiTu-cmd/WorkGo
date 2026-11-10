@@ -1,0 +1,539 @@
+package com.workgo.order.service;
+
+import com.workgo.order.dto.PageResponse;
+import com.workgo.order.dto.request.OrderCreationRequest;
+import com.workgo.order.dto.request.PaymentConfirmedRequest;
+import com.workgo.order.dto.request.SlotActionRequest;
+import com.workgo.order.dto.response.OrderDetailResponse;
+import com.workgo.order.dto.response.OrderItemResponse;
+import com.workgo.order.dto.response.OrderPaymentInfoResponse;
+import com.workgo.order.dto.response.OrderResponse;
+import com.workgo.order.dto.response.OrderSnapshotResponse;
+import com.workgo.order.dto.response.OrderStatusHistoryResponse;
+import com.workgo.order.dto.response.PaymentConfirmationResponse;
+import com.workgo.order.dto.response.client.AddOnResponse;
+import com.workgo.order.dto.response.client.PackageResponse;
+import com.workgo.order.dto.response.client.ProviderProfileResponse;
+import com.workgo.order.dto.response.client.ServiceResponse;
+import com.workgo.order.dto.snapshot.*;
+import com.workgo.order.entity.*;
+import com.workgo.order.enumeration.*;
+import com.workgo.order.enumeration.client.AddOnStatus;
+import com.workgo.order.enumeration.client.PackageStatus;
+import com.workgo.order.enumeration.client.ServiceStatus;
+import com.workgo.order.exception.AppException;
+import com.workgo.order.exception.ErrorCode;
+import com.workgo.order.mapper.OrderItemMapper;
+import com.workgo.order.mapper.OrderMapper;
+import com.workgo.order.mapper.OrderSnapshotMapper;
+import com.workgo.order.mapper.OrderStatusHistoryMapper;
+import com.workgo.order.reppository.*;
+import com.workgo.order.reppository.client.CatalogClient;
+import com.workgo.order.reppository.client.IdentityClient;
+import com.workgo.order.utils.TokenUtils;
+import feign.FeignException;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.security.SecureRandom;
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+public class OrderService {
+
+    OrderRepository orderRepository;
+    OrderMapper orderMapper;
+    OrderStatusHistoryMapper orderStatusHistoryMapper;
+    CatalogClient catalogClient;
+    IdentityClient identityClient;
+    OrderStatusService orderStatusService;
+    OrderSnapshotRepository orderSnapshotRepository;
+    OrderStatusHistoryRepository orderStatusHistoryRepository;
+    OrderItemRepository orderItemRepository;
+    OrderItemMapper orderItemMapper;
+    OrderSnapshotMapper orderSnapshotMapper;
+    ExecutionService executionService;
+    ExecutionRepository executionRepository;
+    OnsiteExecutionRepository onsiteExecutionRepository;
+    PasswordEncoder passwordEncoder;
+    TextEncryptor checkinCodeEncryptor;
+    CancellationService cancellationService;
+    TokenUtils tokenUtils;
+
+    @NonFinal
+    @Value("${order.platform-fee-rate}")
+    BigDecimal platformFeeRate;
+
+    @Transactional
+    public OrderResponse createOrder(OrderCreationRequest request){
+
+        UUID clientId = tokenUtils.getCurrentUserId();
+
+        if (!tokenUtils.hasRole("ROLE_CLIENT")) {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+
+        ServiceResponse serviceResponse = catalogClient.getService(request.getServiceId());
+
+        if(!ServiceStatus.PUBLISHED.equals(serviceResponse.getStatus())){
+            throw new AppException(ErrorCode.SERVICE_NOT_AVAILABLE);
+        }
+
+        PackageResponse packageResponse = catalogClient.getPackage(request.getPackageId());
+
+        if (!request.getServiceId().equals(packageResponse.getServiceId())){
+            throw new AppException(ErrorCode.PACKAGE_NOT_FOUND);
+        }
+
+        if (!PackageStatus.ACTIVE.equals(packageResponse.getPackageStatus())){
+            throw new AppException(ErrorCode.PACKAGE_NOT_AVAILABLE);
+        }
+
+        List<AddOnResponse> addOns = collectAddons(request.getServiceId(), request.getAddonIds());
+
+        //provider khong duoc mua cua chinh minh
+        if (Objects.equals(serviceResponse.getProviderId(), tokenUtils.getCurrentProviderIdOrNull())){
+            throw new AppException(ErrorCode.ORDER_CANNOT_BUY_OWN_SERVICE);
+        }
+
+        //tinh subtotal
+        BigDecimal subtotal = packageResponse.getPrice();
+
+        for (AddOnResponse addOn : addOns){
+            subtotal = subtotal.add(addOn.getPrice());
+        }
+
+        BigDecimal platformFee = subtotal.multiply(platformFeeRate).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal totalAmount = subtotal;                          // client tra dung gia niem yet
+        BigDecimal providerNetAmount = subtotal.subtract(platformFee);
+
+        //luu order -> lay id
+        Order order = orderRepository.save(Order.builder()
+                .orderNumber(generateOrderNumber())
+                .orderStatus(OrderStatus.PENDING_PAYMENT)
+                .paymentStatus(PaymentStatus.PENDING)
+                .sourceType(SourceType.SERVICE)
+                .sourceId(serviceResponse.getServiceId())
+                .clientId(clientId)
+                .providerId(serviceResponse.getProviderId())
+                .serviceId(serviceResponse.getServiceId())
+                .packageId(packageResponse.getPackageId())
+                .executionType(serviceResponse.getExecutionType())
+                .title(serviceResponse.getTitle() + " - " + packageResponse.getName())
+                .subtotal(subtotal)
+                .platformFee(platformFee)
+                .totalAmount(totalAmount)
+                .providerNetAmount(providerNetAmount)
+                .currency(packageResponse.getCurrency() == null ? "VND" : packageResponse.getCurrency())
+                .placedAt(Instant.now())
+                .build());
+
+        //luu OrderItem
+        List<OrderItem> orderItems = buildOrderItems(order, packageResponse, addOns, platformFee);
+
+        assertItemsTotalMatchesSubtotal(orderItems, subtotal);
+
+        orderItemRepository.saveAll(orderItems);
+
+        //tao digital/ onsite execution tuy loai executiontype cua order
+        executionService.createFor(order, request, packageResponse);
+
+        saveSnapshot(order, request, serviceResponse, packageResponse, addOns,
+                subtotal, platformFee, totalAmount, providerNetAmount);
+
+
+        //ghi lai order status history
+        orderStatusService.recordCreated(order, clientId);
+
+        return orderMapper.toOrderResponse(order);
+    }
+
+    @Transactional
+    public PaymentConfirmationResponse<Object> confirmPayment(UUID orderId, PaymentConfirmedRequest request) {
+
+        if (request.getPaymentId() == null) {
+            throw new AppException(ErrorCode.ORDER_PAYMENT_ID_REQUIRED);
+        }
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        //da confirm roi hoac don da huy -> tra trang thai hien tai, payment tu xu ly
+        if (order.getPaymentStatus() == PaymentStatus.SUCCEEDED
+                || order.getOrderStatus() == OrderStatus.CANCELLED) {
+            return toConfirmationResponse(order, null);
+        }
+
+        if (order.getOrderStatus() != OrderStatus.PENDING_PAYMENT) {
+            throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
+        }
+
+        Object executionStatus = null;
+
+        //chi on site
+        if (order.getExecutionType() == ExecutionType.ONSITE) {
+
+            Execution execution = executionRepository.findByOrder_OrderId(orderId)
+                    .orElseThrow(() -> new AppException(ErrorCode.ORDER_EXECUTION_NOT_FOUND));
+
+            OnsiteExecution onsite = onsiteExecutionRepository
+                    .findByExecution_ExecutionId(execution.getExecutionId())
+                    .orElseThrow(() -> new AppException(ErrorCode.ORDER_EXECUTION_NOT_FOUND));
+
+            //slot HELD -> BOOKED, slot het han giu -> huy don, payment refund
+            if (!confirmSlot(onsite.getBookingSlotId(), orderId)) {
+                cancellationService.cancelBySystem(order);
+                return toConfirmationResponse(order, onsite.getStatus());
+            }
+
+            String checkinCode = generateCheckinCode();
+            onsite.setCheckinCodeHash(passwordEncoder.encode(checkinCode));
+            onsite.setCheckinCodeEncrypted(checkinCodeEncryptor.encrypt(checkinCode));
+            onsiteExecutionRepository.save(onsite);
+
+            executionStatus = onsite.getStatus();
+        }
+
+        order.setPaymentStatus(PaymentStatus.SUCCEEDED);
+        order.setPaymentId(request.getPaymentId());
+
+        orderStatusService.transition(order, OrderStatus.CONFIRMED, null, RoleName.SYSTEM);
+
+        return toConfirmationResponse(order, executionStatus);
+    }
+
+    //lay so tien + han thanh toan cua order
+    @Transactional(readOnly = true)
+    public OrderPaymentInfoResponse getPaymentInfo(UUID orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        Instant payableUntil = null;
+
+        //neu la onsite chi duoc thanh toan khi slot con duoc giu
+        if (order.getExecutionType() == ExecutionType.ONSITE) {
+            payableUntil = executionRepository.findByOrder_OrderId(orderId)
+                    .flatMap(execution -> onsiteExecutionRepository
+                            .findByExecution_ExecutionId(execution.getExecutionId()))
+                    .map(OnsiteExecution::getSlotHoldExpiresAt)
+                    .orElse(null);
+        }
+
+        return OrderPaymentInfoResponse.builder()
+                .orderId(order.getOrderId())
+                .orderNumber(order.getOrderNumber())
+                .clientId(order.getClientId())
+                .providerId(order.getProviderId())
+                .orderStatus(order.getOrderStatus())
+                .executionType(order.getExecutionType())
+                .title(order.getTitle())
+                .totalAmount(order.getTotalAmount())
+                .platformFee(order.getPlatformFee())
+                .providerNetAmount(order.getProviderNetAmount())
+                .currency(order.getCurrency())
+                .payableUntil(payableUntil)
+                .build();
+    }
+
+    //sinh ra ma code checkin
+    private String generateCheckinCode() {
+        return String.format("%06d", new SecureRandom().nextInt(1_000_000));
+    }
+
+    private boolean confirmSlot(UUID slotId, UUID orderId) {
+        try {
+            catalogClient.confirmSlot(slotId, SlotActionRequest.builder()
+                    .orderId(orderId)
+                    .build());
+            return true;
+        } catch (FeignException e) {
+            if (e.status() == HttpStatus.CONFLICT.value()) {
+                return false;
+            }
+            throw new AppException(ErrorCode.CATALOG_UNAVAILABLE);
+        }
+    }
+
+    private PaymentConfirmationResponse<Object> toConfirmationResponse(Order order, Object executionStatus) {
+        return PaymentConfirmationResponse.builder()
+                .orderId(order.getOrderId())
+                .orderStatus(order.getOrderStatus())
+                .paymentStatus(order.getPaymentStatus())
+                .executionStatus(executionStatus)
+                .build();
+    }
+
+    //loc ra addon duoc chon
+    private List<AddOnResponse> collectAddons(UUID serviceId, List<UUID> addonIds) {
+
+        if (addonIds == null || addonIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<UUID, AddOnResponse> addOnsOfService = catalogClient.getAllAddonsByService(serviceId)
+                .stream()
+                .collect(Collectors.toMap(
+                        AddOnResponse::getAddOnId,
+                        addOn -> addOn,
+                        (first, second) -> first));
+
+        List<AddOnResponse> selected = new ArrayList<>();
+
+        for (UUID addOnId : new LinkedHashSet<>(addonIds)) {
+
+            AddOnResponse addOn = addOnsOfService.get(addOnId);
+
+            if (addOn == null) {
+                throw new AppException(ErrorCode.ORDER_ADDON_NOT_FOUND);
+            }
+
+            if (!AddOnStatus.ACTIVE.equals(addOn.getStatus())) {
+                throw new AppException(ErrorCode.ORDER_ADDON_NOT_AVAILABLE);
+            }
+
+            selected.add(addOn);
+        }
+
+        return selected;
+    }
+
+    private List<OrderItem> buildOrderItems(Order order,
+                                            PackageResponse packageResponse,
+                                            List<AddOnResponse> addOns,
+                                            BigDecimal platformFee) {
+
+        List<OrderItem> items = new ArrayList<>();
+        int sortOrder = 0;
+
+        //luu package
+        items.add(OrderItem.builder()
+                .name(packageResponse.getName())
+                .quantity(1)
+                .unitPrice(packageResponse.getPrice())
+                .amount(packageResponse.getPrice())
+                .itemType(ItemType.PACKAGE)
+                .referenceId(packageResponse.getPackageId())
+                .sortOrder(sortOrder++)
+                .order(order)
+                .build());
+
+        //luu cac add-on
+        for (AddOnResponse addOn : addOns) {
+            items.add(OrderItem.builder()
+                    .name(addOn.getName())
+                    .quantity(1)
+                    .unitPrice(addOn.getPrice())
+                    .amount(addOn.getPrice())
+                    .itemType(ItemType.ADDON)
+                    .referenceId(addOn.getAddOnId())
+                    .sortOrder(sortOrder++)
+                    .order(order)
+                    .build());
+        }
+
+      //platform-fee
+        items.add(OrderItem.builder()
+                .name("Phi nen tang")
+                .quantity(1)
+                .unitPrice(platformFee)
+                .amount(platformFee)
+                .itemType(ItemType.PLATFORM_FEE)
+                .sortOrder(sortOrder)
+                .order(order)
+                .build());
+
+        return items;
+    }
+
+
+    public PageResponse<OrderResponse> getMyOrders(RoleName roleName, int page, int size){
+
+        Sort sort = Sort.by("createdAt").descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        UUID userId = null;
+        Page<Order> pageData = null;
+
+        switch (roleName){
+            case PROVIDER -> {
+                userId = tokenUtils.getCurrentProviderId();
+                pageData = orderRepository.findAllByProviderId(userId, pageable);
+            }
+            case CLIENT -> {
+                userId = tokenUtils.getCurrentUserId();
+                pageData = orderRepository.findAllByClientId(userId, pageable);
+            }
+            default -> throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        return PageResponse.<OrderResponse>builder()
+                .totalPages(pageData.getTotalPages())
+                .pageSize(pageData.getSize())
+                .totalElements(pageData.getTotalElements())
+                .currentPage(page)
+                .data(pageData.stream()
+                        .map(orderMapper::toOrderResponse)
+                        .toList())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public OrderDetailResponse getOrder(UUID orderId){
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        tokenUtils.assertParticipant(order);
+
+        List<OrderItemResponse> items = orderItemRepository
+                .findByOrder_OrderIdOrderBySortOrderAsc(orderId)
+                .stream()
+                .map(orderItemMapper::toOrderItemResponse)
+                .toList();
+
+        OrderSnapshotResponse snapshot = orderSnapshotRepository.findById(orderId)
+                .map(orderSnapshotMapper::toOrderSnapshotResponse)
+                .orElse(null);
+
+        return OrderDetailResponse.builder()
+                .order(orderMapper.toOrderResponse(order))
+                .items(items)
+                .snapshot(snapshot)
+                .execution(executionService.getExecutionOfOrder(order))
+                .build();
+    }
+
+    public PageResponse<OrderStatusHistoryResponse> getOrderHistory(UUID orderId, int page, int size){
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        tokenUtils.assertParticipant(order);
+
+        Sort sort = Sort.by("createdAt").descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<OrderStatusHistory> pageData = orderStatusHistoryRepository.findAllByOrder_OrderId(orderId, pageable);
+
+        return PageResponse.<OrderStatusHistoryResponse>builder()
+                .totalPages(pageData.getTotalPages())
+                .pageSize(pageData.getSize())
+                .totalElements(pageData.getTotalElements())
+                .currentPage(page)
+                .data(pageData.stream()
+                        .map(orderStatusHistoryMapper::toOrderHistoryResponse)
+                        .toList())
+                .build();
+
+    }
+
+    //tong tien PACKAGE + ADDON phai bang subtotal
+    private void assertItemsTotalMatchesSubtotal(List<OrderItem> items, BigDecimal subtotal) {
+
+        BigDecimal itemsTotal = items.stream()
+                .filter(item -> item.getItemType() == ItemType.PACKAGE
+                        || item.getItemType() == ItemType.ADDON)
+                .map(OrderItem::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (itemsTotal.compareTo(subtotal) != 0) {
+            throw new AppException(ErrorCode.ORDER_ITEM_TOTAL_MISMATCH);
+        }
+    }
+
+    private String generateOrderNumber(){
+        String date = Instant.now().toString();
+        String random = UUID.randomUUID().toString();
+
+        return "WG" + date + "-" + random;
+    }
+
+    private void saveSnapshot(Order order,
+                              OrderCreationRequest request,
+                              ServiceResponse serviceResponse,
+                              PackageResponse packageResponse,
+                              List<AddOnResponse> addOns,
+                              BigDecimal subtotal,
+                              BigDecimal platformFee,
+                              BigDecimal totalAmount,
+                              BigDecimal providerNetAmount) {
+
+        ProviderProfileResponse provider =
+                identityClient.getProviderProfile(serviceResponse.getProviderId());
+
+        List<AddOnSnapshot> addOnSnapshots = addOns.stream()
+                .map(addOn -> AddOnSnapshot.builder()
+                        .addOnId(addOn.getAddOnId())
+                        .name(addOn.getName())
+                        .description(addOn.getDescription())
+                        .price(addOn.getPrice())
+                        .build())
+                .toList();
+
+        orderSnapshotRepository.save(OrderSnapshot.builder()
+                .order(order)
+                .serviceSnapshot(ServiceSnapshot.builder()
+                        .serviceId(serviceResponse.getServiceId())
+                        .providerId(serviceResponse.getProviderId())
+                        .title(serviceResponse.getTitle())
+                        .description(serviceResponse.getDescription())
+                        .executionType(serviceResponse.getExecutionType())
+                        .basePrice(BigDecimal.valueOf(serviceResponse.getBasePrice()))
+                        .currency(serviceResponse.getCurrency())
+                        .build())
+                .packageSnapshot(PackageSnapshot.builder()
+                        .packageId(packageResponse.getPackageId())
+                        .name(packageResponse.getName())
+                        .description(packageResponse.getDescription())
+                        .price(packageResponse.getPrice())
+                        .currency(packageResponse.getCurrency())
+                        .deliveryDay(packageResponse.getDeliveryDay())
+                        .durationMinute(packageResponse.getDurationMinute())
+                        .revisionLimit(packageResponse.getRevisionLimit())
+                        .build())
+                .addOnSnapshot(addOnSnapshots)
+                .pricingSnapshot(PricingSnapshot.builder()
+                        .subtotal(subtotal)
+                        .platformFee(platformFee)
+                        .totalAmount(totalAmount)
+                        .providerNetAmount(providerNetAmount)
+                        .platformFeeRate(platformFeeRate)
+                        .currency(order.getCurrency())
+                        .build())
+                .providerSnapshot(ProviderSnapshot.builder()
+                        .providerId(serviceResponse.getProviderId())
+                        .businessName(provider.getBusinessName())
+                        .build())
+                .executionSnapshot(ExecutionSnapshot.builder()
+                        .executionType(serviceResponse.getExecutionType())
+                        .address(serviceResponse.getExecutionType() == ExecutionType.ONSITE
+                                ? request.getAddress() : null)
+                        .autoCompleteHours(serviceResponse.getExecutionType() == ExecutionType.ONSITE
+                                ? 24 : 72)
+                        .build())
+                .requirementValues(null)
+                .build());
+    }
+
+}

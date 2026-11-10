@@ -1,9 +1,11 @@
 package com.workgo.catalog.dto.request;
 
 import com.workgo.catalog.enumeration.ExecutionType;
+import com.workgo.catalog.enumeration.ServiceStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter
@@ -23,9 +25,11 @@ public class ServiceUpdateRequest {
 
     String description;
 
-    double basePrice;
-
     String currency;
+
+    ServiceStatus status;
+
+    BigDecimal basePrice;
 
 
 }

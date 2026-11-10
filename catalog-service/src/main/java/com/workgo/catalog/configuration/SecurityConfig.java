@@ -27,13 +27,26 @@ public class SecurityConfig {
     CustomJwtDecoder customJwtDecoder;
 
     private final String[] PUBLIC_ENDPOINTS = {
+        "/internal/**"
+    };
 
+    // Read-only catalog data guests can browse without logging in.
+    // /services/my-services stays protected by its @PreAuthorize.
+    private final String[] PUBLIC_GET_ENDPOINTS = {
+        "/categories", "/categories/**",
+        "/services", "/services/*",
+        "/packages/**",
+        "/addons/**",
+        "/medias/**",
+        "/rules/**",
+        "/slots/**"
     };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request ->{
-            request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+            request.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                    .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll()
                     .anyRequest().authenticated();
         });
 

@@ -19,7 +19,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -34,7 +33,8 @@ public class SecurityConfig {
             "/users/registration" ,
             "/auth/token",
             "/auth/introspect",
-            "/auth/logout"
+            "/auth/logout",
+            "/auth/refresh"
     };
 
     @Bean
@@ -56,7 +56,7 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request ->{
-            request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+            request.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                     .anyRequest().authenticated();
         });
 

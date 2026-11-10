@@ -18,4 +18,6 @@ public interface ProviderVerificationRepository extends JpaRepository<ProviderVe
 
     boolean existsByProviderProfile_ProviderProfileIdAndVerificationStatus(
             UUID providerProfileId, VerificationStatus status);
+
+    boolean existsByVerificationStatusAndProviderProfile_ProviderProfileId(VerificationStatus status, UUID id);
 }

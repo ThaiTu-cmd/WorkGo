@@ -124,17 +124,21 @@ public class ProviderVerificationService {
 
         User admin = attributeUtil.getCurrentUser();
 
-        verification.setVerificationStatus(request.getVerificationStatus());
+        verification.setVerificationStatus(
+                verification.getVerificationStatus().transitionTo(request.getVerificationStatus())
+        );
         verification.setVerifiedAt(Instant.now());
         verification.setVerifiedBy(admin.getUserId());
         verification.setUpdatedAt(Instant.now());
 
-        if (request.getVerificationStatus() == VerificationStatus.VERIFIED) {
-            ProviderProfile profile = verification.getProviderProfile();
-            profile.setVerificationStatus(VerificationStatus.VERIFIED);
-            profile.setUpdatedAt(Instant.now());
-            providerProfileRepository.save(profile);
-        }
+
+
+//        if (request.getVerificationStatus() == VerificationStatus.VERIFIED) {
+//            ProviderProfile profile = verification.getProviderProfile();
+//            profile.setVerificationStatus(VerificationStatus.VERIFIED);
+//            profile.setUpdatedAt(Instant.now());
+//            providerProfileRepository.save(profile);
+//        }
 
         return providerVerificationMapper.toProviderVerificationResponse(
                 providerVerificationRepository.save(verification));

@@ -1,0 +1,31 @@
+server:
+  port: ${JOB_PORT:8085}
+  servlet:
+    context-path: /job
+
+spring:
+  application:
+    name: job-service
+  datasource:
+    url: jdbc:postgresql://localhost:${JOB_DB_PORT:5437}/${JOB_DB:job_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  signerKey: ${JWT_SIGNER_KEY}
+
+app:
+  internal-api-key: ${INTERNAL_API_KEY:}
+  services:
+    identity: ${IDENTITY_SERVICE_URL:http://localhost:8081/identity}
+    catalog: ${CATALOG_SERVICE_URL:http://localhost:8082/catalog}
+    order: ${ORDER_SERVICE_URL:http://localhost:8083/order}

@@ -74,7 +74,6 @@ public class User {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     Set<Address> addresses = new HashSet<>();
 
-    @OneToOne
-    @JoinColumn(name = "provider_id")
+    @OneToOne(mappedBy = "user", fetch = FetchType.EAGER)
     ProviderProfile providerProfile;
 }

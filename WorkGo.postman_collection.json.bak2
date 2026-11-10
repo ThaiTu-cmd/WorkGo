@@ -1,0 +1,3356 @@
+{
+  "info": {
+    "_postman_id": "workgo-collection-v2",
+    "name": "WorkGo",
+    "description": "# WorkGo API Collection\n\nCollection này được sinh trực tiếp từ code trong repo (controllers / DTO / security config), đi qua **API Gateway :8888**.\n\n## 1. Các service và port\n\n| Service | Port | Context-path | Route qua gateway |\n|---|---|---|---|\n| api-gateway | 8888 | — | `http://localhost:8888/api/v1/**` |\n| identity-service | 8081 | `/identity` | `/api/v1/identity/**` |\n| catalog-service | 8082 | `/catalog` | `/api/v1/catalog/**` |\n| order-service | 8083 | `/order` | `/api/v1/order/**` |\n| job-service, payment-service | — | — | chưa có code, chưa có API |\n\nGateway dùng `StripPrefix=2`: `/api/v1/identity/auth/token` → service nhận `/identity/auth/token`.\n\n## 2. Cách dùng nhanh (5 bước)\n\n1. Bật PostgreSQL: `docker compose up -d` ở thư mục gốc repo.\n2. Chạy 4 service: identity (8081), catalog (8082), order (8083) và api-gateway (8888).\n3. Mở tab **Variables** của collection, điền `password` = mật khẩu tài khoản của bạn.\n4. Chạy `identity-service > users > Đăng ký tài khoản` (nếu chưa có tài khoản), rồi `auth > 1. Login`.\n   Token tự động lưu vào `{{accessToken}}`; mọi request sau đó tự gắn Bearer token.\n5. Chạy lần lượt từ trên xuống — các ID (`categoryId`, `serviceId`, `packageId`…) được **tự lưu** sau mỗi lần tạo thành công.\n\nRequest có 🔐 là cần token; các request **Public** đã được set `No Auth`.\n\n## 3. Tài khoản test có sẵn trong `data.sql`\n\n| userName | userId | Role trong seed |\n|---|---|---|\n| `nguyenvana` | `99999999-9999-9999-9999-999999999999` | CLIENT + PROVIDER |\n| `tranthib` | `88888888-8888-8888-8888-888888888888` | CLIENT + PROVIDER |\n| `levanc` | `77777777-7777-7777-7777-777777777777` | CLIENT |\n\n⚠️ **Mật khẩu không đọc ngược được từ hash BCrypt trong `data.sql`** — nếu bạn không nhớ, hãy tự ĐĂNG KÝ một tài khoản mới bằng request “Đăng ký tài khoản”.\n\n⚠️ **identity-service có `spring.sql.init.mode: always`** và `data.sql` bắt đầu bằng `DELETE FROM users` — nghĩa là **mỗi lần restart identity-service, toàn bộ user/address/provider bị xoá sạch** rồi nạp lại 3 user seed. catalog-service cũng tương tự (xoá sạch category/service/package/addon/slot). Hãy đăng ký lại tài khoản sau mỗi lần restart identity.\n\n## 4. Dữ liệu seed sẵn để test ngay (catalog-service)\n\nCác UUID này đã được điền sẵn vào biến collection:\n\n* `categoryId` = `11111111-1111-1111-1111-111111111111` — Thiết kế Đồ hoạ\n* `serviceId` = `44444444-4444-4444-4444-444444444444` — Thiết kế Logo Doanh Nghiệp\n* `packageId` = `66666666-6666-6666-6666-111111111111` — Gói Cơ Bản\n* `addonId` = `77777777-7777-7777-7777-111111111111` — Giao file source\n* `ruleId` = `88888888-8888-8888-8888-111111111111`\n* `serviceMediaId` = `99999999-9999-9999-9999-111111111111`\n* `providerId` = `99999999-9999-9999-9999-999999999999` — Văn A Studio, đã VERIFIED\n\n## 5. Muốn test được role PROVIDER thì làm gì?\n\nĐăng ký tài khoản chỉ cấp role **CLIENT**. Trình tự để có token chứa `ROLE_PROVIDER` + claim `providerId`:\n\n1. `providers > Đăng ký làm Provider` — tạo hồ sơ, trạng thái PENDING\n2. `providers > Duyệt / đổi trạng thái provider (ADMIN)` với `?status=VERIFIED` — bước này ghi role PROVIDER vào DB\n3. **Logout + Login lại** để lấy token mới\n4. Giờ mới chạy được `catalog-service > services > Tạo Service (cần role PROVIDER)`\n\n## 6. Muốn test được role ADMIN thì làm gì?\n\nSeed data **không có user nào mang role ADMIN**, và cũng không có API nào cấp role ADMIN. Cách nhanh nhất là insert trực tiếp vào DB:\n\n```sql\n-- 1) Lấy userId của tài khoản bạn vừa đăng ký\nSELECT user_id, user_name FROM users WHERE user_name = 'testuser01';\n\n-- 2) Cấp thêm role ADMIN\nINSERT INTO user_role (user_role_id, granted_at, granted_by, user_id, role_name)\nVALUES (gen_random_uuid(), CURRENT_TIMESTAMP, 'manual', '<user_id>', 'ADMIN');\n```\n\nSau đó **Login lại** để token mới chứa `ROLE_ADMIN`.\n\n## 7. Slot (ONSITE) — chưa test được bằng API\n\n`BookingSlotService.createSlot` đang bị comment và `data.sql` không insert slot nào, nên `/slots/services/{id}` luôn rỗng. Muốn test hold / confirm / release thì insert tạm:\n\n```sql\nINSERT INTO booking_slots (booking_slot_id, started_at, end_at, status, version,\n                           hold_expires_at, created_at, updated_at, service_id)\nVALUES (gen_random_uuid(), '2026-01-06 08:00:00', '2026-01-06 09:00:00', 'AVAILABLE', '0',\n        NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '44444444-4444-4444-4444-444444444444');\n```\n\n## 8. Ba lỗi gateway đã được sửa để collection này chạy được\n\n1. `WebClientConfiguration` — baseUrl sai port `8080` → sửa thành **8081**.\n2. `AuthenticationFilter.isPublicEndpoint` — ghép chuỗi sai nên **không endpoint nào được coi là public** → sửa danh sách và so sánh bằng `equals`.\n3. `application.yaml` — chỉ có route identity → thêm route **catalog** và **order**.\n\n`application-local.yaml` cũng đã được thêm route tương tự cho trường hợp chạy profile `local`.\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "identity-service",
+      "description": "Auth, user, address, provider, hồ sơ xác minh — qua gateway `/api/v1/identity` (service gốc ở port 8081).",
+      "item": [
+        {
+          "name": "auth",
+          "item": [
+            {
+              "name": "1. Login — lấy accessToken",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/auth/token",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "auth",
+                    "token"
+                  ]
+                },
+                "description": "**Public** — không cần token.\n\nĐăng nhập bằng `userName` + `password`.\n\nSau khi chạy, script test sẽ tự lưu `result.token` vào biến `{{accessToken}}`.\n\nResponse: `{ code, message, result: { token, authenticated } }`\n\n> ⚠️ Biến `{{password}}` đang để trống — vào tab **Variables** của collection để điền mật khẩu của bạn.\n> Nếu chưa có tài khoản, chạy request “Đăng ký tài khoản” ở folder `users` trước.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userName\": \"{{userName}}\",\n  \"password\": \"{{password}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result.token) {",
+                      "    pm.collectionVariables.set(\"accessToken\", json.result.token);",
+                      "    console.log(\"✅ accessToken = \" + json.result.token);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy result.token trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "2. Introspect — kiểm tra token",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/auth/introspect",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "auth",
+                    "introspect"
+                  ]
+                },
+                "description": "**Public**\n\nKiểm tra token còn hiệu lực không. Response: `result.valid = true/false`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"{{accessToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "3. Refresh — gia hạn token",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/auth/refresh",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "auth",
+                    "refresh"
+                  ]
+                },
+                "description": "**Public**\n\n⚠️ API này **không có refreshToken riêng** — bạn truyền chính access token đang dùng, hệ thống verify rồi sinh token mới (hạn vẫn 24h).\nScript test sẽ ghi đè `{{accessToken}}` bằng token mới.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"{{accessToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result.token) {",
+                      "    pm.collectionVariables.set(\"accessToken\", json.result.token);",
+                      "    console.log(\"✅ accessToken = \" + json.result.token);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy result.token trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "4. Logout — vô hiệu hoá token",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/auth/logout",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "auth",
+                    "logout"
+                  ]
+                },
+                "description": "**Public**\n\nToken bị đưa vào bảng `invalidated_token` — dùng lại sẽ bị 401.\nChạy xong nhớ chạy lại request Login vì `{{accessToken}}` đã chết.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"{{accessToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "users",
+          "item": [
+            {
+              "name": "Đăng ký tài khoản (luôn cấp role CLIENT)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/users/registration",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "users",
+                    "registration"
+                  ]
+                },
+                "description": "**Public**\n\nTạo user mới. Hệ thống **luôn gán role CLIENT** (xem `UserService.createUser`). Muốn thành PROVIDER thì xem hướng dẫn ở folder `providers`.\n\n⚠️ Response **không trả userId** — lấy `userId` bằng request `myInfo` ngay sau đó.\n\nLỗi thường gặp: `USER_EXISTED` khi trùng `userName` hoặc `email`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Nguyễn\",\n  \"lastName\": \"Văn Test\",\n  \"userName\": \"testuser01\",\n  \"password\": \"Test@12345\",\n  \"phone\": \"0912345678\",\n  \"email\": \"testuser01@example.com\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Lấy thông tin bản thân (myInfo)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/users/myInfo",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "users",
+                    "myInfo"
+                  ]
+                },
+                "description": "🔐 Cần token. Trả về user ứng với claim `sub` (userName) trong JWT.\n\nScript test tự lưu `result.userId` vào `{{userId}}`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result.userId) {",
+                      "    pm.collectionVariables.set(\"userId\", json.result.userId);",
+                      "    console.log(\"✅ userId = \" + json.result.userId);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy result.userId trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Danh sách user (endpoint ADMIN)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/users?page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "users"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 Cần token + **role ADMIN** (`@PreAuthorize(\"hasAnyRole('ADMIN')\")`).\n\nKhông phải ADMIN sẽ bị **403 Forbidden**."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Lấy user theo ID (ADMIN)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/users/{{userId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "users",
+                    "{{userId}}"
+                  ]
+                },
+                "description": "🔐 **ADMIN** — `@PreAuthorize(\"hasRole('ADMIN')\")`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Cập nhật user",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/users/{{userId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "users",
+                    "{{userId}}"
+                  ]
+                },
+                "description": "🔐 Cần token.\n\n⚠️ **Lưu ý bảo mật:** code hiện tại không kiểm tra user này có phải chính bạn không, nên bất kỳ ai có token cũng sửa được user khác.\n\n⚠️ Field `password` **bắt buộc phải gửi** — code gọi `passwordEncoder.encode(request.getPassword())`, để null sẽ lỗi 500.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Nguyễn\",\n  \"lastName\": \"Văn Đã Sửa\",\n  \"userName\": \"testuser01\",\n  \"password\": \"Test@12345\",\n  \"email\": \"testuser01@example.com\",\n  \"phone\": \"0987654321\",\n  \"avatarUrl\": \"https://example.com/avatar.jpg\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Xoá user (soft delete)",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/users/{{userId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "users",
+                    "{{userId}}"
+                  ]
+                },
+                "description": "🔐 Cần token. Thực chất chỉ set `status = DISABLE`, không xoá khỏi DB.\n\n⚠️ Cũng không kiểm tra quyền sở hữu."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "addresses",
+          "item": [
+            {
+              "name": "Tạo address",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/addresses",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "addresses"
+                  ]
+                },
+                "description": "🔐 Cần token. Address tự gắn với user đang đăng nhập.\n\nScript test tự lưu `result.addressId` vào `{{addressId}}`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"label\": \"Nhà riêng\",\n  \"contactName\": \"Nguyễn Văn Test\",\n  \"contactPhone\": \"0912345678\",\n  \"line1\": \"123 Đường Số 1\",\n  \"ward\": \"Phường Bến Thành\",\n  \"district\": \"Quận 1\",\n  \"city\": \"TP Hồ Chí Minh\",\n  \"countryCode\": \"VN\",\n  \"latitude\": \"10.7769\",\n  \"longitude\": \"106.7009\",\n  \"note\": \"Giao giờ hành chính\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result.addressId) {",
+                      "    pm.collectionVariables.set(\"addressId\", json.result.addressId);",
+                      "    console.log(\"✅ addressId = \" + json.result.addressId);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy result.addressId trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Lấy address theo ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/addresses/{{addressId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "addresses",
+                    "{{addressId}}"
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Danh sách address của tôi",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/addresses/my?page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "addresses",
+                    "my"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 Cần token.\n\n⚠️ Endpoint này trả `PageResponse` **trực tiếp** (không bọc trong `ApiResponse`), nên phải đọc `json.data[0].addressId` chứ không phải `json.result...`.\nScript test tự lưu address đầu tiên vào `{{addressId}}`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.data[0].addressId) {",
+                      "    pm.collectionVariables.set(\"addressId\", json.data[0].addressId);",
+                      "    console.log(\"✅ addressId = \" + json.data[0].addressId);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy data[0].addressId trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Cập nhật address",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/addresses/{{addressId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "addresses",
+                    "{{addressId}}"
+                  ]
+                },
+                "description": "🔐 Cần token.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"label\": \"Văn phòng\",\n  \"contactName\": \"Nguyễn Văn Test\",\n  \"contactPhone\": \"0912345678\",\n  \"line1\": \"456 Toà nhà Bitexco\",\n  \"ward\": \"Bến Nghé\",\n  \"district\": \"Quận 1\",\n  \"city\": \"TP Hồ Chí Minh\",\n  \"countryCode\": \"VN\",\n  \"latitude\": \"10.7716\",\n  \"longitude\": \"106.7044\",\n  \"note\": \"\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Xoá address",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/addresses/{{addressId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "addresses",
+                    "{{addressId}}"
+                  ]
+                },
+                "description": "🔐 Cần token (soft delete)."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "providers",
+          "item": [
+            {
+              "name": "Đăng ký làm Provider",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/providers",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "providers"
+                  ]
+                },
+                "description": "🔐 Cần token.\n\nTạo hồ sơ provider cho user đang đăng nhập, trạng thái khởi tạo là **PENDING**.\n\n> ⚠️ Tạo hồ sơ **chưa** cấp role PROVIDER. Phải được ADMIN duyệt VERIFIED (request “Duyệt / đổi trạng thái provider”) rồi **login lại** thì token mới có `scope=ROLE_PROVIDER` và claim `providerId` — đó là điều kiện để tạo Service bên catalog-service.\n\nScript test tự lưu `result.providerProfileId` vào `{{providerId}}`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"providerType\": \"INDIVIDUAL\",\n  \"businessName\": \"Văn A Studio\",\n  \"bio\": \"Chuyên thiết kế website và logo\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result.providerProfileId) {",
+                      "    pm.collectionVariables.set(\"providerId\", json.result.providerProfileId);",
+                      "    console.log(\"✅ providerId = \" + json.result.providerProfileId);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy result.providerProfileId trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Lấy provider profile của tôi",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/providers/myProfile",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "providers",
+                    "myProfile"
+                  ]
+                },
+                "description": "🔐 Cần token. Script test tự lưu `{{providerId}}`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result.providerProfileId) {",
+                      "    pm.collectionVariables.set(\"providerId\", json.result.providerProfileId);",
+                      "    console.log(\"✅ providerId = \" + json.result.providerProfileId);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy result.providerProfileId trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Lấy provider profile theo ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/providers/{{providerId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "providers",
+                    "{{providerId}}"
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Danh sách provider theo trạng thái (ADMIN)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/providers?status=PENDING&page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "providers"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "PENDING"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 **ADMIN**.\n\n`status` nhận: `PENDING`, `VERIFIED`, `REJECTED`, `SUSPENDED`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Cập nhật provider profile của tôi",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/providers/myProfile",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "providers",
+                    "myProfile"
+                  ]
+                },
+                "description": "🔐 Cần token.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"businessName\": \"Văn A Studio (mới)\",\n  \"bio\": \"Mô tả mới\",\n  \"isAcceptingOrders\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Duyệt / đổi trạng thái provider (ADMIN)",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/providers/{{providerId}}/verification?status=VERIFIED",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "providers",
+                    "{{providerId}}",
+                    "verification"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "VERIFIED"
+                    }
+                  ]
+                },
+                "description": "🔐 **ADMIN**.\n\nĐây là bước **cấp role PROVIDER** trong DB. Sau khi chạy VERIFIED thành công, hãy **Logout + Login lại** để token chứa `scope` và `providerId` mới.\n\nQuy tắc chuyển trạng thái: `PENDING → VERIFIED|REJECTED`, `VERIFIED → SUSPENDED`, `REJECTED → SUSPENDED`, `SUSPENDED → VERIFIED|REJECTED`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Xoá provider profile của tôi",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/providers/myProfile",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "providers",
+                    "myProfile"
+                  ]
+                },
+                "description": "🔐 Cần token (soft delete)."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "provider-verifications",
+          "item": [
+            {
+              "name": "Nộp hồ sơ xác minh",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/provider-verifications",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "provider-verifications"
+                  ]
+                },
+                "description": "🔐 Cần token **và đã có provider profile** ở trên.\n\n`verificationType`: `IDENTITY_CARD`, `BUSINESS_LICENSE`, `TAX_CODE`, `PROFESSIONAL_CERT`.\n\nScript test tự lưu `result.providerVerificationId` vào `{{verificationId}}`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"verificationType\": \"IDENTITY_CARD\",\n  \"documentType\": \"CCCD\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result.providerVerificationId) {",
+                      "    pm.collectionVariables.set(\"verificationId\", json.result.providerVerificationId);",
+                      "    console.log(\"✅ verificationId = \" + json.result.providerVerificationId);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy result.providerVerificationId trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Hồ sơ xác minh của tôi",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/provider-verifications/my?page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "provider-verifications",
+                    "my"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 Cần token. Script test tự lưu hồ sơ đầu tiên vào `{{verificationId}}`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result.data[0].providerVerificationId) {",
+                      "    pm.collectionVariables.set(\"verificationId\", json.result.data[0].providerVerificationId);",
+                      "    console.log(\"✅ verificationId = \" + json.result.data[0].providerVerificationId);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy result.data[0].providerVerificationId trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Chi tiết hồ sơ xác minh",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/provider-verifications/{{verificationId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "provider-verifications",
+                    "{{verificationId}}"
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Danh sách hồ sơ theo trạng thái (ADMIN)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/provider-verifications?status=PENDING&page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "provider-verifications"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "PENDING"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 **ADMIN**."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Duyệt / từ chối hồ sơ (ADMIN)",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/provider-verifications/{{verificationId}}/review",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "provider-verifications",
+                    "{{verificationId}}",
+                    "review"
+                  ]
+                },
+                "description": "🔐 **ADMIN**.\n\nBody: `verificationStatus` = `VERIFIED` hoặc `REJECTED`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"verificationStatus\": \"VERIFIED\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Xoá hồ sơ xác minh",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/provider-verifications/{{verificationId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "provider-verifications",
+                    "{{verificationId}}"
+                  ]
+                },
+                "description": "🔐 Cần token (soft delete)."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "internal",
+          "item": [
+            {
+              "name": "Lấy provider profile (API nội bộ)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/identity/internal/providers/{{providerId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "identity",
+                    "internal",
+                    "providers",
+                    "{{providerId}}"
+                  ]
+                },
+                "description": "🔐 Endpoint dành cho **service gọi service** — ở identity-service nó được `permitAll`, nhưng đi qua gateway thì vẫn phải có token.\n\nTrả về **không bọc `ApiResponse`** (raw `ProviderProfileResponse`) — lưu ý khi viết script đọc kết quả."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "catalog-service",
+      "description": "Category, service, package, add-on, rule, media, slot — qua gateway `/api/v1/catalog` (service gốc ở port 8082).",
+      "item": [
+        {
+          "name": "categories",
+          "item": [
+            {
+              "name": "Tạo category gốc",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/categories",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "categories"
+                  ]
+                },
+                "description": "🔐 Cần token.\n\n`parent = null` nghĩa là category gốc.\n\nScript test tự lưu `result.categoryId` vào `{{categoryId}}`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Thiết kế Đồ hoạ\",\n  \"slug\": \"thiet-ke-do-hoa-moi\",\n  \"description\": \"Các dịch vụ thiết kế logo, banner, UI/UX\",\n  \"parent\": null\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result.categoryId) {",
+                      "    pm.collectionVariables.set(\"categoryId\", json.result.categoryId);",
+                      "    console.log(\"✅ categoryId = \" + json.result.categoryId);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy result.categoryId trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Tạo sub-category (có parent)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/categories",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "categories"
+                  ]
+                },
+                "description": "🔐 Cần token. `parent` phải là UUID của category đã tồn tại.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Thiết kế Logo\",\n  \"slug\": \"thiet-ke-logo\",\n  \"description\": \"Chuyên về logo\",\n  \"parent\": \"{{categoryId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Lấy category theo ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/categories/{{categoryId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "categories",
+                    "{{categoryId}}"
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Danh sách tất cả category",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/categories?page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "categories"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Danh sách category gốc",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/categories/roots?page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "categories",
+                    "roots"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Danh sách category con",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/categories/{{categoryId}}/children?page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "categories",
+                    "{{categoryId}}",
+                    "children"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Cập nhật category",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/categories/{{categoryId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "categories",
+                    "{{categoryId}}"
+                  ]
+                },
+                "description": "🔐 Cần token.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Thiết kế Đồ hoạ (đã sửa)\",\n  \"slug\": \"thiet-ke-do-hoa-moi\",\n  \"description\": \"Mô tả đã sửa\",\n  \"parent\": null\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Xoá category",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/categories/{{categoryId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "categories",
+                    "{{categoryId}}"
+                  ]
+                },
+                "description": "🔐 Cần token (soft delete)."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "services",
+          "item": [
+            {
+              "name": "Tạo Service (cần role PROVIDER)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/services",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "services"
+                  ]
+                },
+                "description": "🔐 Cần token + **role PROVIDER** (`@PreAuthorize(\"hasAnyRole('PROVIDER')\")`).\n\nProvider được lấy từ **claim `providerId` trong JWT** — token không có claim này sẽ lỗi UNAUTHORIZED.\nXem hướng dẫn lấy role + claim ở folder `identity-service > providers`.\n\n`executionType`: `DIGITAL` hoặc `ONSITE`. `slug` phải **chưa tồn tại**.\n\nScript test tự lưu `result.serviceId` vào `{{serviceId}}`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"categoryId\": \"{{categoryId}}\",\n  \"executionType\": \"DIGITAL\",\n  \"title\": \"Thiết kế Logo Doanh Nghiệp\",\n  \"slug\": \"thiet-ke-logo-moi\",\n  \"description\": \"Thiết kế logo chuyên nghiệp, hiện đại.\",\n  \"basePrice\": 1000000,\n  \"currency\": \"VND\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result.serviceId) {",
+                      "    pm.collectionVariables.set(\"serviceId\", json.result.serviceId);",
+                      "    console.log(\"✅ serviceId = \" + json.result.serviceId);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy result.serviceId trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Lấy Service theo ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/services/{{serviceId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Service của tôi (PROVIDER)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/services/my-services?page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "services",
+                    "my-services"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 Cần token + **role PROVIDER**.\n\nLọc theo claim `providerId` trong token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Cập nhật Service (PROVIDER)",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/services/{{serviceId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": "🔐 Cần role PROVIDER.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"categoryId\": \"{{categoryId}}\",\n  \"executionType\": \"DIGITAL\",\n  \"title\": \"Thiết kế Logo Doanh Nghiệp (v2)\",\n  \"slug\": \"thiet-ke-logo-moi\",\n  \"description\": \"Mô tả đã sửa\",\n  \"basePrice\": 1200000,\n  \"currency\": \"VND\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Xoá Service (PROVIDER, soft delete)",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/services/{{serviceId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": "🔐 Cần role PROVIDER."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "packages",
+          "item": [
+            {
+              "name": "Tạo Package cho Service",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/packages/services/{{serviceId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "packages",
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": "🔐 Cần token.\n\nScript test tự lưu `result.packageId` vào `{{packageId}}`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Gói Cơ Bản\",\n  \"description\": \"Thiết kế 1 concept logo, bàn giao JPG\",\n  \"price\": 1000000,\n  \"currency\": \"VND\",\n  \"deliveryDay\": 3,\n  \"durationMinute\": 0,\n  \"revisionLimit\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result.packageId) {",
+                      "    pm.collectionVariables.set(\"packageId\", json.result.packageId);",
+                      "    console.log(\"✅ packageId = \" + json.result.packageId);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy result.packageId trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Danh sách Package của Service",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/packages/services/{{serviceId}}?page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "packages",
+                    "services",
+                    "{{serviceId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Lấy Package theo ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/packages/{{packageId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "packages",
+                    "{{packageId}}"
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Cập nhật Package",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/packages/{{packageId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "packages",
+                    "{{packageId}}"
+                  ]
+                },
+                "description": "🔐 Cần token.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Gói Cơ Bản (v2)\",\n  \"description\": \"Mô tả mới\",\n  \"price\": 1100000,\n  \"currency\": \"VND\",\n  \"deliveryDay\": 4,\n  \"durationMinute\": 0,\n  \"revisionLimit\": 2\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Xoá Package (soft delete)",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/packages/{{packageId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "packages",
+                    "{{packageId}}"
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "addons",
+          "item": [
+            {
+              "name": "Tạo Add-on cho Service",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/addons/service/{{serviceId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "addons",
+                    "service",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": "🔐 Cần token.\n\nField `service` trong body là UUID service (trùng với path).\n\nScript test tự lưu `result.addOnId` vào `{{addonId}}`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Giao file source\",\n  \"description\": \"Cung cấp file PSD/AI gốc\",\n  \"price\": 500000,\n  \"currency\": \"VND\",\n  \"service\": \"{{serviceId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result.addOnId) {",
+                      "    pm.collectionVariables.set(\"addonId\", json.result.addOnId);",
+                      "    console.log(\"✅ addonId = \" + json.result.addOnId);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy result.addOnId trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Danh sách Add-on của Service",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/addons/service/{{serviceId}}?page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "addons",
+                    "service",
+                    "{{serviceId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Lấy Add-on theo ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/addons/{{addonId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "addons",
+                    "{{addonId}}"
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Cập nhật Add-on",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/addons/{{addonId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "addons",
+                    "{{addonId}}"
+                  ]
+                },
+                "description": "🔐 Cần token.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Giao file source (v2)\",\n  \"description\": \"Mô tả mới\",\n  \"price\": 600000,\n  \"currency\": \"VND\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Xoá Add-on (soft delete)",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/addons/{{addonId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "addons",
+                    "{{addonId}}"
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "rules (available-rules)",
+          "item": [
+            {
+              "name": "Tạo Available Rule (lịch rảnh) cho Service",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/rules/services/{{serviceId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "rules",
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": "🔐 Cần token.\n\n`dayOfWeek` theo chuẩn Java `DayOfWeek`: 1 = Thứ Hai … 7 = Chủ Nhật.\n`startTime` / `endTime` là **Instant** → gửi chuỗi ISO-8601 có hậu tố `Z`.\n`status`: `ACTIVE` hoặc `INACTIVE`.\n\nScript test tự lưu `result.availableRuleId` vào `{{ruleId}}`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"ACTIVE\",\n  \"slotDurationMinute\": 60,\n  \"startTime\": \"1970-01-01T08:00:00Z\",\n  \"endTime\": \"1970-01-01T12:00:00Z\",\n  \"dayOfWeek\": 2\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result.availableRuleId) {",
+                      "    pm.collectionVariables.set(\"ruleId\", json.result.availableRuleId);",
+                      "    console.log(\"✅ ruleId = \" + json.result.availableRuleId);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy result.availableRuleId trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Danh sách Rule của Service",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/rules/services/{{serviceId}}?page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "rules",
+                    "services",
+                    "{{serviceId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Lấy Rule theo ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/rules/{{ruleId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "rules",
+                    "{{ruleId}}"
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Cập nhật Rule",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/rules/{{ruleId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "rules",
+                    "{{ruleId}}"
+                  ]
+                },
+                "description": "🔐 Cần token.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"ACTIVE\",\n  \"slotDurationMinute\": 30,\n  \"startTime\": \"1970-01-01T08:00:00Z\",\n  \"endTime\": \"1970-01-01T17:00:00Z\",\n  \"dayOfWeek\": 3\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Xoá Rule (soft delete)",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/rules/{{ruleId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "rules",
+                    "{{ruleId}}"
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "medias",
+          "item": [
+            {
+              "name": "Thêm Media cho Service",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/medias/services/{{serviceId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "medias",
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": "🔐 Cần token.\n\n`mediaType`: `IMAGE`, `VIDEO`, `FILE`. `cover = true` là ảnh bìa.\n\nScript test tự lưu `result.serviceMediaId` vào `{{serviceMediaId}}`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"url\": \"https://example.com/logo-cover.jpg\",\n  \"mediaType\": \"IMAGE\",\n  \"cover\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result.serviceMediaId) {",
+                      "    pm.collectionVariables.set(\"serviceMediaId\", json.result.serviceMediaId);",
+                      "    console.log(\"✅ serviceMediaId = \" + json.result.serviceMediaId);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy result.serviceMediaId trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Danh sách Media của Service",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/medias/services/{{serviceId}}?page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "medias",
+                    "services",
+                    "{{serviceId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Lấy Media theo ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/medias/{{serviceMediaId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "medias",
+                    "{{serviceMediaId}}"
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Cập nhật Media",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/medias/{{serviceMediaId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "medias",
+                    "{{serviceMediaId}}"
+                  ]
+                },
+                "description": "🔐 Cần token.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"url\": \"https://example.com/logo-2.jpg\",\n  \"mediaType\": \"IMAGE\",\n  \"cover\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Xoá Media (soft delete)",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/medias/{{serviceMediaId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "medias",
+                    "{{serviceMediaId}}"
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "slots",
+          "item": [
+            {
+              "name": "Danh sách Slot của Service",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/slots/services/{{serviceId}}?page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "slots",
+                    "services",
+                    "{{serviceId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 Cần token.\n\n⚠️ **Hiện chưa có API tạo slot**: hàm `createSlot` trong `BookingSlotService` đang bị comment, còn `data.sql` chỉ `DELETE FROM booking_slots` mà không insert. Nên danh sách này sẽ **rỗng** cho tới khi bạn tự insert slot vào DB.\n\nXem câu SQL mẫu ở phần mô tả collection."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Giữ chỗ Slot (hold)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/slots/{{slotId}}/hold",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "slots",
+                    "{{slotId}}",
+                    "hold"
+                  ]
+                },
+                "description": "🔐 Cần token. Body cần `orderId` của đơn ONSITE.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"orderId\": \"{{orderId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Xác nhận Slot (confirm)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/slots/{{slotId}}/confirm",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "slots",
+                    "{{slotId}}",
+                    "confirm"
+                  ]
+                },
+                "description": "🔐 Cần token.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"orderId\": \"{{orderId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Giải phóng Slot (release)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/slots/{{slotId}}/release",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "slots",
+                    "{{slotId}}",
+                    "release"
+                  ]
+                },
+                "description": "🔐 Cần token.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"orderId\": \"{{orderId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "internal",
+          "item": [
+            {
+              "name": "Lấy Service (API nội bộ)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/internal/services/{{serviceId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "internal",
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": "🔐 Endpoint service-to-service (`permitAll` ở catalog, nhưng qua gateway vẫn cần token).\nTrả về raw `ServiceResponse`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Lấy Package (API nội bộ)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/internal/packages/{{packageId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "internal",
+                    "packages",
+                    "{{packageId}}"
+                  ]
+                },
+                "description": "🔐 Trả về raw `PackageResponse`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Danh sách Add-on của Service (nội bộ)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/catalog/internal/addons/services/{{serviceId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "catalog",
+                    "internal",
+                    "addons",
+                    "services",
+                    "{{serviceId}}"
+                  ]
+                },
+                "description": "🔐 Trả về raw `List<AddOnResponse>`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "order-service",
+      "description": "Đơn hàng — qua gateway `/api/v1/order` (service gốc ở port 8083). Hiện chỉ có 4 endpoint.",
+      "item": [
+        {
+          "name": "orders",
+          "item": [
+            {
+              "name": "Tạo đơn hàng (CLIENT)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/order/orders",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "order",
+                    "orders"
+                  ]
+                },
+                "description": "🔐 Cần token. `clientId` được lấy từ claim `userId` trong JWT.\n\n`serviceId` + `packageId` phải tồn tại bên catalog-service (order-service gọi sang qua Feign `CatalogClient`).\n`addonIds` có thể để mảng rỗng `[]`.\n\nĐơn mới sinh ra ở trạng thái **PENDING_PAYMENT** — cần thanh toán mới sang CONFIRMED, mà payment-service hiện chưa có code, nên các bước sau PENDING_PAYMENT chưa test được.\n\nScript test tự lưu `result.orderId` vào `{{orderId}}`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"serviceId\": \"{{serviceId}}\",\n  \"packageId\": \"{{packageId}}\",\n  \"addonIds\": [\n    \"{{addonId}}\"\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result.orderId) {",
+                      "    pm.collectionVariables.set(\"orderId\", json.result.orderId);",
+                      "    console.log(\"✅ orderId = \" + json.result.orderId);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tìm thấy result.orderId trong response\");",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Danh sách đơn của tôi",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/order/orders?roleName=CLIENT&page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "order",
+                    "orders"
+                  ],
+                  "query": [
+                    {
+                      "key": "roleName",
+                      "value": "CLIENT"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 Cần token. `roleName` là tham số **bắt buộc**.\n\n`roleName=CLIENT` để xem đơn mình đặt, `roleName=PROVIDER` để xem đơn mình nhận làm.\nGiá trị hợp lệ: `CLIENT`, `PROVIDER`, `ADMIN`, `SYSTEM`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Lấy chi tiết đơn hàng",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/order/orders/{{orderId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "order",
+                    "orders",
+                    "{{orderId}}"
+                  ]
+                },
+                "description": "🔐 Cần token."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Lịch sử trạng thái đơn hàng",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/order/orders/{{orderId}}/history?page=0&size=10",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "order",
+                    "orders",
+                    "{{orderId}}",
+                    "history"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "🔐 Cần token.\n\nMỗi lần đổi trạng thái đều ghi 1 dòng vào `order_status_history`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "gatewayUrl",
+      "value": "http://localhost:8888",
+      "type": "string",
+      "description": "Base URL của API Gateway (port 8888)."
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT — tự động điền sau khi chạy request Login."
+    },
+    {
+      "key": "userName",
+      "value": "testuser01",
+      "type": "string",
+      "description": "userName dùng để đăng nhập."
+    },
+    {
+      "key": "password",
+      "value": "",
+      "type": "string",
+      "description": "TỰ ĐIỀN mật khẩu của bạn vào đây trước khi chạy Login."
+    },
+    {
+      "key": "userId",
+      "value": "99999999-9999-9999-9999-999999999999",
+      "type": "string",
+      "description": "UUID user — tự lưu sau khi gọi myInfo. Mặc định là userId của nguyenvana trong seed."
+    },
+    {
+      "key": "providerId",
+      "value": "99999999-9999-9999-9999-999999999999",
+      "type": "string",
+      "description": "UUID provider profile — tự lưu sau khi tạo hoặc lấy profile."
+    },
+    {
+      "key": "addressId",
+      "value": "",
+      "type": "string",
+      "description": "UUID address — tự lưu sau khi tạo address."
+    },
+    {
+      "key": "verificationId",
+      "value": "",
+      "type": "string",
+      "description": "UUID hồ sơ xác minh — tự lưu sau khi nộp hồ sơ."
+    },
+    {
+      "key": "categoryId",
+      "value": "11111111-1111-1111-1111-111111111111",
+      "type": "string",
+      "description": "UUID category — tự lưu sau khi tạo category. Mặc định là category seed."
+    },
+    {
+      "key": "serviceId",
+      "value": "44444444-4444-4444-4444-444444444444",
+      "type": "string",
+      "description": "UUID service — tự lưu sau khi tạo service. Mặc định là service seed."
+    },
+    {
+      "key": "packageId",
+      "value": "66666666-6666-6666-6666-111111111111",
+      "type": "string",
+      "description": "UUID package — tự lưu sau khi tạo package. Mặc định là package seed."
+    },
+    {
+      "key": "addonId",
+      "value": "77777777-7777-7777-7777-111111111111",
+      "type": "string",
+      "description": "UUID add-on — tự lưu sau khi tạo add-on. Mặc định là add-on seed."
+    },
+    {
+      "key": "ruleId",
+      "value": "88888888-8888-8888-8888-111111111111",
+      "type": "string",
+      "description": "UUID available rule — tự lưu sau khi tạo rule. Mặc định là rule seed."
+    },
+    {
+      "key": "serviceMediaId",
+      "value": "99999999-9999-9999-9999-111111111111",
+      "type": "string",
+      "description": "UUID media — tự lưu sau khi thêm media. Mặc định là media seed."
+    },
+    {
+      "key": "slotId",
+      "value": "",
+      "type": "string",
+      "description": "UUID booking slot — chưa có API tạo, phải insert SQL (xem mô tả collection)."
+    },
+    {
+      "key": "orderId",
+      "value": "",
+      "type": "string",
+      "description": "UUID đơn hàng — tự lưu sau khi tạo đơn."
+    }
+  ]
+}

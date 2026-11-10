@@ -1,0 +1,51 @@
+.trustedSection {
+  background-color: #fafafa;
+  border-bottom: 1px solid var(--wg-border-light);
+  padding: 22px 0;
+}
+
+.trustedContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.trustedLabel {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--wg-text-muted);
+}
+
+.partnerList {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  flex-wrap: wrap;
+}
+
+.partnerItem {
+  opacity: 0.6;
+  filter: grayscale(100%);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.partnerItem:hover {
+  opacity: 1;
+  filter: grayscale(0%);
+  transform: translateY(-2px);
+}
+
+.partnerLogoText {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #74767e;
+  letter-spacing: -0.5px;
+}
+
+.partnerItem:hover .partnerLogoText {
+  color: var(--wg-primary);
+}

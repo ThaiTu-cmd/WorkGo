@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="WorkGo - Trang Quản lý Dịch vụ của Chuyên gia / Provider. Theo dõi hiệu suất, kích hoạt nhận đơn, tạo dịch vụ mới và quản trị danh mục bán hàng."
+    />
+    <title>Quản lý Dịch vụ — WorkGo Provider Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="my-services.css" />
+  </head>
+  <body>
+    <!-- 1. Header Navigation -->
+    <header class="header">
+      <div class="container header-container">
+        <div class="left-section">
+          <a href="index.html" class="logo">
+            <div class="logo-icon">W</div>
+            <span class="logo-text">WorkGo</span>
+            <span class="logo-dot">.</span>
+          </a>
+
+          <div class="header-search">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" placeholder="Tìm kiếm dịch vụ, đơn hàng..." />
+            <button type="button" class="header-search-btn">Tìm</button>
+          </div>
+        </div>
+
+        <nav class="nav-links">
+          <a href="catalog-search.html" class="nav-link">Khám phá Dịch vụ</a>
+          <a href="my-services.html" class="nav-link active">Quản lý Dịch vụ</a>
+          <a href="#" class="nav-link">Đơn hàng</a>
+          <a href="#" class="nav-link">Thu nhập & Ví Escrow</a>
+        </nav>
+
+        <div class="auth-buttons">
+          <button class="btn-ghost" type="button">Tài khoản</button>
+          <a href="catalog-search.html" class="btn-primary">Chế độ Khách</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. Main Page Layout -->
+    <main class="page-wrapper">
+      <div class="container">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="index.html">Trang chủ</a>
+          <span class="sep">/</span>
+          <a href="#">Kênh Chuyên gia</a>
+          <span class="sep">/</span>
+          <span class="current">Quản lý Dịch vụ</span>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="page-header-row">
+          <div>
+            <h1 class="page-title">Quản lý Dịch vụ đang cung cấp</h1>
+            <p class="page-subtitle">
+              Theo dõi tình trạng niêm yết, hiệu suất đơn hàng và chuyển đổi trạng thái nhận việc tức thì.
+            </p>
+          </div>
+          <div class="page-header-actions">
+            <a href="service-form.html?mode=create" class="btn-create-service" title="Mở biểu mẫu đa bước theo chuẩn Fiverr">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>+ Tạo dịch vụ mới</span>
+            </a>
+            <button type="button" class="btn-ghost" id="btnOpenCreateModal" style="border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 0.8125rem; padding: 0.5rem 0.75rem; font-weight: 600;" title="Tạo nhanh dạng modal">
+              Tạo nhanh
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Metrics / Stats Cards -->
+        <section class="stats-grid" aria-label="Thống kê hiệu quả hoạt động">
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Dịch vụ Đang bán</span>
+              <div class="stat-icon-wrap green">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m7.5 4.27 9 5.15"></path>
+                  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
+                  <path d="m3.3 7 8.7 5 8.7-5"></path>
+                  <path d="M12 22V12"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value" id="statActiveRatio">3 / 6</div>
+            <div class="stat-footer">
+              <span class="stat-badge pos">+1 tuần này</span>
+              <span class="stat-desc">Hoạt động sẵn sàng nhận đơn</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Lượt xem (30 ngày)</span>
+              <div class="stat-icon-wrap blue">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value" id="statImpressions">12.390</div>
+            <div class="stat-footer">
+              <span class="stat-badge pos">+18.4%</span>
+              <span class="stat-desc">Lượt hiển thị trên tìm kiếm</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Đơn hàng tích lũy</span>
+              <div class="stat-icon-wrap orange">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                  <path d="M3 6h18"></path>
+                  <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value" id="statOrders">112 đơn</div>
+            <div class="stat-footer">
+              <span class="stat-badge pos">Escrow an toàn</span>
+              <span class="stat-desc">Tỉ lệ hoàn thành 99.2%</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Đánh giá trung bình</span>
+              <div class="stat-icon-wrap yellow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value" id="statRating">4.94 ★</div>
+            <div class="stat-footer">
+              <span class="stat-badge pos">Chuyên gia Pro</span>
+              <span class="stat-desc">Dựa trên 97 lượt review</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. Toolbar: Tabs, Search, Filter -->
+        <section class="toolbar-card">
+          <div class="toolbar-tabs-row" id="tabsContainer">
+            <button type="button" class="tab-btn active" data-tab="ALL">
+              <span>Tất cả</span>
+              <span class="tab-badge" id="badgeAll">6</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="ACTIVE">
+              <span>Đang bán</span>
+              <span class="tab-badge" id="badgeActive">3</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="PENDING">
+              <span>Chờ duyệt</span>
+              <span class="tab-badge" id="badgePending">1</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="PAUSED">
+              <span>Tạm ngưng</span>
+              <span class="tab-badge" id="badgePaused">1</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="DRAFT">
+              <span>Bản nháp</span>
+              <span class="tab-badge" id="badgeDraft">1</span>
+            </button>
+          </div>
+
+          <div class="toolbar-controls-row">
+            <div class="search-input-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="searchInput" placeholder="Tìm kiếm theo tên dịch vụ..." />
+            </div>
+
+            <div class="filter-select-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+              <select id="categorySelect">
+                <option value="ALL">Tất cả ngành nghề</option>
+                <option value="lap-trinh-cong-nghe">Lập trình & Công nghệ</option>
+                <option value="thiet-ke-do-hoa">Thiết kế & Đồ họa</option>
+                <option value="sua-chua-dien-nuoc">Sửa chữa Điện nước</option>
+                <option value="ve-sinh-don-dep">Vệ sinh & Dọn dẹp</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. Bulk Action Bar -->
+        <div class="bulk-bar" id="bulkBar">
+          <div class="bulk-count">
+            Đã chọn <strong id="selectedCountText">0</strong> dịch vụ
+          </div>
+          <div class="bulk-buttons">
+            <button type="button" class="bulk-btn" id="btnBulkActivate">Kích hoạt hàng loạt</button>
+            <button type="button" class="bulk-btn" id="btnBulkPause">Tạm ngưng hàng loạt</button>
+            <button type="button" class="bulk-btn bulk-btn-danger" id="btnBulkDelete">Xóa đã chọn</button>
+          </div>
+        </div>
+
+        <!-- 6. Services Table -->
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="th-check">
+                  <input type="checkbox" id="selectAllCheckbox" aria-label="Chọn tất cả" />
+                </th>
+                <th>Dịch vụ đang cung cấp</th>
+                <th>Mức giá & Gói</th>
+                <th>Hiệu quả hoạt động</th>
+                <th>Trạng thái</th>
+                <th class="th-toggle">Nhận đơn</th>
+                <th class="th-actions">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="servicesTableBody">
+              <!-- Rendered via JavaScript -->
+            </tbody>
+          </table>
+
+          <div class="empty-table" id="emptyTableNotice">
+            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <h3 class="empty-title">Không tìm thấy dịch vụ nào</h3>
+            <p class="empty-text">Thử thay đổi từ khóa tìm kiếm hoặc chọn bộ lọc trạng thái khác.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 7. Create Service Modal -->
+    <div class="modal-overlay" id="createServiceModal">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h2 class="modal-title">Tạo dịch vụ mới</h2>
+          <button type="button" class="modal-close-btn" id="btnCloseModal" aria-label="Đóng modal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <form id="createServiceForm">
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label" for="modalTitle">Tên dịch vụ niêm yết *</label>
+              <input
+                type="text"
+                class="form-input"
+                id="modalTitle"
+                placeholder="VD: Thiết kế giao diện Dashboard Webapp chuẩn Figma"
+                required
+              />
+              <span class="form-hint">Tiêu đề rõ ràng giúp tăng 40% khả năng click từ khách hàng.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="modalCategory">Ngành nghề / Danh mục *</label>
+              <select class="form-select" id="modalCategory" required>
+                <option value="lap-trinh-cong-nghe" data-name="Lập trình & Công nghệ">Lập trình & Công nghệ</option>
+                <option value="thiet-ke-do-hoa" data-name="Thiết kế & Đồ họa">Thiết kế & Đồ họa</option>
+                <option value="sua-chua-dien-nuoc" data-name="Sửa chữa Điện nước">Sửa chữa Điện nước</option>
+                <option value="ve-sinh-don-dep" data-name="Vệ sinh & Dọn dẹp">Vệ sinh & Dọn dẹp</option>
+                <option value="van-chuyen-giao-nhan" data-name="Vận chuyển & Giao nhận">Vận chuyển & Giao nhận</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Hình thức thực hiện</label>
+              <div class="exec-radio-grid">
+                <label class="exec-radio-card active">
+                  <input type="radio" name="modalExec" value="DIGITAL" checked />
+                  <span class="exec-radio-title">💻 Dịch vụ Số</span>
+                </label>
+                <label class="exec-radio-card">
+                  <input type="radio" name="modalExec" value="ONSITE" />
+                  <span class="exec-radio-title">📍 Tận nơi</span>
+                </label>
+                <label class="exec-radio-card">
+                  <input type="radio" name="modalExec" value="DELIVERY" />
+                  <span class="exec-radio-title">🚚 Giao nhận</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="modalPrice">Mức giá cơ bản (VNĐ) *</label>
+              <input
+                type="number"
+                class="form-input"
+                id="modalPrice"
+                placeholder="1500000"
+                min="50000"
+                step="50000"
+                value="1500000"
+                required
+              />
+              <span class="form-hint">Giá khởi điểm cho gói cơ bản nhất của bạn.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="modalDesc">Mô tả tóm tắt dịch vụ</label>
+              <textarea
+                class="form-textarea"
+                id="modalDesc"
+                rows="3"
+                placeholder="Giới thiệu điểm nổi bật và cam kết chất lượng..."
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" id="btnCancelModal">Hủy bỏ</button>
+            <button type="submit" class="btn-submit-modal">Đăng dịch vụ ngay</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 8. Toast Feedback -->
+    <div class="toast" id="toastBox">
+      <svg class="toast-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <span id="toastMsg">Thao tác thành công</span>
+    </div>
+
+    <!-- 9. Footer -->
+    <footer class="footer">
+      <div class="container footer-content">
+        <div class="footer-copy">
+          © 2026 WorkGo Marketplace Inc. Bảo lưu mọi quyền. Nền tảng dịch vụ kết hợp Escrow an toàn.
+        </div>
+        <div class="footer-links">
+          <a href="index.html">Trang chủ</a>
+          <a href="catalog-search.html">Danh mục dịch vụ</a>
+          <a href="service-detail.html">Chi tiết mẫu</a>
+          <a href="#">Chính sách Escrow</a>
+        </div>
+      </div>
+    </footer>
+
+    <!-- 10. Interactive Vanilla JavaScript -->
+    <script>
+      (function () {
+        // Initial Mock Services Data
+        const initialServices = [
+          {
+            serviceId: "svc-1",
+            title: "Thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React / Next.js",
+            categorySlug: "lap-trinh-cong-nghe",
+            categoryName: "Lập trình & Công nghệ",
+            executionType: "DIGITAL",
+            coverImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80",
+            status: "ACTIVE",
+            basePrice: 2500000,
+            priceRange: "2.500.000 ₫ – 8.500.000 ₫",
+            packagesCount: 3,
+            impressions: 4820,
+            ordersCount: 42,
+            avgRating: 4.98,
+            reviewCount: 38,
+          },
+          {
+            serviceId: "svc-p2",
+            title: "Phát triển ứng dụng di động React Native đa nền tảng iOS & Android",
+            categorySlug: "lap-trinh-cong-nghe",
+            categoryName: "Lập trình & Công nghệ",
+            executionType: "DIGITAL",
+            coverImage: "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=600&auto=format&fit=crop&q=80",
+            status: "ACTIVE",
+            basePrice: 5000000,
+            priceRange: "5.000.000 ₫ – 15.000.000 ₫",
+            packagesCount: 3,
+            impressions: 2150,
+            ordersCount: 18,
+            avgRating: 4.92,
+            reviewCount: 16,
+          },
+          {
+            serviceId: "svc-p3",
+            title: "Tối ưu hóa tốc độ tải trang & bảo mật Web Core Vitals điểm 95+",
+            categorySlug: "lap-trinh-cong-nghe",
+            categoryName: "Lập trình & Công nghệ",
+            executionType: "DIGITAL",
+            coverImage: "https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=600&auto=format&fit=crop&q=80",
+            status: "PENDING",
+            basePrice: 1200000,
+            priceRange: "1.200.000 ₫ – 3.600.000 ₫",
+            packagesCount: 3,
+            impressions: 890,
+            ordersCount: 8,
+            avgRating: 4.88,
+            reviewCount: 7,
+          },
+          {
+            serviceId: "svc-p4",
+            title: "Thiết kế trọn bộ nhận diện thương hiệu & Logo công ty phong cách tối giản",
+            categorySlug: "thiet-ke-do-hoa",
+            categoryName: "Thiết kế & Đồ họa",
+            executionType: "DIGITAL",
+            coverImage: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=600&auto=format&fit=crop&q=80",
+            status: "ACTIVE",
+            basePrice: 1200000,
+            priceRange: "1.200.000 ₫ – 4.500.000 ₫",
+            packagesCount: 3,
+            impressions: 3410,
+            ordersCount: 29,
+            avgRating: 4.95,
+            reviewCount: 24,
+          },
+          {
+            serviceId: "svc-p5",
+            title: "Khảo sát, lắp đặt & bảo dưỡng hệ thống camera an ninh AI tại nhà",
+            categorySlug: "sua-chua-dien-nuoc",
+            categoryName: "Sửa chữa Điện nước",
+            executionType: "ONSITE",
+            coverImage: "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=600&auto=format&fit=crop&q=80",
+            status: "PAUSED",
+            basePrice: 850000,
+            priceRange: "850.000 ₫ – 2.800.000 ₫",
+            packagesCount: 3,
+            impressions: 1120,
+            ordersCount: 15,
+            avgRating: 4.85,
+            reviewCount: 12,
+          },
+          {
+            serviceId: "svc-p6",
+            title: "Tư vấn thiết kế kiến trúc vi dịch vụ Microservices & CI/CD Cloud",
+            categorySlug: "lap-trinh-cong-nghe",
+            categoryName: "Lập trình & Công nghệ",
+            executionType: "DIGITAL",
+            coverImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&auto=format&fit=crop&q=80",
+            status: "DRAFT",
+            basePrice: 4000000,
+            priceRange: "4.000.000 ₫ – 12.000.000 ₫",
+            packagesCount: 3,
+            impressions: 0,
+            ordersCount: 0,
+            avgRating: 0,
+            reviewCount: 0,
+          }
+        ];
+
+        let services = [...initialServices];
+        let currentTab = 'ALL';
+        let searchQuery = '';
+        let selectedCategory = 'ALL';
+        let selectedIds = new Set();
+
+        // DOM Elements
+        const tableBody = document.getElementById('servicesTableBody');
+        const emptyNotice = document.getElementById('emptyTableNotice');
+        const searchInput = document.getElementById('searchInput');
+        const categorySelect = document.getElementById('categorySelect');
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const bulkBar = document.getElementById('bulkBar');
+        const selectedCountText = document.getElementById('selectedCountText');
+
+        // Modal Elements
+        const modal = document.getElementById('createServiceModal');
+        const btnOpenCreateModal = document.getElementById('btnOpenCreateModal');
+        const btnCloseModal = document.getElementById('btnCloseModal');
+        const btnCancelModal = document.getElementById('btnCancelModal');
+        const createForm = document.getElementById('createServiceForm');
+
+        // Toast Helper
+        function showToast(message) {
+          const toast = document.getElementById('toastBox');
+          const toastMsg = document.getElementById('toastMsg');
+          toastMsg.textContent = message;
+          toast.classList.add('show');
+          setTimeout(() => {
+            toast.classList.remove('show');
+          }, 3200);
+        }
+
+        // Format Currency
+        function formatVND(num) {
+          return new Intl.NumberFormat('vi-VN').format(num) + ' ₫';
+        }
+
+        // Execution Badge Markup
+        function getExecBadgeHtml(type) {
+          if (type === 'DIGITAL') {
+            return '<span class="exec-tag digital">💻 Số (Digital)</span>';
+          }
+          if (type === 'ONSITE') {
+            return '<span class="exec-tag onsite">📍 Tận nơi</span>';
+          }
+          if (type === 'DELIVERY') {
+            return '<span class="exec-tag delivery">🚚 Giao nhận</span>';
+          }
+          return '';
+        }
+
+        // Status Badge Markup
+        function getStatusBadgeHtml(status) {
+          switch (status) {
+            case 'ACTIVE':
+              return '<span class="status-pill status-active"><span class="status-dot"></span>Đang hoạt động</span>';
+            case 'PENDING':
+              return '<span class="status-pill status-pending"><span class="status-dot"></span>Chờ duyệt</span>';
+            case 'PAUSED':
+              return '<span class="status-pill status-paused"><span class="status-dot"></span>Tạm ngưng</span>';
+            case 'DRAFT':
+              return '<span class="status-pill status-draft"><span class="status-dot"></span>Bản nháp</span>';
+            default:
+              return status;
+          }
+        }
+
+        // Update Tab Badges & Metrics
+        function updateMetrics() {
+          const allCount = services.length;
+          const activeCount = services.filter(s => s.status === 'ACTIVE').length;
+          const pendingCount = services.filter(s => s.status === 'PENDING').length;
+          const pausedCount = services.filter(s => s.status === 'PAUSED').length;
+          const draftCount = services.filter(s => s.status === 'DRAFT').length;
+
+          document.getElementById('badgeAll').textContent = allCount;
+          document.getElementById('badgeActive').textContent = activeCount;
+          document.getElementById('badgePending').textContent = pendingCount;
+          document.getElementById('badgePaused').textContent = pausedCount;
+          document.getElementById('badgeDraft').textContent = draftCount;
+
+          document.getElementById('statActiveRatio').textContent = `${activeCount} / ${allCount}`;
+
+          const totalImpressions = services.reduce((acc, cur) => acc + (cur.impressions || 0), 0);
+          document.getElementById('statImpressions').textContent = new Intl.NumberFormat('vi-VN').format(totalImpressions);
+
+          const totalOrders = services.reduce((acc, cur) => acc + (cur.ordersCount || 0), 0);
+          document.getElementById('statOrders').textContent = `${totalOrders} đơn`;
+
+          const rated = services.filter(s => s.avgRating > 0);
+          const avg = rated.length > 0 ? (rated.reduce((acc, c) => acc + c.avgRating, 0) / rated.length).toFixed(2) : '5.00';
+          document.getElementById('statRating').textContent = `${avg} ★`;
+        }
+
+        // Filter and Render Table
+        function renderTable() {
+          const filtered = services.filter(s => {
+            if (currentTab !== 'ALL' && s.status !== currentTab) return false;
+            if (selectedCategory !== 'ALL' && s.categorySlug !== selectedCategory) return false;
+            if (searchQuery.trim()) {
+              const q = searchQuery.toLowerCase();
+              const matchTitle = s.title.toLowerCase().includes(q);
+              const matchCat = s.categoryName.toLowerCase().includes(q);
+              if (!matchTitle && !matchCat) return false;
+            }
+            return true;
+          });
+
+          updateMetrics();
+
+          if (filtered.length === 0) {
+            tableBody.innerHTML = '';
+            emptyNotice.classList.add('visible');
+            return;
+          }
+
+          emptyNotice.classList.remove('visible');
+
+          tableBody.innerHTML = filtered.map(s => {
+            const isChecked = selectedIds.has(s.serviceId);
+            const isActive = s.status === 'ACTIVE';
+            const isPending = s.status === 'PENDING';
+
+            return `
+              <tr class="${isChecked ? 'selected' : ''}" data-id="${s.serviceId}">
+                <td class="td-check">
+                  <input type="checkbox" class="row-checkbox" data-id="${s.serviceId}" ${isChecked ? 'checked' : ''} />
+                </td>
+                <td>
+                  <div class="service-info-cell">
+                    <img src="${s.coverImage}" alt="${s.title}" class="service-thumb" />
+                    <div class="service-content">
+                      <a href="service-detail.html" class="service-name">${s.title}</a>
+                      <div class="service-meta-tags">
+                        <span class="category-tag">${s.categoryName}</span>
+                        ${getExecBadgeHtml(s.executionType)}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="price-cell">
+                    <span class="price-range">${s.priceRange}</span>
+                    <span class="pkg-count-tag">${s.packagesCount || 3} gói dịch vụ</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="stats-cell">
+                    <div class="stat-row-item">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                      <span>${new Intl.NumberFormat('vi-VN').format(s.impressions || 0)} lượt xem</span>
+                    </div>
+                    <div class="stat-row-item">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><line x1="3" y1="6" x2="21" y2="6"></line></svg>
+                      <span><strong>${s.ordersCount || 0}</strong> đơn hàng</span>
+                    </div>
+                    ${s.avgRating > 0 ? `
+                      <div class="rating-row">
+                        <span>★ <strong>${s.avgRating}</strong> (${s.reviewCount || 0})</span>
+                      </div>
+                    ` : ''}
+                  </div>
+                </td>
+                <td>
+                  ${getStatusBadgeHtml(s.status)}
+                </td>
+                <td class="td-toggle">
+                  <label class="switch" title="${isActive ? 'Bấm để Tạm ngưng' : 'Bấm để Bật nhận đơn'}">
+                    <input type="checkbox" class="toggle-status-input" data-id="${s.serviceId}" ${isActive ? 'checked' : ''} ${isPending ? 'disabled' : ''} />
+                    <span class="slider"></span>
+                  </label>
+                </td>
+                <td class="td-actions">
+                  <div class="row-actions">
+                    <a href="service-detail.html" class="icon-btn" title="Xem trước dịch vụ">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    </a>
+                    <a href="service-form.html?mode=edit&id=${s.serviceId}" class="icon-btn" title="Chỉnh sửa dịch vụ (Form đa bước)">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </a>
+                    <button type="button" class="icon-btn btn-duplicate" data-id="${s.serviceId}" title="Nhân bản dịch vụ">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>
+                    </button>
+                    <button type="button" class="icon-btn danger btn-delete" data-id="${s.serviceId}" title="Xóa dịch vụ">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('');
+
+          updateBulkBar();
+        }
+
+        // Bulk Selection Bar Logic
+        function updateBulkBar() {
+          const visibleRows = document.querySelectorAll('.row-checkbox');
+          const checkedRows = document.querySelectorAll('.row-checkbox:checked');
+          
+          if (checkedRows.length > 0) {
+            bulkBar.classList.add('visible');
+            selectedCountText.textContent = checkedRows.length;
+          } else {
+            bulkBar.classList.remove('visible');
+          }
+
+          if (visibleRows.length > 0 && checkedRows.length === visibleRows.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+          } else if (checkedRows.length > 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+          } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+          }
+        }
+
+        // Tab Clicking
+        document.getElementById('tabsContainer').addEventListener('click', (e) => {
+          const tabBtn = e.target.closest('.tab-btn');
+          if (!tabBtn) return;
+          document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+          tabBtn.classList.add('active');
+          currentTab = tabBtn.getAttribute('data-tab');
+          renderTable();
+        });
+
+        // Search Input
+        searchInput.addEventListener('input', (e) => {
+          searchQuery = e.target.value;
+          renderTable();
+        });
+
+        // Category Filter
+        categorySelect.addEventListener('change', (e) => {
+          selectedCategory = e.target.value;
+          renderTable();
+        });
+
+        // Table Event Delegation (Checkbox, Toggle, Action Buttons)
+        tableBody.addEventListener('change', (e) => {
+          // Checkbox selection
+          if (e.target.classList.contains('row-checkbox')) {
+            const sid = e.target.getAttribute('data-id');
+            if (e.target.checked) {
+              selectedIds.add(sid);
+            } else {
+              selectedIds.delete(sid);
+            }
+            const tr = e.target.closest('tr');
+            if (tr) tr.classList.toggle('selected', e.target.checked);
+            updateBulkBar();
+          }
+
+          // Toggle switch
+          if (e.target.classList.contains('toggle-status-input')) {
+            const sid = e.target.getAttribute('data-id');
+            const service = services.find(s => s.serviceId === sid);
+            if (service) {
+              const nextStatus = e.target.checked ? 'ACTIVE' : 'PAUSED';
+              service.status = nextStatus;
+              showToast(nextStatus === 'ACTIVE' 
+                ? `Đã kích hoạt dịch vụ "${service.title}"` 
+                : `Đã tạm ngưng nhận đơn cho "${service.title}"`);
+              renderTable();
+            }
+          }
+        });
+
+        tableBody.addEventListener('click', (e) => {
+          // Duplicate button
+          const dupBtn = e.target.closest('.btn-duplicate');
+          if (dupBtn) {
+            const sid = dupBtn.getAttribute('data-id');
+            const s = services.find(item => item.serviceId === sid);
+            if (s) {
+              const cloned = {
+                ...s,
+                serviceId: `svc-${Date.now()}`,
+                title: `${s.title} (Bản sao)`,
+                status: 'DRAFT',
+                impressions: 0,
+                ordersCount: 0,
+                avgRating: 0,
+                reviewCount: 0,
+              };
+              services.unshift(cloned);
+              showToast(`Đã nhân bản dịch vụ sang trạng thái Bản nháp!`);
+              renderTable();
+            }
+            return;
+          }
+
+          // Delete button
+          const delBtn = e.target.closest('.btn-delete');
+          if (delBtn) {
+            const sid = delBtn.getAttribute('data-id');
+            const s = services.find(item => item.serviceId === sid);
+            if (s && confirm(`Bạn có chắc chắn muốn xóa dịch vụ "${s.title}"?`)) {
+              services = services.filter(item => item.serviceId !== sid);
+              selectedIds.delete(sid);
+              showToast(`Đã xóa dịch vụ thành công!`);
+              renderTable();
+            }
+            return;
+          }
+        });
+
+        // Select All Checkbox
+        selectAllCheckbox.addEventListener('change', (e) => {
+          const checked = e.target.checked;
+          const checkboxes = document.querySelectorAll('.row-checkbox');
+          checkboxes.forEach(cb => {
+            cb.checked = checked;
+            const sid = cb.getAttribute('data-id');
+            if (checked) {
+              selectedIds.add(sid);
+            } else {
+              selectedIds.delete(sid);
+            }
+            const tr = cb.closest('tr');
+            if (tr) tr.classList.toggle('selected', checked);
+          });
+          updateBulkBar();
+        });
+
+        // Bulk Actions
+        document.getElementById('btnBulkActivate').addEventListener('click', () => {
+          selectedIds.forEach(id => {
+            const s = services.find(x => x.serviceId === id);
+            if (s && s.status !== 'PENDING') s.status = 'ACTIVE';
+          });
+          showToast(`Đã kích hoạt ${selectedIds.size} dịch vụ được chọn!`);
+          selectedIds.clear();
+          renderTable();
+        });
+
+        document.getElementById('btnBulkPause').addEventListener('click', () => {
+          selectedIds.forEach(id => {
+            const s = services.find(x => x.serviceId === id);
+            if (s && s.status !== 'PENDING') s.status = 'PAUSED';
+          });
+          showToast(`Đã tạm ngưng ${selectedIds.size} dịch vụ được chọn!`);
+          selectedIds.clear();
+          renderTable();
+        });
+
+        document.getElementById('btnBulkDelete').addEventListener('click', () => {
+          if (confirm(`Bạn có chắc chắn muốn xóa ${selectedIds.size} dịch vụ đã chọn?`)) {
+            services = services.filter(s => !selectedIds.has(s.serviceId));
+            showToast(`Đã xóa các dịch vụ được chọn!`);
+            selectedIds.clear();
+            renderTable();
+          }
+        });
+
+        // Modal Open / Close
+        function openModal() {
+          modal.classList.add('open');
+        }
+        function closeModal() {
+          modal.classList.remove('open');
+          createForm.reset();
+        }
+
+        btnOpenCreateModal.addEventListener('click', openModal);
+        btnCloseModal.addEventListener('click', closeModal);
+        btnCancelModal.addEventListener('click', closeModal);
+
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeModal();
+        });
+
+        // Execution Radio cards UI toggle
+        document.querySelectorAll('.exec-radio-card input').forEach(input => {
+          input.addEventListener('change', () => {
+            document.querySelectorAll('.exec-radio-card').forEach(card => card.classList.remove('active'));
+            input.closest('.exec-radio-card').classList.add('active');
+          });
+        });
+
+        // Form Submit
+        createForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const title = document.getElementById('modalTitle').value.trim();
+          const catSelect = document.getElementById('modalCategory');
+          const categorySlug = catSelect.value;
+          const categoryName = catSelect.options[catSelect.selectedIndex].getAttribute('data-name');
+          const execType = document.querySelector('input[name="modalExec"]:checked').value;
+          const basePrice = Number(document.getElementById('modalPrice').value) || 1000000;
+
+          const newService = {
+            serviceId: `svc-${Date.now()}`,
+            title,
+            categorySlug,
+            categoryName,
+            executionType: execType,
+            coverImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80",
+            status: "ACTIVE",
+            basePrice,
+            priceRange: `${formatVND(basePrice)} – ${formatVND(basePrice * 3)}`,
+            packagesCount: 3,
+            impressions: 1,
+            ordersCount: 0,
+            avgRating: 0,
+            reviewCount: 0,
+          };
+
+          services.unshift(newService);
+          closeModal();
+          showToast(`Đã đăng thành công dịch vụ "${title}"!`);
+          renderTable();
+        });
+
+        // Initial Table Render
+        renderTable();
+      })();
+    </script>
+  </body>
+</html>
+

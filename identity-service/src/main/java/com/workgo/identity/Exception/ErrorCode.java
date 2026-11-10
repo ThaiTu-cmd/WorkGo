@@ -47,6 +47,8 @@ public enum ErrorCode {
     PROVIDER_VERIFICATION_NOT_EXISTED(1026, "Provider verification does not exist", HttpStatus.NOT_FOUND),
     PROVIDER_VERIFICATION_PENDING(1027, "You already have a pending verification request", HttpStatus.BAD_REQUEST),
 
+    INVALID_STATE_TRANSITION(1028,  "Invalid state transition", HttpStatus.CONFLICT),
+    INVALID_CONDITION_PROVIDER(1029,  "User has invalid condition to be a provider", HttpStatus.CONFLICT)
 
     ;
 

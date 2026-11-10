@@ -6,6 +6,33 @@ server:
 spring:
   application:
     name: order-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    url: jdbc:postgresql://localhost:${ORDER_DB_PORT:5435}/${ORDER_DB:order_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:admin123}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: 3000
+            read-timeout: 3000
 
-# TODO: Thêm datasource khi order-service có DB
-# TODO: Thêm kafka config khi cần
+app:
+  services:
+    catalog: ${CATALOG_SERVICE_URL:http://localhost:8082/catalog}
+    identity: ${IDENTITY_SERVICE_URL:http://localhost:8081/identity}
+  internal-key: ${INTERNAL_API_KEY:dev-internal-key}
+
+order:
+  platform-fee-rate: 0.10
+  checkin-code:
+    secret: ${CHECKIN_CODE_SECRET:dev-checkin-code-secret}
+    salt: ${CHECKIN_CODE_SALT:5c0744940b5c369b}

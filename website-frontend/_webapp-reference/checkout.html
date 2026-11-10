@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="WorkGo - Thanh toán đơn hàng. Xem Order Snapshot (giá gói, add-on, phí nền tảng) và chọn cổng thanh toán, tiền được giữ Escrow đến khi nghiệm thu."
+    />
+    <title>Thanh toán — WorkGo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="checkout.css" />
+  </head>
+  <body>
+    <!-- 1. Header -->
+    <header class="header">
+      <div class="container header-container">
+        <a href="index.html" class="logo"><span class="logo-work">Work</span><span class="logo-go">Go</span></a>
+        <div class="secure-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          Thanh toán bảo mật
+        </div>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="container">
+        <!-- 2. Breadcrumb -->
+        <div class="breadcrumb">
+          <a href="service-detail.html" class="back-btn">&larr; Quay lại dịch vụ</a>
+          <span class="sep">/</span>
+          <span>Đặt hàng</span>
+          <span class="sep">/</span>
+          <span class="current">Thanh toán</span>
+        </div>
+
+        <!-- 3. Stepper -->
+        <ol class="stepper" aria-label="Tiến trình đặt hàng">
+          <li class="step done"><span class="step-dot">✓</span><span>Chọn gói</span></li>
+          <li class="step-line done"></li>
+          <li class="step active" aria-current="step"><span class="step-dot">2</span><span>Thanh toán</span></li>
+          <li class="step-line"></li>
+          <li class="step"><span class="step-dot">3</span><span>Hoàn tất</span></li>
+        </ol>
+
+        <h1 class="page-title">Xác nhận &amp; thanh toán</h1>
+
+        <div class="checkout-grid">
+          <!-- ===== Left column ===== -->
+          <div class="main-col">
+            <!-- Service snapshot -->
+            <section class="card">
+              <div class="card-head">
+                <h2 class="card-title">Dịch vụ</h2>
+                <span class="status-badge">Chờ thanh toán</span>
+              </div>
+              <div class="service-row">
+                <img
+                  class="service-thumb"
+                  src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=300&auto=format&fit=crop&q=80"
+                  alt=""
+                />
+                <div class="service-info">
+                  <div class="badge-row">
+                    <span class="exec-badge">Online / Digital</span>
+                    <span class="order-code">Mã đơn tạm: <strong>WG-20261017-0042</strong></span>
+                  </div>
+                  <h3 class="service-title">Thiết kế website doanh nghiệp chuẩn SEO &amp; Responsive bằng React / Next.js</h3>
+                  <p class="provider">
+                    Chuyên gia: <strong>Trần Minh Quang</strong>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#1dbf73" stroke="#fff" stroke-width="2" aria-label="Đã xác minh">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="m8 12 3 3 5-6" />
+                    </svg>
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <!-- Package snapshot -->
+            <section class="card">
+              <h2 class="card-title">Gói đã chọn</h2>
+              <div class="package-box">
+                <div class="package-head">
+                  <div>
+                    <span class="tier">Tiêu chuẩn</span>
+                    <h3 class="package-name">Pro Business</h3>
+                  </div>
+                  <strong class="package-price">5.500.000 ₫</strong>
+                </div>
+                <ul class="package-meta">
+                  <li>⏱ Giao trong <strong>8 ngày</strong></li>
+                  <li>↻ Chỉnh sửa <strong>5 lần</strong></li>
+                  <li>✓ Tự hoàn tất sau <strong>72 giờ</strong> kể từ khi bàn giao</li>
+                </ul>
+              </div>
+              <h4 class="sub-title">Dịch vụ bổ sung</h4>
+              <ul class="addon-list">
+                <li><span>Giao hàng nhanh (giảm 3 ngày)</span><strong>+800.000 ₫</strong></li>
+                <li><span>Tích hợp Google Analytics 4</span><strong>+300.000 ₫</strong></li>
+              </ul>
+            </section>
+
+            <!-- Payment gateways -->
+            <section class="card">
+              <h2 class="card-title">Chọn cổng thanh toán</h2>
+              <p class="card-sub">Tiền được chuyển vào tài khoản Ký quỹ (Escrow) của WorkGo, chưa tới tay chuyên gia.</p>
+              <div class="gateway-list" role="radiogroup" aria-label="Cổng thanh toán">
+                <label class="gateway-card selected">
+                  <input type="radio" name="gateway" value="VNPay" checked />
+                  <span class="gw-logo gw-vnpay">VNPAY</span>
+                  <span class="gw-text"><strong>VNPay</strong><small>ATM nội địa, QR ngân hàng</small></span>
+                  <span class="gw-fee">Miễn phí</span>
+                </label>
+                <label class="gateway-card">
+                  <input type="radio" name="gateway" value="MoMo" />
+                  <span class="gw-logo gw-momo">MoMo</span>
+                  <span class="gw-text"><strong>Ví MoMo</strong><small>Quét mã hoặc mở app MoMo</small></span>
+                  <span class="gw-fee">Miễn phí</span>
+                </label>
+                <label class="gateway-card">
+                  <input type="radio" name="gateway" value="ZaloPay" />
+                  <span class="gw-logo gw-zalopay">Zalo<b>Pay</b></span>
+                  <span class="gw-text"><strong>ZaloPay</strong><small>Ví ZaloPay, thẻ liên kết</small></span>
+                  <span class="gw-fee">Miễn phí</span>
+                </label>
+                <label class="gateway-card">
+                  <input type="radio" name="gateway" value="thẻ quốc tế" />
+                  <span class="gw-logo gw-card">VISA</span>
+                  <span class="gw-text"><strong>Thẻ quốc tế</strong><small>Visa, Mastercard, JCB</small></span>
+                  <span class="gw-fee">Miễn phí</span>
+                </label>
+                <label class="gateway-card">
+                  <input type="radio" name="gateway" value="chuyển khoản" />
+                  <span class="gw-logo gw-bank">BANK</span>
+                  <span class="gw-text"><strong>Chuyển khoản ngân hàng</strong><small>Xác nhận trong 5–15 phút</small></span>
+                  <span class="gw-fee">Miễn phí</span>
+                </label>
+              </div>
+            </section>
+          </div>
+
+          <!-- ===== Right column: Order Snapshot ===== -->
+          <aside class="snapshot">
+            <div class="snapshot-head">
+              <h2 class="card-title">Order Snapshot</h2>
+              <span class="lock-note">🔒 Giá đã khóa</span>
+            </div>
+
+            <dl class="price-list">
+              <div class="price-row"><dt>Giá gói Tiêu chuẩn</dt><dd>5.500.000 ₫</dd></div>
+              <div class="price-row muted"><dt>+ Giao hàng nhanh</dt><dd>800.000 ₫</dd></div>
+              <div class="price-row muted"><dt>+ Tích hợp Google Analytics 4</dt><dd>300.000 ₫</dd></div>
+              <div class="price-row subtotal"><dt>Tạm tính</dt><dd>6.600.000 ₫</dd></div>
+              <div class="price-row">
+                <dt>
+                  Phí nền tảng (10%)
+                  <span class="tip" tabindex="0" aria-label="Phí duy trì Escrow, hỗ trợ khiếu nại và bảo vệ giao dịch">?</span>
+                </dt>
+                <dd>660.000 ₫</dd>
+              </div>
+            </dl>
+
+            <div class="total-row">
+              <span>Tổng thanh toán</span>
+              <strong>7.260.000 ₫</strong>
+            </div>
+            <p class="net-note">Chuyên gia nhận sau nghiệm thu: 5.940.000 ₫</p>
+
+            <div class="escrow-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+              <p><strong>Bảo chứng Escrow</strong> — WorkGo giữ tiền đến khi bạn nghiệm thu. Hoàn tiền 100% nếu chuyên gia không bàn giao.</p>
+            </div>
+
+            <label class="agree">
+              <input type="checkbox" id="agree" />
+              <span>Tôi đồng ý với <a href="#">Điều khoản dịch vụ</a> và <a href="#">Chính sách Escrow</a> của WorkGo.</span>
+            </label>
+
+            <button type="button" class="btn-pay" id="btnPay" disabled>
+              Thanh toán 7.260.000 ₫ qua <span id="gwName">VNPay</span>
+            </button>
+            <p class="snapshot-time">Snapshot tạo lúc 14:32, 17/10/2026 — giá không đổi nếu chuyên gia cập nhật gói.</p>
+          </aside>
+        </div>
+      </div>
+    </main>
+
+    <!-- Redirect overlay (mock) -->
+    <div class="overlay" id="overlay" hidden aria-live="polite">
+      <div class="overlay-box">
+        <span class="spinner" aria-hidden="true"></span>
+        <p>Đang chuyển tới cổng <strong id="overlayGw">VNPay</strong>…</p>
+      </div>
+    </div>
+
+    <script>
+      const cards = document.querySelectorAll('.gateway-card');
+      const gwName = document.getElementById('gwName');
+      const agree = document.getElementById('agree');
+      const btnPay = document.getElementById('btnPay');
+      const overlay = document.getElementById('overlay');
+
+      cards.forEach((card) => {
+        card.querySelector('input').addEventListener('change', (e) => {
+          cards.forEach((c) => c.classList.remove('selected'));
+          card.classList.add('selected');
+          gwName.textContent = e.target.value;
+        });
+      });
+
+      agree.addEventListener('change', () => {
+        btnPay.disabled = !agree.checked;
+      });
+
+      btnPay.addEventListener('click', () => {
+        document.getElementById('overlayGw').textContent = gwName.textContent;
+        overlay.hidden = false;
+        setTimeout(() => {
+          overlay.hidden = true;
+        }, 1800);
+      });
+    </script>
+  </body>
+</html>

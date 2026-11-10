@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="WorkGo - Tìm kiếm và lọc dịch vụ Freelancer & Chuyên gia uy tín theo giá, danh mục và hình thức thực hiện."
+    />
+    <title>Danh mục Dịch vụ — WorkGo Marketplace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="catalog-search.css" />
+  </head>
+  <body>
+    <!-- 1. Header Navigation -->
+    <header class="header">
+      <div class="container header-container">
+        <div class="left-section">
+          <a href="index.html" class="logo">
+            <div class="logo-icon">W</div>
+            <span class="logo-text">WorkGo</span>
+            <span class="logo-dot">.</span>
+          </a>
+
+          <div class="header-search">
+            <svg class="icon search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" placeholder="Tìm kiếm dịch vụ, chuyên gia..." />
+            <button type="button" class="header-search-btn">Tìm</button>
+          </div>
+        </div>
+
+        <nav class="nav-links">
+          <a href="catalog-search.html" class="nav-link active">Danh mục dịch vụ</a>
+          <a href="index.html#how-it-works" class="nav-link">Quy trình</a>
+          <a href="index.html#why-workgo" class="nav-link">Bảo chứng Escrow</a>
+          <a href="my-services.html" class="nav-link highlight">Quản lý Dịch vụ</a>
+        </nav>
+
+        <div class="auth-buttons">
+          <button class="btn-ghost">Đăng nhập</button>
+          <button class="btn-primary">Đăng ký</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. Main Page Layout -->
+    <div class="page-wrapper">
+      <div class="container">
+        <!-- Breadcrumb Navigation -->
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="index.html">Trang chủ</a>
+          <span class="sep">/</span>
+          <a href="#">Danh mục</a>
+          <span class="sep">/</span>
+          <span class="current">Lập trình & Công nghệ</span>
+        </nav>
+
+        <!-- Catalog Toolbar Header -->
+        <div class="catalog-toolbar">
+          <div class="toolbar-left">
+            <h1 class="page-title">Lập trình & Phát triển Phần mềm</h1>
+            <p class="results-count">Hiển thị <strong>12</strong> dịch vụ phù hợp</p>
+          </div>
+
+          <div class="toolbar-right">
+            <div class="sort-box">
+              <label for="sortSelect">Sắp xếp theo:</label>
+              <select id="sortSelect">
+                <option value="popular">Phổ biến nhất</option>
+                <option value="rating">Đánh giá cao nhất</option>
+                <option value="price-asc">Giá: Thấp đến Cao</option>
+                <option value="price-desc">Giá: Cao đến Thấp</option>
+                <option value="newest">Mới nhất</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Catalog Content Grid (Sidebar + Services) -->
+        <div class="catalog-layout">
+          <!-- Left: Filter Sidebar -->
+          <aside class="sidebar" id="filterSidebar">
+            <div class="sidebar-header">
+              <h2 class="sidebar-title">Bộ lọc tìm kiếm</h2>
+              <button class="reset-link" type="reset">Xóa tất cả</button>
+            </div>
+
+            <!-- Filter Section 1: Category -->
+            <div class="filter-section">
+              <h3 class="section-title">Danh mục dịch vụ</h3>
+              <ul class="filter-list">
+                <li class="filter-item active">
+                  <label>
+                    <input type="radio" name="cat" checked />
+                    <span>Lập trình & CNTT</span>
+                  </label>
+                  <span class="count">185</span>
+                </li>
+                <li class="filter-item">
+                  <label>
+                    <input type="radio" name="cat" />
+                    <span>Thiết kế & Đồ họa</span>
+                  </label>
+                  <span class="count">240</span>
+                </li>
+                <li class="filter-item">
+                  <label>
+                    <input type="radio" name="cat" />
+                    <span>Sửa chữa Điện nước</span>
+                  </label>
+                  <span class="count">142</span>
+                </li>
+                <li class="filter-item">
+                  <label>
+                    <input type="radio" name="cat" />
+                    <span>Vệ sinh & Dọn dẹp</span>
+                  </label>
+                  <span class="count">98</span>
+                </li>
+                <li class="filter-item">
+                  <label>
+                    <input type="radio" name="cat" />
+                    <span>Viết lách & Dịch thuật</span>
+                  </label>
+                  <span class="count">116</span>
+                </li>
+                <li class="filter-item">
+                  <label>
+                    <input type="radio" name="cat" />
+                    <span>Vận chuyển & Giao nhận</span>
+                  </label>
+                  <span class="count">75</span>
+                </li>
+                <li class="filter-item">
+                  <label>
+                    <input type="radio" name="cat" />
+                    <span>Gia sư & Đào tạo</span>
+                  </label>
+                  <span class="count">88</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Filter Section 2: Execution Type -->
+            <div class="filter-section">
+              <h3 class="section-title">Hình thức thực hiện</h3>
+              <div class="checkbox-group">
+                <label class="check-label">
+                  <input type="checkbox" checked />
+                  <span class="badge badge-digital">Digital (Online)</span>
+                </label>
+                <label class="check-label">
+                  <input type="checkbox" />
+                  <span class="badge badge-onsite">Onsite (Tại nhà)</span>
+                </label>
+                <label class="check-label">
+                  <input type="checkbox" />
+                  <span class="badge badge-delivery">Delivery (Giao nhận)</span>
+                </label>
+                <label class="check-label">
+                  <input type="checkbox" />
+                  <span class="badge badge-appointment">Appointment (Đặt hẹn)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Filter Section 3: Price Range -->
+            <div class="filter-section">
+              <h3 class="section-title">Khoảng giá (₫)</h3>
+              <div class="price-presets">
+                <button type="button" class="preset-btn">&lt; 500.000₫</button>
+                <button type="button" class="preset-btn">500k - 2 triệu</button>
+                <button type="button" class="preset-btn">2 triệu - 5 triệu</button>
+                <button type="button" class="preset-btn">&gt; 5 triệu</button>
+              </div>
+              <div class="price-inputs">
+                <input type="number" placeholder="Tối thiểu" />
+                <span class="price-dash">-</span>
+                <input type="number" placeholder="Tối đa" />
+              </div>
+              <button type="button" class="apply-price-btn">Áp dụng giá</button>
+            </div>
+
+            <!-- Filter Section 4: Delivery Time -->
+            <div class="filter-section">
+              <h3 class="section-title">Thời gian hoàn thành</h3>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" name="time" checked />
+                  <span>Bất kỳ lúc nào</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="time" />
+                  <span>⚡ Siêu tốc trong 24 giờ</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="time" />
+                  <span>Tối đa 3 ngày</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="time" />
+                  <span>Tối đa 7 ngày</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Filter Section 5: Trust & Verification -->
+            <div class="filter-section">
+              <h3 class="section-title">Uy tín chuyên gia</h3>
+              <label class="check-label">
+                <input type="checkbox" checked />
+                <span>Chuyên gia đã xác thực (Verified)</span>
+              </label>
+              <label class="check-label">
+                <input type="checkbox" />
+                <span>Đánh giá từ 4.5★ trở lên</span>
+              </label>
+            </div>
+          </aside>
+
+          <!-- Right: Services Grid -->
+          <main class="services-area">
+            <div class="services-grid">
+              <!-- Card 1 -->
+              <article class="service-card">
+                <div class="card-media">
+                  <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80" alt="Thiết kế website" loading="lazy" />
+                  <span class="card-badge badge-digital">Online</span>
+                </div>
+                <div class="card-body">
+                  <div class="provider-info">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Avatar" class="avatar" />
+                    <div class="provider-meta">
+                      <span class="provider-name">Trần Minh Quang</span>
+                      <span class="provider-badge">Chuyên gia Pro</span>
+                    </div>
+                  </div>
+                  <h3 class="service-title"><a href="service-detail.html">Thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React / Next.js</a></h3>
+                  <div class="rating-row">
+                    <span class="stars">★ 4.98</span>
+                    <span class="reviews">(164 đánh giá)</span>
+                  </div>
+                  <div class="card-footer">
+                    <span class="delivery-time">🕒 5 ngày</span>
+                    <div class="price-wrap">
+                      <span class="price-label">Khởi điểm</span>
+                      <span class="price-val">2.500.000₫</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Card 2 -->
+              <article class="service-card">
+                <div class="card-media">
+                  <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop&q=80" alt="Backend API" loading="lazy" />
+                  <span class="card-badge badge-digital">Online</span>
+                </div>
+                <div class="card-body">
+                  <div class="provider-info">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" alt="Avatar" class="avatar" />
+                    <div class="provider-meta">
+                      <span class="provider-name">Đặng Quang Huy</span>
+                      <span class="provider-badge">Senior Java Engineer</span>
+                    </div>
+                  </div>
+                  <h3 class="service-title">Lập trình Backend RESTful API & Microservices bảo mật cao bằng Spring Boot</h3>
+                  <div class="rating-row">
+                    <span class="stars">★ 4.97</span>
+                    <span class="reviews">(112 đánh giá)</span>
+                  </div>
+                  <div class="card-footer">
+                    <span class="delivery-time">🕒 7 ngày</span>
+                    <div class="price-wrap">
+                      <span class="price-label">Khởi điểm</span>
+                      <span class="price-val">4.000.000₫</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Card 3 -->
+              <article class="service-card">
+                <div class="card-media">
+                  <img src="https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=600&auto=format&fit=crop&q=80" alt="UI UX" loading="lazy" />
+                  <span class="card-badge badge-digital">Online</span>
+                </div>
+                <div class="card-body">
+                  <div class="provider-info">
+                    <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80" alt="Avatar" class="avatar" />
+                    <div class="provider-meta">
+                      <span class="provider-name">Phạm Thu Trang</span>
+                      <span class="provider-badge">Senior UI/UX Designer</span>
+                    </div>
+                  </div>
+                  <h3 class="service-title">Thiết kế giao diện Mobile App & Dashboard bằng Figma với Design System hoàn chỉnh</h3>
+                  <div class="rating-row">
+                    <span class="stars">★ 5.0</span>
+                    <span class="reviews">(97 đánh giá)</span>
+                  </div>
+                  <div class="card-footer">
+                    <span class="delivery-time">🕒 7 ngày</span>
+                    <div class="price-wrap">
+                      <span class="price-label">Khởi điểm</span>
+                      <span class="price-val">3.200.000₫</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Card 4 -->
+              <article class="service-card">
+                <div class="card-media">
+                  <img src="https://images.unsplash.com/photo-1626785774573-4b799315345d?w=600&auto=format&fit=crop&q=80" alt="Logo Design" loading="lazy" />
+                  <span class="card-badge badge-digital">Online</span>
+                </div>
+                <div class="card-body">
+                  <div class="provider-info">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" alt="Avatar" class="avatar" />
+                    <div class="provider-meta">
+                      <span class="provider-name">Lê Hoàng Anh</span>
+                      <span class="provider-badge">Verified Designer</span>
+                    </div>
+                  </div>
+                  <h3 class="service-title">Thiết kế trọn bộ nhận diện thương hiệu & Logo công ty phong cách tối giản</h3>
+                  <div class="rating-row">
+                    <span class="stars">★ 4.95</span>
+                    <span class="reviews">(289 đánh giá)</span>
+                  </div>
+                  <div class="card-footer">
+                    <span class="delivery-time">🕒 3 ngày</span>
+                    <div class="price-wrap">
+                      <span class="price-label">Khởi điểm</span>
+                      <span class="price-val">1.200.000₫</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Card 5 -->
+              <article class="service-card">
+                <div class="card-media">
+                  <img src="https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=600&auto=format&fit=crop&q=80" alt="Sửa điện nước" loading="lazy" />
+                  <span class="card-badge badge-onsite">Tại nhà</span>
+                </div>
+                <div class="card-body">
+                  <div class="provider-info">
+                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80" alt="Avatar" class="avatar" />
+                    <div class="provider-meta">
+                      <span class="provider-name">Nguyễn Văn Tuấn</span>
+                      <span class="provider-badge">Thợ 10+ năm kinh nghiệm</span>
+                    </div>
+                  </div>
+                  <h3 class="service-title">Sửa chữa điện nước, xử lý chập cháy & rò rỉ đường ống khẩn cấp tại nhà</h3>
+                  <div class="rating-row">
+                    <span class="stars">★ 4.92</span>
+                    <span class="reviews">(215 đánh giá)</span>
+                  </div>
+                  <div class="card-footer">
+                    <span class="delivery-time">🕒 1 ngày</span>
+                    <div class="price-wrap">
+                      <span class="price-label">Khởi điểm</span>
+                      <span class="price-val">250.000₫</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Card 6 -->
+              <article class="service-card">
+                <div class="card-media">
+                  <img src="https://images.unsplash.com/photo-1526367790999-0150786686a2?w=600&auto=format&fit=crop&q=80" alt="Giao tài liệu" loading="lazy" />
+                  <span class="card-badge badge-delivery">Giao nhận</span>
+                </div>
+                <div class="card-body">
+                  <div class="provider-info">
+                    <img src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&auto=format&fit=crop&q=80" alt="Avatar" class="avatar" />
+                    <div class="provider-meta">
+                      <span class="provider-name">Vũ Đăng Khoa</span>
+                      <span class="provider-badge">Giao siêu tốc 60p</span>
+                    </div>
+                  </div>
+                  <h3 class="service-title">Giao tài liệu hỏa tốc nội thành, giao hồ sơ pháp lý & bưu kiện cam kết bảo mật</h3>
+                  <div class="rating-row">
+                    <span class="stars">★ 4.96</span>
+                    <span class="reviews">(310 đánh giá)</span>
+                  </div>
+                  <div class="card-footer">
+                    <span class="delivery-time">🕒 1 ngày</span>
+                    <div class="price-wrap">
+                      <span class="price-label">Khởi điểm</span>
+                      <span class="price-val">50.000₫</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <!-- Pagination Bar -->
+            <nav class="pagination-bar" aria-label="Pagination">
+              <button class="page-nav-btn disabled" disabled>&lt; Trước</button>
+              <div class="page-numbers">
+                <button class="page-num active">1</button>
+                <button class="page-num">2</button>
+                <button class="page-num">3</button>
+              </div>
+              <button class="page-nav-btn">Sau &gt;</button>
+            </nav>
+          </main>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Footer -->
+    <footer class="footer">
+      <div class="container footer-content">
+        <p>© 2026 WorkGo Marketplace Inc. Nền tảng kết nối dịch vụ Freelancer & Chuyên gia hàng đầu.</p>
+        <div class="footer-links">
+          <a href="#">Điều khoản</a>
+          <a href="#">Bảo mật</a>
+          <a href="#">Ký quỹ Escrow</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

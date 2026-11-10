@@ -13,6 +13,7 @@ import java.util.UUID;
 public class ProviderProfileResponse {
     private UUID providerProfileId;
     private UUID userId;
+    private String userStatus;
     private String providerType;
     private String businessName;
     private String bio;

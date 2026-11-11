@@ -8,7 +8,7 @@
 .sectionTitle {
   font-size: 1.35rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 0;
 }
 
@@ -72,7 +72,7 @@
 .providerName {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 0;
 }
 
@@ -117,7 +117,7 @@
 
 .ratingVal {
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
 }
 
 .reviewCount {
@@ -136,7 +136,7 @@
 /* Bio */
 .sellerBio {
   font-size: 0.92rem;
-  color: #334155;
+  color: var(--wg-text-secondary);
   line-height: 1.6;
   margin: 0;
   padding-bottom: 4px;
@@ -180,7 +180,7 @@
 .statVal {
   font-size: 0.88rem;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--wg-text);
 }
 
 /* Action */
@@ -192,7 +192,7 @@
   padding: 11px 20px;
   background-color: var(--wg-surface);
   border: 1px solid #cbd5e1;
-  color: #0f172a;
+  color: var(--wg-text);
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 600;

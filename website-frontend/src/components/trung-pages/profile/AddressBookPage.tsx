@@ -44,7 +44,7 @@ const EMPTY: Address = {
   note: "",
   detail: ""
 };
-const apiMessage = (err: unknown) => (err as Error)?.message || "Server connection error";
+const apiMessage = (err: unknown, fallback: string) => (err as Error)?.message || fallback;
 export default function AddressBookPage({
   onNavigate,
   onShowToast
@@ -176,7 +176,7 @@ export default function AddressBookPage({
       if (editingId) await addressApi.update(editingId, body);else await addressApi.create(body);
     } catch (err) {
       setError(tr("m1309", {
-        p0: apiMessage(err)
+        p0: apiMessage(err, tr("m1303"))
       }));
       return;
     } finally {
@@ -191,7 +191,7 @@ export default function AddressBookPage({
       await addressApi.remove(id);
     } catch (err) {
       onShowToast(tr("m1312", {
-        p0: apiMessage(err)
+        p0: apiMessage(err, tr("m1303"))
       }));
       return;
     }

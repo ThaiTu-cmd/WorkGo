@@ -19,12 +19,15 @@ export const initialAvatar = (name) => {
 };
 
 const toNumber = (v) => (v === null || v === undefined || v === '' ? 0 : Number(v));
+// Instant as ISO string or epoch number → ms (0 when missing).
+const timeOf = (v) => (typeof v === 'number' ? v : Date.parse(v ?? '') || 0);
 
 // PackageResponse[] → sidebar/comparison packages, cheapest = BASIC.
 export const toPackages = (packages = []) =>
   [...packages]
     .filter((p) => !p.packageStatus || p.packageStatus === 'ACTIVE')
-    .sort((a, b) => toNumber(a.price) - toNumber(b.price))
+    // Equal prices fall back to creation order (Basic is created first).
+    .sort((a, b) => toNumber(a.price) - toNumber(b.price) || timeOf(a.createdAt) - timeOf(b.createdAt))
     .slice(0, 3)
     .map((p, i) => ({
       id: p.packageId,
@@ -96,9 +99,21 @@ export const toProvider = (profile, fallbackProviderId = null) => {
   };
 };
 
+// Fastest delivery among a service's ACTIVE packages, in days. Only DIGITAL
+// work has a delivery time (ONSITE packages store 0 / null), so no positive
+// value means "not applicable" → null.
+export const fastestDeliveryDays = (packages = []) => {
+  const days = packages
+    .filter((p) => !p.packageStatus || p.packageStatus === 'ACTIVE')
+    .map((p) => Number(p.deliveryDay))
+    .filter((d) => Number.isFinite(d) && d > 0);
+  return days.length ? Math.min(...days) : null;
+};
+
 // ServiceResponse (list endpoint) → ServiceCard item used by CatalogSearch and
-// PopularServices. `provider` is the ProviderProfileResponse when known.
-export const toServiceCard = (dto, { category = null, provider = null } = {}) => {
+// PopularServices. `provider` is the ProviderProfileResponse when known;
+// `packages` (PackageResponse[]) fills deliveryDays when given.
+export const toServiceCard = (dto, { category = null, provider = null, packages = null } = {}) => {
   const providerView = toProvider(provider, dto.providerId);
   const hasRealCover = Boolean(dto.coverImage);
   const coverImage = dto.coverImage || (dto.slug ? `https://picsum.photos/seed/${dto.slug}-1/1200/800` : initialAvatar(dto.title));
@@ -119,7 +134,7 @@ export const toServiceCard = (dto, { category = null, provider = null } = {}) =>
     reviewCount: toNumber(dto.reviewCount),
     orderCount: toNumber(dto.orderCount),
     basePrice: toNumber(dto.basePrice),
-    deliveryDays: null,
+    deliveryDays: packages ? fastestDeliveryDays(packages) : null,
     createdAt: dto.createdAt,
   };
 };

@@ -2,14 +2,14 @@ import { useTranslations } from "next-intl";
 import React from 'react';
 import styles from './OrderStatusBadge.module.css';
 
-// Labels for order-service OrderStatus.
+// Labels for order-service OrderStatus (keys of the "misc" dictionary).
 export const ORDER_STATUS_LABELS = {
-  PENDING_PAYMENT: "Wait for payment",
-  CONFIRMED: "Confirmed",
-  IN_PROGRESS: "Ongoing",
-  DELIVERED: "Handed over",
-  COMPLETED: "Completed",
-  CANCELLED: "Canceled"
+  PENDING_PAYMENT: 'm1574',
+  CONFIRMED: 'm1575',
+  IN_PROGRESS: 'm1576',
+  DELIVERED: 'm1577',
+  COMPLETED: 'm1578',
+  CANCELLED: 'm1579'
 };
 const CLASS_BY_STATUS = {
   PENDING_PAYMENT: styles.pending,
@@ -24,6 +24,6 @@ export default function OrderStatusBadge({
 }) {
   const tr = useTranslations("misc");
   return <span className={`${styles.badge} ${CLASS_BY_STATUS[status] || styles.cancelled}`}>
-      {ORDER_STATUS_LABELS[status] || status}
+      {ORDER_STATUS_LABELS[status] ? tr(ORDER_STATUS_LABELS[status]) : status}
     </span>;
 }

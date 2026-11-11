@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import styles from './Step2Pricing.module.css';
+import { DEFAULT_MINUTES, DURATION_OPTIONS } from '../../serviceFormSync';
 let nextAddonKey = 0;
 export default function Step2Pricing({
   formData,
@@ -124,8 +125,20 @@ export default function Step2Pricing({
               </td>
             </tr>
 
-            {/* Delivery Days */}
-            <tr>
+            {/* ONSITE: working time per visit (PackageRequest.durationMinute) */}
+            {!isDigital && <tr>
+              <td className={styles.tdFeature}>{tr("m1568")}</td>
+              {['basic', 'standard', 'premium'].map(tier => <td key={tier}>
+                  <select className={styles.select} value={packages[tier]?.minutes || DEFAULT_MINUTES[tier]} onChange={e => handlePackageChange(tier, 'minutes', Number(e.target.value))}>
+                    {DURATION_OPTIONS.map(m => <option key={m} value={m}>{tr("m1569", {
+                    p0: m
+                  })}</option>)}
+                  </select>
+                </td>)}
+            </tr>}
+
+            {/* Delivery Days (DIGITAL only: ONSITE work has no delivery time) */}
+            {isDigital && <tr>
               <td className={styles.tdFeature}>{tr("m422")}</td>
               <td>
                 <select className={styles.select} value={packages.basic?.days || 3} onChange={e => handlePackageChange('basic', 'days', Number(e.target.value))}>
@@ -152,7 +165,7 @@ export default function Step2Pricing({
                   <option value={21}>{tr("m1081")}</option>
                 </select>
               </td>
-            </tr>
+            </tr>}
 
             {/* Revisions */}
             <tr>
@@ -220,7 +233,7 @@ export default function Step2Pricing({
 
             {/* Price Row */}
             <tr style={{
-            background: '#f8fafc'
+            background: 'var(--wg-surface-alt)'
           }}>
               <td className={styles.tdFeature} style={{
               verticalAlign: 'middle'
@@ -234,7 +247,7 @@ export default function Step2Pricing({
                 </div>
               </td>
               <td style={{
-              background: '#f0fdf4'
+              background: 'var(--wg-primary-light)'
             }}>
                 <div className={styles.priceInputRow}>
                   <input type="number" className={styles.priceInput} value={packages.standard?.price || 5000000} step={50000} min={50000} onChange={e => handlePackageChange('standard', 'price', Number(e.target.value))} />

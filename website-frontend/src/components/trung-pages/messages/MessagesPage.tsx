@@ -15,12 +15,13 @@ type Props = {
   onShowToast: (message: string) => void;
   conversationId?: string;
 };
-const QUOTA_MESSAGE = "Browser memory is full or blocked \u2014 messages are held for this session only.";
+// Keys of the "misc" dictionary, translated with tr() where used.
+const QUOTA_MESSAGE = "m1679";
 
 // Mock counterpart replies until a real messaging service exists.
 const REPLIES: Record<Conversation["participantRole"], string[]> = {
-  PROVIDER: ["Thank you for your message! I have received the information and will respond in detail immediately.", "Okay, okay? Can you send more examples or specific requirements so I can quote more accurately?", "I can start today. You choose the appropriate package and then place an order through WorkGo so your money is kept safe in Escrow."],
-  CLIENT: ["Ok, I've seen it.", "Thank you, then I'll wait for the update.", "Can you tell me when the expected completion time is?"]
+  PROVIDER: ["m1680", "m1681", "m1682"],
+  CLIENT: ["m1683", "m1684", "m1685"]
 };
 export default function MessagesPage({
   onNavigate,
@@ -61,7 +62,7 @@ export default function MessagesPage({
     const {
       ok
     } = messageApi.sendMessage(active.id, text, attachments);
-    if (!ok) onShowToast(QUOTA_MESSAGE);
+    if (!ok) onShowToast(tr(QUOTA_MESSAGE));
     const {
       id,
       participantId,
@@ -70,7 +71,7 @@ export default function MessagesPage({
     const replies = REPLIES[participantRole];
     timers.current.push(setTimeout(() => setTypingId(id), 600), setTimeout(() => {
       setTypingId(cur => cur === id ? null : cur);
-      messageApi.receiveMessage(id, participantId, replies[Math.floor(Math.random() * replies.length)]);
+      messageApi.receiveMessage(id, participantId, tr(replies[Math.floor(Math.random() * replies.length)]));
     }, 2200));
   };
   const openContext = () => {

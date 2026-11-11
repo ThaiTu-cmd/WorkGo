@@ -99,7 +99,9 @@ export default function CatalogSearchPage({
       }
 
       // 4. Delivery time filter
-      if (deliveryTime !== 'ALL' && service.deliveryDays > Number(deliveryTime)) {
+      // No known delivery time (ONSITE, or packages not loaded) can't satisfy a
+      // "delivered within N days" filter, so it is left out.
+      if (deliveryTime !== 'ALL' && (service.deliveryDays == null || service.deliveryDays > Number(deliveryTime))) {
         return false;
       }
 

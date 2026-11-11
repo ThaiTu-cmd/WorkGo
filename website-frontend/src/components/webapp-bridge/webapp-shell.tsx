@@ -18,6 +18,7 @@ import ServiceFormPage from "@/_webapp-mirror/pages/ServiceForm/ServiceFormPage"
 import AvailabilityPage from "@/_webapp-mirror/pages/Availability/AvailabilityPage";
 import CheckoutPage from "@/_webapp-mirror/pages/Checkout/CheckoutPage";
 import OrderDashboardPage from "@/_webapp-mirror/pages/OrderDashboard/OrderDashboardPage";
+import OrderPaymentPage from "@/_webapp-mirror/pages/OrderPayment/OrderPaymentPage";
 import BookingSlotsPage from "@/_webapp-mirror/pages/BackendParity/BookingSlotsPage";
 import VerificationCenterPage from "@/_webapp-mirror/pages/BackendParity/VerificationCenterPage";
 import AdminConsolePage from "@/_webapp-mirror/pages/BackendParity/AdminConsolePage";
@@ -55,6 +56,8 @@ export type CatalogFilterParams = {
   jobId?: string;
   providerId?: string;
   orderId?: string;
+  // "order-payment": payment to follow (otherwise the order's gateway picker).
+  paymentId?: string;
   serviceId?: string;
   section?: string;
   // Finance hub pre-selected tab ("wallet" | "deposit" | "payout").
@@ -72,6 +75,7 @@ export type TrungPageKey =
   | "availability"
   | "checkout"
   | "orders"
+  | "order-payment"
   | "booking-slots"
   | "verification-center"
   | "admin-console"
@@ -136,6 +140,7 @@ const CORE_PAGE_KEYS = new Set<string>([
   "availability",
   "checkout",
   "orders",
+  "order-payment",
   "booking-slots",
   "verification-center",
   "admin-console",
@@ -154,6 +159,7 @@ export function buildTargetUrl(page: TrungPageKey, params: CatalogFilterParams =
   if (params.jobId) q.set("jobId", params.jobId);
   if (params.providerId) q.set("providerId", params.providerId);
   if (params.orderId) q.set("orderId", params.orderId);
+  if (params.paymentId) q.set("paymentId", params.paymentId);
   if (params.tab) q.set("tab", params.tab);
 
   const pathname = window.location.pathname;
@@ -179,6 +185,7 @@ export function parseUrlParams(search: string = typeof window !== "undefined" ? 
     jobId: searchParams.get("jobId") || "",
     providerId: searchParams.get("providerId") || "",
     orderId: searchParams.get("orderId") || "",
+    paymentId: searchParams.get("paymentId") || "",
     tab: searchParams.get("tab") || "wallet",
   };
 
@@ -240,6 +247,9 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
   const [selectedJobId, setSelectedJobId] = useState("");
   const [selectedProviderId, setSelectedProviderId] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState("");
+  // "order-payment": payment to follow, and the gateway verdict from /payment/result.
+  const [selectedPaymentId, setSelectedPaymentId] = useState("");
+  const [paymentResult, setPaymentResult] = useState("");
   const [chatConversationId, setChatConversationId] = useState("");
   // { service, pkg, addons } handed over by ServiceDetailPage "Tiếp tục đặt hàng".
   const [checkoutOrder, setCheckoutOrder] = useState<Record<string, unknown> | null>(null);
@@ -360,6 +370,11 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
       if (parsedParams.jobId) setSelectedJobId(parsedParams.jobId);
       if (parsedParams.providerId) setSelectedProviderId(parsedParams.providerId);
       if (parsedParams.orderId) setSelectedOrderId(parsedParams.orderId);
+      if (targetPage === "order-payment") {
+        setSelectedOrderId(parsedParams.orderId || "");
+        setSelectedPaymentId(parsedParams.paymentId || "");
+        setPaymentResult(searchParams.get("result") || "");
+      }
       if (parsedParams.tab) {
         const t = parsedParams.tab;
         if (t === "wallet" || t === "deposit" || t === "payout") setFinanceTab(t as FinanceTab);
@@ -395,6 +410,11 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
       if (parsedParams.jobId) setSelectedJobId(parsedParams.jobId);
       if (parsedParams.providerId) setSelectedProviderId(parsedParams.providerId);
       if (parsedParams.orderId) setSelectedOrderId(parsedParams.orderId);
+      if (targetPage === "order-payment") {
+        setSelectedOrderId(parsedParams.orderId || "");
+        setSelectedPaymentId(parsedParams.paymentId || "");
+        setPaymentResult(new URLSearchParams(window.location.search).get("result") || "");
+      }
       if (parsedParams.tab) {
         const t = parsedParams.tab;
         if (t === "wallet" || t === "deposit" || t === "payout") setFinanceTab(t as FinanceTab);
@@ -468,6 +488,11 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
     if (page === "submit-proposal" && params.jobId) setSelectedJobId(params.jobId);
     if (page === "proposal-review" && params.jobId) setSelectedJobId(params.jobId);
     if (page === "review-form" && params.orderId) setSelectedOrderId(params.orderId);
+    if (page === "order-payment") {
+      setSelectedOrderId(params.orderId || "");
+      setSelectedPaymentId(params.paymentId || "");
+      setPaymentResult("");
+    }
     if (page === "detail" && params.serviceId) setSelectedServiceId(params.serviceId);
     if (page === "messages") {
       const { chat } = params;
@@ -677,6 +702,20 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
           onDone={() => handleNavigate("home")}
           onViewOrders={() => handleNavigate("orders")}
           onOpenAddressBook={() => handleNavigate("address-book")}
+          onOpenPayment={(p: CatalogFilterParams) => handleNavigate("order-payment", p)}
+        />
+      )}
+
+      {currentPage === "order-payment" && (
+        /* Pay a PENDING_PAYMENT order / follow a payment back from the gateway */
+        <OrderPaymentPage
+          orderId={selectedOrderId}
+          paymentId={selectedPaymentId}
+          gatewayResult={paymentResult}
+          onOpenPayment={(p: CatalogFilterParams) => handleNavigate("order-payment", p)}
+          onViewOrders={() => handleNavigate("orders")}
+          onGoHome={() => handleNavigate("home")}
+          onShowToast={showToast}
         />
       )}
 
@@ -686,6 +725,7 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
           onGoHome={() => handleNavigate("home")}
           onShowToast={showToast}
           onOpenChat={(chat: ChatTarget) => handleNavigate("messages", { chat })}
+          onOpenPayment={(p: CatalogFilterParams) => handleNavigate("order-payment", p)}
         />
       )}
 

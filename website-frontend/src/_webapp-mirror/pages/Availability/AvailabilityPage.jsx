@@ -6,10 +6,11 @@ import WeekGrid from './components/WeekGrid';
 import RuleForm, { emptyRule } from './components/RuleForm';
 import SlotList from './components/SlotList';
 import styles from './AvailabilityPage.module.css';
+// Keys of the "misc" dictionary, translated with tr() at render.
 const NOTICES = {
-  'needs-login': "Sign in with your Professional account to manage your availability.",
-  forbidden: "Your account does not have PROVIDER rights, so there is no service to book free time.",
-  error: "Unable to connect to server \u2014 unable to download free calendar."
+  'needs-login': 'm1627',
+  forbidden: 'm1628',
+  error: 'm1629'
 };
 export default function AvailabilityPage({
   onGoBack,
@@ -83,7 +84,7 @@ export default function AvailabilityPage({
         </div>
 
         {NOTICES[status] && <div className={styles.notice} role="status">
-            <Info size={16} /> <span>{NOTICES[status]}</span>
+            <Info size={16} /> <span>{tr(NOTICES[status])}</span>
           </div>}
 
         <div className={styles.summaryRow}>

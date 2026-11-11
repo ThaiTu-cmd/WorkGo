@@ -81,7 +81,7 @@
 }
 
 .resetBtn:hover {
-  background-color: #fee2e2;
+  background-color: rgba(239, 68, 68, 0.12);
   transform: scale(1.02);
 }
 
@@ -323,7 +323,7 @@
 
 .applyPriceBtn {
   background-color: var(--wg-text);
-  color: #ffffff;
+  color: var(--wg-surface);
   font-size: 0.82rem;
   font-weight: 700;
   padding: 8px;

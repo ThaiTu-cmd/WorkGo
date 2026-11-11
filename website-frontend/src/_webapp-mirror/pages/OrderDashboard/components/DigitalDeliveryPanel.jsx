@@ -4,14 +4,15 @@ import { Link2, Paperclip, PackageCheck, RefreshCw } from 'lucide-react';
 import { useDigitalDelivery } from '../../../hooks/useDigitalDelivery';
 import evidenceStyles from './WorkEvidence.module.css';
 import styles from './OrderFlow.module.css';
+// Keys of the "misc" dictionary, translated with tr() at render.
 const PACKAGE_STATUS = {
-  SUBMITTED: "Wait for acceptance",
-  ACCEPTED: "Accepted",
-  REVISION_REQUESTED: "Correction requested"
+  SUBMITTED: 'm1597',
+  ACCEPTED: 'm1602',
+  REVISION_REQUESTED: 'm1603'
 };
 const REVISION_STATUS = {
-  OPEN: "Editing",
-  RESOLVED: "Submitted again"
+  OPEN: 'm1604',
+  RESOLVED: 'm1605'
 };
 const formatDateTime = iso => iso ? new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'short',
@@ -52,7 +53,7 @@ export default function DigitalDeliveryPanel({
               <strong>Lần {d.versionNo}</strong> · {formatDateTime(d.deliveredAt)}
             </span>
             <span className={`${styles.chip} ${styles[`chip_${d.status}`] || ''}`}>
-              {PACKAGE_STATUS[d.status] || d.status}
+              {PACKAGE_STATUS[d.status] ? tr(PACKAGE_STATUS[d.status]) : d.status}
             </span>
           </div>
           {d.message && <p className={styles.quote}>{d.message}</p>}
@@ -80,7 +81,7 @@ export default function DigitalDeliveryPanel({
               <div className={styles.versionHead}>
                 <span>{tr("m1508")}{formatDateTime(r.createdAt)}</span>
                 <span className={`${styles.chip} ${styles[`chip_${r.status}`] || ''}`}>
-                  {REVISION_STATUS[r.status] || r.status}
+                  {REVISION_STATUS[r.status] ? tr(REVISION_STATUS[r.status]) : r.status}
                 </span>
               </div>
               <p className={styles.quote}>{r.reason}</p>

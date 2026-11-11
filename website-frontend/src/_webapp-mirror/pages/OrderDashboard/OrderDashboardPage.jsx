@@ -1,5 +1,5 @@
 import { useTranslations } from "next-intl";
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Info, Loader2, MessageSquare, Search, Package } from 'lucide-react';
 import { useMyOrders } from '../../hooks/useMyOrders';
 import OrderStatusBadge from './components/OrderStatusBadge';
@@ -7,41 +7,41 @@ import OrderExecutionInfo from './components/OrderExecutionInfo';
 import WorkEvidencePanel from './components/WorkEvidencePanel';
 import DigitalDeliveryPanel from './components/DigitalDeliveryPanel';
 import OrderBriefPanel from './components/OrderBriefPanel';
-import { CheckinCode, CheckinCodeDialog, CheckinDialog, DeliveryDialog, RequirementsDialog, RevisionDialog } from './components/OrderFlowDialogs';
+import { CheckinCode, CheckinDialog, DeliveryDialog, RequirementsDialog, RevisionDialog } from './components/OrderFlowDialogs';
 import flowStyles from './components/OrderFlow.module.css';
 import { useOrderExecution } from '../../hooks/useOrderExecution';
 import OrderCancelPage from '../OrderCancel/OrderCancelPage';
 import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
 import { orderApi, orderErrorMessage } from '../../api/orderApi';
-import { loadCheckinCode, saveCheckinCode } from '../../utils/checkinCodes';
+import { ORDER_PAYMENT_TIMEOUT_MINUTES } from '../../api/paymentApi';
 import styles from './OrderDashboardPage.module.css';
+// Labels below are keys of the "misc" dictionary, translated with tr() at render.
 const NOTICES = {
-  'needs-login': "Log in to view your orders.",
-  error: "Unable to connect to order-service \u2014 orders cannot be downloaded.",
-  'not-provider': NOT_PROVIDER_MESSAGE
+  'needs-login': 'm1571',
+  error: 'm1572'
 };
 const ACTIVE_STATUSES = ['PENDING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS', 'DELIVERED'];
 const TABS = [{
   id: 'ACTIVE',
-  label: "Processing"
+  label: 'm1573'
 }, {
   id: 'PENDING_PAYMENT',
-  label: "Wait for payment"
+  label: 'm1574'
 }, {
   id: 'CONFIRMED',
-  label: "Confirmed"
+  label: 'm1575'
 }, {
   id: 'IN_PROGRESS',
-  label: "Ongoing"
+  label: 'm1576'
 }, {
   id: 'DELIVERED',
-  label: "Handed over"
+  label: 'm1577'
 }, {
   id: 'COMPLETED',
-  label: "Completed"
+  label: 'm1578'
 }, {
   id: 'CANCELLED',
-  label: "Canceled"
+  label: 'm1579'
 }];
 const EXECUTION = {
   DIGITAL: {
@@ -64,18 +64,19 @@ const EXECUTION = {
 
 // Buttons per role → status → execution type ('ALL' applies to every type).
 // `run` names a server call in runAction, `dialog` opens one of the flow dialogs,
-// `cancel` opens the cancellation form. order-service refuses to cancel a DELIVERED order.
+// `pay` opens the payment page, `cancel` opens the cancellation form.
+// order-service refuses to cancel a DELIVERED order.
 const ACTIONS = {
   CLIENT: {
     PENDING_PAYMENT: {
       ALL: [{
         id: 'pay',
-        run: 'pay',
-        label: "Pay",
+        pay: true,
+        label: 'm1580',
         variant: 'primary'
       }, {
         id: 'cancel',
-        label: "Cancel",
+        label: 'm1581',
         variant: 'danger',
         cancel: true
       }]
@@ -84,12 +85,12 @@ const ACTIONS = {
       DIGITAL: [{
         id: 'requirements',
         dialog: 'requirements',
-        label: "Send request",
+        label: 'm1582',
         variant: 'primary'
       }],
       ALL: [{
         id: 'cancel',
-        label: "Request cancellation",
+        label: 'm1583',
         variant: 'danger',
         cancel: true
       }]
@@ -97,7 +98,7 @@ const ACTIONS = {
     IN_PROGRESS: {
       ALL: [{
         id: 'cancel',
-        label: "Request cancellation",
+        label: 'm1583',
         variant: 'danger',
         cancel: true
       }]
@@ -106,18 +107,18 @@ const ACTIONS = {
       ONSITE: [{
         id: 'accept',
         run: 'acceptOnsite',
-        label: "Acceptance",
+        label: 'm1584',
         variant: 'primary'
       }],
       DIGITAL: [{
         id: 'accept',
         run: 'acceptDigital',
-        label: "Acceptance",
+        label: 'm1584',
         variant: 'primary'
       }, {
         id: 'revision',
         dialog: 'revision',
-        label: "Request correction",
+        label: 'm1585',
         variant: 'outline'
       }]
     }
@@ -127,12 +128,12 @@ const ACTIONS = {
       ONSITE: [{
         id: 'checkin',
         dialog: 'checkin',
-        label: 'Check-in',
+        label: 'm1621',
         variant: 'primary'
       }],
       ALL: [{
         id: 'cancel',
-        label: "Refuse",
+        label: 'm1586',
         variant: 'danger',
         cancel: true
       }]
@@ -141,18 +142,18 @@ const ACTIONS = {
       ONSITE: [{
         id: 'complete',
         run: 'completeOnsite',
-        label: "Complete",
+        label: 'm1587',
         variant: 'primary'
       }],
       DIGITAL: [{
         id: 'deliver',
         dialog: 'delivery',
-        label: "Submit your assignment",
+        label: 'm1588',
         variant: 'primary'
       }],
       ALL: [{
         id: 'cancel',
-        label: "Request cancellation",
+        label: 'm1583',
         variant: 'danger',
         cancel: true
       }]
@@ -182,32 +183,44 @@ const formatDateTime = iso => iso ? new Intl.DateTimeFormat('vi-VN', {
   month: '2-digit',
   year: 'numeric'
 }).format(new Date(iso)) : '—';
-const timeLeft = iso => {
+// Module-level helpers get `tr` from the calling component (useTranslations
+// only exists inside components).
+const timeLeft = (iso, tr) => {
   const ms = new Date(iso).getTime() - Date.now();
-  if (ms <= 0) return "is about to complete itself";
+  if (ms <= 0) return tr("m1589");
   const hours = Math.ceil(ms / 3600000);
   return hours >= 24 ? tr("m821", {
     p0: Math.ceil(hours / 24)
-  }) : `sau ${hours} giờ`;
+  }) : tr("m1590", {
+    p0: hours
+  });
 };
 
 // Milestone column: what the user should know about where the order stands.
-function milestone(order, role) {
+function milestone(order, role, tr) {
   switch (order.orderStatus) {
     case 'PENDING_PAYMENT':
-      return {
-        text: role === 'CLIENT' ? "Pay to confirm order" : "Wait for customers to pay",
-        warn: role === 'CLIENT'
-      };
+      {
+        // order-service cancels unpaid orders ORDER_PAYMENT_TIMEOUT_MINUTES after creation.
+        const start = order.createdAt || order.placedAt;
+        const deadline = start ? new Date(new Date(start).getTime() + ORDER_PAYMENT_TIMEOUT_MINUTES * 60000).toISOString() : null;
+        return {
+          text: role === 'CLIENT' ? tr("m1591") : tr("m1592"),
+          sub: deadline ? tr("m1739", {
+            p0: formatDateTime(deadline)
+          }) : null,
+          warn: role === 'CLIENT'
+        };
+      }
     case 'CONFIRMED':
       if (order.executionType === 'DIGITAL') {
         return {
-          text: role === 'CLIENT' ? "Submit a request to get started" : "Wait for the customer to send a request",
+          text: role === 'CLIENT' ? tr("m1593") : tr("m1594"),
           warn: role === 'CLIENT'
         };
       }
       return {
-        text: role === 'CLIENT' ? "Wait for the expert to check-in" : "Check-in upon arrival",
+        text: role === 'CLIENT' ? tr("m1595") : tr("m1596"),
         warn: role === 'PROVIDER'
       };
     case 'IN_PROGRESS':
@@ -219,8 +232,8 @@ function milestone(order, role) {
     case 'DELIVERED':
       return {
         text: order.autoCompleteAt ? tr("m828", {
-          p0: timeLeft(order.autoCompleteAt)
-        }) : "Wait for acceptance",
+          p0: timeLeft(order.autoCompleteAt, tr)
+        }) : tr("m1597"),
         warn: true
       };
     case 'COMPLETED':
@@ -241,24 +254,50 @@ function milestone(order, role) {
       };
   }
 }
-const paymentLabel = order => {
-  if (order.orderStatus === 'CANCELLED') return order.paymentStatus === 'SUCCEEDED' ? "Refunded" : "Not yet paid";
-  if (order.orderStatus === 'COMPLETED') return "Disbursed";
-  return order.paymentStatus === 'SUCCEEDED' ? "Paid · Escrow" : "Not yet paid";
+const paymentLabel = (order, tr) => {
+  if (order.orderStatus === 'CANCELLED') return order.paymentStatus === 'SUCCEEDED' ? tr("m1598") : tr("m1599");
+  if (order.orderStatus === 'COMPLETED') return tr("m1600");
+  return order.paymentStatus === 'SUCCEEDED' ? tr("m1601") : tr("m1599");
 };
 
 // Client side of a paid ONSITE order: the code the provider needs to check in.
+// order-service keeps it (encrypted) while the order is CONFIRMED.
 function CheckinCodeCard({
   orderId
 }) {
   const tr = useTranslations("misc");
-  const code = loadCheckinCode(orderId);
+  const [state, setState] = useState({
+    status: 'loading',
+    code: null,
+    error: null
+  });
+  useEffect(() => {
+    let cancelled = false;
+    orderApi.getCheckinCode(orderId).then(res => {
+      if (!cancelled) setState({
+        status: 'ready',
+        code: (res?.result ?? res)?.checkinCode ?? null,
+        error: null
+      });
+    }, err => {
+      if (!cancelled) setState({
+        status: 'error',
+        code: null,
+        error: err
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId]);
   return <section className={`${flowStyles.panel} ${flowStyles.codeCard}`} aria-label={tr("m835")}>
       <strong className={flowStyles.panelTitle}>{tr("m835")}</strong>
-      {code ? <>
-          <CheckinCode code={code} />
+      {state.status === 'loading' && <Loader2 size={18} className={styles.spinner} aria-label={tr("m1737")} />}
+      {state.status === 'ready' && state.code && <>
+          <CheckinCode code={state.code} />
           <span className={flowStyles.note}>{tr("m858")}</span>
-        </> : <span className={flowStyles.note}>{tr("m859")}</span>}
+        </>}
+      {state.status === 'error' && <span className={flowStyles.note}>{orderErrorMessage(state.error)}</span>}
     </section>;
 }
 
@@ -283,7 +322,8 @@ function OrderLiveDetails({
 export default function OrderDashboardPage({
   onGoHome,
   onShowToast,
-  onOpenChat
+  onOpenChat,
+  onOpenPayment
 }) {
   const tr = useTranslations("misc");
   const [role, setRole] = useState('CLIENT');
@@ -295,7 +335,6 @@ export default function OrderDashboardPage({
   // Open flow dialog { type, order } and the order whose server call is running.
   const [dialog, setDialog] = useState(null);
   const [busyId, setBusyId] = useState(null);
-  const [paidCode, setPaidCode] = useState(null);
   // Bumped after every flow action so the expanded details refetch.
   const [detailsVersion, setDetailsVersion] = useState(0);
   const {
@@ -354,20 +393,7 @@ export default function OrderDashboardPage({
     reload();
   };
 
-  // DEV payment: order-service confirms the order and books the held slot of an
-  // ONSITE order; keep its one-time check-in code.
-  const pay = async order => {
-    const res = await orderApi.confirmPayment(order.orderId);
-    if (order.executionType !== 'ONSITE') return tr("m836");
-    const code = res?.checkinCode ?? res?.result?.checkinCode;
-    if (code) {
-      saveCheckinCode(order.orderId, code);
-      setPaidCode(code);
-    }
-    return tr("m837");
-  };
   const SERVER_ACTIONS = {
-    pay,
     completeOnsite: async order => {
       await orderApi.completeOnsite(order.orderId);
       return tr("m838");
@@ -388,6 +414,12 @@ export default function OrderDashboardPage({
       window.scrollTo({
         top: 0,
         behavior: 'smooth'
+      });
+      return;
+    }
+    if (action.pay) {
+      if (onOpenPayment) onOpenPayment({
+        orderId: order.orderId
       });
       return;
     }
@@ -478,9 +510,9 @@ export default function OrderDashboardPage({
           </div>
         </div>
 
-        {!isLive && status !== 'loading' && NOTICES[status] && <div className={styles.notice} role="status">
+        {!isLive && status !== 'loading' && (status === 'not-provider' || NOTICES[status]) && <div className={styles.notice} role="status">
             <Info size={16} />
-            <span>{NOTICES[status]}</span>
+            <span>{status === 'not-provider' ? NOT_PROVIDER_MESSAGE : tr(NOTICES[status])}</span>
           </div>}
 
         {/* Stats */}
@@ -512,7 +544,7 @@ export default function OrderDashboardPage({
           <div className={styles.toolbar}>
             <div className={styles.statusTabs} role="tablist" aria-label={tr("m1533")}>
               {TABS.map(t => <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={`${styles.tab} ${tab === t.id ? styles.tabActive : ''}`} onClick={() => setTab(t.id)}>
-                  {t.label} <span className={styles.tabCount}>{counts[t.id] || 0}</span>
+                  {tr(t.label)} <span className={styles.tabCount}>{counts[t.id] || 0}</span>
                 </button>)}
             </div>
             <label className={styles.search}>
@@ -538,7 +570,7 @@ export default function OrderDashboardPage({
                 <tbody>
                   {visible.map(o => {
                   const exec = EXECUTION[o.executionType];
-                  const ms = milestone(o, role);
+                  const ms = milestone(o, role, tr);
                   // Flow actions need the live order; local demo rows only get cancel.
                   const actions = actionsFor(role, o).filter(a => !(a.cancel && o.cancelRequest) && (isLive || a.cancel));
                   const busy = busyId === o.orderId;
@@ -560,18 +592,19 @@ export default function OrderDashboardPage({
                           <td data-label={tr("m259")}>
                             <OrderStatusBadge status={o.orderStatus} />
                             <span className={`${styles.pay} ${o.paymentStatus !== 'SUCCEEDED' && o.orderStatus !== 'CANCELLED' ? styles.payWarn : ''}`}>
-                              {paymentLabel(o)}
+                              {paymentLabel(o, tr)}
                             </span>
                             {o.cancelRequest && <span className={styles.cancelChip}>{tr("m874")}</span>}
                           </td>
                           <td data-label={tr("m872")}>
                             <span className={`${styles.due} ${ms.warn ? styles.dueWarn : ''}`}>{ms.text}</span>
+                            {ms.sub && <span className={styles.dueSub}>{ms.sub}</span>}
                           </td>
                           <td data-label={tr("m551")} className={styles.actions}>
                             <div className={styles.actionGroup}>
                             {actions.map(a => <button key={a.id} type="button" className={`${styles.btn} ${styles[`btn_${a.variant}`]}`} disabled={busy} aria-busy={busy && Boolean(a.run)} onClick={() => runAction(o, a)}>
                                 {busy && a.run && <Loader2 size={14} className={styles.spinner} aria-hidden="true" />}
-                                {a.label}
+                                {tr(a.label)}
                               </button>)}
                             {onOpenChat && <button type="button" className={`${styles.btn} ${styles.btn_ghost}`} onClick={() => openChat(o)}>
                                 <MessageSquare size={14} aria-hidden="true" />{tr("m875")}</button>}
@@ -637,12 +670,12 @@ export default function OrderDashboardPage({
                                   </div>}
                                 {o.statusHistory && <div style={{
                             marginTop: '12px',
-                            borderTop: '1px dashed #e2e8f0',
+                            borderTop: '1px dashed var(--wg-border)',
                             paddingTop: '10px'
                           }}>
                                     <strong style={{
                               fontSize: '0.85rem',
-                              color: '#334155',
+                              color: 'var(--wg-text-secondary)',
                               display: 'block',
                               marginBottom: '6px'
                             }}>{tr("m883")}</strong>
@@ -650,7 +683,7 @@ export default function OrderDashboardPage({
                               margin: 0,
                               paddingLeft: '18px',
                               fontSize: '0.8rem',
-                              color: '#64748b'
+                              color: 'var(--wg-text-muted)'
                             }}>
                                       {o.statusHistory.map((h, hIdx) => <li key={hIdx}>
                                           <strong>{h.status}</strong> ({formatDateTime(h.timestamp)}): {h.note}
@@ -673,7 +706,7 @@ export default function OrderDashboardPage({
               <button type="button" className={styles.pageBtn} disabled={page === 0 || status === 'loading'} onClick={() => setPage(p => p - 1)} aria-label={tr("m425")}>
                 <ChevronLeft size={16} />
               </button>
-              <button type="button" className={styles.pageBtn} disabled={page + 1 >= pageInfo.totalPages || status === 'loading'} onClick={() => setPage(p => p + 1)} aria-label="Trang sau">
+              <button type="button" className={styles.pageBtn} disabled={page + 1 >= pageInfo.totalPages || status === 'loading'} onClick={() => setPage(p => p + 1)} aria-label={tr("m1620")}>
                 <ChevronRight size={16} />
               </button>
             </div>
@@ -687,6 +720,5 @@ export default function OrderDashboardPage({
       setDialog(null);
       afterFlowAction(dialog.order, message);
     }} />}
-      {paidCode && <CheckinCodeDialog code={paidCode} onClose={() => setPaidCode(null)} />}
     </div>;
 }

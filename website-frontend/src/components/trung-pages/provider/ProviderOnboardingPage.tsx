@@ -19,11 +19,12 @@ function sanitizeText(s: unknown): string {
 type Provider = ReturnType<typeof toProvider>;
 // none = signed in without a provider profile yet (the form is shown).
 type LoadState = "loading" | "needs-login" | "none" | "has-profile" | "error";
+// Keys of the "misc" dictionary, translated with tr() at render.
 const STATUS_TEXT: Record<string, string> = {
-  PENDING: "Profile is waiting for admin approval. Once approved, log out and log back in to gain access to the service.",
-  VERIFIED: "You are already an Expert. If you can't sign up to the service, sign out and sign back in to update permissions.",
-  REJECTED: "The application has been rejected. Please contact WorkGo for support.",
-  SUSPENDED: "The Expert account is temporarily locked."
+  PENDING: "m1686",
+  VERIFIED: "m1687",
+  REJECTED: "m1688",
+  SUSPENDED: "m1689"
 };
 export default function ProviderOnboardingPage({
   onNavigate,
@@ -137,7 +138,7 @@ export default function ProviderOnboardingPage({
           {state === "has-profile" ? <>
               <p className={styles.sub}>{tr("m47")}<strong>{provider?.name}</strong>{tr("m1361")}<strong>{provider?.verificationStatus ?? "PENDING"}</strong>
               </p>
-              <p className={styles.sub}>{STATUS_TEXT[provider?.verificationStatus ?? "PENDING"]}</p>
+              <p className={styles.sub}>{tr(STATUS_TEXT[provider?.verificationStatus ?? "PENDING"] ?? STATUS_TEXT.PENDING)}</p>
               {provider?.verificationStatus === "VERIFIED" ? <button type="button" className={styles.submit} onClick={() => onNavigate("my-services")}>{tr("m176")}</button> : null}
             </> : null}
         </div>

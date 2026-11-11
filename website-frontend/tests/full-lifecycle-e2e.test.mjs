@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
+import { getCheckinCode, payViaMock } from './helpers/payment.mjs';
 
 const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:8888/api/v1';
 
@@ -135,18 +136,15 @@ test('TC-01: Tạo đơn hàng Digital thật & lưu DB', async () => {
 });
 
 test('TC-02: Thanh toán Escrow chuyển trạng thái đơn hàng sang CONFIRMED', async () => {
-  const res = await fetch(`${GATEWAY_URL}/order/internal/orders/${digitalOrderId}/confirm`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${clientToken}`,
-    },
-  });
+  // Real flow: payment-service MOCK payment → dev settle → order-service confirmed.
+  const { payment, order } = await payViaMock(GATEWAY_URL, clientToken, digitalOrderId);
+  assert.equal(order.orderStatus, 'CONFIRMED');
+  assert.equal(order.paymentStatus, 'SUCCEEDED');
 
-  assert.equal(res.status, 200, `Confirm payment failed with status ${res.status}`);
-  const data = await res.json();
-  assert.equal(data.orderStatus, 'CONFIRMED');
-  assert.equal(data.paymentStatus, 'SUCCEEDED');
+  const payRes = await fetch(`${GATEWAY_URL}/payment/payments/${payment.paymentId}`, {
+    headers: { Authorization: `Bearer ${clientToken}` },
+  });
+  assert.equal((await payRes.json()).result?.status, 'SUCCEEDED');
 
   // Verify in PostgreSQL order_db: execution and digital_execution created
   const execStatus = queryDb(
@@ -378,10 +376,7 @@ test('TC-08: Yêu cầu hủy đơn đã xác nhận & Đối tác Duyệt (PEND
   const createData = await createRes.json();
   cancelConfirmedOrderId = createData.result.orderId;
 
-  await fetch(`${GATEWAY_URL}/order/internal/orders/${cancelConfirmedOrderId}/confirm`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${clientToken}` },
-  });
+  await payViaMock(GATEWAY_URL, clientToken, cancelConfirmedOrderId);
 
   // Client requests cancellation
   const cancelReqRes = await fetch(`${GATEWAY_URL}/order/orders/${cancelConfirmedOrderId}/cancel`, {
@@ -436,10 +431,7 @@ test('TC-09: Yêu cầu hủy đơn & Đối tác Từ chối (PENDING -> REJECT
   const createData = await createRes.json();
   cancelInProgressOrderId = createData.result.orderId;
 
-  await fetch(`${GATEWAY_URL}/order/internal/orders/${cancelInProgressOrderId}/confirm`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${clientToken}` },
-  });
+  await payViaMock(GATEWAY_URL, clientToken, cancelInProgressOrderId);
 
   await fetch(`${GATEWAY_URL}/order/orders/digital/${cancelInProgressOrderId}/requirements`, {
     method: 'POST',
@@ -529,13 +521,8 @@ test('TC-10: Đặt dịch vụ tận nơi (Onsite) kèm Slot & Địa chỉ', a
 
 test('TC-11: Thực thi Onsite: Check-in -> Báo xong việc -> Nghiệm thu', async () => {
   // Confirm payment for Onsite order -> generates checkin code
-  const confirmRes = await fetch(`${GATEWAY_URL}/order/internal/orders/${onsiteOrderId}/confirm`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${clientToken}` },
-  });
-  const confirmData = await confirmRes.json();
-  assert.equal(confirmRes.status, 200);
-  onsiteCheckinCode = confirmData.checkinCode;
+  await payViaMock(GATEWAY_URL, clientToken, onsiteOrderId);
+  onsiteCheckinCode = await getCheckinCode(GATEWAY_URL, clientToken, onsiteOrderId);
   assert.ok(onsiteCheckinCode, 'Checkin code must be generated for onsite order');
 
   // Verify slot transitioned to BOOKED

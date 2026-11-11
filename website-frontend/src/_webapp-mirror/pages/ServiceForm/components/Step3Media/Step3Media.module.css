@@ -16,7 +16,7 @@
   font-family: var(--font-heading, sans-serif);
   font-size: 1.25rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--wg-text);
   margin-bottom: 0.25rem;
 }
 
@@ -39,7 +39,7 @@
   display: block;
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin-bottom: 0.5rem;
 }
 
@@ -53,7 +53,7 @@
   border: 1.5px solid #e2e8f0;
   border-radius: 10px;
   font-size: 0.9375rem;
-  color: #1e293b;
+  color: var(--wg-text);
   outline: none;
 }
 
@@ -167,7 +167,7 @@
 }
 
 .galleryAddBtn:hover {
-  background: #f0fdf4;
+  background: var(--wg-primary-light);
 }
 
 /* Right Card Preview */
@@ -236,13 +236,13 @@
 .mockPname {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--wg-text);
 }
 
 .mockTitle {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   line-height: 1.35;
   margin-bottom: 0.5rem;
   display: -webkit-box;
@@ -273,7 +273,7 @@
 .mockPriceVal {
   font-family: var(--font-heading, sans-serif);
   font-weight: 800;
-  color: #0f172a;
+  color: var(--wg-text);
   font-size: 0.9375rem;
 }
 

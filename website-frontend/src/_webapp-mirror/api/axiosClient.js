@@ -70,7 +70,7 @@ export function isAuthGuarded(url) {
   return AUTH_GUARD_PATHS.some((path) => url.startsWith(path));
 }
 
-async function request(method, url, { params, data } = {}) {
+async function request(method, url, { params, data, headers: extraHeaders } = {}) {
   const token = getAccessToken();
 
   // Guard: Avoid firing unauthenticated requests to protected identity endpoints
@@ -79,7 +79,7 @@ async function request(method, url, { params, data } = {}) {
   }
 
   const query = params ? `?${new URLSearchParams(params)}` : '';
-  const headers = { 'Content-Type': 'application/json' };
+  const headers = { 'Content-Type': 'application/json', ...extraHeaders };
   if (token) headers.Authorization = `Bearer ${token}`;
 
   let res;

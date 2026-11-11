@@ -3,17 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { catalogApi } from '../../api/catalogApi';
 import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
 import { pageItems, toPackages } from '../../api/adapters';
-import { addonsToForm, mediasToForm, planAddonChanges, planMediaChanges } from './serviceFormSync';
+import { addonsToForm, applyMediaOp, attachGalleryIds, DEFAULT_MINUTES, mediasToForm, planAddonChanges, planMediaChanges, toAddonBody, toPackageBody } from './serviceFormSync';
 const TIER_KEYS = {
   BASIC: 'basic',
   STANDARD: 'standard',
   PREMIUM: 'premium'
-};
-
-// '3 lần' → 3; 'Không giới hạn' → null (unlimited).
-const parseRevisions = rev => {
-  const n = parseInt(String(rev ?? ''), 10);
-  return Number.isFinite(n) ? n : null;
 };
 const toSlug = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0111/gi, 'd').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 import FormStepper from './components/FormStepper/FormStepper';
@@ -22,7 +16,7 @@ import Step2Pricing from './components/Step2Pricing/Step2Pricing';
 import Step3Media from './components/Step3Media/Step3Media';
 import { ArrowLeft, Check, FilePlus2, PencilLine, Save } from 'lucide-react';
 import styles from './ServiceFormPage.module.css';
-import { validateTitle, validateDescription, validatePrice, validateAddons, sanitizeText, clampPrice, isHttpUrl } from './formValidation';
+import { validateTitle, validateDescription, validatePackagePrices, validateAddons, sanitizeText, clampPrice, isHttpUrl } from './formValidation';
 export default function ServiceFormPage({
   mode = 'create',
   serviceId = null,
@@ -45,6 +39,7 @@ export default function ServiceFormPage({
         title: tr("m1039"),
         desc: tr("m1040"),
         days: 3,
+        minutes: DEFAULT_MINUTES.basic,
         rev: '2 lần',
         price: 2500000
       },
@@ -52,6 +47,7 @@ export default function ServiceFormPage({
         title: tr("m1041"),
         desc: tr("m1042"),
         days: 5,
+        minutes: DEFAULT_MINUTES.standard,
         rev: '5 lần',
         price: 5000000
       },
@@ -59,6 +55,7 @@ export default function ServiceFormPage({
         title: tr("m1043"),
         desc: tr("m1044"),
         days: 10,
+        minutes: DEFAULT_MINUTES.premium,
         rev: tr("m1045"),
         price: 8500000
       }
@@ -82,6 +79,10 @@ export default function ServiceFormPage({
   // only the add-ons and media that changed.
   const [originalAddonIds, setOriginalAddonIds] = useState([]);
   const [originalMedia, setOriginalMedia] = useState(null);
+  // Create mode: id of the service a save already created. If a later step of
+  // that save failed, the next save continues on this service instead of
+  // creating a second one.
+  const [createdServiceId, setCreatedServiceId] = useState(null);
   useEffect(() => {
     if (!isEdit) return undefined;
     let cancelled = false;
@@ -100,7 +101,8 @@ export default function ServiceFormPage({
           return {
             title: p.name,
             desc: p.description,
-            days: p.deliveryDays ?? defaultFormData.packages[key].days,
+            days: p.deliveryDays || defaultFormData.packages[key].days,
+            minutes: p.durationMinute || defaultFormData.packages[key].minutes,
             rev: p.revisionLimit ? `${p.revisionLimit} lần` : tr("m1045"),
             price: p.price
           };
@@ -161,7 +163,7 @@ export default function ServiceFormPage({
       if (!formData.categoryId) errs.categoryId = tr("m1118");
     }
     if (step === 2) {
-      const priceErr = validatePrice(formData.packages?.basic?.price);
+      const priceErr = validatePackagePrices(formData.packages);
       if (priceErr) errs.price = priceErr;
       const addonErr = validateAddons(formData.addons);
       if (addonErr) errs.addons = addonErr;
@@ -221,11 +223,22 @@ export default function ServiceFormPage({
       basePrice: clampPrice(formData.packages.basic.price)
     };
     setSaving(true);
+
+    // What the server holds as this save advances. On failure it is written
+    // back to state, so the next save updates what was already created instead
+    // of creating the service, packages, add-ons or media a second time.
+    let id = isEdit ? serviceId : createdServiceId;
+    const pkgIds = {
+      ...packageIds
+    };
+    let addons = formData.addons;
+    let addonIdsOnServer = id ? originalAddonIds : [];
+    let media = id ? originalMedia : null;
     try {
-      let id = serviceId;
-      if (isEdit) {
-        // The update mapper writes nulls too: always send the status back.
-        await catalogApi.updateService(serviceId, {
+      if (id) {
+        // The update mapper writes nulls too: always send the status back
+        // (a service created by an earlier, failed save is still DRAFT).
+        await catalogApi.updateService(id, {
           ...serviceBody,
           status: existingStatus || 'DRAFT'
         });
@@ -233,29 +246,41 @@ export default function ServiceFormPage({
         const res = await catalogApi.createService(serviceBody);
         id = res?.result?.serviceId;
         if (!id) throw new Error(tr("m1124"));
+        setCreatedServiceId(id);
       }
       for (const key of ['basic', 'standard', 'premium']) {
-        const p = formData.packages[key];
-        const body = {
-          name: sanitizeText(p.title),
-          description: sanitizeText(p.desc),
-          price: clampPrice(p.price),
-          currency: 'VND',
-          deliveryDay: Number(p.days) || null,
-          revisionLimit: parseRevisions(p.rev)
-        };
-        if (packageIds[key]) await catalogApi.updatePackage(packageIds[key], body);else await catalogApi.createPackage(id, body);
+        const body = toPackageBody(formData.packages[key], formData.executionType, key);
+        if (pkgIds[key]) {
+          await catalogApi.updatePackage(pkgIds[key], body);
+        } else {
+          const res = await catalogApi.createPackage(id, body);
+          pkgIds[key] = res?.result?.packageId;
+        }
       }
-      const addonPlan = planAddonChanges(isEdit ? originalAddonIds : [], formData.addons);
-      for (const body of addonPlan.create) await catalogApi.createAddon(id, body);
-      for (const {
-        id: addonId,
-        body
-      } of addonPlan.update) await catalogApi.updateAddon(addonId, body);
-      for (const addonId of addonPlan.remove) await catalogApi.deleteAddon(addonId);
-      const mediaOps = planMediaChanges(isEdit ? originalMedia : null, formData);
-      for (const step of mediaOps) {
-        if (step.op === 'create') await catalogApi.createMedia(id, step.body);else if (step.op === 'update') await catalogApi.updateMedia(step.id, step.body);else await catalogApi.deleteMedia(step.id);
+      const removedAddonIds = planAddonChanges(addonIdsOnServer, addons).remove;
+      for (const [i, row] of addons.entries()) {
+        if (row.id) {
+          await catalogApi.updateAddon(row.id, toAddonBody(row));
+        } else {
+          const res = await catalogApi.createAddon(id, toAddonBody(row));
+          const newId = res?.result?.addOnId;
+          if (newId) {
+            addons = addons.map((a, j) => j === i ? {
+              ...a,
+              id: newId
+            } : a);
+            addonIdsOnServer = [...addonIdsOnServer, newId];
+          }
+        }
+      }
+      for (const addonId of removedAddonIds) {
+        await catalogApi.deleteAddon(addonId);
+        addonIdsOnServer = addonIdsOnServer.filter(x => x !== addonId);
+      }
+      for (const step of planMediaChanges(media, formData)) {
+        let newId = null;
+        if (step.op === 'create') newId = (await catalogApi.createMedia(id, step.body))?.result?.serviceMediaId ?? null;else if (step.op === 'update') await catalogApi.updateMedia(step.id, step.body);else await catalogApi.deleteMedia(step.id);
+        media = applyMediaOp(media, step, newId);
       }
       if (!isEdit && targetStatus === 'PUBLISHED') {
         await catalogApi.setServiceStatus(id, 'PUBLISHED');
@@ -265,10 +290,27 @@ export default function ServiceFormPage({
         title: cleanTitle
       }, isEdit);
     } catch (err) {
-      if (onShowToast) {
-        onShowToast(err?.status === 403 ? NOT_PROVIDER_MESSAGE : tr("m1459", {
-          p0: err?.message || tr("m1303")
+      if (id) {
+        setPackageIds(pkgIds);
+        setOriginalAddonIds(addonIdsOnServer);
+        setOriginalMedia(media);
+        // Only add the new server ids: keep whatever was typed while saving.
+        setFormData(prev => ({
+          ...prev,
+          addons: prev.addons.map((a, i) => a.id || !addons[i]?.id ? a : {
+            ...a,
+            id: addons[i].id
+          }),
+          gallery: attachGalleryIds(prev.gallery, media)
         }));
+      }
+      if (onShowToast) {
+        if (err?.status === 403) onShowToast(NOT_PROVIDER_MESSAGE);else {
+          onShowToast(tr("m1459", {
+            p0: err?.message || tr("m1303")
+          }));
+          if (!isEdit && id) onShowToast(tr("m1570"));
+        }
       }
     } finally {
       setSaving(false);

@@ -1,53 +1,25 @@
 import { useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, BadgeCheck, CheckCircle2, Clock, CreditCard, HelpCircle, Loader2, Lock, RotateCcw, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BadgeCheck, Clock, CreditCard, HelpCircle, Loader2, Lock, RotateCcw, ShieldCheck } from 'lucide-react';
 import styles from './CheckoutPage.module.css';
 import { orderApi, isOrderable, orderErrorMessage, NOT_ORDERABLE_MESSAGE } from '../../api/orderApi';
+import { DEFAULT_PAYMENT_OPTION, ORDER_PAYMENT_TIMEOUT_MINUTES, paymentErrorMessage, startPayment } from '../../api/paymentApi';
 import OnsiteBookingSection, { formatOrderAddress } from './OnsiteBookingSection';
+import PaymentOptionPicker from './PaymentOptionPicker';
 
 // Mirrors order-service `order.platform-fee-rate` (application.yaml).
 const PLATFORM_FEE_RATE = 0.1;
-const GATEWAYS = [{
-  id: 'vnpay',
-  name: 'VNPay',
-  desc: "Domestic ATM, bank QR",
-  logo: 'VNPAY',
-  logoClass: 'gwVnpay'
-}, {
-  id: 'momo',
-  name: "MoMo Wallet",
-  desc: "Scan the code or open the MoMo app",
-  logo: 'MoMo',
-  logoClass: 'gwMomo'
-}, {
-  id: 'zalopay',
-  name: 'ZaloPay',
-  desc: "ZaloPay wallet, linked card",
-  logo: 'ZaloPay',
-  logoClass: 'gwZalopay'
-}, {
-  id: 'card',
-  name: "International card",
-  desc: 'Visa, Mastercard, JCB',
-  logo: 'VISA',
-  logoClass: 'gwCard'
-}, {
-  id: 'bank',
-  name: "Transfer",
-  desc: "Confirm in 5\u201315 minutes",
-  logo: 'BANK',
-  logoClass: 'gwBank'
-}];
+// Labels below are keys of the "misc" dictionary (tr() at render).
 const EXECUTION_LABELS = {
-  DIGITAL: 'Online / Digital',
-  ONSITE: "At home / Onsite",
-  DELIVERY: "Delivery / Delivery",
-  APPOINTMENT: "Make an appointment"
+  DIGITAL: 'm1643',
+  ONSITE: 'm1644',
+  DELIVERY: 'm1645',
+  APPOINTMENT: 'm1626'
 };
 const TIER_LABELS = {
-  BASIC: "Basic",
-  STANDARD: "Standard",
-  PREMIUM: "High-class"
+  BASIC: 'm1646',
+  STANDARD: 'm1647',
+  PREMIUM: 'm1648'
 };
 const formatPrice = num => new Intl.NumberFormat('vi-VN').format(num) + ' ₫';
 const formatTime = date => new Intl.DateTimeFormat('vi-VN', {
@@ -80,19 +52,23 @@ export default function CheckoutPage({
   onShowToast,
   onDone,
   onViewOrders,
-  onOpenAddressBook
+  onOpenAddressBook,
+  onOpenPayment
 }) {
   const tr = useTranslations("misc");
-  const [gateway, setGateway] = useState('vnpay');
+  const [gateway, setGateway] = useState(DEFAULT_PAYMENT_OPTION);
   const [agreed, setAgreed] = useState(false);
   // ONSITE only: { slot, address } picked in OnsiteBookingSection.
   const [booking, setBooking] = useState({
     slot: null,
     address: null
   });
-  const [phase, setPhase] = useState('review'); // 'review' | 'creating' | 'success'
+  // 'review' → 'creating' (POST /orders) → 'paying' (POST /payments, then leave for
+  // the gateway). 'unpaid': the order exists but the payment could not be started.
+  const [phase, setPhase] = useState('review');
   // OrderResponse from POST /order/orders.
   const [createdOrder, setCreatedOrder] = useState(null);
+  const [payError, setPayError] = useState('');
   const [snapshotAt] = useState(() => new Date());
   const pricing = useMemo(() => {
     if (!order) return null;
@@ -131,16 +107,16 @@ export default function CheckoutPage({
     pkg,
     addons
   } = order;
-  const currentGateway = GATEWAYS.find(g => g.id === gateway) || GATEWAYS[0];
-
-  // Creates the order; payment-service is not routed by the gateway yet,
-  // so the order stays PENDING_PAYMENT (see BACKEND_GAPS.md).
   const orderable = isOrderable(service.executionType);
   const isOnsite = service.executionType === 'ONSITE';
   const bookingReady = !isOnsite || booking.slot && booking.address;
+
+  // 1) create the order (pricing and slot hold happen server-side),
+  // 2) create its payment and leave for the gateway (MOCK: in-app result page).
   const handlePay = async () => {
     if (!agreed || phase !== 'review' || !orderable || !bookingReady) return;
     setPhase('creating');
+    let created;
     try {
       const res = await orderApi.createOrder({
         serviceId: service.serviceId,
@@ -151,9 +127,8 @@ export default function CheckoutPage({
           address: formatOrderAddress(booking.address)
         })
       });
-      const created = res?.result ?? null;
+      created = res?.result ?? null;
       setCreatedOrder(created);
-      setPhase('success');
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('workgo-orders-changed'));
       }
@@ -164,6 +139,24 @@ export default function CheckoutPage({
           p0: err?.status ? orderErrorMessage(err) : tr("m1303")
         }));
       }
+      return;
+    }
+    if (!created?.orderId) {
+      setPayError(tr("m1303"));
+      setPhase('unpaid');
+      return;
+    }
+    setPhase('paying');
+    try {
+      await startPayment(created.orderId, gateway, {
+        onMock: payment => onOpenPayment && onOpenPayment({
+          orderId: created.orderId,
+          paymentId: payment?.paymentId
+        })
+      });
+    } catch (err) {
+      setPayError(err?.status ? paymentErrorMessage(err) : tr("m1303"));
+      setPhase('unpaid');
     }
   };
   const steps = [{
@@ -171,10 +164,10 @@ export default function CheckoutPage({
     state: 'done'
   }, {
     label: tr("m456"),
-    state: phase === 'success' ? 'done' : 'active'
+    state: phase === 'unpaid' ? 'done' : 'active'
   }, {
     label: tr("m457"),
-    state: phase === 'success' ? 'active' : 'todo'
+    state: phase === 'unpaid' ? 'active' : 'todo'
   }];
   return <div className={styles.pageContainer}>
       <div className={styles.contentWrapper}>
@@ -199,14 +192,21 @@ export default function CheckoutPage({
             </React.Fragment>)}
         </ol>
 
-        {phase === 'success' ? <section className={styles.successCard} aria-live="polite">
-            <CheckCircle2 size={56} className={styles.successIcon} />
-            <h1 className={styles.pageTitle}>{tr("m469")}</h1>
-            <p>{tr("m470")}<strong>{createdOrder?.orderNumber || createdOrder?.orderId}</strong>{tr("m1486")}{' '}
-              {formatPrice(pricing.totalAmount)}{tr("m1487")}{currentGateway.name}{tr("m1488")}<strong>{tr("m472")}</strong>{tr("m473")}<strong>{tr("m456")}</strong>{tr("m1489")}{isOnsite ? tr("m459") : ''}.
-            </p>
+        {phase === 'unpaid' ? <section className={styles.successCard} aria-live="polite">
+            <AlertTriangle size={56} className={styles.warnIcon} />
+            <h1 className={styles.pageTitle}>{tr("m1709")}</h1>
+            <p>{tr("m1710", {
+              p0: createdOrder?.orderNumber || createdOrder?.orderId || '—',
+              p1: payError
+            })}</p>
+            <p className={styles.mutedText}>{tr("m1711", {
+              p0: ORDER_PAYMENT_TIMEOUT_MINUTES
+            })}</p>
             <div className={styles.successActions}>
-              {onViewOrders && <button type="button" className={styles.btnPay} onClick={onViewOrders}>{tr("m475")}</button>}
+              {onOpenPayment && createdOrder?.orderId && <button type="button" className={styles.btnPay} onClick={() => onOpenPayment({
+                orderId: createdOrder.orderId
+              })}>{tr("m1712")}</button>}
+              {onViewOrders && <button type="button" className={styles.btnSecondary} onClick={onViewOrders}>{tr("m475")}</button>}
               <button type="button" className={styles.btnSecondary} onClick={onDone}>{tr("m476")}</button>
             </div>
           </section> : <>
@@ -227,7 +227,7 @@ export default function CheckoutPage({
                     <div className={styles.serviceInfo}>
                       <div className={styles.badgeRow}>
                         <span className={styles.execBadge}>
-                          {EXECUTION_LABELS[service.executionType] || service.executionType}
+                          {EXECUTION_LABELS[service.executionType] ? tr(EXECUTION_LABELS[service.executionType]) : service.executionType}
                         </span>
                         <span className={styles.orderCode}>{tr("m479")}</span>
                       </div>
@@ -245,7 +245,7 @@ export default function CheckoutPage({
                   <div className={styles.packageBox}>
                     <div className={styles.packageHead}>
                       <div>
-                        <span className={styles.tier}>{TIER_LABELS[pkg.tier] || pkg.tier}</span>
+                        <span className={styles.tier}>{TIER_LABELS[pkg.tier] ? tr(TIER_LABELS[pkg.tier]) : pkg.tier}</span>
                         <h3 className={styles.packageName}>{pkg.name}</h3>
                       </div>
                       <strong className={styles.packagePrice}>{formatPrice(pkg.price)}</strong>
@@ -273,23 +273,7 @@ export default function CheckoutPage({
                 {isOnsite && <OnsiteBookingSection serviceId={service.serviceId} value={booking} onChange={setBooking} onOpenAddressBook={onOpenAddressBook} />}
 
                 {/* Payment gateways */}
-                <section className={styles.card}>
-                  <h2 className={styles.cardTitle}>{tr("m488")}</h2>
-                  <p className={styles.cardSub}>{tr("m489")}</p>
-                  <div className={styles.gatewayList} role="radiogroup" aria-label={tr("m461")}>
-                    {GATEWAYS.map(gw => <label key={gw.id} className={`${styles.gatewayCard} ${gateway === gw.id ? styles.gatewaySelected : ''}`}>
-                        <input type="radio" name="gateway" value={gw.id} checked={gateway === gw.id} onChange={() => setGateway(gw.id)} className={styles.gatewayInput} />
-                        <span className={`${styles.gwLogo} ${styles[gw.logoClass]}`} aria-hidden="true">
-                          {gw.logo}
-                        </span>
-                        <span className={styles.gwText}>
-                          <strong>{gw.name}</strong>
-                          <small>{gw.desc}</small>
-                        </span>
-                        <span className={styles.gwFee}>{tr("m490")}</span>
-                      </label>)}
-                  </div>
-                </section>
+                <PaymentOptionPicker value={gateway} onChange={setGateway} disabled={phase !== 'review'} />
               </div>
 
               {/* ===== Right column: Order Snapshot ===== */}
@@ -302,7 +286,7 @@ export default function CheckoutPage({
 
                 <dl className={styles.priceList}>
                   <div className={styles.priceRow}>
-                    <dt>{tr("m1491")}{TIER_LABELS[pkg.tier] || pkg.name}</dt>
+                    <dt>{tr("m1491")}{TIER_LABELS[pkg.tier] ? tr(TIER_LABELS[pkg.tier]) : pkg.name}</dt>
                     <dd>{formatPrice(pkg.price)}</dd>
                   </div>
                   {addons.map(addon => <div key={addon.id} className={`${styles.priceRow} ${styles.priceRowMuted}`}>
@@ -353,10 +337,10 @@ export default function CheckoutPage({
           </>}
       </div>
 
-      {phase === 'creating' && <div className={styles.overlay} role="status" aria-live="polite">
+      {(phase === 'creating' || phase === 'paying') && <div className={styles.overlay} role="status" aria-live="polite">
           <div className={styles.overlayBox}>
             <Loader2 size={36} className={styles.spinner} />
-            <p>{tr("m503")}</p>
+            <p>{phase === 'creating' ? tr("m503") : tr("m1708")}</p>
           </div>
         </div>}
     </div>;

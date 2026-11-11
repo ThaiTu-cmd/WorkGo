@@ -60,6 +60,6 @@
 
 .numberBtnActive {
   background-color: var(--wg-text) !important;
-  color: #ffffff !important;
+  color: var(--wg-surface) !important;
   border-color: var(--wg-text) !important;
 }

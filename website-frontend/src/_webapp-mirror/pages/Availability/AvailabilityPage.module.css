@@ -29,7 +29,7 @@
   background-color: var(--wg-surface);
   border: 1px solid #cbd5e1;
   border-radius: var(--radius-sm);
-  color: #1e293b;
+  color: var(--wg-text);
   font-size: 0.85rem;
   font-weight: 600;
   transition: background-color var(--transition-fast);
@@ -44,7 +44,7 @@
 }
 
 .bcCurrent {
-  color: #0f172a;
+  color: var(--wg-text);
   font-weight: 600;
 }
 
@@ -64,7 +64,7 @@
   font-family: var(--font-heading);
   font-size: 1.85rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--wg-text);
   margin-bottom: 6px;
 }
 
@@ -265,7 +265,7 @@
 }
 
 .dayBody:hover {
-  background-color: #fafdfb;
+  background-color: var(--wg-primary-light);
 }
 
 .ruleBlock {
@@ -454,7 +454,7 @@
 }
 
 .dangerBtn:hover:not(:disabled) {
-  background-color: #fef2f2;
+  background-color: rgba(239, 68, 68, 0.12);
 }
 
 .primaryBtn:disabled,

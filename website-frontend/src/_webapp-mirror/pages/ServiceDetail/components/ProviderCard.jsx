@@ -6,15 +6,17 @@ export default function ProviderCard({
   provider = {},
   sellerBio = '',
   responseTime = '< 1 giờ',
-  lastDelivery = "A few hours ago",
+  lastDelivery,
   memberSince = '2023',
-  languages = ["Vietnamese", "English"],
+  languages,
   avgRating = 5.0,
   reviewCount = 0,
   ordersInQueue = 2,
   onContactSeller
 }) {
   const tr = useTranslations("misc");
+  lastDelivery ??= tr("m1661");
+  languages ??= [tr("m1662"), tr("m1663")];
   return <section className={styles.sellerSection}>
       <h2 className={styles.sectionTitle}>{tr("m953")}</h2>
 

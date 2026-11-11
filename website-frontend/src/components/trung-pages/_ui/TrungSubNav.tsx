@@ -10,54 +10,55 @@ export type TrungSubNavProps = {
   /** Cycle 4: hide the Đăng nhập / Đăng ký entries once the user is signed in. */
   isAuthenticated?: boolean;
 };
+// `label` is a key of the "misc" dictionary, translated with tr() at render.
 const LINKS: Array<{
   key: TrungPageKey;
   label: string;
 }> = [{
   key: "register",
-  label: "Register"
+  label: "m1694"
 }, {
   key: "login",
-  label: "Log in"
+  label: "m1695"
 }, {
   key: "profile-settings",
-  label: "File"
+  label: "m1696"
 }, {
   key: "address-book",
-  label: "Address"
+  label: "m1697"
 }, {
   key: "provider-onboarding",
-  label: "Become a Provider"
+  label: "m1698"
 }, {
   key: "provider-profile",
-  label: "Provider"
+  label: "m1699"
 }, {
   key: "job-list",
-  label: "Find a job"
+  label: "m1700"
 }, {
   key: "job-post",
-  label: "Post a job"
+  label: "m1701"
 }, {
   key: "submit-proposal",
-  label: "Submit suggestions"
+  label: "m1702"
 }, {
   key: "proposal-review",
-  label: "Browse suggestions"
+  label: "m1703"
 }, {
   key: "payment-gateway",
-  label: "Deposit money"
+  label: "m1665"
 }, {
   key: "wallet",
-  label: "Wallet"
+  label: "m1664"
 }, {
   key: "payout-settings",
-  label: "Withdraw money"
+  label: "m1666"
 }, {
   key: "review-form",
-  label: "Evaluate"
+  label: "m1704"
 }, {
   key: "dispute-center",
-  label: "Dispute"
+  label: "m1705"
 }];
 
 // Cycle 4: the two auth entry points disappear from the auxiliary nav once a
@@ -125,7 +126,7 @@ export default function TrungSubNav({
   return <nav ref={barRef} className={styles.bar} aria-label={tr("m1443")}>
       <div ref={innerRef} className={styles.inner} onKeyDown={onKeyDown}>
         {links.map(l => <button key={l.key} type="button" className={l.key === current ? `${styles.link} ${styles.active}` : styles.link} aria-current={l.key === current ? "page" : undefined} onClick={() => onNavigate(l.key)}>
-            {l.label}
+            {tr(l.label)}
           </button>)}
       </div>
     </nav>;

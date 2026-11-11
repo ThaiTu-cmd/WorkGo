@@ -37,7 +37,7 @@
   background-color: var(--wg-surface);
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  color: #1e293b;
+  color: var(--wg-text);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
@@ -70,7 +70,7 @@
 }
 
 .bcCurrent {
-  color: #0f172a;
+  color: var(--wg-text);
   font-weight: 600;
   max-width: 320px;
   white-space: nowrap;
@@ -93,14 +93,14 @@
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--wg-text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .actionBtn:hover {
   background-color: var(--wg-surface);
-  color: #0f172a;
+  color: var(--wg-text);
 }
 
 .actionSaved {
@@ -166,7 +166,7 @@
 .serviceTitle {
   font-size: 1.85rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--wg-text);
   line-height: 1.35;
   margin: 0;
   font-family: var(--font-heading);
@@ -197,7 +197,7 @@
 
 .miniName {
   font-size: 0.95rem;
-  color: #0f172a;
+  color: var(--wg-text);
 }
 
 .verifiedIcon {
@@ -229,7 +229,7 @@
 }
 
 .ratingScore {
-  color: #0f172a;
+  color: var(--wg-text);
   font-size: 0.95rem;
 }
 
@@ -273,12 +273,12 @@
 .blockTitle {
   font-size: 1.35rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 0 0 16px 0;
 }
 
 .richText {
-  color: #334155;
+  color: var(--wg-text-secondary);
   font-size: 0.95rem;
   line-height: 1.7;
 }
@@ -289,7 +289,7 @@
 
 .richText h3 {
   font-size: 1.1rem;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 22px 0 12px 0;
   font-weight: 700;
 }
@@ -311,7 +311,7 @@
   align-items: flex-start;
   gap: 16px;
   padding: 18px 20px;
-  background-color: #f0fdf4;
+  background-color: var(--wg-primary-light);
   border: 1px solid #a7f3d0;
   border-radius: 10px;
   margin-top: 20px;
@@ -326,13 +326,13 @@
 .guaranteeBox h4 {
   font-size: 1rem;
   font-weight: 700;
-  color: #065f46;
+  color: var(--wg-primary-active);
   margin: 0 0 6px 0;
 }
 
 .guaranteeBox p {
   font-size: 0.88rem;
-  color: #047857;
+  color: var(--wg-text-secondary);
   line-height: 1.5;
   margin: 0;
 }

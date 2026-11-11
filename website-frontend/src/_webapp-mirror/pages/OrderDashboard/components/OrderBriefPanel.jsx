@@ -3,14 +3,14 @@ import React from 'react';
 import { ClipboardList, Link2 } from 'lucide-react';
 import { useOrderDetail } from '../../../hooks/useOrderDetail';
 import styles from './OrderFlow.module.css';
+// Keys of the "misc" dictionary (Add-on reads the same in both languages).
 const ITEM_TYPE = {
-  PACKAGE: "Package",
-  ADDON: 'Add-on',
-  PLATFORM_FEE: "Fee"
+  PACKAGE: 'm1606',
+  PLATFORM_FEE: 'm1607'
 };
 
 // order-service names the fee item without diacritics ("Phi nen tang").
-const itemName = item => item.itemType === 'PLATFORM_FEE' ? "Platform fees" : item.name;
+const itemName = (item, tr) => item.itemType === 'PLATFORM_FEE' ? tr("m1608") : item.name;
 const formatPrice = num => new Intl.NumberFormat('vi-VN').format(Number(num) || 0) + ' ₫';
 const isHttpUrl = value => /^https?:\/\//i.test(String(value || ''));
 
@@ -68,9 +68,9 @@ export default function OrderBriefPanel({
 
       {items.length > 0 && <ul className={styles.fileList}>
           {items.map(item => <li key={item.orderItemId} className={styles.fileRow}>
-              <span className={styles.chip}>{ITEM_TYPE[item.itemType] || item.itemType}</span>
+              <span className={styles.chip}>{ITEM_TYPE[item.itemType] ? tr(ITEM_TYPE[item.itemType]) : item.itemType === 'ADDON' ? 'Add-on' : item.itemType}</span>
               <span className={styles.fileName}>
-                {itemName(item)}
+                {itemName(item, tr)}
                 {item.quantity > 1 ? ` × ${item.quantity}` : ''}
               </span>
               <small>{formatPrice(item.amount ?? item.unitPrice)}</small>

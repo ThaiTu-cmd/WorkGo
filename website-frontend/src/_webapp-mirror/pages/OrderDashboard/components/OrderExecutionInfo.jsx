@@ -3,35 +3,38 @@ import React, { useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2, Clock, Send, XCircle } from 'lucide-react';
 import { orderApi } from '../../../api/orderApi';
 import styles from './OrderExecutionInfo.module.css';
+// Label maps hold keys of the "misc" dictionary, translated with tr() at render.
 const DIGITAL_STATUS = {
-  AWAITING_REQUIREMENTS: "Wait for the customer to send a request",
-  WORKING: "Ongoing",
-  SUBMITTED: "Handed over, waiting for acceptance",
-  REVISING: "Editing",
-  ACCEPT: "Accepted",
-  CANCELLED: "Canceled"
+  AWAITING_REQUIREMENTS: 'm1594',
+  WORKING: 'm1576',
+  SUBMITTED: 'm1609',
+  REVISING: 'm1610',
+  ACCEPT: 'm1602',
+  CANCELLED: 'm1579'
 };
 export const ONSITE_STATUS = {
-  SCHEDULED: "Scheduled",
-  IN_SERVICE: "Doing it at home",
-  SERVICE_DONE: "Done, waiting for acceptance",
-  ACCEPT: "Accepted",
-  CANCELLED: "Canceled"
+  SCHEDULED: 'm1611',
+  IN_SERVICE: 'm1612',
+  SERVICE_DONE: 'm1613',
+  ACCEPT: 'm1602',
+  CANCELLED: 'm1579'
 };
 const ORDER_STATUS_LABELS = {
-  PENDING_PAYMENT: "Wait for payment",
-  CONFIRMED: "Confirmed",
-  IN_PROGRESS: "Ongoing",
-  DELIVERED: "Handed over",
-  COMPLETED: "Completed",
-  CANCELLED: "Canceled"
+  PENDING_PAYMENT: 'm1574',
+  CONFIRMED: 'm1575',
+  IN_PROGRESS: 'm1576',
+  DELIVERED: 'm1577',
+  COMPLETED: 'm1578',
+  CANCELLED: 'm1579'
 };
 const ROLE_LABELS = {
-  CLIENT: "Client",
-  PROVIDER: "Expert",
-  SYSTEM: "System",
-  ADMIN: "Administrator"
+  CLIENT: 'm1614',
+  PROVIDER: 'm1615',
+  SYSTEM: 'm1616',
+  ADMIN: 'm1617'
 };
+// Translated label for `value` from one of the maps above (raw value if unknown).
+const labelOf = (tr, map, value) => map[value] ? tr(map[value]) : value;
 const formatDateTime = iso => iso ? new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'short',
   timeStyle: 'short'
@@ -104,8 +107,9 @@ export default function OrderExecutionInfo({
       padding: '12px 14px',
       marginBottom: '14px',
       borderRadius: '6px',
-      border: cancellation.status === 'PENDING' ? '1px solid #f59e0b' : '1px solid #e2e8f0',
-      backgroundColor: cancellation.status === 'PENDING' ? '#fffbeb' : '#f8fafc'
+      border: cancellation.status === 'PENDING' ? '1px solid #f59e0b' : '1px solid var(--wg-border)',
+      // Translucent amber / theme surface: the text inside uses theme colors.
+      backgroundColor: cancellation.status === 'PENDING' ? 'rgba(245, 158, 11, 0.1)' : 'var(--wg-surface-alt)'
     }}>
           <div style={{
         display: 'flex',
@@ -116,14 +120,14 @@ export default function OrderExecutionInfo({
             <AlertCircle size={18} color={cancellation.status === 'PENDING' ? '#d97706' : '#64748b'} />
             <strong style={{
           fontSize: '0.9rem',
-          color: cancellation.status === 'PENDING' ? '#b45309' : '#334155'
+          color: cancellation.status === 'PENDING' ? '#d97706' : 'var(--wg-text-secondary)'
         }}>
               {cancellation.status === 'PENDING' ? tr("m738") : cancellation.status === 'ACCEPTED' || cancellation.status === 'AUTO_APPROVED' ? tr("m739") : tr("m740")}
             </strong>
           </div>
           <div style={{
         fontSize: '0.82rem',
-        color: '#475569',
+        color: 'var(--wg-text-secondary)',
         lineHeight: 1.5
       }}>
             <p style={{
@@ -171,9 +175,9 @@ export default function OrderExecutionInfo({
                   <button type="button" disabled={responding} onClick={() => handleRespondCancellation(false)} style={{
             padding: '6px 14px',
             borderRadius: '4px',
-            backgroundColor: '#ffffff',
-            color: '#334155',
-            border: '1px solid #cbd5e1',
+            backgroundColor: 'var(--wg-surface)',
+            color: 'var(--wg-text-secondary)',
+            border: '1px solid var(--wg-border)',
             fontSize: '0.82rem',
             fontWeight: 600,
             cursor: 'pointer'
@@ -183,7 +187,7 @@ export default function OrderExecutionInfo({
                 </div> : <p style={{
           margin: '6px 0 0 0',
           fontStyle: 'italic',
-          color: '#64748b',
+          color: 'var(--wg-text-muted)',
           fontSize: '0.82rem'
         }}>{tr("m753")}</p>}
             </div>}
@@ -196,7 +200,7 @@ export default function OrderExecutionInfo({
           {state.execution.executionType === 'DIGITAL' && state.execution.digital && <dl className={styles.list}>
               <div>
                 <dt>{tr("m756")}</dt>
-                <dd>{DIGITAL_STATUS[state.execution.digital.status] || state.execution.digital.status}</dd>
+                <dd>{labelOf(tr, DIGITAL_STATUS, state.execution.digital.status)}</dd>
               </div>
               <div>
                 <dt>{tr("m757")}</dt>
@@ -213,7 +217,7 @@ export default function OrderExecutionInfo({
           {state.execution.executionType === 'ONSITE' && state.execution.onsite && <dl className={styles.list}>
               <div>
                 <dt>{tr("m756")}</dt>
-                <dd>{ONSITE_STATUS[state.execution.onsite.status] || state.execution.onsite.status}</dd>
+                <dd>{labelOf(tr, ONSITE_STATUS, state.execution.onsite.status)}</dd>
               </div>
               <div>
                 <dt>{tr("m83")}</dt>
@@ -251,7 +255,7 @@ export default function OrderExecutionInfo({
         {orderHistory.length === 0 ? <p style={{
         margin: '6px 0',
         fontSize: '0.82rem',
-        color: '#94a3b8',
+        color: 'var(--wg-text-muted)',
         fontStyle: 'italic'
       }}>{tr("m760")}</p> : <div style={{
         display: 'flex',
@@ -264,8 +268,8 @@ export default function OrderExecutionInfo({
           justifyContent: 'space-between',
           padding: '8px 12px',
           borderRadius: '6px',
-          backgroundColor: '#ffffff',
-          border: '1px solid #e2e8f0',
+          backgroundColor: 'var(--wg-surface)',
+          border: '1px solid var(--wg-border)',
           fontSize: '0.82rem'
         }}>
                 <div style={{
@@ -275,31 +279,31 @@ export default function OrderExecutionInfo({
             flexWrap: 'wrap'
           }}>
                   <span style={{
-              backgroundColor: '#f1f5f9',
-              color: '#475569',
+              backgroundColor: 'var(--wg-surface-alt)',
+              color: 'var(--wg-text-secondary)',
               padding: '2px 8px',
               borderRadius: '4px',
               fontSize: '0.75rem',
               fontWeight: 600
             }}>
-                    {ROLE_LABELS[hist.roleName] || hist.roleName || tr("m733")}
+                    {labelOf(tr, ROLE_LABELS, hist.roleName) || tr("m733")}
                   </span>
                   <span style={{
-              color: '#64748b'
+              color: 'var(--wg-text-muted)'
             }}>
-                    {ORDER_STATUS_LABELS[hist.fromStatus] || hist.fromStatus || tr("m743")}
+                    {labelOf(tr, ORDER_STATUS_LABELS, hist.fromStatus) || tr("m743")}
                   </span>
                   <span style={{
-              color: '#94a3b8'
+              color: 'var(--wg-text-muted)'
             }}>➔</span>
                   <strong style={{
-              color: '#0f172a'
+              color: 'var(--wg-text)'
             }}>
-                    {ORDER_STATUS_LABELS[hist.toStatus] || hist.toStatus}
+                    {labelOf(tr, ORDER_STATUS_LABELS, hist.toStatus)}
                   </strong>
                 </div>
                 <span style={{
-            color: '#64748b',
+            color: 'var(--wg-text-muted)',
             fontSize: '0.75rem',
             whiteSpace: 'nowrap'
           }}>

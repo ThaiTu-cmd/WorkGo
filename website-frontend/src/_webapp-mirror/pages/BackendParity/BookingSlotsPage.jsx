@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from 'react';
 import { availabilityApi } from '../../api/availabilityApi';
-import { catalogApi } from '../../api/catalogApi';
+import { listPublishedServices } from '../../api/catalogListing';
 import { Loader2 } from 'lucide-react';
 import styles from './BookingSlotsPage.module.css';
 
@@ -38,12 +38,12 @@ export default function BookingSlotsPage({
           // Fallback to public services if not provider
         }
         if (list.length === 0) {
-          const catRes = await catalogApi.listServices({
-            page: 0,
-            size: 20
+          // Not a provider (or no services yet): show published ONSITE services,
+          // the only ones that have booking slots.
+          const published = await listPublishedServices({
+            executionTypes: ['ONSITE']
           }).catch(() => null);
-          const data = catRes?.result?.data || (Array.isArray(catRes?.result) ? catRes.result : []);
-          if (Array.isArray(data)) list = data;
+          list = published?.services ?? [];
         }
         if (cancelled) return;
         setServices(list);
@@ -185,13 +185,13 @@ export default function BookingSlotsPage({
         }}>🕒</div>
             <p className={styles.emptyText} style={{
           fontWeight: 600,
-          color: '#334155',
+          color: 'var(--wg-text-secondary)',
           fontSize: '1rem',
           margin: '0 0 6px 0'
         }}>{tr("m313")}</p>
             <span style={{
           fontSize: '0.85rem',
-          color: '#64748b'
+          color: 'var(--wg-text-muted)'
         }}>{tr("m314")}</span>
           </div> : Object.entries(slotsByDate).map(([date, dateSlots]) => <div key={date} className={styles.dateGroup}>
               <h2 className={styles.dateHeading}>{tr("m1480")}{date !== tr("m304") ? new Date(date).toLocaleDateString('vi-VN', {

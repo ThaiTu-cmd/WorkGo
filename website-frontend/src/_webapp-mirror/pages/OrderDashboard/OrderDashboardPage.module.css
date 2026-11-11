@@ -29,7 +29,7 @@
   background-color: var(--wg-surface);
   border: 1px solid #cbd5e1;
   border-radius: var(--radius-sm);
-  color: #1e293b;
+  color: var(--wg-text);
   font-size: 0.85rem;
   font-weight: 600;
   transition: background-color var(--transition-fast);
@@ -147,12 +147,16 @@
 }
 
 .statWarn {
-  border-color: #fed7aa;
-  background-color: #fffbf5;
+  border-color: rgba(251, 146, 60, 0.4);
+  background-color: rgba(251, 146, 60, 0.07);
 }
 
 .statWarn .statValue {
   color: #c2410c;
+}
+
+:global([data-theme="dark"]) .statWarn .statValue {
+  color: #fb923c;
 }
 
 .statAccent {
@@ -303,8 +307,9 @@
   vertical-align: middle;
 }
 
+/* Theme tint: pale green on light, translucent green on dark (text stays readable). */
 .ordersTable tbody tr:hover {
-  background-color: #fafcfb;
+  background-color: var(--wg-primary-light);
 }
 
 .rowExpanded td {
@@ -415,6 +420,13 @@
   color: #c2410c;
 }
 
+.dueSub {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.76rem;
+  color: var(--wg-text-muted);
+}
+
 .actionsHead {
   text-align: right !important;
 }
@@ -473,7 +485,7 @@
 }
 
 .btn_danger:hover {
-  background-color: #fef2f2;
+  background-color: rgba(239, 68, 68, 0.12);
 }
 
 .chevronOpen {
@@ -483,7 +495,7 @@
 /* ---------- Detail row ---------- */
 .detailRow td {
   padding-top: 0;
-  background-color: #fafcfb;
+  background-color: var(--wg-surface-alt);
 }
 
 .detailGrid {

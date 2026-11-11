@@ -54,7 +54,7 @@
 
 .tabBtn:hover {
   background-color: var(--wg-surface);
-  color: #0f172a;
+  color: var(--wg-text);
 }
 
 .tabActive {
@@ -107,7 +107,7 @@
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   font-size: 0.88rem;
-  color: #0f172a;
+  color: var(--wg-text);
   outline: none;
   transition: all 0.2s ease;
 }
@@ -137,7 +137,7 @@
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   font-size: 0.88rem;
-  color: #334155;
+  color: var(--wg-text-secondary);
   background-color: var(--wg-surface);
   outline: none;
   cursor: pointer;

@@ -190,7 +190,9 @@
 :global(.dark) .webapp-scope {
   --wg-primary: #1dbf73;
   --wg-primary-hover: #34d399;
-  --wg-primary-active: #158852;
+  /* Used as text / focus-ring color (never as a fill): the light theme's
+     #158852 is too dark to read on dark green tints. */
+  --wg-primary-active: #34d399;
   --wg-primary-light: rgba(29, 191, 115, 0.14);
   --wg-primary-glow: rgba(29, 191, 115, 0.35);
 

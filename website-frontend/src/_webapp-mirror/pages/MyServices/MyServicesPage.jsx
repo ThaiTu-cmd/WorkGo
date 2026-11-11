@@ -7,10 +7,11 @@ import ServicesTable from './components/ServicesTable/ServicesTable';
 import { ArrowLeft, ShieldCheck, CalendarClock, Store } from 'lucide-react';
 import styles from './MyServicesPage.module.css';
 const STATE_MESSAGES = {
-  loading: "Loading service list...",
-  'needs-login': "Sign in with your Expert account to manage services.",
+  // Keys of the "misc" dictionary; forbidden keeps axiosClient's own message.
+  loading: 'm1649',
+  'needs-login': 'm1650',
   forbidden: NOT_PROVIDER_MESSAGE,
-  error: "Unable to download service list from server."
+  error: 'm1651'
 };
 
 // Live list from catalog-service. Duplicating is not offered (no copy endpoint).
@@ -185,7 +186,7 @@ export default function MyServicesPage({
         <ServicesToolbar activeTab={activeTab} onSelectTab={setActiveTab} tabCounts={tabCounts} searchQuery={searchQuery} onSearchChange={setSearchQuery} selectedCategory={selectedCategory} onCategoryChange={setSelectedCategory} onOpenCreateModal={() => onOpenCreateForm && onOpenCreateForm()} />
 
         {status !== 'ready' ? <div className={styles.pageSubtitle} role={status === 'error' ? 'alert' : 'status'}>
-            <p>{STATE_MESSAGES[status]}</p>
+            <p>{status === 'forbidden' ? STATE_MESSAGES[status] : tr(STATE_MESSAGES[status])}</p>
             {status === 'error' && <button type="button" className={styles.availabilityBtn} onClick={reload}>{tr("m604")}</button>}
             {status === 'forbidden' && onOpenProviderOnboarding && <button type="button" className={styles.availabilityBtn} onClick={onOpenProviderOnboarding}>{tr("m605")}</button>}
           </div> : <ServicesTable services={filteredServices} selectedIds={selectedIds} onToggleSelect={handleToggleSelect} onSelectAll={handleSelectAll} onViewService={onSelectService} onEditService={s => onOpenEditForm ? onOpenEditForm(s.serviceId) : onShowToast && onShowToast(tr("m600", {

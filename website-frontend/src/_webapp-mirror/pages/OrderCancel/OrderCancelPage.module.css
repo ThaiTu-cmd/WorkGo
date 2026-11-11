@@ -18,7 +18,7 @@
   background-color: var(--wg-surface);
   border: 1px solid #cbd5e1;
   border-radius: var(--radius-sm);
-  color: #1e293b;
+  color: var(--wg-text);
   font-size: 0.85rem;
   font-weight: 600;
   transition: background-color var(--transition-fast);
@@ -136,7 +136,7 @@
 .reasonSelected,
 .reasonSelected:hover {
   border-color: #dc2626;
-  background-color: #fef2f2;
+  background-color: rgba(239, 68, 68, 0.12);
 }
 
 .textarea {

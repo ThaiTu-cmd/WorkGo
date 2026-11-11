@@ -26,21 +26,23 @@ export function sanitizeText(s: unknown): string {
 export function slugify(s: string): string {
   return sanitizeText(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").slice(0, 80);
 }
-export function validateJobTitle(raw: string): string | undefined {
+// Validators return a message from the "misc" dictionary, so they take the page's translator.
+type Tr = (key: string, values?: Record<string, string | number>) => string;
+export function validateJobTitle(raw: string, tr: Tr): string | undefined {
   const clean = sanitizeText(raw);
-  if (clean.length < TITLE_MIN) return `Please enter a title between ${TITLE_MIN} and ${TITLE_MAX} characters!`;
-  if (clean.length > TITLE_MAX) return `Title is too long (${clean.length}/${TITLE_MAX} characters) — please shorten it!`;
+  if (clean.length < TITLE_MIN) return tr("m1667", { p0: TITLE_MIN, p1: TITLE_MAX });
+  if (clean.length > TITLE_MAX) return tr("m1668", { p0: clean.length, p1: TITLE_MAX });
   return undefined;
 }
-export function validateJobDescription(raw: string): string | undefined {
+export function validateJobDescription(raw: string, tr: Tr): string | undefined {
   const clean = sanitizeText(raw);
-  return clean.length < DESC_MIN ? `Please enter a detailed description of ${DESC_MIN} characters or more!` : undefined;
+  return clean.length < DESC_MIN ? tr("m1669", { p0: DESC_MIN }) : undefined;
 }
-export function validateJobBudget(raw: string): string | undefined {
+export function validateJobBudget(raw: string, tr: Tr): string | undefined {
   const budget = Number(String(raw).replace(/[^\d]/g, ""));
-  if (!Number.isFinite(budget) || budget <= 0) return "Package price must be a number greater than 0!";
-  if (budget < PRICE_MIN) return `Minimum price is ${PRICE_MIN.toLocaleString("vi-VN")} ₫!`;
-  if (budget > PRICE_MAX) return `Price exceeds ${PRICE_MAX.toLocaleString("vi-VN")} ₫ allowed!`;
+  if (!Number.isFinite(budget) || budget <= 0) return tr("m1670");
+  if (budget < PRICE_MIN) return tr("m1671", { p0: PRICE_MIN.toLocaleString("vi-VN") });
+  if (budget > PRICE_MAX) return tr("m1672", { p0: PRICE_MAX.toLocaleString("vi-VN") });
   return undefined;
 }
 export default function JobPostPage({
@@ -60,9 +62,9 @@ export default function JobPostPage({
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const next: typeof errors = {
-      title: validateJobTitle(title),
-      description: validateJobDescription(description),
-      budget: validateJobBudget(budgetRaw)
+      title: validateJobTitle(title, tr),
+      description: validateJobDescription(description, tr),
+      budget: validateJobBudget(budgetRaw, tr)
     };
     setErrors(next);
     if (next.title ?? next.description ?? next.budget) return;
@@ -112,11 +114,11 @@ export default function JobPostPage({
             setTitle(e.target.value);
             if (errors.title) setErrors(prev => ({
               ...prev,
-              title: validateJobTitle(e.target.value)
+              title: validateJobTitle(e.target.value, tr)
             }));
           }} onBlur={() => setErrors(prev => ({
             ...prev,
-            title: validateJobTitle(title)
+            title: validateJobTitle(title, tr)
           }))} placeholder={tr("m1177")} aria-invalid={errors.title ? true : undefined} aria-describedby={errors.title ? "jobpost-title-error" : undefined} />
             {errors.title ? <em id="jobpost-title-error" className={styles.error}>
                 {errors.title}
@@ -128,11 +130,11 @@ export default function JobPostPage({
             setDescription(e.target.value);
             if (errors.description) setErrors(prev => ({
               ...prev,
-              description: validateJobDescription(e.target.value)
+              description: validateJobDescription(e.target.value, tr)
             }));
           }} onBlur={() => setErrors(prev => ({
             ...prev,
-            description: validateJobDescription(description)
+            description: validateJobDescription(description, tr)
           }))} placeholder={tr("m1178")} rows={5} aria-invalid={errors.description ? true : undefined} aria-describedby={errors.description ? "jobpost-description-error" : undefined} />
             {errors.description ? <em id="jobpost-description-error" className={styles.error}>
                 {errors.description}
@@ -145,11 +147,11 @@ export default function JobPostPage({
               setBudgetRaw(e.target.value);
               if (errors.budget) setErrors(prev => ({
                 ...prev,
-                budget: validateJobBudget(e.target.value)
+                budget: validateJobBudget(e.target.value, tr)
               }));
             }} onBlur={() => setErrors(prev => ({
               ...prev,
-              budget: validateJobBudget(budgetRaw)
+              budget: validateJobBudget(budgetRaw, tr)
             }))} placeholder="2500000" inputMode="numeric" aria-invalid={errors.budget ? true : undefined} aria-describedby={errors.budget ? "jobpost-budget-error" : undefined} />
               {errors.budget ? <em id="jobpost-budget-error" className={styles.error}>
                   {errors.budget}

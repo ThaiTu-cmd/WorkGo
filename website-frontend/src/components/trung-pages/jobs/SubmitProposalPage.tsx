@@ -44,22 +44,24 @@ function loadProposals(): Proposal[] {
     return mockProposals;
   }
 }
-export function validateProposalJob(raw: string): string | undefined {
-  return raw ? undefined : "Please choose what to submit your proposal for!";
+// Validators return a message from the "misc" dictionary, so they take the page's translator.
+type Tr = (key: string, values?: Record<string, string | number>) => string;
+export function validateProposalJob(raw: string, tr: Tr): string | undefined {
+  return raw ? undefined : tr("m1673");
 }
-export function validateProposalBid(raw: string): string | undefined {
+export function validateProposalBid(raw: string, tr: Tr): string | undefined {
   const bid = Number(String(raw).replace(/[^\d]/g, ""));
-  if (!Number.isFinite(bid) || bid <= 0) return "Package price must be a number greater than 0!";
-  if (bid < PRICE_MIN) return `Minimum price is ${PRICE_MIN.toLocaleString("vi-VN")} ₫!`;
-  if (bid > PRICE_MAX) return `Price exceeds ${PRICE_MAX.toLocaleString("vi-VN")} ₫ allowed!`;
+  if (!Number.isFinite(bid) || bid <= 0) return tr("m1670");
+  if (bid < PRICE_MIN) return tr("m1671", { p0: PRICE_MIN.toLocaleString("vi-VN") });
+  if (bid > PRICE_MAX) return tr("m1672", { p0: PRICE_MAX.toLocaleString("vi-VN") });
   return undefined;
 }
-export function validateProposalDuration(raw: string): string | undefined {
+export function validateProposalDuration(raw: string, tr: Tr): string | undefined {
   const duration = Number(raw);
-  return !Number.isInteger(duration) || duration < 1 ? "Minimum implementation time 1 day!" : undefined;
+  return !Number.isInteger(duration) || duration < 1 ? tr("m1674") : undefined;
 }
-export function validateProposalMessage(raw: string): string | undefined {
-  return sanitizeText(raw).length < 20 ? "Please enter a detailed message of 20 characters or more!" : undefined;
+export function validateProposalMessage(raw: string, tr: Tr): string | undefined {
+  return sanitizeText(raw).length < 20 ? tr("m1675") : undefined;
 }
 export default function SubmitProposalPage({
   onNavigate,
@@ -83,10 +85,10 @@ export default function SubmitProposalPage({
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const next: typeof errors = {
-      job: validateProposalJob(selectedJobId),
-      bid: validateProposalBid(bidRaw),
-      duration: validateProposalDuration(durationRaw),
-      message: validateProposalMessage(message)
+      job: validateProposalJob(selectedJobId, tr),
+      bid: validateProposalBid(bidRaw, tr),
+      duration: validateProposalDuration(durationRaw, tr),
+      message: validateProposalMessage(message, tr)
     };
     setErrors(next);
     if (next.job ?? next.bid ?? next.duration ?? next.message) return;
@@ -144,11 +146,11 @@ export default function SubmitProposalPage({
             setSelectedJobId(e.target.value);
             if (errors.job) setErrors(prev => ({
               ...prev,
-              job: validateProposalJob(e.target.value)
+              job: validateProposalJob(e.target.value, tr)
             }));
           }} onBlur={() => setErrors(prev => ({
             ...prev,
-            job: validateProposalJob(selectedJobId)
+            job: validateProposalJob(selectedJobId, tr)
           }))} aria-describedby={errors.job ? "proposal-job-error" : undefined}>
               <option value="">{tr("m1217")}</option>
               {jobs.map(j => <option key={j.jobId} value={j.jobId}>
@@ -166,11 +168,11 @@ export default function SubmitProposalPage({
               setBidRaw(e.target.value);
               if (errors.bid) setErrors(prev => ({
                 ...prev,
-                bid: validateProposalBid(e.target.value)
+                bid: validateProposalBid(e.target.value, tr)
               }));
             }} onBlur={() => setErrors(prev => ({
               ...prev,
-              bid: validateProposalBid(bidRaw)
+              bid: validateProposalBid(bidRaw, tr)
             }))} placeholder="2000000" inputMode="numeric" aria-describedby={errors.bid ? "proposal-bid-error" : undefined} />
               {errors.bid ? <em id="proposal-bid-error" className={styles.error}>
                   {errors.bid}
@@ -182,11 +184,11 @@ export default function SubmitProposalPage({
               setDurationRaw(e.target.value);
               if (errors.duration) setErrors(prev => ({
                 ...prev,
-                duration: validateProposalDuration(e.target.value)
+                duration: validateProposalDuration(e.target.value, tr)
               }));
             }} onBlur={() => setErrors(prev => ({
               ...prev,
-              duration: validateProposalDuration(durationRaw)
+              duration: validateProposalDuration(durationRaw, tr)
             }))} placeholder="5" inputMode="numeric" aria-describedby={errors.duration ? "proposal-duration-error" : undefined} />
               {errors.duration ? <em id="proposal-duration-error" className={styles.error}>
                   {errors.duration}
@@ -199,11 +201,11 @@ export default function SubmitProposalPage({
             setMessage(e.target.value);
             if (errors.message) setErrors(prev => ({
               ...prev,
-              message: validateProposalMessage(e.target.value)
+              message: validateProposalMessage(e.target.value, tr)
             }));
           }} onBlur={() => setErrors(prev => ({
             ...prev,
-            message: validateProposalMessage(message)
+            message: validateProposalMessage(message, tr)
           }))} rows={5} placeholder={tr("m1211")} aria-describedby={errors.message ? "proposal-message-error" : undefined} />
             {errors.message ? <em id="proposal-message-error" className={styles.error}>
                 {errors.message}

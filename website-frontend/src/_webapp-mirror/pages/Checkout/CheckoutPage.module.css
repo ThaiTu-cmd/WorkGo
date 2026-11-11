@@ -29,7 +29,7 @@
   background-color: var(--wg-surface);
   border: 1px solid #cbd5e1;
   border-radius: var(--radius-sm);
-  color: #1e293b;
+  color: var(--wg-text);
   font-size: 0.85rem;
   font-weight: 600;
   transition: background-color var(--transition-fast);
@@ -412,6 +412,12 @@
   background-color: #334155;
 }
 
+.gwMock {
+  background-color: #475569;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
 .gwText {
   display: flex;
   flex-direction: column;
@@ -656,6 +662,14 @@
 
 .successIcon {
   color: var(--wg-primary);
+}
+
+.warnIcon {
+  color: var(--badge-onsite-text);
+}
+
+.dangerIcon {
+  color: var(--color-danger, #dc2626);
 }
 
 /* ---------- Overlay ---------- */

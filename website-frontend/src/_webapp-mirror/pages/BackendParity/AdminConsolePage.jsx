@@ -283,7 +283,7 @@ export default function AdminConsolePage({
           {verifications.length === 0 ? <div style={{
         textAlign: 'center',
         padding: '40px 20px',
-        color: '#64748b'
+        color: 'var(--wg-text-muted)'
       }}>
               <div style={{
           fontSize: '2.5rem',
@@ -291,7 +291,7 @@ export default function AdminConsolePage({
         }}>📋</div>
               <p style={{
           fontWeight: 600,
-          color: '#334155',
+          color: 'var(--wg-text-secondary)',
           fontSize: '1rem',
           margin: '0 0 4px 0'
         }}>{tr("m254")}</p>
@@ -379,7 +379,7 @@ export default function AdminConsolePage({
           {providers.length === 0 ? <div style={{
         textAlign: 'center',
         padding: '40px 20px',
-        color: '#64748b'
+        color: 'var(--wg-text-muted)'
       }}>
               <div style={{
           fontSize: '2.5rem',
@@ -387,7 +387,7 @@ export default function AdminConsolePage({
         }}>💼</div>
               <p style={{
           fontWeight: 600,
-          color: '#334155',
+          color: 'var(--wg-text-secondary)',
           fontSize: '1rem',
           margin: '0 0 4px 0'
         }}>{tr("m268")}</p>
@@ -425,7 +425,7 @@ export default function AdminConsolePage({
                         <td style={{
                   maxWidth: '240px',
                   fontSize: '0.82rem',
-                  color: '#475569'
+                  color: 'var(--wg-text-secondary)'
                 }}>
                           {p.bio || '—'}
                         </td>
@@ -464,7 +464,7 @@ export default function AdminConsolePage({
           {categories.length === 0 ? <div style={{
         textAlign: 'center',
         padding: '40px 20px',
-        color: '#64748b'
+        color: 'var(--wg-text-muted)'
       }}>
               <div style={{
           fontSize: '2.5rem',
@@ -472,7 +472,7 @@ export default function AdminConsolePage({
         }}>🗂️</div>
               <p style={{
           fontWeight: 600,
-          color: '#334155',
+          color: 'var(--wg-text-secondary)',
           fontSize: '1rem',
           margin: '0 0 4px 0'
         }}>{tr("m281")}</p>
@@ -499,12 +499,12 @@ export default function AdminConsolePage({
                         <td><strong>{c.name}</strong></td>
                         <td><code style={{
                     fontSize: '0.8rem',
-                    color: '#64748b'
+                    color: 'var(--wg-text-muted)'
                   }}>{c.slug}</code></td>
                         <td style={{
                   maxWidth: '280px',
                   fontSize: '0.82rem',
-                  color: '#475569'
+                  color: 'var(--wg-text-secondary)'
                 }}>
                           {c.description || '—'}
                         </td>
@@ -516,7 +516,7 @@ export default function AdminConsolePage({
                         <td>
                           <span style={{
                     fontSize: '0.85rem',
-                    color: '#334155'
+                    color: 'var(--wg-text-secondary)'
                   }}>
                             {Array.isArray(c.children) ? tr("m230", {
                       p0: c.children.length
@@ -536,7 +536,7 @@ export default function AdminConsolePage({
           {users.length === 0 ? <div style={{
         textAlign: 'center',
         padding: '40px 20px',
-        color: '#64748b'
+        color: 'var(--wg-text-muted)'
       }}>
               <div style={{
           fontSize: '2.5rem',
@@ -544,7 +544,7 @@ export default function AdminConsolePage({
         }}>👥</div>
               <p style={{
           fontWeight: 600,
-          color: '#334155',
+          color: 'var(--wg-text-secondary)',
           fontSize: '1rem',
           margin: '0 0 4px 0'
         }}>{tr("m292")}</p>

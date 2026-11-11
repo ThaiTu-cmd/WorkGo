@@ -22,15 +22,18 @@ export function maskAccount(n: string): string {
   if (digits.length <= 4) return digits;
   return `****${digits.slice(-4)}`;
 }
-export function validatePayoutBank(raw: string): string | undefined {
-  return sanitizeText(raw).length < 2 ? "Please enter bank name from 2 characters!" : undefined;
+// Validators return a message from the "misc" dictionary, so they take the page's translator.
+type Tr = (key: string, values?: Record<string, string | number>) => string;
+export function validatePayoutBank(raw: string, tr: Tr): string | undefined {
+  return sanitizeText(raw).length < 2 ? tr("m1676") : undefined;
 }
-export function validatePayoutHolder(raw: string): string | undefined {
-  return sanitizeText(raw).length < 2 ? "Please enter the account owner's name from 2 characters!" : undefined;
+export function validatePayoutHolder(raw: string, tr: Tr): string | undefined {
+  return sanitizeText(raw).length < 2 ? tr("m1677") : undefined;
 }
-export function validatePayoutAccount(raw: string): string | undefined {
+// Account numbers have 8-19 digits.
+export function validatePayoutAccount(raw: string, tr: Tr): string | undefined {
   const digits = sanitizeText(raw).replace(/\D/g, "");
-  return /^\d{8,19}$/.test(digits) ? undefined : "Account number must contain 8-19 digits!";
+  return /^\d{8,19}$/.test(digits) ? undefined : tr("m1678");
 }
 function loadPayout(): SavedPayout {
   if (typeof window === "undefined") return mockPayout;
@@ -66,9 +69,9 @@ export default function PayoutSettingsPage({
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const next: typeof errors = {
-      bankName: validatePayoutBank(bankName),
-      accountName: validatePayoutHolder(accountName),
-      accountNumber: validatePayoutAccount(accountNumber)
+      bankName: validatePayoutBank(bankName, tr),
+      accountName: validatePayoutHolder(accountName, tr),
+      accountNumber: validatePayoutAccount(accountNumber, tr)
     };
     setErrors(next);
     if (next.bankName ?? next.accountName ?? next.accountNumber) return;
@@ -101,11 +104,11 @@ export default function PayoutSettingsPage({
             setBankName(e.target.value);
             if (errors.bankName) setErrors(prev => ({
               ...prev,
-              bankName: validatePayoutBank(e.target.value)
+              bankName: validatePayoutBank(e.target.value, tr)
             }));
           }} onBlur={() => setErrors(prev => ({
             ...prev,
-            bankName: validatePayoutBank(bankName)
+            bankName: validatePayoutBank(bankName, tr)
           }))} placeholder="Vietcombank" aria-invalid={errors.bankName ? true : undefined} aria-describedby={errors.bankName ? "payout-bank-error" : undefined} />
             {errors.bankName ? <em id="payout-bank-error" className={styles.error}>
                 {errors.bankName}
@@ -117,11 +120,11 @@ export default function PayoutSettingsPage({
             setAccountName(e.target.value);
             if (errors.accountName) setErrors(prev => ({
               ...prev,
-              accountName: validatePayoutHolder(e.target.value)
+              accountName: validatePayoutHolder(e.target.value, tr)
             }));
           }} onBlur={() => setErrors(prev => ({
             ...prev,
-            accountName: validatePayoutHolder(accountName)
+            accountName: validatePayoutHolder(accountName, tr)
           }))} placeholder="NGUYEN VAN A" aria-invalid={errors.accountName ? true : undefined} aria-describedby={errors.accountName ? "payout-holder-error" : undefined} />
             {errors.accountName ? <em id="payout-holder-error" className={styles.error}>
                 {errors.accountName}
@@ -133,11 +136,11 @@ export default function PayoutSettingsPage({
             setAccountNumber(e.target.value);
             if (errors.accountNumber) setErrors(prev => ({
               ...prev,
-              accountNumber: validatePayoutAccount(e.target.value)
+              accountNumber: validatePayoutAccount(e.target.value, tr)
             }));
           }} onBlur={() => setErrors(prev => ({
             ...prev,
-            accountNumber: validatePayoutAccount(accountNumber)
+            accountNumber: validatePayoutAccount(accountNumber, tr)
           }))} placeholder="0123456789" inputMode="numeric" aria-invalid={errors.accountNumber ? true : undefined} aria-describedby={errors.accountNumber ? "payout-account-error" : undefined} />
             {errors.accountNumber ? <em id="payout-account-error" className={styles.error}>
                 {errors.accountNumber}

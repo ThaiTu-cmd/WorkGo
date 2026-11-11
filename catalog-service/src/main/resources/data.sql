@@ -137,3 +137,38 @@ CROSS JOIN (VALUES
     ('pm', '1970-01-01 13:00:00', '1970-01-01 17:00:00')
 ) AS h(shift, start_time, end_time)
 WHERE s.execution_type = 'ONSITE';
+
+-- ==========================================================
+-- Booking slots: the next 14 days of AVAILABLE slots cut from the rules
+-- above, so ONSITE services can be booked right after startup (this file
+-- runs on every start and emptied booking_slots at the top).
+-- Rule times are instants on 1970-01-01 read at a fixed UTC+7, as the web
+-- app shows them (01:00Z = 08:00). Not Asia/Ho_Chi_Minh for the rule: in
+-- 1970 that zone was UTC+8 and every slot would move one hour.
+-- created_at runs backwards with start_at because the slot API lists by
+-- created_at DESC: the soonest slots come first.
+-- ==========================================================
+INSERT INTO booking_slots (booking_slot_id, service_id, start_at, end_at, status, created_at)
+SELECT gen_random_uuid(), sl.service_id, sl.start_at, sl.end_at, 'AVAILABLE',
+       now() - (sl.start_at - now()) / 1000
+FROM (
+  SELECT sh.service_id,
+         ((sh.day + sh.t_start) + make_interval(mins => sh.dur * k)) AT TIME ZONE 'Asia/Ho_Chi_Minh' AS start_at,
+         ((sh.day + sh.t_start) + make_interval(mins => sh.dur * (k + 1))) AT TIME ZONE 'Asia/Ho_Chi_Minh' AS end_at
+  FROM (
+    SELECT r.service_id, d.day, r.slot_duration_minute AS dur,
+           ((r.start_time AT TIME ZONE 'UTC') + interval '7 hours')::time AS t_start,
+           ((r.end_time AT TIME ZONE 'UTC') + interval '7 hours')::time AS t_end
+    FROM available_rules r
+    JOIN services s ON s.service_id = r.service_id AND s.is_deleted = 0 AND s.status = 'PUBLISHED'
+                   AND s.execution_type = 'ONSITE'
+    JOIN (
+      SELECT g::date AS day
+      FROM generate_series((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,
+                           (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date + 13, interval '1 day') AS g
+    ) d ON EXTRACT(ISODOW FROM d.day)::int + 1 = r.day_of_weeek
+    WHERE r.is_deleted = 0 AND r.status = 'ACTIVE' AND r.slot_duration_minute > 0
+  ) sh
+  CROSS JOIN LATERAL generate_series(0, (EXTRACT(EPOCH FROM (sh.t_end - sh.t_start)) / 60 / sh.dur)::int - 1) AS k
+) sl
+WHERE sl.start_at > now();

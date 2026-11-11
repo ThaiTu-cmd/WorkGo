@@ -251,7 +251,7 @@ export default function ServiceDetailPage({
 
             {/* 2.5 Onsite Booking Slots Available */}
             {service.executionType === 'ONSITE' && <section className={styles.descriptionSection} style={{
-            borderTop: '1px solid #e2e8f0',
+            borderTop: '1px solid var(--wg-border)',
             paddingTop: '20px'
           }}>
                 <div style={{
@@ -281,10 +281,10 @@ export default function ServiceDetailPage({
                 </div>
 
                 {loadingSlots ? <p style={{
-              color: '#64748b',
+              color: 'var(--wg-text-muted)',
               fontSize: '0.9rem'
             }}>{tr("m1004")}</p> : availableOnsiteSlots.length === 0 ? <p style={{
-              color: '#94a3b8',
+              color: 'var(--wg-text-muted)',
               fontSize: '0.9rem'
             }}>{tr("m1005")}</p> : <div style={{
               display: 'grid',
@@ -311,15 +311,15 @@ export default function ServiceDetailPage({
                 return <div key={sid} style={{
                   padding: '10px 12px',
                   borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: '#f8fafc',
+                  border: '1px solid var(--wg-border)',
+                  backgroundColor: 'var(--wg-surface-alt)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '4px'
                 }}>
                           <span style={{
                     fontWeight: 600,
-                    color: '#0f172a',
+                    color: 'var(--wg-text)',
                     fontSize: '0.88rem',
                     display: 'flex',
                     alignItems: 'center',
@@ -329,7 +329,7 @@ export default function ServiceDetailPage({
                           </span>
                           <span style={{
                     fontSize: '0.78rem',
-                    color: '#64748b'
+                    color: 'var(--wg-text-muted)'
                   }}>{dateStr}</span>
                         </div>;
               })}

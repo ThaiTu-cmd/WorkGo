@@ -1,6 +1,6 @@
 .pageContainer {
   min-height: 100vh;
-  background-color: var(--bg-page, #f8fafc);
+  background-color: var(--wg-bg);
   padding-bottom: 90px;
 }
 
@@ -41,7 +41,7 @@
 
 .backBtn:hover {
   background: var(--wg-surface);
-  color: #0f172a;
+  color: var(--wg-text);
 }
 
 .topBarTitle {
@@ -51,7 +51,7 @@
   font-family: var(--font-heading, sans-serif);
   font-size: 1.125rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--wg-text);
 }
 
 .modeBadge {
@@ -62,7 +62,7 @@
   background: var(--wg-surface);
   border-radius: 9999px;
   font-size: 0.75rem;
-  color: #475569;
+  color: var(--wg-text-secondary);
   font-weight: 600;
 }
 
@@ -102,15 +102,15 @@
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #334155;
+  color: var(--wg-text-secondary);
   background: var(--wg-surface);
   border: 1px solid #e2e8f0;
   transition: all 0.15s;
 }
 
 .btnPrev:hover:not(:disabled) {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: var(--wg-surface-alt);
+  color: var(--wg-text);
 }
 
 .btnPrev:disabled {
@@ -132,7 +132,7 @@
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--wg-text);
   background: var(--wg-surface);
   border: 1px solid #cbd5e1;
   transition: all 0.15s;

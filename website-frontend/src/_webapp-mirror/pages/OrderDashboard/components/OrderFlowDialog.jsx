@@ -11,14 +11,16 @@ import styles from './WorkEvidence.module.css';
 export default function OrderFlowDialog({
   title,
   submitLabel,
-  submittingLabel = "Sending...",
+  submittingLabel,
   canSubmit = true,
   onSubmit,
   onClose,
-  closeLabel = "Cancel",
+  closeLabel,
   children
 }) {
   const tr = useTranslations("misc");
+  submittingLabel ??= tr("m1618");
+  closeLabel ??= tr("m1581");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const dialogRef = useRef(null);

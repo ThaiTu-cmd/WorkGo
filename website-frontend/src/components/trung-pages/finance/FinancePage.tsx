@@ -8,21 +8,22 @@ import PaymentGatewayPage from "../payment/PaymentGatewayPage";
 import PayoutSettingsPage from "../payment/PayoutSettingsPage";
 import styles from "./FinancePage.module.css";
 export type FinanceTab = "wallet" | "deposit" | "payout";
+// `label` is a key of the "misc" dictionary, translated with tr() at render.
 const TABS: Array<{
   id: FinanceTab;
   label: string;
   icon: typeof Wallet;
 }> = [{
   id: "wallet",
-  label: "Wallet",
+  label: "m1664",
   icon: Wallet
 }, {
   id: "deposit",
-  label: "Deposit money",
+  label: "m1665",
   icon: CreditCard
 }, {
   id: "payout",
-  label: "Withdraw money",
+  label: "m1666",
   icon: Landmark
 }];
 type FinancePageProps = {
@@ -73,7 +74,7 @@ export default function FinancePage({
         <div className={styles.tabBar} role="tablist" aria-label={tr("m51")} onKeyDown={onTablistKeyDown}>
           {TABS.map(t => <button key={t.id} type="button" role="tab" id={`finance-tab-${t.id}`} aria-selected={activeTab === t.id} aria-controls={`finance-panel-${t.id}`} tabIndex={activeTab === t.id ? 0 : -1} className={activeTab === t.id ? `${styles.tab} ${styles.tabActive}` : styles.tab} onClick={() => onOpenTab(t.id)}>
               <t.icon size={16} aria-hidden="true" />
-              {t.label}
+              {tr(t.label)}
             </button>)}
         </div>
       </div>

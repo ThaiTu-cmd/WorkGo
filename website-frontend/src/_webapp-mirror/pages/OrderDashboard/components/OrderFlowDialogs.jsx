@@ -10,7 +10,8 @@ import styles from './OrderFlow.module.css';
 export const MAX_FILE_BYTES = 2 * 1024 * 1024;
 const isHttpUrl = s => /^https?:\/\/\S+$/i.test(s.trim());
 const formatSize = bytes => bytes == null ? '' : bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.ceil(bytes / 1024)} KB`;
-const readAsDataUrl = file => new Promise((resolve, reject) => {
+// `tr` comes from the calling component (useTranslations only exists inside components).
+const readAsDataUrl = (file, tr) => new Promise((resolve, reject) => {
   const reader = new FileReader();
   reader.onload = () => resolve(reader.result);
   reader.onerror = () => reject(new Error(tr("m764", {
@@ -29,19 +30,6 @@ export function CheckinCode({
   })}>
       {code}
     </span>;
-}
-
-// Shown right after an ONSITE order is paid: the only time order-service returns the code.
-export function CheckinCodeDialog({
-  code,
-  onClose
-}) {
-  const tr = useTranslations("misc");
-  return <OrderFlowDialog title={tr("m766")} onClose={onClose} closeLabel={tr("m767")}>
-      <p className={styles.text}>{tr("m780")}</p>
-      <CheckinCode code={code} />
-      <p className={styles.note}>{tr("m1514")}</p>
-    </OrderFlowDialog>;
 }
 
 // Provider, ONSITE + CONFIRMED: enter the client's code → IN_PROGRESS.
@@ -150,7 +138,7 @@ export function DeliveryDialog({
     try {
       const read = await Promise.all(picked.filter(f => f.size <= MAX_FILE_BYTES).map(async f => ({
         key: `${Date.now()}-${f.name}`,
-        fileUrl: await readAsDataUrl(f),
+        fileUrl: await readAsDataUrl(f, tr),
         fileName: f.name,
         mimeType: f.type || null,
         sizeBytes: f.size

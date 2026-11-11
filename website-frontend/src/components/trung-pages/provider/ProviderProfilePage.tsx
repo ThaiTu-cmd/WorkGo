@@ -13,11 +13,12 @@ export type TrungPageProps = {
 };
 type Provider = ReturnType<typeof toProvider>;
 type LoadState = "loading" | "ready" | "needs-login" | "not-found" | "error";
+// Keys of the "misc" dictionary, translated with tr() at render.
 const VERIFICATION_LABEL: Record<string, string> = {
-  VERIFIED: "Verified",
-  PENDING: "Awaiting verification",
-  REJECTED: "Verification refused",
-  SUSPENDED: "Temporarily locked"
+  VERIFIED: "m1690",
+  PENDING: "m1691",
+  REJECTED: "m1692",
+  SUSPENDED: "m1693"
 };
 export default function ProviderProfilePage({
   onNavigate,
@@ -89,7 +90,7 @@ export default function ProviderProfilePage({
             <p className={styles.meta}>
               <BadgeCheck size={16} className={styles.star} aria-hidden="true" />
               <span>
-                {VERIFICATION_LABEL[provider.verificationStatus ?? ""] ?? tr("m1375")}
+                {tr(VERIFICATION_LABEL[provider.verificationStatus ?? ""] ?? "m1375")}
                 {provider.providerType ? ` • ${provider.providerType}` : ""}
               </span>
             </p>

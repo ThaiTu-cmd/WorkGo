@@ -35,7 +35,7 @@
 }
 
 .tabBtn:hover {
-  color: #0f172a;
+  color: var(--wg-text);
   background-color: var(--wg-surface);
 }
 
@@ -90,7 +90,7 @@
 .packageName {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 0;
 }
 
@@ -104,7 +104,7 @@
 
 .packageDesc {
   font-size: 0.9rem;
-  color: #475569;
+  color: var(--wg-text-secondary);
   line-height: 1.55;
   margin: 0;
 }
@@ -125,7 +125,7 @@
   align-items: center;
   gap: 8px;
   font-size: 0.85rem;
-  color: #334155;
+  color: var(--wg-text-secondary);
 }
 
 .metaIcon {
@@ -142,7 +142,7 @@
 .featuresTitle {
   font-size: 0.88rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -166,7 +166,7 @@
 }
 
 .featItemOk {
-  color: #1e293b;
+  color: var(--wg-text);
 }
 
 .featItemMuted {
@@ -198,7 +198,7 @@
 .addonsTitle {
   font-size: 0.92rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 0;
   display: flex;
   align-items: center;
@@ -230,7 +230,7 @@
 
 .addonCardActive {
   border-color: #10b981;
-  background-color: #f0fdf4;
+  background-color: var(--wg-primary-light);
 }
 
 .addonCheckbox {
@@ -251,7 +251,7 @@
 .addonName {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--wg-text);
   line-height: 1.35;
 }
 
@@ -288,7 +288,7 @@
 .totalLabel {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #334155;
+  color: var(--wg-text-secondary);
 }
 
 .totalAmount {
@@ -327,7 +327,7 @@
   width: 100%;
   padding: 11px 16px;
   background-color: transparent;
-  color: #334155;
+  color: var(--wg-text-secondary);
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   font-size: 0.9rem;
@@ -344,7 +344,7 @@
 .btnChat:hover {
   background-color: var(--wg-surface);
   border-color: #94a3b8;
-  color: #0f172a;
+  color: var(--wg-text);
 }
 
 /* Escrow Notice */
@@ -372,5 +372,5 @@
 }
 
 .escrowText strong {
-  color: #1e293b;
+  color: var(--wg-text);
 }

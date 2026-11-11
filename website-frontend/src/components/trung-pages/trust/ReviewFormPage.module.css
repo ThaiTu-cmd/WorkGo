@@ -161,7 +161,7 @@
   border: 1px solid var(--wg-border);
   border-radius: 12px;
   padding: 14px;
-  background: #f9fafb;
+  background: var(--wg-surface-alt);
   overflow-wrap: break-word;
 }
 
@@ -187,7 +187,7 @@
 
 .reviewComment {
   font-size: 0.9rem;
-  color: #4b5563;
+  color: var(--wg-text-secondary);
   margin: 0 0 6px 0;
   line-height: 1.5;
   overflow-wrap: break-word;

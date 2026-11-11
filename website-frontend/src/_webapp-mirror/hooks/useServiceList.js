@@ -2,17 +2,7 @@ import { useEffect, useState } from 'react';
 import { catalogApi } from '../api/catalogApi';
 import { providerApi } from '../api/providerApi';
 import { pageItems, toServiceCard } from '../api/adapters';
-
-const EXECUTION_TYPES = ['DIGITAL', 'ONSITE'];
-const PRICE_FLOOR = 0;
-const PRICE_CEILING = 1_000_000_000_000;
-
-// Root categories plus their direct children, keyed by id.
-const flattenCategories = (roots) =>
-  roots.flatMap((root) => [
-    root,
-    ...[...(root.children || [])].map((child) => ({ ...child, parent: root.categoryId })),
-  ]);
+import { listPublishedServices } from '../api/catalogListing';
 
 // Every PUBLISHED service from catalog-service, as ServiceCard items.
 // Loads strictly real services from PostgreSQL via catalogApi.
@@ -26,50 +16,35 @@ export function useServiceList() {
     const load = async () => {
       setState((s) => ({ ...s, status: 'loading' }));
       try {
-        const rootRes = await catalogApi.getRootCategories();
-        const rootItems = pageItems(rootRes);
-        if (!rootItems || rootItems.length === 0) {
-          if (!cancelled) setState({ status: 'ready', services: [] });
-          return;
-        }
-
-        const categories = flattenCategories(rootItems);
-        const categoryById = Object.fromEntries(categories.map((c) => [c.categoryId, c]));
-
-        const pages = await Promise.all(
-          categories.flatMap((c) =>
-            EXECUTION_TYPES.map((executionType) =>
-              catalogApi
-                .listServices({
-                  categoryId: c.categoryId,
-                  executionType,
-                  minPrice: PRICE_FLOOR,
-                  maxPrice: PRICE_CEILING,
-                })
-                .catch(() => null)
-            )
-          )
-        );
-        const byId = new Map();
-        pages.forEach((p) => pageItems(p).forEach((s) => byId.set(s.serviceId, s)));
-        const services = [...byId.values()];
-
+        const { services, categories } = await listPublishedServices();
         if (services.length === 0) {
           if (!cancelled) setState({ status: 'ready', services: [] });
           return;
         }
+        const categoryById = Object.fromEntries(categories.map((c) => [c.categoryId, c]));
 
+        // Providers (name / verified badge) and packages (delivery time for the
+        // "Thời gian giao" filter) are optional: a failure leaves them empty.
         const providerIds = [...new Set(services.map((s) => s.providerId).filter(Boolean))];
-        const providers = await Promise.all(
-          providerIds.map((id) => providerApi.getProvider(id).then((r) => r?.result ?? null, () => null))
-        );
+        const [providers, packageLists] = await Promise.all([
+          Promise.all(
+            providerIds.map((id) => providerApi.getProvider(id).then((r) => r?.result ?? null, () => null))
+          ),
+          Promise.all(
+            services.map((s) => catalogApi.getPackages(s.serviceId).then((r) => pageItems(r), () => null))
+          ),
+        ]);
         const providerById = Object.fromEntries(providers.filter(Boolean).map((p) => [p.providerProfileId, p]));
 
         if (cancelled) return;
         setState({
           status: 'ready',
-          services: services.map((s) =>
-            toServiceCard(s, { category: categoryById[s.categoryId], provider: providerById[s.providerId] })
+          services: services.map((s, i) =>
+            toServiceCard(s, {
+              category: categoryById[s.categoryId],
+              provider: providerById[s.providerId],
+              packages: packageLists[i],
+            })
           ),
         });
       } catch (err) {

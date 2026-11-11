@@ -35,7 +35,7 @@
 .title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 0 0 12px;
   line-height: 1.3;
 }
@@ -56,7 +56,7 @@
   border-radius: 6px;
   padding: 6px 12px;
   font-size: 0.8125rem;
-  color: #475569;
+  color: var(--wg-text-secondary);
   margin-bottom: 28px;
   max-width: 100%;
   overflow-x: auto;
@@ -114,7 +114,7 @@
 
 .btnSecondary {
   background-color: var(--wg-surface);
-  color: #1e293b;
+  color: var(--wg-text);
   border: 1px solid #cbd5e1;
   padding: 10px 20px;
   font-size: 0.95rem;
@@ -129,7 +129,7 @@
 }
 
 .btnSecondary:hover {
-  background-color: #e2e8f0;
+  background-color: var(--wg-surface-alt);
   border-color: #94a3b8;
 }
 

@@ -22,11 +22,12 @@ export const orderApi = {
   // ONSITE also needs { bookingSlotId, address }; order-service holds the slot itself.
   createOrder: (body) => axiosClient.post('/order/orders', body),
 
-  // DEV ONLY: payment-service has no payment flow yet, so the "Thanh toán" button
-  // calls order-service's internal confirm directly (reachable through the gateway).
-  // PENDING_PAYMENT → CONFIRMED and books the held slot; ONSITE answers its one-time 6-digit checkinCode.
-  // PaymentConfirmationResponse { orderId, orderStatus, paymentStatus, executionStatus, checkinCode }
-  confirmPayment: (orderId) => axiosClient.post(`/order/internal/orders/${orderId}/confirm`),
+  // Payment goes through payment-service (see paymentApi.js); once it succeeds,
+  // payment-service confirms the order here (PENDING_PAYMENT → CONFIRMED).
+
+  // ONSITE, client only, while CONFIRMED: CheckinCodeResponse { orderId, checkinCode, scheduledStart }.
+  // Error 3020 until the payment has reached order-service.
+  getCheckinCode: (orderId) => axiosClient.get(`/order/orders/onsite/${orderId}/checkin-code`),
 
   // ONSITE flow. Provider: checkin (CONFIRMED → IN_PROGRESS, needs the client's code),
   // complete (IN_PROGRESS → DELIVERED, needs an AFTER evidence). Client: accept (→ COMPLETED).
@@ -102,6 +103,11 @@ const ERROR_MESSAGES = {
   3017: 'Yêu cầu hủy này đã được xử lý.',
   3018: 'Bạn không thể tự phản hồi yêu cầu hủy của mình.',
   3019: 'Vui lòng chọn đồng ý hoặc từ chối.',
+  3020: 'Mã check-in chưa sẵn sàng. Mã có sau khi thanh toán được xác nhận.',
+  3021: 'Thiếu mã giao dịch thanh toán.',
+  3022: 'Yêu cầu tạo đơn từ đề xuất không hợp lệ.',
+  3023: 'Đề xuất này đã được tạo đơn với nội dung khác.',
+  3024: 'Dịch vụ việc làm đang bận. Vui lòng thử lại sau.',
 };
 
 export const orderErrorMessage = (err) =>

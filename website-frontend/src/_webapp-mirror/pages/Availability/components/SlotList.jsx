@@ -3,15 +3,15 @@ import React from 'react';
 import styles from '../AvailabilityPage.module.css';
 const STATUS = {
   AVAILABLE: {
-    label: "Still empty",
+    label: 'm1630',
     cls: styles.slotAvailable
   },
   HELD: {
-    label: "Holding",
+    label: 'm1631',
     cls: styles.slotHeld
   },
   BOOKED: {
-    label: "Booked",
+    label: 'm1632',
     cls: styles.slotBooked
   }
 };
@@ -54,7 +54,7 @@ export default function SlotList({
                       <span>
                         {fmtTime(s.startedAt)} – {fmtTime(s.endAt)}
                       </span>
-                      <span className={`${styles.slotBadge} ${st.cls}`}>{st.label}</span>
+                      <span className={`${styles.slotBadge} ${st.cls}`}>{tr(st.label)}</span>
                     </li>;
           })}
               </ul>

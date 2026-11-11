@@ -8,7 +8,7 @@
 .sectionTitle {
   font-size: 1.35rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 0;
 }
 
@@ -42,7 +42,7 @@
   font-family: inherit;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--wg-text);
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -69,7 +69,7 @@
 .faqAnswer {
   padding: 0 20px 18px 20px;
   font-size: 0.9rem;
-  color: #475569;
+  color: var(--wg-text-secondary);
   line-height: 1.6;
   border-top: 1px solid #f1f5f9;
   padding-top: 14px;

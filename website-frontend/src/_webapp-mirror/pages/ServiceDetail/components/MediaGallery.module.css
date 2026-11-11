@@ -31,7 +31,7 @@
   height: 40px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.88);
-  color: #1e293b;
+  color: var(--wg-text);
   border: none;
   display: flex;
   align-items: center;

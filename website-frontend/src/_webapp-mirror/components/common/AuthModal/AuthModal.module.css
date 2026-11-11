@@ -243,7 +243,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  background-color: #f0fdf4;
+  background-color: var(--wg-primary-light);
   border: 1px solid #bbf7d0;
   border-radius: var(--radius-sm);
   padding: 8px 12px;

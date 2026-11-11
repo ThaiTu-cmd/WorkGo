@@ -16,7 +16,7 @@
   font-family: var(--font-heading, sans-serif);
   font-size: 1.25rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--wg-text);
   margin-bottom: 0.25rem;
 }
 
@@ -43,7 +43,7 @@
 .label {
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -69,7 +69,7 @@
   border: 1.5px solid #e2e8f0;
   border-radius: 10px;
   font-size: 0.9375rem;
-  color: #1e293b;
+  color: var(--wg-text);
   background: var(--wg-surface);
   transition: all 0.2s ease;
   outline: none;
@@ -97,13 +97,13 @@
 }
 
 .select option {
-  color: #1e293b;
+  color: var(--wg-text);
   background-color: var(--wg-surface);
 }
 
 .input.error, .textarea.error {
   border-color: #ef4444;
-  background-color: #fffafb;
+  background-color: rgba(239, 68, 68, 0.06);
 }
 
 .errorText {
@@ -162,7 +162,7 @@
 
 .execCard.selected {
   border-color: #10b981;
-  background: #ecfdf5;
+  background: var(--wg-primary-light);
 }
 
 .execHeader {
@@ -188,12 +188,12 @@
 .execTitle {
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
 }
 
 .execDesc {
   font-size: 0.8125rem;
-  color: #64748b;
+  color: var(--wg-text-secondary);
   line-height: 1.4;
 }
 
@@ -225,7 +225,7 @@
   border-radius: 9999px;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--wg-text);
 }
 
 .tagRemove {
@@ -248,7 +248,7 @@
   flex: 1;
   min-width: 140px;
   font-size: 0.875rem;
-  color: #1e293b;
+  color: var(--wg-text);
   background: transparent;
 }
 

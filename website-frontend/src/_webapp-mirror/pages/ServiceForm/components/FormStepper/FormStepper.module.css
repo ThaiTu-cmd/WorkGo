@@ -69,7 +69,7 @@
 }
 
 .stepItem.active .stepTitle {
-  color: #0f172a;
+  color: var(--wg-text);
 }
 
 /* Completed State */

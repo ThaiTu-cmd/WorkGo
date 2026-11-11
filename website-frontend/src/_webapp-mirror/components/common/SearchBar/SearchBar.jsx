@@ -2,25 +2,26 @@ import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from 'react';
 import { Search, ChevronDown, Check, LayoutGrid, Globe, Home, Truck, CalendarDays } from 'lucide-react';
 import styles from './SearchBar.module.css';
+// `label` is a key of the "misc" dictionary, translated with tr() at render.
 const EXECUTION_TYPES = [{
   value: 'ALL',
-  label: "All forms",
+  label: 'm1622',
   Icon: LayoutGrid
 }, {
   value: 'DIGITAL',
-  label: "Online Services",
+  label: 'm1623',
   Icon: Globe
 }, {
   value: 'ONSITE',
-  label: "In-Home Services",
+  label: 'm1624',
   Icon: Home
 }, {
   value: 'DELIVERY',
-  label: "Delivery",
+  label: 'm1625',
   Icon: Truck
 }, {
   value: 'APPOINTMENT',
-  label: "Make an appointment",
+  label: 'm1626',
   Icon: CalendarDays
 }];
 export default function SearchBar({
@@ -85,7 +86,7 @@ export default function SearchBar({
       <div className={styles.filterWrapper} ref={filterRef}>
         <button type="button" className={styles.filterTrigger} onClick={() => menuOpen ? setMenuOpen(false) : openMenu()} onKeyDown={handleTriggerKeyDown} aria-haspopup="listbox" aria-expanded={menuOpen} aria-label={tr("m78")}>
           <selected.Icon size={16} className={styles.triggerIcon} />
-          <span className={styles.triggerLabel}>{selected.label}</span>
+          <span className={styles.triggerLabel}>{tr(selected.label)}</span>
           <ChevronDown size={16} className={`${styles.chevronIcon} ${menuOpen ? styles.chevronOpen : ''}`} />
         </button>
 
@@ -100,7 +101,7 @@ export default function SearchBar({
                   <span className={styles.optionIcon}>
                     <Icon size={16} />
                   </span>
-                  <span className={styles.optionLabel}>{label}</span>
+                  <span className={styles.optionLabel}>{tr(label)}</span>
                   {isSelected && <Check size={16} className={styles.optionCheck} />}
                 </li>;
         })}

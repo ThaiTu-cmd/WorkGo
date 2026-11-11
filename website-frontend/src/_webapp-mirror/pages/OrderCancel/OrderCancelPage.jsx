@@ -6,38 +6,39 @@ import { orderApi, orderErrorMessage } from '../../api/orderApi';
 import styles from './OrderCancelPage.module.css';
 const NOTE_MIN = 20;
 const NOTE_MAX = 500;
+// `label` is a key of the "misc" dictionary, translated with tr() at render.
 const REASONS = {
   CLIENT: [{
     code: 'CHANGED_MIND',
-    label: "Changed mind / no longer needed"
+    label: 'm1652'
   }, {
     code: 'LATE',
-    label: "Experts are behind schedule"
+    label: 'm1653'
   }, {
     code: 'QUALITY',
-    label: "Quality is not as described"
+    label: 'm1654'
   }, {
     code: 'NO_CONTACT',
-    label: "Unable to contact specialist"
+    label: 'm1655'
   }, {
     code: 'WRONG_ORDER',
-    label: "Ordered the wrong package/service"
+    label: 'm1656'
   }, {
     code: 'OTHER',
-    label: "Other reasons"
+    label: 'm1657'
   }],
   PROVIDER: [{
     code: 'OVERLOADED',
-    label: "Overcrowded schedule, unable to receive applications in time"
+    label: 'm1658'
   }, {
     code: 'OUT_OF_SCOPE',
-    label: "Request outside package scope"
+    label: 'm1659'
   }, {
     code: 'MISSING_INFO',
-    label: "Lack of information from customers"
+    label: 'm1660'
   }, {
     code: 'OTHER',
-    label: "Other reasons"
+    label: 'm1657'
   }]
 };
 const formatPrice = num => new Intl.NumberFormat('vi-VN').format(num || 0) + ' ₫';
@@ -130,7 +131,7 @@ export default function OrderCancelPage({
       if (onSubmit) {
         onSubmit({
           reasonCode,
-          reasonLabel: reason?.label || reasonCode,
+          reasonLabel: reason ? tr(reason.label) : reasonCode,
           note: note.trim(),
           mode: policy.mode,
           result
@@ -195,7 +196,7 @@ export default function OrderCancelPage({
             <div className={styles.reasonList}>
               {reasons.map(r => <label key={r.code} className={`${styles.reasonCard} ${reasonCode === r.code ? styles.reasonSelected : ''}`}>
                   <input type="radio" name="cancel-reason" value={r.code} checked={reasonCode === r.code} onChange={() => setReasonCode(r.code)} />
-                  <span>{r.label}</span>
+                  <span>{tr(r.label)}</span>
                 </label>)}
             </div>
           </fieldset>

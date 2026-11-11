@@ -63,7 +63,7 @@ export default function WorkEvidencePanel({
 
       <div className={styles.tabs} role="tablist" aria-label={tr("m799")}>
         {TABS.map(t => <button key={t.value} type="button" role="tab" aria-selected={tab === t.value} className={`${styles.tab} ${tab === t.value ? styles.tabActive : ''} ${t.tone === 'warning' ? styles.tabWarning : ''}`} onClick={() => setTab(t.value)}>
-            {t.label}
+            {t.value === 'ALL' ? tr("m1619") : t.label}
             <span className={styles.tabCount}>{status === 'ready' ? counts[t.value] : '·'}</span>
           </button>)}
       </div>

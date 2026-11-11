@@ -40,7 +40,7 @@
 /* Paused */
 .badgePaused {
   background-color: var(--wg-surface);
-  color: #475569;
+  color: var(--wg-text-secondary);
   border: 1px solid #cbd5e1;
 }
 .dotPaused {

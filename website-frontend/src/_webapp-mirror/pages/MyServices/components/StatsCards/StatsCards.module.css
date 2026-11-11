@@ -59,7 +59,7 @@
 .statValue {
   font-size: 1.65rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--wg-text);
   font-family: var(--font-heading);
   line-height: 1.2;
 }

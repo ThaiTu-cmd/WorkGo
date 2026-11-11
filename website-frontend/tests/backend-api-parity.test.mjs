@@ -14,6 +14,7 @@ import { authApi } from "../src/_webapp-mirror/api/authApi.js";
 import { providerApi } from "../src/_webapp-mirror/api/providerApi.js";
 import { adminApi } from "../src/_webapp-mirror/api/adminApi.js";
 import { orderApi, isOrderable, orderErrorMessage } from "../src/_webapp-mirror/api/orderApi.js";
+import { paymentApi, paymentErrorMessage, startPayment, PAYMENT_OPTIONS } from "../src/_webapp-mirror/api/paymentApi.js";
 import axiosClient from "../src/_webapp-mirror/api/axiosClient.js";
 import { evidenceApi } from "../src/_webapp-mirror/api/evidenceApi.js";
 import { verificationApi } from "../src/_webapp-mirror/api/verificationApi.js";
@@ -134,13 +135,13 @@ test("API Parity: orderApi exports order, history, execution, and create operati
   assert.equal(typeof orderApi.createOrder, "function");
 });
 
-test("API Parity: orderApi calls the onsite, digital and payment-confirm endpoints", async () => {
+test("API Parity: orderApi calls the onsite and digital endpoints", async () => {
   const calls = [];
   const original = { get: axiosClient.get, post: axiosClient.post };
   axiosClient.get = async (url, config) => calls.push(["GET", url, config?.params]);
   axiosClient.post = async (url, body) => calls.push(["POST", url, body]);
   try {
-    await orderApi.confirmPayment("o1");
+    await orderApi.getCheckinCode("o1");
     await orderApi.checkin("o1", "123456");
     await orderApi.completeOnsite("o1");
     await orderApi.acceptOnsite("o1");
@@ -154,7 +155,7 @@ test("API Parity: orderApi calls the onsite, digital and payment-confirm endpoin
     Object.assign(axiosClient, original);
   }
   assert.deepEqual(calls, [
-    ["POST", "/order/internal/orders/o1/confirm", undefined],
+    ["GET", "/order/orders/onsite/o1/checkin-code", undefined],
     ["POST", "/order/orders/onsite/o1/checkin", { code: "123456" }],
     ["POST", "/order/orders/onsite/o1/complete", undefined],
     ["POST", "/order/orders/onsite/o1/accept", undefined],
@@ -198,4 +199,75 @@ test("API Parity: backend.ts bridge re-exports all API modules cleanly", () => {
   assert.match(content, /export\s*\{\s*orderApi/);
   assert.match(content, /export\s*\{\s*evidenceApi/);
   assert.match(content, /export\s*\{\s*verificationApi\s*\}\s*from/);
+});
+
+test("API Parity: orderApi no longer confirms payments itself", () => {
+  assert.equal(orderApi.confirmPayment, undefined);
+});
+
+test("API Parity: paymentApi calls payment-service through the gateway", async () => {
+  const calls = [];
+  const original = { get: axiosClient.get, post: axiosClient.post };
+  axiosClient.get = async (url, config) => calls.push(["GET", url, config?.params]);
+  axiosClient.post = async (url, body, config) => calls.push(["POST", url, body, config?.headers]);
+  try {
+    await paymentApi.createPayment({ orderId: "o1", gateway: "VNPAY", paymentMethod: "QR" }, "key-1");
+    await paymentApi.createPayment({ orderId: "o1", gateway: "MOCK" }, "key-2");
+    await paymentApi.getPayment("p1");
+    await paymentApi.getPaymentsOfOrder("o1");
+    await paymentApi.getEscrow("o1");
+    await paymentApi.simulateMockPayment("PAY1", true);
+    await paymentApi.simulateMockPayment("PAY1", false);
+  } finally {
+    Object.assign(axiosClient, original);
+  }
+  assert.deepEqual(calls, [
+    ["POST", "/payment/payments", { orderId: "o1", gateway: "VNPAY", paymentMethod: "QR" }, { "Idempotency-Key": "key-1" }],
+    ["POST", "/payment/payments", { orderId: "o1", gateway: "MOCK" }, { "Idempotency-Key": "key-2" }],
+    ["GET", "/payment/payments/p1", undefined],
+    ["GET", "/payment/payments", { orderId: "o1" }],
+    ["GET", "/payment/escrows/orders/o1", undefined],
+    ["POST", "/payment/dev/payments/PAY1/success", undefined, undefined],
+    ["POST", "/payment/dev/payments/PAY1/fail", undefined, undefined],
+  ]);
+});
+
+test("API Parity: createPayment always sends a fresh Idempotency-Key", async () => {
+  const keys = [];
+  const original = axiosClient.post;
+  axiosClient.post = async (_url, _body, config) => keys.push(config?.headers?.["Idempotency-Key"]);
+  try {
+    await paymentApi.createPayment({ orderId: "o1", gateway: "MOCK" });
+    await paymentApi.createPayment({ orderId: "o1", gateway: "MOCK" });
+  } finally {
+    axiosClient.post = original;
+  }
+  assert.equal(keys.length, 2);
+  assert.ok(keys[0] && keys[1]);
+  assert.notEqual(keys[0], keys[1]);
+});
+
+test("Payment flow: MOCK payments stay in the app, real gateways redirect", async () => {
+  const original = axiosClient.post;
+  axiosClient.post = async (_url, body) => ({
+    result: { paymentId: "p1", gateway: body.gateway, paymentUrl: "https://sandbox.example/pay" },
+  });
+  try {
+    let mocked = null;
+    const payment = await startPayment("o1", "mock", { onMock: (p) => { mocked = p; } });
+    assert.equal(payment.paymentId, "p1");
+    assert.equal(mocked?.paymentId, "p1", "MOCK hands the payment to onMock");
+  } finally {
+    axiosClient.post = original;
+  }
+  assert.ok(PAYMENT_OPTIONS.some((o) => o.gateway === "VNPAY"));
+  assert.ok(PAYMENT_OPTIONS.some((o) => o.gateway === "MOMO"));
+  assert.ok(PAYMENT_OPTIONS.every((o) => ["MOCK", "VNPAY", "MOMO"].includes(o.gateway)), "only gateways payment-service supports");
+});
+
+test("Payment flow: payment-service and order-service error codes are mapped separately", () => {
+  assert.match(paymentErrorMessage({ code: 3003 }), /đã được thanh toán/);
+  assert.match(orderErrorMessage({ code: 3003 }), /check-in/);
+  assert.match(orderErrorMessage({ code: 3020 }), /check-in/);
+  assert.equal(paymentErrorMessage({ message: "x" }), "x");
 });

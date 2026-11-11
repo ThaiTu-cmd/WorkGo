@@ -5,7 +5,7 @@
   margin: 0 auto;
   padding: 24px 20px 60px;
   box-sizing: border-box;
-  color: #1e293b;
+  color: var(--wg-text);
 }
 
 /* Breadcrumb */
@@ -43,7 +43,7 @@
 }
 
 .breadcrumbCurrent {
-  color: #334155;
+  color: var(--wg-text-secondary);
   font-weight: 600;
   padding: 4px 0;
 }
@@ -58,7 +58,7 @@
 .title {
   font-size: 1.875rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 0 0 8px;
   line-height: 1.3;
 }
@@ -92,7 +92,7 @@
 .filterLabel {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #334155;
+  color: var(--wg-text-secondary);
   white-space: nowrap;
 }
 
@@ -102,7 +102,7 @@
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 0.95rem;
-  color: #1e293b;
+  color: var(--wg-text);
   background-color: var(--wg-surface);
   min-height: 44px;
 }
@@ -130,7 +130,7 @@
 .dateHeading {
   font-size: 1.125rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 0 0 18px;
   padding-bottom: 8px;
   border-bottom: 1px solid #f1f5f9;
@@ -165,7 +165,7 @@
 }
 
 .slotHeld {
-  background-color: #fffbeb;
+  background-color: rgba(245, 158, 11, 0.1);
   border-color: #fde68a;
 }
 
@@ -178,7 +178,7 @@
 .slotTime {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
 }
 
 .slotStatusRow {
@@ -211,8 +211,8 @@
   font-size: 0.75rem;
   font-weight: 600;
   border-radius: 4px;
-  background-color: #e2e8f0;
-  color: #475569;
+  background-color: var(--wg-surface-alt);
+  color: var(--wg-text-secondary);
 }
 
 /* Empty State */

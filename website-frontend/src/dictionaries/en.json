@@ -787,7 +787,7 @@
     "m104": "Login to view service catalog.",
     "m105": "Unable to download catalog from server.",
     "m106": "There are no categories yet.",
-    "m107": "{p0}+ services",
+    "m107": "{p0} services",
     "m108": "Featured categories",
     "m109": "Hundreds of fields for individuals & businesses",
     "m110": "See all",
@@ -2222,9 +2222,9 @@
     "m1539": "single",
     "m1540": "Last Updated:",
     "m1541": "Continue to Place order",
-    "m1542": "evaluate ",
-    "m1543": "Processing",
-    "m1544": "Message to",
+    "m1542": "reviews)",
+    "m1543": "orders in progress",
+    "m1544": "Message",
     "m1545": "Customer Reviews & Comments (",
     "m1546": "Based on",
     "m1547": "reviews from customers who have accepted",
@@ -2441,6 +2441,11 @@
     "m1758": "No escrow record for this order yet.",
     "m1759": "Could not load the escrow: {p0}",
     "m1760": "Refunded ({p0})",
-    "m1761": "Transactions"
+    "m1761": "Transactions",
+    "m1762": "New service · no reviews yet",
+    "m1763": "Your service title",
+    "m1764": "Basic package",
+    "m1765": "Standard package",
+    "m1766": "Premium package"
   }
 }

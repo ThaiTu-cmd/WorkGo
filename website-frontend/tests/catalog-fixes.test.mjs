@@ -1,13 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { listPublishedServices } from "../src/_webapp-mirror/api/catalogListing.js";
-import { fastestDeliveryDays, toPackages, toServiceCard } from "../src/_webapp-mirror/api/adapters.js";
+import { fastestDeliveryDays, toPackages, toServiceCard, toServiceDetail } from "../src/_webapp-mirror/api/adapters.js";
 import {
   applyMediaOp,
   attachGalleryIds,
+  defaultPackages,
   planMediaChanges,
   toPackageBody,
 } from "../src/_webapp-mirror/pages/ServiceForm/serviceFormSync.js";
+import { countByRootCategory } from "../src/_webapp-mirror/api/catalogListing.js";
 import { validatePackagePrices } from "../src/_webapp-mirror/pages/ServiceForm/formValidation.js";
 
 const page = (data) => ({ result: { data } });
@@ -132,4 +134,51 @@ test("applyMediaOp handles update and delete", () => {
   s = applyMediaOp(s, { op: "delete", id: "g1" });
   s = applyMediaOp(s, { op: "delete", id: "v" });
   assert.deepEqual(s, { cover: { id: "c", url: "https://x/new.jpg" }, gallery: [], video: null });
+});
+
+test("toServiceCard uses the service's own cover media, else a neutral placeholder (no stock photo)", () => {
+  const dto = { serviceId: "s1", title: "Logo", slug: "logo" };
+  const withMedia = toServiceCard(dto, {
+    medias: [
+      { serviceMediaId: "m2", url: "https://cdn/x/2.jpg", mediaType: "IMAGE", cover: false },
+      { serviceMediaId: "m1", url: "https://cdn/x/1.jpg", mediaType: "IMAGE", cover: true },
+    ],
+  });
+  assert.equal(withMedia.coverImage, "https://cdn/x/1.jpg");
+  assert.equal(withMedia.imageSource, "real");
+
+  const without = toServiceCard(dto, { medias: [] });
+  assert.match(without.coverImage, /^data:image\/svg\+xml/);
+  assert.doesNotMatch(without.coverImage, /picsum/);
+  assert.equal(without.imageSource, "placeholder");
+});
+
+test("toServiceDetail leaves stats the backend does not have empty instead of inventing them", () => {
+  const d = toServiceDetail({ service: { serviceId: "s1", title: "Logo", slug: "logo" } });
+  assert.equal(d.responseTime, null);
+  assert.equal(d.lastDelivery, null);
+  assert.equal(d.memberSince, null);
+  assert.deepEqual(d.languages, []);
+  assert.equal(d.mediaList.length, 1);
+  assert.doesNotMatch(d.coverImage, /picsum/);
+  const joined = toServiceDetail({
+    service: { serviceId: "s1" },
+    provider: { providerProfileId: "p", businessName: "A", joinedAt: "2025-03-01T00:00:00Z" },
+  });
+  assert.equal(joined.memberSince, 2025);
+});
+
+test("countByRootCategory counts listed services per root category", () => {
+  assert.deepEqual(
+    countByRootCategory([{ rootCategoryId: "r1" }, { rootCategoryId: "r1" }, { rootCategoryId: "r2" }, {}]),
+    { r1: 2, r2: 1 }
+  );
+});
+
+test("defaultPackages starts neutral: tier names, empty descriptions, rising prices", () => {
+  const tr = (k) => `<${k}>`;
+  const p = defaultPackages(tr);
+  assert.deepEqual([p.basic.title, p.standard.title, p.premium.title], ["<m1764>", "<m1765>", "<m1766>"]);
+  assert.deepEqual([p.basic.desc, p.standard.desc, p.premium.desc], ["", "", ""]);
+  assert.ok(p.basic.price < p.standard.price && p.standard.price < p.premium.price);
 });

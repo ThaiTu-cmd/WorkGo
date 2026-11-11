@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { catalogApi } from '../../api/catalogApi';
 import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
 import { pageItems, toPackages } from '../../api/adapters';
-import { addonsToForm, applyMediaOp, attachGalleryIds, DEFAULT_MINUTES, mediasToForm, planAddonChanges, planMediaChanges, toAddonBody, toPackageBody } from './serviceFormSync';
+import { addonsToForm, applyMediaOp, attachGalleryIds, defaultPackages, mediasToForm, planAddonChanges, planMediaChanges, toAddonBody, toPackageBody } from './serviceFormSync';
 const TIER_KEYS = {
   BASIC: 'basic',
   STANDARD: 'standard',
@@ -33,33 +33,8 @@ export default function ServiceFormPage({
     categoryName: '',
     executionType: 'DIGITAL',
     description: '',
-    tags: ['React', 'NextJS', 'Website'],
-    packages: {
-      basic: {
-        title: tr("m1039"),
-        desc: tr("m1040"),
-        days: 3,
-        minutes: DEFAULT_MINUTES.basic,
-        rev: '2 lần',
-        price: 2500000
-      },
-      standard: {
-        title: tr("m1041"),
-        desc: tr("m1042"),
-        days: 5,
-        minutes: DEFAULT_MINUTES.standard,
-        rev: '5 lần',
-        price: 5000000
-      },
-      premium: {
-        title: tr("m1043"),
-        desc: tr("m1044"),
-        days: 10,
-        minutes: DEFAULT_MINUTES.premium,
-        rev: tr("m1045"),
-        price: 8500000
-      }
-    },
+    tags: [],
+    packages: defaultPackages(tr),
     // Add-ons: { id (server addOnId, absent until saved), name, desc, price }.
     addons: [],
     coverImage: '',

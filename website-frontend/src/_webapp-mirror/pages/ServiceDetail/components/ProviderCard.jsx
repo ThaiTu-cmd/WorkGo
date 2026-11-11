@@ -5,18 +5,17 @@ import styles from './ProviderCard.module.css';
 export default function ProviderCard({
   provider = {},
   sellerBio = '',
-  responseTime = '< 1 giờ',
-  lastDelivery,
-  memberSince = '2023',
-  languages,
-  avgRating = 5.0,
+  // No made-up defaults: a stat without data is simply not shown.
+  responseTime = null,
+  lastDelivery = null,
+  memberSince = null,
+  languages = [],
+  avgRating = null,
   reviewCount = 0,
-  ordersInQueue = 2,
+  ordersInQueue = null,
   onContactSeller
 }) {
   const tr = useTranslations("misc");
-  lastDelivery ??= tr("m1661");
-  languages ??= [tr("m1662"), tr("m1663")];
   return <section className={styles.sellerSection}>
       <h2 className={styles.sectionTitle}>{tr("m953")}</h2>
 
@@ -44,10 +43,10 @@ export default function ProviderCard({
                 {avgRating != null && <div className={styles.stars}>
                     <Star size={15} className={styles.starIcon} />
                     <span className={styles.ratingVal}>{avgRating}</span>
-                    <span className={styles.reviewCount}>({reviewCount}{tr("m1542")}</span>
+                    <span className={styles.reviewCount}>({reviewCount} {tr("m1542")}</span>
                   </div>}
                 {avgRating != null && ordersInQueue != null && <span className={styles.dotSep}>•</span>}
-                {ordersInQueue != null && <span className={styles.queueText}>{ordersInQueue}{tr("m1543")}</span>}
+                {ordersInQueue != null && <span className={styles.queueText}>{ordersInQueue} {tr("m1543")}</span>}
               </div>}
           </div>
         </div>
@@ -55,8 +54,8 @@ export default function ProviderCard({
         {/* Bio */}
         {sellerBio && <p className={styles.sellerBio}>{sellerBio}</p>}
 
-        {/* Stats Grid */}
-        <div className={styles.statsGrid}>
+        {/* Stats Grid (hidden when there is nothing to show) */}
+        {(memberSince || responseTime || lastDelivery || languages?.length > 0) && <div className={styles.statsGrid}>
           {memberSince && <div className={styles.statItem}>
               <Calendar size={16} className={styles.statIcon} />
               <div className={styles.statText}>
@@ -88,13 +87,13 @@ export default function ProviderCard({
                 <span className={styles.statVal}>{languages.join(', ')}</span>
               </div>
             </div>}
-        </div>
+        </div>}
 
         {/* Action Button */}
         <div className={styles.footerAction}>
           <button type="button" className={styles.contactBtn} onClick={onContactSeller}>
             <MessageSquare size={16} />
-            <span>{tr("m1544")}{provider.name}</span>
+            <span>{tr("m1544")} {provider.name}</span>
           </button>
         </div>
       </div>

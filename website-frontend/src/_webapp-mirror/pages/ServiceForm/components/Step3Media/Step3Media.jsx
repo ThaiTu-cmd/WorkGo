@@ -2,6 +2,8 @@ import { useTranslations } from "next-intl";
 import React, { useState } from 'react';
 import { Sparkles, Plus, X } from 'lucide-react';
 import { isHttpUrl } from '../../formValidation';
+import { initialAvatar, placeholderCover } from '../../../../api/adapters';
+import { useMyDisplayName } from '../../../../hooks/useMyDisplayName';
 import styles from './Step3Media.module.css';
 export default function Step3Media({
   formData,
@@ -9,6 +11,8 @@ export default function Step3Media({
   errors = {}
 }) {
   const tr = useTranslations("misc");
+  // The preview shows the signed-in provider, not a sample person.
+  const providerName = useMyDisplayName() || tr("m86");
   const gallery = formData.gallery || [];
   const [newImageUrl, setNewImageUrl] = useState('');
   const [galleryError, setGalleryError] = useState('');
@@ -30,7 +34,7 @@ export default function Step3Media({
     setNewImageUrl('');
   };
   const removeImage = idx => onChange('gallery', gallery.filter((_, i) => i !== idx));
-  const coverUrl = formData.coverImage || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80';
+  const coverUrl = formData.coverImage || placeholderCover(formData.title);
   const basePrice = formData.packages?.basic?.price || 2500000;
   const formattedPrice = new Intl.NumberFormat('vi-VN').format(basePrice) + ' ₫';
   return <div className={styles.card}>
@@ -127,13 +131,13 @@ export default function Step3Media({
               <img src={coverUrl} alt="Thumbnail" className={styles.mockCardImg} />
               <div className={styles.mockCardBody}>
                 <div className={styles.mockProvider}>
-                  <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Avatar" className={styles.mockAvatar} />
-                  <span className={styles.mockPname}>Trần Minh Quang (Top Rated)</span>
+                  <img src={initialAvatar(providerName)} alt="" className={styles.mockAvatar} />
+                  <span className={styles.mockPname}>{providerName}</span>
                 </div>
                 <h4 className={styles.mockTitle}>
-                  {formData.title || tr("m1103")}
+                  {formData.title || tr("m1763")}
                 </h4>
-                <div className={styles.mockRating}>{tr("m1115")}</div>
+                <div className={styles.mockRating}>{tr("m1762")}</div>
                 <div className={styles.mockFooter}>
                   <span className={styles.mockPriceLabel}>{tr("m1116")}</span>
                   <span className={styles.mockPriceVal}>{formattedPrice}</span>

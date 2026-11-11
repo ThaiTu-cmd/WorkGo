@@ -18,6 +18,20 @@ export const initialAvatar = (name) => {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 };
 
+// Neutral 3:2 cover for a service without uploaded images: the title's initial
+// on a brand gradient, instead of a random stock photo that looks real.
+export const placeholderCover = (title) => {
+  const letter = (String(title || '?').trim()[0] || '?').toUpperCase();
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">` +
+    `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
+    `<stop offset="0" stop-color="#0f5132"/><stop offset="1" stop-color="#1dbf73"/></linearGradient></defs>` +
+    `<rect width="1200" height="800" fill="url(#g)"/>` +
+    `<text x="50%" y="53%" font-family="sans-serif" font-size="300" font-weight="700" fill="#ffffff" fill-opacity="0.9" ` +
+    `text-anchor="middle" dominant-baseline="middle">${letter}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+};
+
 const toNumber = (v) => (v === null || v === undefined || v === '' ? 0 : Number(v));
 // Instant as ISO string or epoch number → ms (0 when missing).
 const timeOf = (v) => (typeof v === 'number' ? v : Date.parse(v ?? '') || 0);
@@ -112,11 +126,13 @@ export const fastestDeliveryDays = (packages = []) => {
 
 // ServiceResponse (list endpoint) → ServiceCard item used by CatalogSearch and
 // PopularServices. `provider` is the ProviderProfileResponse when known;
-// `packages` (PackageResponse[]) fills deliveryDays when given.
-export const toServiceCard = (dto, { category = null, provider = null, packages = null } = {}) => {
+// `packages` (PackageResponse[]) fills deliveryDays and `medias`
+// (ServiceMediaResponse[]) the cover image when given.
+export const toServiceCard = (dto, { category = null, provider = null, packages = null, medias = null } = {}) => {
   const providerView = toProvider(provider, dto.providerId);
-  const hasRealCover = Boolean(dto.coverImage);
-  const coverImage = dto.coverImage || (dto.slug ? `https://picsum.photos/seed/${dto.slug}-1/1200/800` : initialAvatar(dto.title));
+  const realCover = dto.coverImage || toMediaList(medias || [])[0]?.url || null;
+  const hasRealCover = Boolean(realCover);
+  const coverImage = realCover || placeholderCover(dto.title);
   return {
     serviceId: dto.serviceId,
     providerId: dto.providerId,
@@ -145,10 +161,9 @@ export const toServiceDetail = ({ service, packages = [], addons = [], medias = 
   const mediaList = toMediaList(medias, service.title);
   const pkgs = toPackages(packages);
   const hasRealMedia = mediaList.length > 0 || Boolean(service.coverImage);
-  const coverUrl = mediaList[0]?.url || (service.slug ? `https://picsum.photos/seed/${service.slug}-1/1200/800` : initialAvatar(service.title));
+  const coverUrl = mediaList[0]?.url || service.coverImage || placeholderCover(service.title);
   const fullMediaList = mediaList.length > 0 ? mediaList : [
-    { id: 'cover-1', url: coverUrl, isCover: true, alt: service.title, source: 'placeholder' },
-    { id: 'cover-2', url: `https://picsum.photos/seed/${service.slug}-2/1200/800`, isCover: false, alt: service.title, source: 'placeholder' },
+    { id: 'cover-1', url: coverUrl, isCover: true, alt: service.title, source: hasRealMedia ? 'real' : 'placeholder' },
   ];
   return {
     serviceId: service.serviceId,
@@ -167,8 +182,6 @@ export const toServiceDetail = ({ service, packages = [], addons = [], medias = 
     basePrice: pkgs[0]?.price ?? toNumber(service.basePrice),
     provider: providerView,
     providerSource: providerView.source,
-    // Fields below are not yet provided by backend → rendered as illustrative placeholders.
-    mockFields: ['responseTime', 'lastDelivery', 'memberSince', 'languages', 'sellerBio', 'faqs', 'ordersInQueue'],
     avgRating: toNumber(service.reviewCount) > 0 ? toNumber(service.avgRating) : null,
     reviewCount: toNumber(service.reviewCount),
     orderCount: toNumber(service.orderCount),
@@ -177,10 +190,12 @@ export const toServiceDetail = ({ service, packages = [], addons = [], medias = 
     packages: pkgs,
     comparisonMatrix: [],
     sellerBio: providerView.bio,
-    responseTime: '< 1 giờ',
-    lastDelivery: 'Hôm nay',
-    memberSince: providerView.joinedAt ? new Date(providerView.joinedAt).getFullYear() : 2024,
-    languages: ['Tiếng Việt', 'English'],
+    // No backend source for these yet: null / empty hides the matching row
+    // instead of showing made-up values.
+    responseTime: null,
+    lastDelivery: null,
+    memberSince: providerView.joinedAt ? new Date(providerView.joinedAt).getFullYear() : null,
+    languages: [],
     faqs: [],
     reviews: [],
     addons: toAddons(addons),

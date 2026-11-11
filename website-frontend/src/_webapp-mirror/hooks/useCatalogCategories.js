@@ -9,7 +9,6 @@ export const CATEGORY_META = {
     executionType: 'DIGITAL',
     executionLabel: 'Online',
     popularTags: ['Logo Branding', 'Figma UI/UX', 'Banner Ads'],
-    serviceCount: 3,
   },
   'lap-trinh-it': {
     iconName: 'Code2',
@@ -17,7 +16,6 @@ export const CATEGORY_META = {
     executionType: 'DIGITAL',
     executionLabel: 'Online',
     popularTags: ['Web Next.js', 'App Mobile', 'API & Cloud'],
-    serviceCount: 3,
   },
   'viet-lach-dich-thuat': {
     iconName: 'PenLine',
@@ -25,7 +23,6 @@ export const CATEGORY_META = {
     executionType: 'DIGITAL',
     executionLabel: 'Online',
     popularTags: ['Bài viết chuẩn SEO', 'Dịch thuật', 'Content Marketing'],
-    serviceCount: 2,
   },
   'marketing-quang-cao': {
     iconName: 'Megaphone',
@@ -33,7 +30,6 @@ export const CATEGORY_META = {
     executionType: 'DIGITAL',
     executionLabel: 'Online',
     popularTags: ['Facebook Ads', 'Google Ads', 'SEO Fanpage'],
-    serviceCount: 2,
   },
   'sua-chua-bao-tri': {
     iconName: 'Wrench',
@@ -41,7 +37,6 @@ export const CATEGORY_META = {
     executionType: 'ONSITE',
     executionLabel: 'Tại nhà',
     popularTags: ['Điện nước dân dụng', 'Điện lạnh', 'Sửa máy giặt'],
-    serviceCount: 3,
   },
   've-sinh-don-dep': {
     iconName: 'Sparkles',
@@ -49,7 +44,6 @@ export const CATEGORY_META = {
     executionType: 'ONSITE',
     executionLabel: 'Tại nhà',
     popularTags: ['Dọn dẹp theo giờ', 'Giặt sofa nệm', 'Vệ sinh công nghiệp'],
-    serviceCount: 3,
   },
   'van-chuyen-giao-hang': {
     iconName: 'Truck',
@@ -57,7 +51,6 @@ export const CATEGORY_META = {
     executionType: 'ONSITE',
     executionLabel: 'Giao nhận',
     popularTags: ['Giao hàng hỏa tốc', 'Chuyển nhà trọn gói', 'Bốc xếp xe tải'],
-    serviceCount: 2,
   },
   'giao-duc-gia-su': {
     iconName: 'GraduationCap',
@@ -65,7 +58,6 @@ export const CATEGORY_META = {
     executionType: 'DIGITAL',
     executionLabel: 'Đặt lịch',
     popularTags: ['Luyện thi IELTS', 'Gia sư Toán', 'Dạy kèm 1-1'],
-    serviceCount: 2,
   },
 };
 
@@ -93,7 +85,6 @@ export function useCatalogCategories() {
             executionType: meta.executionType || 'DIGITAL',
             executionLabel: meta.executionLabel || null,
             popularTags: meta.popularTags || (cat.children || []).map((c) => c.name),
-            serviceCount: meta.serviceCount ?? null,
           };
         });
 

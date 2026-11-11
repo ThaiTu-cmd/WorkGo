@@ -8,6 +8,21 @@ const clean = (s) => String(s ?? '').trim();
 export const DURATION_OPTIONS = [30, 60, 90, 120, 180, 240, 360, 480];
 export const DEFAULT_MINUTES = { basic: 60, standard: 120, premium: 240 };
 
+// Starting values for the three packages of a new service: neutral tier names,
+// no description (the inputs show examples as placeholders) and rising prices.
+export const defaultPackages = (tr) => ({
+  basic: { title: tr('m1764'), desc: '', days: 3, minutes: DEFAULT_MINUTES.basic, rev: '2 lần', price: 2500000 },
+  standard: { title: tr('m1765'), desc: '', days: 5, minutes: DEFAULT_MINUTES.standard, rev: '5 lần', price: 5000000 },
+  premium: { title: tr('m1766'), desc: '', days: 10, minutes: DEFAULT_MINUTES.premium, rev: tr('m1045'), price: 8500000 },
+});
+
+// Example texts shown as placeholders in the package inputs.
+export const PACKAGE_EXAMPLES = {
+  basic: { title: 'm1039', desc: 'm1040' },
+  standard: { title: 'm1041', desc: 'm1042' },
+  premium: { title: 'm1043', desc: 'm1044' },
+};
+
 // '3 lần' → 3; 'Không giới hạn' / 'Unlimited' → null (unlimited).
 export const parseRevisions = (rev) => {
   const n = parseInt(String(rev ?? ''), 10);

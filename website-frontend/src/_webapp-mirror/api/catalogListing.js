@@ -37,4 +37,11 @@ export async function listPublishedServices({ executionTypes = EXECUTION_TYPES, 
   return { services: [...byId.values()], categories };
 }
 
+// Number of listed services per root category id (cards carry rootCategoryId).
+export const countByRootCategory = (services = []) =>
+  services.reduce((acc, s) => {
+    if (s.rootCategoryId) acc[s.rootCategoryId] = (acc[s.rootCategoryId] || 0) + 1;
+    return acc;
+  }, {});
+
 export default listPublishedServices;

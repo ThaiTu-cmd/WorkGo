@@ -6,7 +6,7 @@ import Pagination from './components/Pagination/Pagination';
 import ServiceCard from '../../components/common/ServiceCard/ServiceCard';
 import SkeletonServiceCard from '../../components/common/Skeleton/SkeletonServiceCard';
 import { useCatalogCategories } from '../../hooks/useCatalogCategories';
-import { useServiceList } from '../../hooks/useServiceList';
+import { useServiceList, countByRootCategory } from '../../hooks/useServiceList';
 import { SearchX, RotateCcw, X } from 'lucide-react';
 import styles from './CatalogSearchPage.module.css';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
@@ -44,6 +44,15 @@ export default function CatalogSearchPage({
     services: listedServices,
     status: servicesStatus
   } = useServiceList();
+  // Sidebar counts come from the services actually listed (no number until loaded).
+  const categoriesWithCounts = useMemo(() => {
+    if (servicesStatus !== 'ready') return categories;
+    const counts = countByRootCategory(listedServices);
+    return categories.map(c => ({
+      ...c,
+      serviceCount: counts[c.categoryId] ?? 0
+    }));
+  }, [categories, listedServices, servicesStatus]);
   useEffect(() => {
     setIsFiltering(true);
     const t = setTimeout(() => setIsFiltering(false), 250);
@@ -259,7 +268,7 @@ export default function CatalogSearchPage({
       <div className={styles.mainLayout}>
           {/* Desktop Filter Sidebar */}
           <div className={styles.sidebarColumn}>
-            <FilterSidebar categories={categories} categoriesStatus={categoriesStatus} selectedCategory={selectedCategory} onSelectCategory={cat => {
+            <FilterSidebar categories={categoriesWithCounts} categoriesStatus={categoriesStatus} selectedCategory={selectedCategory} onSelectCategory={cat => {
           setSelectedCategory(cat);
           setCurrentPage(1);
         }} selectedType={selectedType} onSelectType={t => {
@@ -340,7 +349,7 @@ export default function CatalogSearchPage({
             </div>
 
             <div className={styles.drawerBody}>
-              <FilterSidebar categories={categories} categoriesStatus={categoriesStatus} selectedCategory={selectedCategory} onSelectCategory={cat => {
+              <FilterSidebar categories={categoriesWithCounts} categoriesStatus={categoriesStatus} selectedCategory={selectedCategory} onSelectCategory={cat => {
             setSelectedCategory(cat);
             setCurrentPage(1);
           }} selectedType={selectedType} onSelectType={t => {

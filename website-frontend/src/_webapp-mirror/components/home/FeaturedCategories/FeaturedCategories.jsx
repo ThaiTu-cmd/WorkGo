@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import React from "react";
 import { Code2, Palette, Wrench, Sparkles, PenLine, Truck, Megaphone, GraduationCap, ArrowRight, FolderTree } from "lucide-react";
 import { useCatalogCategories } from "../../../hooks/useCatalogCategories";
+import { useCategoryCounts } from "../../../hooks/useServiceList";
 import styles from "./FeaturedCategories.module.css";
 const ICON_MAP = {
   Code2: Code2,
@@ -24,6 +25,8 @@ export default function FeaturedCategories({
     categories,
     status
   } = useCatalogCategories();
+  // Real number of published services per category (null while loading).
+  const counts = useCategoryCounts();
   const getBadgeClass = type => {
     switch (type) {
       case "DIGITAL":
@@ -93,8 +96,8 @@ export default function FeaturedCategories({
                 {/* Card footer */}
                 <div className={styles.cardFooter}>
                   <span className={styles.countText}>
-                    {cat.serviceCount != null ? tr("m107", {
-                  p0: cat.serviceCount
+                    {counts ? tr("m107", {
+                  p0: counts[cat.categoryId] ?? 0
                 }) : ""}
                   </span>
                   <span className={styles.exploreBtn}>

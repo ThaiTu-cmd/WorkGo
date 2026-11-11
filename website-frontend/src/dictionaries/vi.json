@@ -787,7 +787,7 @@
     "m104": "Đăng nhập để xem danh mục dịch vụ.",
     "m105": "Không tải được danh mục từ máy chủ.",
     "m106": "Chưa có danh mục nào.",
-    "m107": "{p0}+ dịch vụ",
+    "m107": "{p0} dịch vụ",
     "m108": "Danh mục nổi bật",
     "m109": "Hàng trăm lĩnh vực cho cá nhân & doanh nghiệp",
     "m110": "Xem tất cả",
@@ -2441,6 +2441,11 @@
     "m1758": "Chưa có thông tin ký quỹ cho đơn này.",
     "m1759": "Không tải được thông tin ký quỹ: {p0}",
     "m1760": "Đã hoàn tiền ({p0})",
-    "m1761": "Lịch sử giao dịch"
+    "m1761": "Lịch sử giao dịch",
+    "m1762": "Dịch vụ mới · chưa có đánh giá",
+    "m1763": "Tiêu đề dịch vụ của bạn",
+    "m1764": "Gói Cơ bản",
+    "m1765": "Gói Tiêu chuẩn",
+    "m1766": "Gói Cao cấp"
   }
 }

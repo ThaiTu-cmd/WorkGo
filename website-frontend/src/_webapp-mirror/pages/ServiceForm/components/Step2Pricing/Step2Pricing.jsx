@@ -2,7 +2,7 @@ import { useTranslations } from "next-intl";
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import styles from './Step2Pricing.module.css';
-import { DEFAULT_MINUTES, DURATION_OPTIONS } from '../../serviceFormSync';
+import { DEFAULT_MINUTES, DURATION_OPTIONS, defaultPackages, PACKAGE_EXAMPLES } from '../../serviceFormSync';
 let nextAddonKey = 0;
 export default function Step2Pricing({
   formData,
@@ -11,29 +11,7 @@ export default function Step2Pricing({
 }) {
   const tr = useTranslations("misc");
   const isDigital = (formData.executionType || 'DIGITAL') === 'DIGITAL';
-  const packages = formData.packages || {
-    basic: {
-      title: tr("m1039"),
-      desc: tr("m1040"),
-      days: 3,
-      rev: '2 lần',
-      price: 2500000
-    },
-    standard: {
-      title: tr("m1041"),
-      desc: tr("m1042"),
-      days: 5,
-      rev: '5 lần',
-      price: 5000000
-    },
-    premium: {
-      title: tr("m1043"),
-      desc: tr("m1044"),
-      days: 10,
-      rev: tr("m1045"),
-      price: 8500000
-    }
-  };
+  const packages = formData.packages || defaultPackages(tr);
 
   // F1: keep raw numeric input (NaN → 0) so validateStep can REPORT range errors;
   // the save path clamps as a safety net. Silent hard-clamp here would hide the error UI.
@@ -101,13 +79,13 @@ export default function Step2Pricing({
             <tr>
               <td className={styles.tdFeature}>{tr("m1072")}</td>
               <td>
-                <input type="text" className={styles.inputTitle} value={packages.basic?.title || ''} onChange={e => handlePackageChange('basic', 'title', e.target.value)} />
+                <input type="text" className={styles.inputTitle} placeholder={tr(PACKAGE_EXAMPLES.basic.title)} value={packages.basic?.title || ''} onChange={e => handlePackageChange('basic', 'title', e.target.value)} />
               </td>
               <td>
-                <input type="text" className={styles.inputTitle} value={packages.standard?.title || ''} onChange={e => handlePackageChange('standard', 'title', e.target.value)} />
+                <input type="text" className={styles.inputTitle} placeholder={tr(PACKAGE_EXAMPLES.standard.title)} value={packages.standard?.title || ''} onChange={e => handlePackageChange('standard', 'title', e.target.value)} />
               </td>
               <td>
-                <input type="text" className={styles.inputTitle} value={packages.premium?.title || ''} onChange={e => handlePackageChange('premium', 'title', e.target.value)} />
+                <input type="text" className={styles.inputTitle} placeholder={tr(PACKAGE_EXAMPLES.premium.title)} value={packages.premium?.title || ''} onChange={e => handlePackageChange('premium', 'title', e.target.value)} />
               </td>
             </tr>
 
@@ -115,13 +93,13 @@ export default function Step2Pricing({
             <tr>
               <td className={styles.tdFeature}>{tr("m1073")}</td>
               <td>
-                <textarea className={styles.textareaDesc} value={packages.basic?.desc || ''} onChange={e => handlePackageChange('basic', 'desc', e.target.value)} />
+                <textarea className={styles.textareaDesc} placeholder={tr(PACKAGE_EXAMPLES.basic.desc)} value={packages.basic?.desc || ''} onChange={e => handlePackageChange('basic', 'desc', e.target.value)} />
               </td>
               <td>
-                <textarea className={styles.textareaDesc} value={packages.standard?.desc || ''} onChange={e => handlePackageChange('standard', 'desc', e.target.value)} />
+                <textarea className={styles.textareaDesc} placeholder={tr(PACKAGE_EXAMPLES.standard.desc)} value={packages.standard?.desc || ''} onChange={e => handlePackageChange('standard', 'desc', e.target.value)} />
               </td>
               <td>
-                <textarea className={styles.textareaDesc} value={packages.premium?.desc || ''} onChange={e => handlePackageChange('premium', 'desc', e.target.value)} />
+                <textarea className={styles.textareaDesc} placeholder={tr(PACKAGE_EXAMPLES.premium.desc)} value={packages.premium?.desc || ''} onChange={e => handlePackageChange('premium', 'desc', e.target.value)} />
               </td>
             </tr>
 

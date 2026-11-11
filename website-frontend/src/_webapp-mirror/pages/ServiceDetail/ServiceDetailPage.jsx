@@ -203,7 +203,7 @@ export default function ServiceDetailPage({
                 <div className={styles.ratingBox}>
                   <Star size={16} className={styles.starIcon} />
                   <strong className={styles.ratingScore}>{service.avgRating}</strong>
-                  <span className={styles.ratingReviews}>({service.reviewCount}{tr("m1542")}</span>
+                  <span className={styles.ratingReviews}>({service.reviewCount} {tr("m1542")}</span>
                 </div>
               </>}
 

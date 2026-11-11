@@ -7,14 +7,7 @@ import { useMessages } from '../../../hooks/useMessages';
 import { totalUnread } from '../../../api/messageApi';
 import { hasRole } from '../../../utils/jwt';
 import styles from './AccountMenu.module.css';
-import { decodeToken } from '../../../utils/jwt';
-
-// identity-service puts the username in the JWT subject; display-only fallback
-// used while myInfo is unavailable.
-const tokenUserName = token => {
-  const sub = decodeToken(token)?.sub;
-  return typeof sub === 'string' && sub ? sub : null;
-};
+import { useMyDisplayName } from '../../../hooks/useMyDisplayName';
 
 // Signed-in destinations that used to live in the Trung sub-nav. Pages that
 // need an id (submit-proposal, review-form) are opened from their parent page.
@@ -148,25 +141,7 @@ export default function AccountMenu({
   const unread = totalUnread(useMessages());
   // Trigger shows who is signed in: "Nguyễn Văn A" (myInfo) with the login id
   // as fallback while the profile is unavailable.
-  const [displayName, setDisplayName] = useState(null);
-  useEffect(() => {
-    if (!token) {
-      setDisplayName(null);
-      return undefined;
-    }
-    let cancelled = false;
-    authApi.getMyInfo().then(res => {
-      if (cancelled) return;
-      const user = res?.result;
-      const full = [user?.lastName, user?.firstName].filter(Boolean).join(' ').trim();
-      setDisplayName(full || user?.userName || tokenUserName(token) || null);
-    }).catch(() => {
-      if (!cancelled) setDisplayName(tokenUserName(token));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
+  const displayName = useMyDisplayName();
 
   // Close on outside click or Escape (focus returns to the trigger).
   useEffect(() => {

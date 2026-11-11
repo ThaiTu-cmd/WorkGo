@@ -149,3 +149,15 @@ test("adapters: row status and catalog ServiceStatus convert both ways", () => {
   assert.equal(toServiceStatus("ACTIVE"), "PUBLISHED");
   assert.equal(toServiceStatus("PAUSED"), "PAUSED");
 });
+
+test("Order numbers: long backend numbers are shortened for display", async () => {
+  const { shortOrderNumber, orderLabel } = await import("../src/_webapp-mirror/utils/orderNumber.js");
+  assert.equal(
+    shortOrderNumber("WG2026-11-11T07:39:15.553032500Z-f5da0b14-b371-4d0f-ae03-eb83bd466038"),
+    "WG-F5DA0B14",
+  );
+  assert.equal(shortOrderNumber("WG-P-ab106566-b358-4dcd-bb63-44f793783004"), "WG-P-AB106566");
+  assert.equal(shortOrderNumber("ORD-2026-0001"), "ORD-2026-0001", "short numbers stay as they are");
+  assert.equal(shortOrderNumber("", "97c833ba-87b8-431f-8310-fc7a0662ce15"), "WG-97C833BA");
+  assert.equal(orderLabel(null), "");
+});

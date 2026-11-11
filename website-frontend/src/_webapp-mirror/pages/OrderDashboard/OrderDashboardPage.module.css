@@ -279,6 +279,8 @@
 
 .tableWrap {
   overflow-x: auto;
+  /* Lets the detail row size itself to the visible width (cqw), not the table's. */
+  container-type: inline-size;
 }
 
 .ordersTable {
@@ -508,6 +510,17 @@
   background-color: var(--wg-surface);
 }
 
+/* When the table is wider than its wrapper, keep the expanded details inside the
+   visible area instead of stretching them to the full table width. */
+@supports (width: 1cqw) {
+  .detailGrid {
+    position: sticky;
+    left: 16px;
+    box-sizing: border-box;
+    width: calc(100cqw - 32px);
+  }
+}
+
 .detailList {
   display: flex;
   flex-direction: column;
@@ -657,6 +670,8 @@
 
   .detailGrid {
     grid-template-columns: minmax(0, 1fr);
+    position: static;
+    width: auto;
   }
 
   .svcTitle {

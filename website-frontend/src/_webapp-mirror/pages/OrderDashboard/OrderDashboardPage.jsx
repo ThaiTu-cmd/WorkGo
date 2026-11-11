@@ -16,6 +16,7 @@ import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
 import { orderApi, orderErrorMessage } from '../../api/orderApi';
 import { ORDER_PAYMENT_TIMEOUT_MINUTES } from '../../api/paymentApi';
 import styles from './OrderDashboardPage.module.css';
+import { orderLabel } from '../../utils/orderNumber';
 // Labels below are keys of the "misc" dictionary, translated with tr() at render.
 const NOTICES = {
   'needs-login': 'm1571',
@@ -377,7 +378,7 @@ export default function OrderDashboardPage({
     const q = query.trim().toLowerCase();
     return orders.filter(o => {
       const okStatus = tab === 'ACTIVE' ? ACTIVE_STATUSES.includes(o.orderStatus) : o.orderStatus === tab;
-      const okQuery = !q || o.orderNumber?.toLowerCase().includes(q) || o.title?.toLowerCase().includes(q) || o.counterpartName?.toLowerCase().includes(q);
+      const okQuery = !q || o.orderNumber?.toLowerCase().includes(q) || orderLabel(o).toLowerCase().includes(q) || o.title?.toLowerCase().includes(q) || o.counterpartName?.toLowerCase().includes(q);
       return okStatus && okQuery;
     });
   }, [orders, tab, query]);
@@ -389,7 +390,7 @@ export default function OrderDashboardPage({
     setExpandedId(null);
   };
   const afterFlowAction = (order, message) => {
-    toast(`${order.orderNumber}: ${message}`);
+    toast(`${orderLabel(order)}: ${message}`);
     setExpandedId(order.orderId);
     setDetailsVersion(v => v + 1);
     reload();
@@ -439,7 +440,7 @@ export default function OrderDashboardPage({
     try {
       afterFlowAction(order, await SERVER_ACTIONS[action.run](order));
     } catch (err) {
-      toast(`${order.orderNumber}: ${orderErrorMessage(err)}`);
+      toast(`${orderLabel(order)}: ${orderErrorMessage(err)}`);
     } finally {
       setBusyId(null);
     }
@@ -474,7 +475,7 @@ export default function OrderDashboardPage({
         type: 'order',
         id: o.orderId,
         title: o.title,
-        label: o.orderNumber,
+        label: orderLabel(o),
         status: o.orderStatus
       }
     });
@@ -580,8 +581,8 @@ export default function OrderDashboardPage({
                   return <React.Fragment key={o.orderId}>
                         <tr className={expanded ? styles.rowExpanded : ''}>
                           <td data-label={tr("m870")}>
-                            <span className={styles.orderNo}>{o.orderNumber}</span>
-                            <small className={styles.small}>{tr("m1538")}{formatDate(o.placedAt || o.createdAt)}</small>
+                            <span className={styles.orderNo} title={o.orderNumber}>{orderLabel(o)}</span>
+                            <small className={styles.small}>{tr("m1538")} {formatDate(o.placedAt || o.createdAt)}</small>
                           </td>
                           <td data-label={tr("m84")}>
                             <span className={styles.svcTitle}>{o.title}</span>

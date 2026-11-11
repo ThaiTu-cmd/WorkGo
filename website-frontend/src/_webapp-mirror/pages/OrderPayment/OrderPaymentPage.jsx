@@ -8,6 +8,7 @@ import OrderStatusBadge from '../OrderDashboard/components/OrderStatusBadge';
 import { CheckinCode } from '../OrderDashboard/components/OrderFlowDialogs';
 import { orderApi, orderErrorMessage } from '../../api/orderApi';
 import { DEFAULT_PAYMENT_OPTION, ORDER_PAYMENT_TIMEOUT_MINUTES, isPaymentWaiting, paymentApi, paymentErrorMessage, startPayment } from '../../api/paymentApi';
+import { orderLabel } from '../../utils/orderNumber';
 
 // Gateways only redirect the browser back here; the payment is confirmed by
 // their server-to-server IPN, so keep polling a while before giving up.
@@ -145,7 +146,7 @@ function PayOrderView({
     return <PageFrame tr={tr} onBack={back}>
         <section className={checkoutStyles.emptyState}>
           <ShieldCheck size={48} className={checkoutStyles.successIcon} />
-          <h1 className={checkoutStyles.pageTitle}>{order.orderNumber}</h1>
+          <h1 className={checkoutStyles.pageTitle} title={order.orderNumber}>{orderLabel(order)}</h1>
           <OrderStatusBadge status={order.orderStatus} />
           <p>{tr("m1719")}</p>
           <div className={checkoutStyles.successActions}>
@@ -166,7 +167,7 @@ function PayOrderView({
           <dl className={styles.summary}>
             <div>
               <dt>{tr("m1714")}</dt>
-              <dd><strong>{order.orderNumber}</strong></dd>
+              <dd><strong title={order.orderNumber}>{orderLabel(order)}</strong></dd>
             </div>
             {order.title && <div>
                 <dt>{tr("m84")}</dt>
@@ -388,7 +389,7 @@ function PaidOrderInfo({
   }, [orderId]);
   if (!order) return null;
   return <div className={styles.paidInfo}>
-      <span className={checkoutStyles.mutedText}>{order.orderNumber}</span>
+      <span className={checkoutStyles.mutedText} title={order.orderNumber}>{orderLabel(order)}</span>
       <OrderStatusBadge status={order.orderStatus} />
       {order.executionType === 'ONSITE' && <div className={styles.codeBox}>
           <strong>{tr("m835")}</strong>

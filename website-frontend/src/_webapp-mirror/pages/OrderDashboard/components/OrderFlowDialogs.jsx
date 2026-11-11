@@ -5,6 +5,7 @@ import { orderApi } from '../../../api/orderApi';
 import OrderFlowDialog from './OrderFlowDialog';
 import evidenceStyles from './WorkEvidence.module.css';
 import styles from './OrderFlow.module.css';
+import { orderLabel } from '../../../utils/orderNumber';
 
 // No file storage service yet: small files travel as data URLs (like evidence photos).
 export const MAX_FILE_BYTES = 2 * 1024 * 1024;
@@ -40,7 +41,7 @@ export function CheckinDialog({
 }) {
   const tr = useTranslations("misc");
   const [code, setCode] = useState('');
-  return <OrderFlowDialog title={`Check-in ${order.orderNumber}`} submitLabel="Check-in" canSubmit={/^\d{6}$/.test(code)} onSubmit={async () => {
+  return <OrderFlowDialog title={`Check-in ${orderLabel(order)}`} submitLabel="Check-in" canSubmit={/^\d{6}$/.test(code)} onSubmit={async () => {
     await orderApi.checkin(order.orderId, code);
     onDone(tr("m1515"));
   }} onClose={onClose}>
@@ -149,7 +150,7 @@ export function DeliveryDialog({
     }
   };
   return <OrderFlowDialog title={tr("m1454", {
-    p0: order.orderNumber
+    p0: orderLabel(order)
   })} submitLabel={tr("m819")} canSubmit={files.length > 0} onSubmit={async () => {
     await orderApi.submitDelivery(order.orderId, {
       message: message.trim() || null,

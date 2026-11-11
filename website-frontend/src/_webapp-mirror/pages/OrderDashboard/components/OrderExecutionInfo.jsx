@@ -50,12 +50,16 @@ export default function OrderExecutionInfo({
   const [orderHistory, setOrderHistory] = useState([]);
   const [responding, setResponding] = useState(false);
   const orderId = order?.orderId;
+  // OrderResponse does not say whether a cancellation request exists, and the endpoint
+  // answers 404 when there is none. Skip the call where no request can matter:
+  // unpaid orders cancel at once, completed orders can no longer be cancelled.
+  const mayHaveCancellation = !['PENDING_PAYMENT', 'COMPLETED'].includes(order?.orderStatus);
   useEffect(() => {
     if (!orderId) return;
     let cancelled = false;
 
     // Fetch cancellation details
-    orderApi.getCancellation(orderId).then(res => {
+    if (mayHaveCancellation) orderApi.getCancellation(orderId).then(res => {
       if (!cancelled && res?.result) {
         setCancellation(res.result);
       }
@@ -75,7 +79,7 @@ export default function OrderExecutionInfo({
     return () => {
       cancelled = true;
     };
-  }, [orderId]);
+  }, [orderId, mayHaveCancellation]);
   const handleRespondCancellation = async accept => {
     if (responding || !orderId) return;
     setResponding(true);

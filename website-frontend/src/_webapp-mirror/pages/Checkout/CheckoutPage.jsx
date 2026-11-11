@@ -6,6 +6,7 @@ import { orderApi, isOrderable, orderErrorMessage, NOT_ORDERABLE_MESSAGE } from 
 import { DEFAULT_PAYMENT_OPTION, ORDER_PAYMENT_TIMEOUT_MINUTES, paymentErrorMessage, startPayment } from '../../api/paymentApi';
 import OnsiteBookingSection, { formatOrderAddress } from './OnsiteBookingSection';
 import PaymentOptionPicker from './PaymentOptionPicker';
+import { orderLabel } from '../../utils/orderNumber';
 
 // Mirrors order-service `order.platform-fee-rate` (application.yaml).
 const PLATFORM_FEE_RATE = 0.1;
@@ -196,7 +197,7 @@ export default function CheckoutPage({
             <AlertTriangle size={56} className={styles.warnIcon} />
             <h1 className={styles.pageTitle}>{tr("m1709")}</h1>
             <p>{tr("m1710", {
-              p0: createdOrder?.orderNumber || createdOrder?.orderId || '—',
+              p0: (createdOrder && orderLabel(createdOrder)) || '—',
               p1: payError
             })}</p>
             <p className={styles.mutedText}>{tr("m1711", {

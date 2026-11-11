@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowLeft, Loader2, Upload } from 'lucide-react';
 import OrderStatusBadge from '../OrderDashboard/components/OrderStatusBadge';
 import { orderApi, orderErrorMessage } from '../../api/orderApi';
 import styles from './OrderCancelPage.module.css';
+import { orderLabel } from '../../utils/orderNumber';
 const NOTE_MIN = 20;
 const NOTE_MAX = 500;
 // `label` is a key of the "misc" dictionary, translated with tr() at render.
@@ -149,7 +150,7 @@ export default function OrderCancelPage({
       <button type="button" className={styles.backBtn} onClick={onBack}>
         <ArrowLeft size={16} />{tr("m49")}</button>
       <span className={styles.sep}>/</span>
-      <span>{order?.orderNumber}</span>
+      <span title={order?.orderNumber}>{orderLabel(order)}</span>
       <span className={styles.sep}>/</span>
       <span className={styles.current}>{isProvider ? tr("m631") : tr("m632")}</span>
     </nav>;
@@ -259,7 +260,7 @@ export default function OrderCancelPage({
         <aside className={styles.summary} aria-label={tr("m649")}>
           <h2 className={styles.cardTitle}>{tr("m49")}</h2>
           <div className={styles.orderHead}>
-            <span className={styles.orderNo}>{order.orderNumber}</span>
+            <span className={styles.orderNo} title={order.orderNumber}>{orderLabel(order)}</span>
             <OrderStatusBadge status={order.orderStatus} />
           </div>
           <p className={styles.svcTitle}>{order.title}</p>

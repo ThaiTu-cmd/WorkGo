@@ -57,6 +57,7 @@ public class PaymentSyncService {
         }
 
         order.setPaymentStatus(PaymentStatus.RELEASED);
+        log.info("Escrow of order {} released", orderId);
         orderRepository.save(order);
     }
 
@@ -94,6 +95,7 @@ public class PaymentSyncService {
         }
 
         order.setPaymentStatus(PaymentStatus.REFUNDED);
+        log.info("Escrow of order {} refunded", orderId);
         orderRepository.save(order);
     }
 

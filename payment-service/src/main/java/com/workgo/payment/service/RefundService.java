@@ -113,6 +113,7 @@ public class RefundService {
 
         refund.setStatus(RefundStatus.COMPLETED);
         refund.setProcessedAt(now);
+        log.info("Refund payment {} of order {} completed, reason {}", payment.getPaymentCode(), payment.getOrderId(), reason);
 
         if (escrow != null) {
             escrowService.refund(escrow, refund);

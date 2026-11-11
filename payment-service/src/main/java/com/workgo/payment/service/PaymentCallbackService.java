@@ -59,12 +59,15 @@ public class PaymentCallbackService {
                 payment.setFailureCode(result.getFailureCode());
                 payment.setFailureMessage(result.getFailureMessage());
                 paymentStatusService.transition(payment, PaymentStatus.FAILED);
+                log.info("Payment {} of order {} failed: {}", payment.getPaymentCode(), payment.getOrderId(), result.getFailureCode());
             }
             return paymentMapper.toResponse(paymentRepository.save(payment));
         }
 
         //EXPIRED / CANCELLED van nhan, vi tien da bi tru that
         paymentStatusService.transition(payment, PaymentStatus.SUCCEEDED);
+        log.info("Payment {} of order {} succeeded, gatewayTxnId {}",
+                payment.getPaymentCode(), payment.getOrderId(), payment.getGatewayTxnId());
 
         //order da co escrow (tra tre vao QR cu) -> khong hold, hoan lai payment nay
         if (escrowService.hold(payment).isEmpty()) {

@@ -43,6 +43,13 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             "/identity/auth/refresh"
     };
 
+    //vnpay / momo goi IPN + redirect trinh duyet ve, khong co token (payment-service tu check chu ky)
+    //dev: link mock /dev/payments/{code}/success mo bang trinh duyet
+    private final String[] PUBLIC_PREFIXES = {
+            "/payment/gateway/",
+            "/payment/dev/"
+    };
+
     @Value("${app.api-prefix}")
     @NonFinal
     private String apiPrefix;
@@ -78,8 +85,14 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     private boolean isPublicEndpoint(ServerHttpRequest request){
         String path = request.getURI().getPath();
 
-        return Arrays.stream(PUBLIC_ENDPOINTS)
-                .anyMatch(publicEndpoint -> path.equals(apiPrefix + publicEndpoint));
+        if (Arrays.stream(PUBLIC_ENDPOINTS)
+                .anyMatch(publicEndpoint -> path.equals(apiPrefix + publicEndpoint))) {
+            return true;
+        }
+
+        //chan /payment/gateway/../payments lach sang api can token
+        return !path.contains("..") && Arrays.stream(PUBLIC_PREFIXES)
+                .anyMatch(prefix -> path.startsWith(apiPrefix + prefix));
     }
 
     Mono<Void> unauthenticated(ServerHttpResponse response){

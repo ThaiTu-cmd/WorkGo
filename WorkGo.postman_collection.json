@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "workgo-collection-v2",
     "name": "WorkGo",
-    "description": "# WorkGo API Collection\n\nCollection này được sinh trực tiếp từ code trong repo (controllers / DTO / security config), đi qua **API Gateway :8888**.\n\n## 1. Các service và port\n\n| Service | Port | Context-path | Route qua gateway |\n|---|---|---|---|\n| api-gateway | 8888 | — | `http://localhost:8888/api/v1/**` |\n| identity-service | 8081 | `/identity` | `/api/v1/identity/**` |\n| catalog-service | 8082 | `/catalog` | `/api/v1/catalog/**` |\n| order-service | 8083 | `/order` | `/api/v1/order/**` |\n| job-service, payment-service | — | — | chưa có code, chưa có API |\n\nGateway dùng `StripPrefix=2`: `/api/v1/identity/auth/token` → service nhận `/identity/auth/token`.\n\n## 2. Cách dùng nhanh (5 bước)\n\n1. Bật PostgreSQL: `docker compose up -d` ở thư mục gốc repo.\n2. Chạy 4 service: identity (8081), catalog (8082), order (8083) và api-gateway (8888).\n3. Mở tab **Variables** của collection, điền `password` = mật khẩu tài khoản của bạn.\n4. Chạy `identity-service > users > Đăng ký tài khoản` (nếu chưa có tài khoản), rồi `auth > 1. Login`.\n   Token tự động lưu vào `{{accessToken}}`; mọi request sau đó tự gắn Bearer token.\n5. Chạy lần lượt từ trên xuống — các ID (`categoryId`, `serviceId`, `packageId`…) được **tự lưu** sau mỗi lần tạo thành công.\n\nRequest có 🔐 là cần token; các request **Public** đã được set `No Auth`.\n\n## 3. Tài khoản test có sẵn trong `data.sql`\n\n| userName | userId | Role trong seed |\n|---|---|---|\n| `nguyenvana` | `99999999-9999-9999-9999-999999999999` | CLIENT + PROVIDER |\n| `tranthib` | `88888888-8888-8888-8888-888888888888` | CLIENT + PROVIDER |\n| `levanc` | `77777777-7777-7777-7777-777777777777` | CLIENT |\n\n⚠️ **Mật khẩu không đọc ngược được từ hash BCrypt trong `data.sql`** — nếu bạn không nhớ, hãy tự ĐĂNG KÝ một tài khoản mới bằng request “Đăng ký tài khoản”.\n\n⚠️ **identity-service có `spring.sql.init.mode: always`** và `data.sql` bắt đầu bằng `DELETE FROM users` — nghĩa là **mỗi lần restart identity-service, toàn bộ user/address/provider bị xoá sạch** rồi nạp lại 3 user seed. catalog-service cũng tương tự (xoá sạch category/service/package/addon/slot). Hãy đăng ký lại tài khoản sau mỗi lần restart identity.\n\n## 4. Dữ liệu seed sẵn để test ngay (catalog-service)\n\nCác UUID này đã được điền sẵn vào biến collection:\n\n* `categoryId` = `11111111-1111-1111-1111-111111111111` — Thiết kế Đồ hoạ\n* `serviceId` = `44444444-4444-4444-4444-444444444444` — Thiết kế Logo Doanh Nghiệp\n* `packageId` = `66666666-6666-6666-6666-111111111111` — Gói Cơ Bản\n* `addonId` = `77777777-7777-7777-7777-111111111111` — Giao file source\n* `ruleId` = `88888888-8888-8888-8888-111111111111`\n* `serviceMediaId` = `99999999-9999-9999-9999-111111111111`\n* `providerId` = `99999999-9999-9999-9999-999999999999` — Văn A Studio, đã VERIFIED\n\n## 5. Muốn test được role PROVIDER thì làm gì?\n\nĐăng ký tài khoản chỉ cấp role **CLIENT**. Trình tự để có token chứa `ROLE_PROVIDER` + claim `providerId`:\n\n1. `providers > Đăng ký làm Provider` — tạo hồ sơ, trạng thái PENDING\n2. `providers > Duyệt / đổi trạng thái provider (ADMIN)` với `?status=VERIFIED` — bước này ghi role PROVIDER vào DB\n3. **Logout + Login lại** để lấy token mới\n4. Giờ mới chạy được `catalog-service > services > Tạo Service (cần role PROVIDER)`\n\n## 6. Muốn test được role ADMIN thì làm gì?\n\nSeed data **không có user nào mang role ADMIN**, và cũng không có API nào cấp role ADMIN. Cách nhanh nhất là insert trực tiếp vào DB:\n\n```sql\n-- 1) Lấy userId của tài khoản bạn vừa đăng ký\nSELECT user_id, user_name FROM users WHERE user_name = 'testuser01';\n\n-- 2) Cấp thêm role ADMIN\nINSERT INTO user_role (user_role_id, granted_at, granted_by, user_id, role_name)\nVALUES (gen_random_uuid(), CURRENT_TIMESTAMP, 'manual', '<user_id>', 'ADMIN');\n```\n\nSau đó **Login lại** để token mới chứa `ROLE_ADMIN`.\n\n## 7. Slot (ONSITE) — chưa test được bằng API\n\n`BookingSlotService.createSlot` đang bị comment và `data.sql` không insert slot nào, nên `/slots/services/{id}` luôn rỗng. Muốn test hold / confirm / release thì insert tạm:\n\n```sql\nINSERT INTO booking_slots (booking_slot_id, start_at, end_at, status, version,\n                           hold_expires_at, created_at, updated_at, service_id)\nVALUES (gen_random_uuid(), '2026-01-06 08:00:00', '2026-01-06 09:00:00', 'AVAILABLE', '0',\n        NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '44444444-4444-4444-4444-444444444444');\n```\n\n## 8. Ba lỗi gateway đã được sửa để collection này chạy được\n\n1. `WebClientConfiguration` — baseUrl sai port `8080` → sửa thành **8081**.\n2. `AuthenticationFilter.isPublicEndpoint` — ghép chuỗi sai nên **không endpoint nào được coi là public** → sửa danh sách và so sánh bằng `equals`.\n3. `application.yaml` — chỉ có route identity → thêm route **catalog** và **order**.\n\n`application-local.yaml` cũng đã được thêm route tương tự cho trường hợp chạy profile `local`.\n",
+    "description": "# WorkGo API Collection\n\nCollection này được sinh trực tiếp từ code trong repo (controllers / DTO / security config), đi qua **API Gateway :8888**.\n\n## 1. Các service và port\n\n| Service | Port | Context-path | Route qua gateway |\n|---|---|---|---|\n| api-gateway | 8888 | — | `http://localhost:8888/api/v1/**` |\n| identity-service | 8081 | `/identity` | `/api/v1/identity/**` |\n| catalog-service | 8082 | `/catalog` | `/api/v1/catalog/**` |\n| order-service | 8083 | `/order` | `/api/v1/order/**` |\n| payment-service | 8084 | `/payment` | `/api/v1/payment/**` |\n| job-service | — | — | chưa có code, chưa có API |\n\nGateway dùng `StripPrefix=2`: `/api/v1/identity/auth/token` → service nhận `/identity/auth/token`.\n\n## 2. Cách dùng nhanh (5 bước)\n\n1. Bật PostgreSQL: `docker compose up -d` ở thư mục gốc repo.\n2. Chạy 4 service: identity (8081), catalog (8082), order (8083) và api-gateway (8888).\n3. Mở tab **Variables** của collection, điền `password` = mật khẩu tài khoản của bạn.\n4. Chạy `identity-service > users > Đăng ký tài khoản` (nếu chưa có tài khoản), rồi `auth > 1. Login`.\n   Token tự động lưu vào `{{accessToken}}`; mọi request sau đó tự gắn Bearer token.\n5. Chạy lần lượt từ trên xuống — các ID (`categoryId`, `serviceId`, `packageId`…) được **tự lưu** sau mỗi lần tạo thành công.\n\nRequest có 🔐 là cần token; các request **Public** đã được set `No Auth`.\n\n## 3. Tài khoản test có sẵn trong `data.sql`\n\n| userName | userId | Role trong seed |\n|---|---|---|\n| `nguyenvana` | `99999999-9999-9999-9999-999999999999` | CLIENT + PROVIDER |\n| `tranthib` | `88888888-8888-8888-8888-888888888888` | CLIENT + PROVIDER |\n| `levanc` | `77777777-7777-7777-7777-777777777777` | CLIENT |\n\n⚠️ **Mật khẩu không đọc ngược được từ hash BCrypt trong `data.sql`** — nếu bạn không nhớ, hãy tự ĐĂNG KÝ một tài khoản mới bằng request “Đăng ký tài khoản”.\n\n⚠️ **identity-service có `spring.sql.init.mode: always`** và `data.sql` bắt đầu bằng `DELETE FROM users` — nghĩa là **mỗi lần restart identity-service, toàn bộ user/address/provider bị xoá sạch** rồi nạp lại 3 user seed. catalog-service cũng tương tự (xoá sạch category/service/package/addon/slot). Hãy đăng ký lại tài khoản sau mỗi lần restart identity.\n\n## 4. Dữ liệu seed sẵn để test ngay (catalog-service)\n\nCác UUID này đã được điền sẵn vào biến collection:\n\n* `categoryId` = `11111111-1111-1111-1111-111111111111` — Thiết kế Đồ hoạ\n* `serviceId` = `44444444-4444-4444-4444-444444444444` — Thiết kế Logo Doanh Nghiệp\n* `packageId` = `66666666-6666-6666-6666-111111111111` — Gói Cơ Bản\n* `addonId` = `77777777-7777-7777-7777-111111111111` — Giao file source\n* `ruleId` = `88888888-8888-8888-8888-111111111111`\n* `serviceMediaId` = `99999999-9999-9999-9999-111111111111`\n* `providerId` = `99999999-9999-9999-9999-999999999999` — Văn A Studio, đã VERIFIED\n\n## 5. Muốn test được role PROVIDER thì làm gì?\n\nĐăng ký tài khoản chỉ cấp role **CLIENT**. Trình tự để có token chứa `ROLE_PROVIDER` + claim `providerId`:\n\n1. `providers > Đăng ký làm Provider` — tạo hồ sơ, trạng thái PENDING\n2. `providers > Duyệt / đổi trạng thái provider (ADMIN)` với `?status=VERIFIED` — bước này ghi role PROVIDER vào DB\n3. **Logout + Login lại** để lấy token mới\n4. Giờ mới chạy được `catalog-service > services > Tạo Service (cần role PROVIDER)`\n\n## 6. Muốn test được role ADMIN thì làm gì?\n\nSeed data **không có user nào mang role ADMIN**, và cũng không có API nào cấp role ADMIN. Cách nhanh nhất là insert trực tiếp vào DB:\n\n```sql\n-- 1) Lấy userId của tài khoản bạn vừa đăng ký\nSELECT user_id, user_name FROM users WHERE user_name = 'testuser01';\n\n-- 2) Cấp thêm role ADMIN\nINSERT INTO user_role (user_role_id, granted_at, granted_by, user_id, role_name)\nVALUES (gen_random_uuid(), CURRENT_TIMESTAMP, 'manual', '<user_id>', 'ADMIN');\n```\n\nSau đó **Login lại** để token mới chứa `ROLE_ADMIN`.\n\n## 7. Slot (ONSITE) — chưa test được bằng API\n\n`BookingSlotService.createSlot` đang bị comment và `data.sql` không insert slot nào, nên `/slots/services/{id}` luôn rỗng. Muốn test hold / confirm / release thì insert tạm:\n\n```sql\nINSERT INTO booking_slots (booking_slot_id, start_at, end_at, status, version,\n                           hold_expires_at, created_at, updated_at, service_id)\nVALUES (gen_random_uuid(), '2026-01-06 08:00:00', '2026-01-06 09:00:00', 'AVAILABLE', '0',\n        NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '44444444-4444-4444-4444-444444444444');\n```\n\n## 8. Ba lỗi gateway đã được sửa để collection này chạy được\n\n1. `WebClientConfiguration` — baseUrl sai port `8080` → sửa thành **8081**.\n2. `AuthenticationFilter.isPublicEndpoint` — ghép chuỗi sai nên **không endpoint nào được coi là public** → sửa danh sách và so sánh bằng `equals`.\n3. `application.yaml` — chỉ có route identity → thêm route **catalog** và **order**.\n\n`application-local.yaml` cũng đã được thêm route tương tự cho trường hợp chạy profile `local`.\n",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -2948,7 +2948,7 @@
                     "orders"
                   ]
                 },
-                "description": "🔐 Cần token. `clientId` được lấy từ claim `userId` trong JWT.\n\n`serviceId` + `packageId` phải tồn tại bên catalog-service (order-service gọi sang qua Feign `CatalogClient`).\n`addonIds` có thể để mảng rỗng `[]`.\n\nĐơn mới sinh ra ở trạng thái **PENDING_PAYMENT** — cần thanh toán mới sang CONFIRMED, mà payment-service hiện chưa có code, nên các bước sau PENDING_PAYMENT chưa test được.\n\nScript test tự lưu `result.orderId` vào `{{orderId}}`.",
+                "description": "🔐 Cần token. `clientId` được lấy từ claim `userId` trong JWT.\n\n`serviceId` + `packageId` phải tồn tại bên catalog-service (order-service gọi sang qua Feign `CatalogClient`).\n`addonIds` có thể để mảng rỗng `[]`.\n\nĐơn mới sinh ra ở trạng thái **PENDING_PAYMENT** — cần thanh toán mới sang CONFIRMED, xem folder `payment-service` để thanh toán (MOCK / VNPAY / MOMO).\n\nScript test tự lưu `result.orderId` vào `{{orderId}}`.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"serviceId\": \"{{serviceId}}\",\n  \"packageId\": \"{{packageId}}\",\n  \"addonIds\": [\n    \"{{addonId}}\"\n  ]\n}",
@@ -3106,6 +3106,432 @@
           ]
         }
       ]
+    },
+    {
+      "name": "payment-service",
+      "description": "Thanh toán + escrow — qua gateway `/api/v1/payment` (service gốc ở port 8084, context-path `/payment`).\n\n## Luồng test nhanh với MOCK (không cần VNPay/MoMo)\n\n1. `order-service > orders > Tạo đơn hàng` → có `{{orderId}}` (đơn `PENDING_PAYMENT`).\n2. `payments > 1. Tạo payment MOCK` → có `{{paymentCode}}`.\n3. `dev (mock) > Giả lập thanh toán THÀNH CÔNG` → payment `SUCCEEDED`, escrow `HOLDING`, order tự chuyển `CONFIRMED` (payment gọi sang order).\n4. `escrows > Xem escrow của đơn` → thấy txn `HOLD`.\n5. Đơn `COMPLETED` (accept / auto-complete) → escrow `RELEASED` (txn `FEE` + `RELEASE`). Hủy đơn đã trả (2 bên đồng ý) → escrow `REFUNDED`.\n\n## Biến mới\n\n* `paymentServiceUrl` = `http://localhost:8084/payment` — gọi thẳng service (cho request internal).\n* `internalKey` = giá trị `INTERNAL_API_KEY` (mặc định dev `dev-internal-key`).\n* `paymentId`, `paymentCode` — tự lưu sau khi tạo payment.\n\n## Lưu ý\n\n* `dev (mock)` đi qua gateway không cần token (gateway mở `/payment/gateway/**` và `/payment/dev/**`). Request `internal` gọi **thẳng port 8084** vì gateway không mở `/internal/**`.\n* VNPAY / MOMO cần điền key sandbox vào `.env` (`VNPAY_*`, `MOMO_*`); IPN cần ngrok trỏ về gateway.",
+      "item": [
+        {
+          "name": "payments",
+          "item": [
+            {
+              "name": "1. Tạo payment MOCK (CLIENT)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/payment/payments",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "payment",
+                    "payments"
+                  ]
+                },
+                "description": "🔐 Cần token CLIENT — phải là **chủ đơn** `{{orderId}}` (đơn đang `PENDING_PAYMENT`).\n\nHeader `Idempotency-Key` bắt buộc. Đang để `{{$guid}}` (mỗi lần gửi 1 key mới); muốn test idempotency thì thay bằng 1 chuỗi cố định và gửi 2 lần → ra cùng 1 payment.\n\n`paymentMethod`: `QR` (mặc định), `ATM_CARD`, `INTL_CARD`, `WALLET`.\n\nĐơn đang có payment `PENDING` cùng gateway, chưa hết hạn → trả lại payment cũ. Đổi gateway → payment cũ bị `CANCELLED`, tạo payment mới.\n\nScript test tự lưu `{{paymentId}}`, `{{paymentCode}}`.\n\n**MOCK**: `paymentUrl` = link `/dev/payments/{code}/success` — chạy request ở folder `dev (mock)` để giả lập.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"gateway\": \"MOCK\",\n  \"paymentMethod\": \"QR\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result && json.result.paymentId) {",
+                      "    pm.collectionVariables.set(\"paymentId\", json.result.paymentId);",
+                      "    pm.collectionVariables.set(\"paymentCode\", json.result.paymentCode);",
+                      "    console.log(\"✅ paymentCode = \" + json.result.paymentCode + \" | status = \" + json.result.status);",
+                      "    console.log(\"👉 paymentUrl = \" + json.result.paymentUrl);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tạo được payment: \" + json.code + \" \" + json.message);",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "2. Tạo payment VNPAY (CLIENT)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/payment/payments",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "payment",
+                    "payments"
+                  ]
+                },
+                "description": "🔐 Cần token CLIENT — phải là **chủ đơn** `{{orderId}}` (đơn đang `PENDING_PAYMENT`).\n\nHeader `Idempotency-Key` bắt buộc. Đang để `{{$guid}}` (mỗi lần gửi 1 key mới); muốn test idempotency thì thay bằng 1 chuỗi cố định và gửi 2 lần → ra cùng 1 payment.\n\n`paymentMethod`: `QR` (mặc định), `ATM_CARD`, `INTL_CARD`, `WALLET`.\n\nĐơn đang có payment `PENDING` cùng gateway, chưa hết hạn → trả lại payment cũ. Đổi gateway → payment cũ bị `CANCELLED`, tạo payment mới.\n\nScript test tự lưu `{{paymentId}}`, `{{paymentCode}}`.\n\n**VNPAY sandbox**: mở `paymentUrl` bằng trình duyệt. `ATM_CARD` → `vnp_BankCode=VNBANK` để thanh toán bằng thẻ test NCB; `QR` → `VNPAYQR` (cần app VNPay QR test).\n\nCần `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET` trong `.env`, không có thì trả 3301.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"gateway\": \"VNPAY\",\n  \"paymentMethod\": \"ATM_CARD\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result && json.result.paymentId) {",
+                      "    pm.collectionVariables.set(\"paymentId\", json.result.paymentId);",
+                      "    pm.collectionVariables.set(\"paymentCode\", json.result.paymentCode);",
+                      "    console.log(\"✅ paymentCode = \" + json.result.paymentCode + \" | status = \" + json.result.status);",
+                      "    console.log(\"👉 paymentUrl = \" + json.result.paymentUrl);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tạo được payment: \" + json.code + \" \" + json.message);",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "3. Tạo payment MOMO (CLIENT)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/payment/payments",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "payment",
+                    "payments"
+                  ]
+                },
+                "description": "🔐 Cần token CLIENT — phải là **chủ đơn** `{{orderId}}` (đơn đang `PENDING_PAYMENT`).\n\nHeader `Idempotency-Key` bắt buộc. Đang để `{{$guid}}` (mỗi lần gửi 1 key mới); muốn test idempotency thì thay bằng 1 chuỗi cố định và gửi 2 lần → ra cùng 1 payment.\n\n`paymentMethod`: `QR` (mặc định), `ATM_CARD`, `INTL_CARD`, `WALLET`.\n\nĐơn đang có payment `PENDING` cùng gateway, chưa hết hạn → trả lại payment cũ. Đổi gateway → payment cũ bị `CANCELLED`, tạo payment mới.\n\nScript test tự lưu `{{paymentId}}`, `{{paymentCode}}`.\n\n**MOMO sandbox**: mở `paymentUrl` hoặc quét `qrCodeUrl` (chuỗi QR, FE tự vẽ) bằng app MoMo test. Số tiền phải trong 1.000đ – 50.000.000đ (ngoài khoảng → 3012).\n\nCần `MOMO_PARTNER_CODE`, `MOMO_ACCESS_KEY`, `MOMO_SECRET_KEY`, `MOMO_IPN_URL` (ngrok) trong `.env`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"gateway\": \"MOMO\",\n  \"paymentMethod\": \"QR\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json.result && json.result.paymentId) {",
+                      "    pm.collectionVariables.set(\"paymentId\", json.result.paymentId);",
+                      "    pm.collectionVariables.set(\"paymentCode\", json.result.paymentCode);",
+                      "    console.log(\"✅ paymentCode = \" + json.result.paymentCode + \" | status = \" + json.result.status);",
+                      "    console.log(\"👉 paymentUrl = \" + json.result.paymentUrl);",
+                      "} else {",
+                      "    console.warn(\"⚠️ Không tạo được payment: \" + json.code + \" \" + json.message);",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Xem payment",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/payment/payments/{{paymentId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "payment",
+                    "payments",
+                    "{{paymentId}}"
+                  ]
+                },
+                "description": "🔐 Cần token — chỉ người trả (payer) xem được, người khác nhận 3001.\n\nFE poll request này sau khi khách quét QR / được redirect về trang kết quả."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"HTTP 200 OK\", function () { pm.response.to.have.status(200); });",
+                      "console.log(\"status = \" + pm.response.json().result.status);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Lịch sử payment của đơn",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/payment/payments?orderId={{orderId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "payment",
+                    "payments"
+                  ],
+                  "query": [
+                    {
+                      "key": "orderId",
+                      "value": "{{orderId}}"
+                    }
+                  ]
+                },
+                "description": "🔐 Cần token — các payment của đơn `{{orderId}}` mà user hiện tại đã tạo, mới nhất trước."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "dev (mock)",
+          "item": [
+            {
+              "name": "Giả lập thanh toán THÀNH CÔNG",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/payment/dev/payments/{{paymentCode}}/success",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "payment",
+                    "dev",
+                    "payments",
+                    "{{paymentCode}}",
+                    "success"
+                  ]
+                },
+                "description": "**Public, chỉ có ở profile `dev`** — giả lập IPN thành công cho payment MOCK.\n\nPayment → `SUCCEEDED`, tạo escrow `HOLDING`, sau commit gọi order `payment-confirmed` → order `CONFIRMED` (ONSITE: confirm slot + sinh OTP check-in).\n\nGọi lại lần 2 → trả kết quả cũ, không xử lý lại.",
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Giả lập thanh toán THẤT BẠI",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/payment/dev/payments/{{paymentCode}}/fail",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "payment",
+                    "dev",
+                    "payments",
+                    "{{paymentCode}}",
+                    "fail"
+                  ]
+                },
+                "description": "**Public, chỉ có ở profile `dev`** — payment → `FAILED` (`MOCK_FAILED`). Tạo payment mới để thử lại.",
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "escrows",
+          "item": [
+            {
+              "name": "Xem escrow của đơn",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gatewayUrl}}/api/v1/payment/escrows/orders/{{orderId}}",
+                  "host": [
+                    "{{gatewayUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "payment",
+                    "escrows",
+                    "orders",
+                    "{{orderId}}"
+                  ]
+                },
+                "description": "🔐 Cần token — client **hoặc** provider của đơn. Người ngoài nhận 3101.\n\nTrả `heldAmount`, `platformFeeAmount`, `providerNetAmount`, `releasedAmount`, `refundedAmount`, `status` (`HOLDING` / `RELEASED` / `REFUNDED`) và danh sách `transactions` (append-only: `HOLD`, `FEE`, `RELEASE`, `REFUND`)."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "internal (order-service gọi)",
+          "item": [
+            {
+              "name": "Release escrow",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Internal-Key",
+                    "value": "{{internalKey}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{paymentServiceUrl}}/internal/escrows/release",
+                  "host": [
+                    "{{paymentServiceUrl}}"
+                  ],
+                  "path": [
+                    "internal",
+                    "escrows",
+                    "release"
+                  ]
+                },
+                "description": "**Internal** — header `X-Internal-Key`, không dùng JWT. Bình thường order-service tự gọi khi đơn `COMPLETED`; request này để debug.\n\nIdempotent: escrow đã `RELEASED` → trả lại kết quả cũ. Escrow `REFUNDED` → 3102.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"orderId\": \"{{orderId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Refund escrow (100%)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Internal-Key",
+                    "value": "{{internalKey}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{paymentServiceUrl}}/internal/escrows/refund",
+                  "host": [
+                    "{{paymentServiceUrl}}"
+                  ],
+                  "path": [
+                    "internal",
+                    "escrows",
+                    "refund"
+                  ]
+                },
+                "description": "**Internal** — order-service tự gọi khi hủy đơn đã thanh toán. Chỉ hỗ trợ `refundPercent = 100` (khác → 3201).\n\nMOCK hoàn ngay (`COMPLETED`). VNPAY / MOMO: refund `FAILED`, admin hoàn tay (API refund của gateway chưa làm).",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"refundPercent\": 100,\n  \"reasonCode\": \"ORDER_CANCELLED\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
     }
   ],
   "variable": [
@@ -3204,6 +3630,30 @@
       "value": "",
       "type": "string",
       "description": "UUID đơn hàng — tự lưu sau khi tạo đơn."
+    },
+    {
+      "key": "paymentServiceUrl",
+      "value": "http://localhost:8084/payment",
+      "type": "string",
+      "description": "Gọi thẳng payment-service (request internal), không qua gateway."
+    },
+    {
+      "key": "internalKey",
+      "value": "dev-internal-key",
+      "type": "string",
+      "description": "Giá trị INTERNAL_API_KEY (mặc định của profile dev)."
+    },
+    {
+      "key": "paymentId",
+      "value": "",
+      "type": "string",
+      "description": "UUID payment — tự điền sau khi tạo payment."
+    },
+    {
+      "key": "paymentCode",
+      "value": "",
+      "type": "string",
+      "description": "Mã payment (PAY...) — tự điền sau khi tạo payment, dùng cho request dev (mock)."
     }
   ]
 }

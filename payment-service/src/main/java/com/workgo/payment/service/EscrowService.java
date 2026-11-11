@@ -18,6 +18,7 @@ import com.workgo.payment.utils.TokenUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@Slf4j
 public class EscrowService {
 
     EscrowAccountRepository escrowAccountRepository;
@@ -64,6 +66,8 @@ public class EscrowService {
                 .triggeredBy(TriggeredBy.GATEWAY)
                 .escrowAccount(escrow)
                 .build());
+
+        log.info("Escrow hold {} for order {}, payment {}", payment.getAmount(), payment.getOrderId(), payment.getPaymentCode());
 
         return Optional.of(escrow);
     }
@@ -105,6 +109,8 @@ public class EscrowService {
         escrow.setStatus(EscrowStatus.RELEASED);
         escrow.setUpdatedAt(now);
 
+        log.info("Escrow released for order {}, fee {}, provider net {}", escrow.getOrderId(), fee, balance);
+
         return escrowMapper.toResponse(escrowAccountRepository.save(escrow));
     }
 
@@ -127,6 +133,8 @@ public class EscrowService {
         escrow.setUpdatedAt(now);
 
         escrowAccountRepository.save(escrow);
+
+        log.info("Escrow refunded {} for order {}, reason {}", refund.getAmount(), escrow.getOrderId(), refund.getReasonCode());
     }
 
     //client hoac provider cua order xem tien dang giu

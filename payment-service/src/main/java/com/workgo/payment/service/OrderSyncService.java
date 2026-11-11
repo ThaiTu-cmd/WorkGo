@@ -68,6 +68,7 @@ public class OrderSyncService {
             } else {
                 payment.setOrderSyncStatus(OrderSyncStatus.SYNCED);
                 payment.setOrderSyncedAt(Instant.now());
+                log.info("Order {} confirmed for payment {}", payment.getOrderId(), payment.getPaymentCode());
             }
 
         } catch (FeignException e) {

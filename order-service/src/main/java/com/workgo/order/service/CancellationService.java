@@ -174,6 +174,7 @@ public class CancellationService {
             return;
         }
 
+        log.info("Order {} not paid in time, cancel by system", orderId);
         cancelOrder(order, null, RoleName.SYSTEM);
     }
 

@@ -36,6 +36,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -58,6 +59,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@Slf4j
 public class OrderService {
 
     OrderRepository orderRepository;
@@ -205,6 +207,7 @@ public class OrderService {
 
             //slot HELD -> BOOKED, slot het han giu -> huy don, payment refund
             if (!confirmSlot(onsite.getBookingSlotId(), orderId)) {
+                log.warn("Slot of order {} expired, cancel order, payment {} will refund", orderId, request.getPaymentId());
                 cancellationService.cancelBySystem(order);
                 return toConfirmationResponse(order, onsite.getStatus());
             }
@@ -221,6 +224,7 @@ public class OrderService {
         order.setPaymentId(request.getPaymentId());
 
         orderStatusService.transition(order, OrderStatus.CONFIRMED, null, RoleName.SYSTEM);
+        log.info("Order {} confirmed by payment {}", orderId, request.getPaymentId());
 
         return toConfirmationResponse(order, executionStatus);
     }

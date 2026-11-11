@@ -162,6 +162,8 @@ public class PaymentService {
             payment.setQrCodeUrl(result.getQrCodeUrl());
             payment.setDeeplink(result.getDeeplink());
             paymentStatusService.transition(payment, PaymentStatus.PENDING);
+            log.info("Payment {} created for order {}, gateway {}, amount {}",
+                    payment.getPaymentCode(), payment.getOrderId(), payment.getGateway(), payment.getAmount());
 
         } catch (Exception e) {
 
@@ -169,6 +171,13 @@ public class PaymentService {
             payment.setFailureMessage(e.getMessage());
             paymentStatusService.transition(payment, PaymentStatus.FAILED);
             paymentRepository.save(payment);
+            log.warn("Create payment {} for order {} failed at gateway {}: {}",
+                    payment.getPaymentCode(), payment.getOrderId(), payment.getGateway(), e.getMessage());
+
+            //loi nghiep vu cua gateway (vd so tien ngoai gioi han) -> tra dung ma loi
+            if (e instanceof AppException appException) {
+                throw appException;
+            }
 
             throw new AppException(ErrorCode.GATEWAY_UNAVAILABLE);
         }

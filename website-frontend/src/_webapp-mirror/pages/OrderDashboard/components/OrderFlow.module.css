@@ -208,3 +208,71 @@
   color: var(--wg-text-secondary);
   white-space: pre-wrap;
 }
+
+/* ---------- Escrow (payment-service) ---------- */
+.escrowList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+}
+
+.escrowList > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.escrowList dt {
+  font-size: 0.78rem;
+  color: var(--wg-text-secondary);
+}
+
+.escrowList dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--wg-text);
+}
+
+.escrowTxns {
+  display: grid;
+  grid-template-columns: max-content max-content max-content;
+  gap: 6px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.escrowTxns li {
+  display: contents;
+}
+
+.escrowTxns span {
+  color: var(--wg-text);
+}
+
+.escrowTxns strong {
+  text-align: right;
+  color: var(--wg-text);
+}
+
+.escrowTxns small {
+  color: var(--wg-text-secondary);
+}
+
+.escrow_PENDING,
+.escrow_REFUNDED,
+.escrow_PARTIALLY_REFUNDED { background-color: var(--badge-digital-bg); color: var(--badge-digital-text); }
+.escrow_HOLDING { background-color: var(--badge-onsite-bg); color: var(--badge-onsite-text); }
+.escrow_RELEASED { background-color: var(--badge-delivery-bg); color: var(--badge-delivery-text); }
+.escrow_FROZEN { background-color: var(--badge-appointment-bg); color: var(--badge-appointment-text); }
+
+.spin {
+  color: var(--wg-text-secondary);
+  animation: escrowSpin 0.8s linear infinite;
+}
+
+@keyframes escrowSpin {
+  to { transform: rotate(360deg); }
+}

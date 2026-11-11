@@ -269,5 +269,6 @@ test("Payment flow: payment-service and order-service error codes are mapped sep
   assert.match(paymentErrorMessage({ code: 3003 }), /đã được thanh toán/);
   assert.match(orderErrorMessage({ code: 3003 }), /check-in/);
   assert.match(orderErrorMessage({ code: 3020 }), /check-in/);
+  assert.match(paymentErrorMessage({ code: 3101 }), /escrow/);
   assert.equal(paymentErrorMessage({ message: "x" }), "x");
 });

@@ -99,6 +99,7 @@ const ERROR_MESSAGES = {
   3007: 'Cổng thanh toán này chưa được hỗ trợ.',
   3009: 'Khung giờ đã hết thời gian giữ chỗ. Vui lòng đặt đơn mới.',
   3012: 'Số tiền nằm ngoài hạn mức của cổng thanh toán này. Hãy chọn cổng khác.',
+  3101: 'Chưa có thông tin ký quỹ (escrow) cho đơn này.',
   3301: 'Cổng thanh toán tạm thời không phản hồi. Vui lòng thử lại hoặc chọn cổng khác.',
 };
 

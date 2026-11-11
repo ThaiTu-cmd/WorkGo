@@ -7,6 +7,7 @@ import OrderExecutionInfo from './components/OrderExecutionInfo';
 import WorkEvidencePanel from './components/WorkEvidencePanel';
 import DigitalDeliveryPanel from './components/DigitalDeliveryPanel';
 import OrderBriefPanel from './components/OrderBriefPanel';
+import EscrowPanel from './components/EscrowPanel';
 import { CheckinCode, CheckinDialog, DeliveryDialog, RequirementsDialog, RevisionDialog } from './components/OrderFlowDialogs';
 import flowStyles from './components/OrderFlow.module.css';
 import { useOrderExecution } from '../../hooks/useOrderExecution';
@@ -314,6 +315,7 @@ function OrderLiveDetails({
   return <>
       <OrderExecutionInfo state={executionState} order={order} role={role} onShowToast={onShowToast} />
       <OrderBriefPanel order={order} role={role} />
+      {order.paymentStatus && order.paymentStatus !== 'PENDING' && <EscrowPanel orderId={order.orderId} role={role} />}
       {order.executionType === 'ONSITE' && role === 'CLIENT' && order.orderStatus === 'CONFIRMED' && <CheckinCodeCard orderId={order.orderId} />}
       {order.executionType === 'DIGITAL' && <DigitalDeliveryPanel orderId={order.orderId} role={role} />}
       {order.executionType === 'ONSITE' && <WorkEvidencePanel orderId={order.orderId} role={role} orderStatus={order.orderStatus} onsiteStatus={executionState.execution?.onsite?.status} onShowToast={onShowToast} />}

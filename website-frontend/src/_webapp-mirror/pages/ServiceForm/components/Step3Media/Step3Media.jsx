@@ -48,18 +48,14 @@ export default function Step3Media({ formData, onChange, errors = {} }) {
               Bổ sung hình ảnh sản phẩm đã hoàn thành để nâng cao độ tin cậy.
             </p>
             <div className={styles.galleryGrid}>
-              <div className={styles.gallerySlot}>
-                <img
-                  src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&auto=format&fit=crop&q=80"
-                  alt="Gallery 1"
-                />
-              </div>
-              <div className={styles.gallerySlot}>
-                <img
-                  src="https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=400&auto=format&fit=crop&q=80"
-                  alt="Gallery 2"
-                />
-              </div>
+              {(formData.mediaUrls || [
+                'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&auto=format&fit=crop&q=80',
+                'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=400&auto=format&fit=crop&q=80',
+              ]).map((url, idx) => (
+                <div key={idx} className={styles.gallerySlot}>
+                  <img src={url} alt={`Gallery ${idx + 1}`} />
+                </div>
+              ))}
               <div className={styles.gallerySlot} title="Thêm ảnh minh họa">
                 <Plus size={20} />
                 <span>+ Thêm ảnh</span>

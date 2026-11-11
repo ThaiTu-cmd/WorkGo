@@ -18,12 +18,6 @@ import ServiceFormPage from "@/_webapp-mirror/pages/ServiceForm/ServiceFormPage"
 import AvailabilityPage from "@/_webapp-mirror/pages/Availability/AvailabilityPage";
 import CheckoutPage from "@/_webapp-mirror/pages/Checkout/CheckoutPage";
 import OrderDashboardPage from "@/_webapp-mirror/pages/OrderDashboard/OrderDashboardPage";
-import { mockProviderServices } from "@/_webapp-mirror/data/mockProviderServices";
-import {
-  initialProviderServices,
-  persistProviderServices,
-} from "@/_webapp-mirror/pages/MyServices/providerServicesStore";
-import TrungSubNav from "../trung-pages/_ui/TrungSubNav";
 import RegisterPage from "../trung-pages/auth/RegisterPage";
 import LoginPage from "../trung-pages/auth/LoginPage";
 import ProfileSettingsPage from "../trung-pages/profile/ProfileSettingsPage";
@@ -39,7 +33,15 @@ import WalletPage from "../trung-pages/payment/WalletPage";
 import PayoutSettingsPage from "../trung-pages/payment/PayoutSettingsPage";
 import ReviewFormPage from "../trung-pages/trust/ReviewFormPage";
 import DisputeCenterPage from "../trung-pages/trust/DisputeCenterPage";
+import PublicInfoPage, { isPublicInfoPageKey, type PublicInfoPageKey } from "../trung-pages/public/PublicInfoPage";
+import { PUBLIC_INFO_PAGE_KEYS } from "../trung-pages/public/publicInfoContent.js";
+import NotFoundPage from "../trung-pages/NotFoundPage";
+import MessagesPage from "../trung-pages/messages/MessagesPage";
+import type { ChatTarget } from "../trung-pages/messages/types";
+import { getAccessToken } from "@/_webapp-mirror/api/axiosClient";
+import { messageApi } from "./backend";
 import { Info } from "lucide-react";
+import ScrollEnhancements from "../common/ScrollEnhancements";
 import styles from "./webapp-shell.module.css";
 
 export type CatalogFilterParams = {
@@ -49,6 +51,9 @@ export type CatalogFilterParams = {
   jobId?: string;
   providerId?: string;
   orderId?: string;
+  serviceId?: string;
+  // "messages": thread to open (created if this is the first contact).
+  chat?: ChatTarget;
 };
 
 export type TrungPageKey =
@@ -74,7 +79,54 @@ export type TrungPageKey =
   | "wallet"
   | "payout-settings"
   | "review-form"
-  | "dispute-center";
+  | "dispute-center"
+  | "how-it-works"
+  | "escrow-protection"
+  | "refund-policy"
+  | "faq"
+  | "verification-standards"
+  | "package-rules"
+  | "community"
+  | "about"
+  | "careers"
+  | "terms"
+  | "privacy"
+  | "contact"
+  | "messages"
+  | PublicInfoPageKey;
+
+const TRUNG_PAGE_KEYS = new Set<string>([
+  "register",
+  "login",
+  "profile-settings",
+  "provider-onboarding",
+  "address-book",
+  "provider-profile",
+  "job-list",
+  "job-post",
+  "submit-proposal",
+  "proposal-review",
+  "payment-gateway",
+  "wallet",
+  "payout-settings",
+  "review-form",
+  "dispute-center",
+  ...PUBLIC_INFO_PAGE_KEYS,
+  "messages",
+]);
+
+const CORE_PAGE_KEYS = new Set<string>([
+  "home",
+  "catalog",
+  "detail",
+  "my-services",
+  "service-form",
+  "availability",
+  "checkout",
+  "orders",
+]);
+
+const KNOWN_PAGE_KEYS = new Set<string>([...CORE_PAGE_KEYS, ...TRUNG_PAGE_KEYS]);
 
 type CategorySelection = {
   slug: string;
@@ -91,7 +143,26 @@ type SavedService = {
   title: string;
 };
 
-type ProviderService = (typeof mockProviderServices)[number] | SavedService;
+// Force instantaneous scroll to top regardless of CSS scroll-behavior: smooth on html/body
+function scrollToTopInstant() {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+  const root = document.documentElement;
+  const body = document.body;
+  const prevRootBehavior = root.style.scrollBehavior;
+  const prevBodyBehavior = body ? body.style.scrollBehavior : "";
+
+  root.style.scrollBehavior = "auto";
+  if (body) body.style.scrollBehavior = "auto";
+
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  root.scrollTop = 0;
+  if (body) body.scrollTop = 0;
+
+  requestAnimationFrame(() => {
+    root.style.scrollBehavior = prevRootBehavior;
+    if (body) body.style.scrollBehavior = prevBodyBehavior;
+  });
+}
 
 // Port 1:1 of web-app/src/App.jsx state machine (minus App.module.css,
 // which carries the Turbopack-impure `main` selector). Data import resolves
@@ -100,21 +171,13 @@ type ProviderService = (typeof mockProviderServices)[number] | SavedService;
 export default function WebAppShell() {
   const [currentPage, setCurrentPage] = useState<TrungPageKey>("home"); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form' | 'availability' | 'checkout' | 'orders' + 15 trung-pages
   const [previousPage, setPreviousPage] = useState<TrungPageKey>("home");
-  const [selectedServiceId, setSelectedServiceId] = useState("svc-1");
+  const [selectedServiceId, setSelectedServiceId] = useState("");
   const [selectedJobId, setSelectedJobId] = useState("");
   const [selectedProviderId, setSelectedProviderId] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState("");
+  const [chatConversationId, setChatConversationId] = useState("");
   // { service, pkg, addons } handed over by ServiceDetailPage "Tiếp tục đặt hàng".
   const [checkoutOrder, setCheckoutOrder] = useState<Record<string, unknown> | null>(null);
-  // C2-5: same persistence contract as web-app MyServicesPage — the
-  // persisted snapshot wins on reload, bundled mocks are the fallback.
-  // (Without this, the shell would feed the stale mock list and the
-  // mirrored page would overwrite the snapshot on mount.)
-  const [providerServices, setProviderServices] = useState<ProviderService[]>(
-    () => initialProviderServices() as ProviderService[]
-  );
-
-  // Write-through: form create/edit flows land here first.
   // S4: offline state for the banner (M3) — refreshed on online/offline events.
   // SSR-safe: initial true matches server HTML (no banner); the real
   // navigator.onLine value syncs on mount to avoid hydration mismatch
@@ -169,21 +232,38 @@ export default function WebAppShell() {
     toastTimersRef.current[id] = setTimeout(() => dismissToast(id), 3500);
   }, []);
 
-  // R2 (parity with web-app): toast once when the write fails (quota/private-mode).
-  const persistFailedRef = useRef(false);
+  // Reset scroll to top on every page change and manage landmark focus
   useEffect(() => {
-    if (persistProviderServices(providerServices) === false) {
-      if (!persistFailedRef.current) {
-        persistFailedRef.current = true;
-        showToast('Bộ nhớ trình duyệt bị đầy hoặc bị chặn — thay đổi chỉ được giữ trong phiên này.');
+    scrollToTopInstant();
+
+    // A11y focus management: Focus main heading or main landmark on navigation
+    requestAnimationFrame(() => {
+      const mainHeading = document.querySelector<HTMLElement>("main h1, [role='main'] h1, h1");
+      if (mainHeading) {
+        if (!mainHeading.hasAttribute("tabindex")) {
+          mainHeading.setAttribute("tabindex", "-1");
+        }
+        mainHeading.focus({ preventScroll: true });
+      } else {
+        const mainLandmark = document.querySelector<HTMLElement>("main, [role='main']");
+        if (mainLandmark) {
+          if (!mainLandmark.hasAttribute("tabindex")) {
+            mainLandmark.setAttribute("tabindex", "-1");
+          }
+          mainLandmark.focus({ preventScroll: true });
+        }
       }
-    } else {
-      persistFailedRef.current = false;
-    }
-  }, [providerServices, showToast]);
+    });
+  }, [currentPage]);
 
   // Navigate handler from Header or links
   const handleNavigate = (page: TrungPageKey, params: CatalogFilterParams = {}) => {
+    // Conversations belong to an account: ask for sign-in first.
+    if (page === "messages" && !getAccessToken()) {
+      showToast("Vui lòng đăng nhập để nhắn tin.");
+      setAuthModal("login");
+      return;
+    }
     setPreviousPage(currentPage);
     setCurrentPage(page);
     if (page === "catalog") {
@@ -197,8 +277,25 @@ export default function WebAppShell() {
     if (page === "submit-proposal" && params.jobId) setSelectedJobId(params.jobId);
     if (page === "proposal-review" && params.jobId) setSelectedJobId(params.jobId);
     if (page === "review-form" && params.orderId) setSelectedOrderId(params.orderId);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (page === "detail" && params.serviceId) setSelectedServiceId(params.serviceId);
+    if (page === "messages") {
+      const { chat } = params;
+      setChatConversationId(chat ? messageApi.openConversation(chat, chat.context) : "");
+    }
+    scrollToTopInstant();
   };
+
+  // Navigation event listener for programmatic / test triggering
+  useEffect(() => {
+    const onTestNav = (e: Event) => {
+      const customEvent = e as CustomEvent<{ page: string; params?: CatalogFilterParams }>;
+      if (customEvent.detail?.page) {
+        handleNavigate(customEvent.detail.page as TrungPageKey, customEvent.detail.params);
+      }
+    };
+    window.addEventListener("workgo-navigate", onTestNav);
+    return () => window.removeEventListener("workgo-navigate", onTestNav);
+  });
 
   // Search from HeroBanner
   const handleHeroSearch = ({
@@ -216,7 +313,7 @@ export default function WebAppShell() {
       query: keyword || "",
     });
     showToast(`Đang tìm: "${keyword || "Tất cả dịch vụ"}"`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToTopInstant();
   };
 
   // Select category from Home Category Grid
@@ -229,14 +326,14 @@ export default function WebAppShell() {
       query: "",
     });
     showToast(`Xem danh mục: ${category.name}`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   };
 
   const handleSelectService = (service: ServiceSelection) => {
     setPreviousPage(currentPage);
     setSelectedServiceId(service.serviceId);
     setCurrentPage("detail");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   };
 
   const handleOpenCreateForm = () => {
@@ -244,7 +341,7 @@ export default function WebAppShell() {
     setEditServiceId(null);
     setPreviousPage(currentPage);
     setCurrentPage("service-form");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   };
 
   const handleOpenEditForm = (serviceId: string) => {
@@ -252,31 +349,27 @@ export default function WebAppShell() {
     setEditServiceId(serviceId);
     setPreviousPage(currentPage);
     setCurrentPage("service-form");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   };
 
   const handleServiceFormSuccess = (savedService: SavedService, isEdit: boolean) => {
-    setProviderServices((prev) => {
-      if (isEdit) {
-        return prev.map((s) => (s.serviceId === savedService.serviceId ? { ...s, ...savedService } : s));
-      }
-      return [savedService, ...prev];
-    });
     showToast(
       isEdit
         ? `Đã cập nhật dịch vụ "${savedService.title}"!`
         : `Đã tạo thành công dịch vụ mới "${savedService.title}"!`
     );
     setCurrentPage("my-services");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   };
 
   return (
     <div className={`${styles.appRoot} ${styles["webapp-scope"]}`}>
+      {/* Global Scroll Enhancements: Progress bar, Back to Top & .reveal animations */}
+      <ScrollEnhancements />
       {/* S4: offline banner — local data keeps working, user must know why */}
       {!isOnline && (
         <div className={styles.offlineBanner} role="status">
-          <span>Bạn đang ngoại tuyến — ứng dụng vẫn dùng được với dữ liệu đã lưu trên thiết bị này.</span>
+          <span>Bạn đang ngoại tuyến — cần kết nối mạng để tải và lưu dữ liệu.</span>
         </div>
       )}
       {/* Toast queue (max 3, each auto-dismisses + manual close) */}
@@ -307,9 +400,6 @@ export default function WebAppShell() {
           onOpenAuth={(mode: "login" | "register") => setAuthModal(mode)}
         />
       )}
-
-      {/* Trung auxiliary nav (Header mirror can't carry the 15 new links) */}
-      <TrungSubNav current={currentPage} onNavigate={handleNavigate} />
 
       {/* Main Content Router */}
       {currentPage === "home" && (
@@ -358,6 +448,7 @@ export default function WebAppShell() {
           onSelectCategory={handleSelectCategory}
           onGoHome={() => handleNavigate("home")}
           onShowToast={showToast}
+          onContactSeller={(chat: ChatTarget) => handleNavigate("messages", { chat })}
           onCheckout={(order: Record<string, unknown>) => {
             setCheckoutOrder(order);
             handleNavigate("checkout");
@@ -378,20 +469,23 @@ export default function WebAppShell() {
 
       {currentPage === "orders" && (
         /* Client / Provider order dashboard */
-        <OrderDashboardPage onGoHome={() => handleNavigate("home")} onShowToast={showToast} />
+        <OrderDashboardPage
+          onGoHome={() => handleNavigate("home")}
+          onShowToast={showToast}
+          onOpenChat={(chat: ChatTarget) => handleNavigate("messages", { chat })}
+        />
       )}
 
       {currentPage === "my-services" && (
         /* Provider My Services Page */
         <MyServicesPage
-          services={providerServices}
-          onUpdateServices={setProviderServices}
           onSelectService={handleSelectService}
           onGoHome={() => handleNavigate("home")}
           onShowToast={showToast}
           onOpenCreateForm={handleOpenCreateForm}
           onOpenEditForm={handleOpenEditForm}
           onOpenAvailability={() => handleNavigate("availability")}
+          onOpenProviderOnboarding={() => handleNavigate("provider-onboarding")}
         />
       )}
 
@@ -412,13 +506,16 @@ export default function WebAppShell() {
           serviceId={editServiceId as unknown as null}
           onCancel={() => {
             setCurrentPage("my-services");
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            window.scrollTo({ top: 0, left: 0, behavior: "auto" });
           }}
           onSaveSuccess={handleServiceFormSuccess}
           onShowToast={showToast}
         />
       )}
 
+      {/* Trung pages sit under the fixed header; this wrapper reserves its height. */}
+      {TRUNG_PAGE_KEYS.has(currentPage) && (
+      <div className={styles.trungPage}>
       {currentPage === "register" && (
         <RegisterPage onNavigate={handleNavigate} onShowToast={showToast} />
       )}
@@ -495,8 +592,35 @@ export default function WebAppShell() {
         <DisputeCenterPage onNavigate={handleNavigate} onShowToast={showToast} />
       )}
 
+      {isPublicInfoPageKey(currentPage) && (
+        <PublicInfoPage
+          pageKey={currentPage}
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+        />
+      )}
+
+      {currentPage === "messages" && (
+        <MessagesPage
+          key={chatConversationId}
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+          conversationId={chatConversationId || undefined}
+        />
+      )}
+      </div>
+      )}
+
+      {/* Fallback for unknown page keys */}
+      {!KNOWN_PAGE_KEYS.has(currentPage) && (
+        <div className={styles.trungPage}>
+          <NotFoundPage requestedKey={currentPage} onNavigate={handleNavigate} />
+        </div>
+      )}
+
       {/* Footer (hidden on service-form wizard for clean focus) */}
-      {currentPage !== "service-form" && <Footer />}
+      {/* Messages is a full-height app view, so it drops the footer too. */}
+      {currentPage !== "service-form" && currentPage !== "messages" && <Footer onNavigate={handleNavigate} />}
 
       {/* Authentication Modal */}
       {authModal && (

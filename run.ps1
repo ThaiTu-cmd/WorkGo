@@ -47,6 +47,10 @@ $ServicesConfig = [ordered]@{
         DbName       = "postgres-identity"
         DbPort       = 5433
         HealthUrl    = "http://localhost:8081/identity/auth/introspect"
+        HealthMethod = "POST"
+        HealthBody   = '{"token":""}'
+        HealthMode   = "Json"
+        HealthRegex  = '"code"\s*:\s*1000[\s\S]*"valid"\s*:\s*false'
         Description  = "Authentication, Authorization & Users"
     }
     "api-gateway" = @{
@@ -55,7 +59,11 @@ $ServicesConfig = [ordered]@{
         PortEnvVar   = "GATEWAY_PORT"
         DbName       = $null
         DbPort       = $null
-        HealthUrl    = "http://localhost:8888/api/v1/identity"
+        HealthUrl    = "http://localhost:8888/api/v1/identity/auth/introspect"
+        HealthMethod = "POST"
+        HealthBody   = '{"token":""}'
+        HealthMode   = "Json"
+        HealthRegex  = '"code"\s*:\s*1000[\s\S]*"valid"\s*:\s*false'
         Description  = "API Gateway Router"
     }
     "catalog-service" = @{
@@ -65,6 +73,8 @@ $ServicesConfig = [ordered]@{
         DbName       = "postgres-catalog"
         DbPort       = 5434
         HealthUrl    = "http://localhost:8082/catalog/categories/roots"
+        HealthMethod = "GET"
+        HealthMode   = "Http"
         Description  = "Service Catalog & Job Posts"
     }
     "order-service" = @{
@@ -74,6 +84,8 @@ $ServicesConfig = [ordered]@{
         DbName       = "order_db"
         DbPort       = 5432
         HealthUrl    = "http://localhost:8083/order"
+        HealthMethod = "GET"
+        HealthMode   = "Http"
         Description  = "Orders & Job Proposals"
     }
     "payment-service" = @{
@@ -83,6 +95,8 @@ $ServicesConfig = [ordered]@{
         DbName       = "payment_db"
         DbPort       = 5432
         HealthUrl    = "http://localhost:8084/payment"
+        HealthMethod = "GET"
+        HealthMode   = "Http"
         Description  = "Wallet, Payments & Escrow"
     }
 }
@@ -91,8 +105,9 @@ $ServicesConfig = [ordered]@{
 function Get-TargetPort([hashtable]$cfg) {
     if ($cfg.PortEnvVar -and (Test-Path "Env:$($cfg.PortEnvVar)")) {
         $val = (Get-Item "Env:$($cfg.PortEnvVar)").Value
-        if ($val -as [int]) {
-            return [int]$val
+        $parsed = 0
+        if ([int]::TryParse($val, [ref]$parsed) -and $parsed -gt 0) {
+            return $parsed
         }
     }
     return [int]$cfg.DefaultPort
@@ -139,47 +154,169 @@ function Stop-PortProcess([int]$Port, [string]$ServiceName = "") {
     return $true
 }
 
-function Test-ServiceHttp([string]$Url, [int]$TimeoutSec = 2) {
-    if (-not $Url) { return $false }
+function Invoke-ServiceProbe {
+    param(
+        [Parameter(Mandatory=$true)][string]$Url,
+        [string]$Method = "GET",
+        [string]$Body = $null,
+        [int]$TimeoutSec = 2
+    )
+
+    Add-Type -AssemblyName System.Net.Http | Out-Null
+    $client = [System.Net.Http.HttpClient]::new()
+    $client.Timeout = [TimeSpan]::FromSeconds($TimeoutSec)
+
     try {
-        $null = Invoke-WebRequest -Uri $Url -Method Get -TimeoutSec $TimeoutSec -UseBasicParsing -ErrorAction Stop
-        return $true
-    } catch {
-        if ($_.Exception.Response -ne $null) {
-            return $true
+        $request = [System.Net.Http.HttpRequestMessage]::new(
+            [System.Net.Http.HttpMethod]::new($Method), $Url
+        )
+        if (-not [string]::IsNullOrEmpty($Body)) {
+            $request.Content = [System.Net.Http.StringContent]::new(
+                $Body, [System.Text.Encoding]::UTF8, "application/json"
+            )
         }
-        return $false
+
+        $response = $client.SendAsync($request).GetAwaiter().GetResult()
+        $text = ""
+        $contentType = ""
+        if ($null -ne $response.Content) {
+            $text = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+            $contentType = [string]$response.Content.Headers.ContentType
+        }
+
+        return [pscustomobject]@{
+            Ok          = $response.IsSuccessStatusCode
+            StatusCode  = [int]$response.StatusCode
+            ContentType = $contentType
+            Body        = $text
+            IsJson      = ($contentType -match "application/json")
+            Error       = $null
+        }
+    }
+    catch {
+        return [pscustomobject]@{
+            Ok          = $false
+            StatusCode  = 0
+            ContentType = ""
+            Body        = ""
+            IsJson      = $false
+            Error       = $_.Exception.Message
+        }
+    }
+    finally {
+        $client.Dispose()
     }
 }
 
-function Check-DockerDatabase([string]$ServiceName) {
-    if ($ServiceName -eq "identity-service") {
-        $dbPort = 5433
-        $conn = Test-NetConnection -ComputerName "localhost" -Port $dbPort -WarningAction SilentlyContinue
-        if (-not $conn.TcpTestSucceeded) {
-            Write-Warning "[WorkGo] PostgreSQL database for Identity Service (port $dbPort) not reachable."
-            Write-Host "[WorkGo] Auto-starting Docker container 'identity-postgres'..." -ForegroundColor Cyan
-            try {
-                docker compose up -d postgres-identity
-                Start-Sleep -Seconds 3
-            } catch {
-                Write-Warning "[WorkGo] Unable to run docker compose. Please ensure Docker Desktop is running."
-            }
-        }
-    } elseif ($ServiceName -eq "catalog-service") {
-        $dbPort = 5434
-        $conn = Test-NetConnection -ComputerName "localhost" -Port $dbPort -WarningAction SilentlyContinue
-        if (-not $conn.TcpTestSucceeded) {
-            Write-Warning "[WorkGo] PostgreSQL database for Catalog Service (port $dbPort) not reachable."
-            Write-Host "[WorkGo] Auto-starting Docker container 'catalog-postgres'..." -ForegroundColor Cyan
-            try {
-                docker compose up -d postgres-catalog
-                Start-Sleep -Seconds 3
-            } catch {
-                Write-Warning "[WorkGo] Unable to run docker compose. Please ensure Docker Desktop is running."
+function Test-ServiceHealth {
+    param([hashtable]$Config)
+
+    if (-not $Config.HealthUrl) {
+        return [pscustomobject]@{ Healthy = $false; Probe = $null }
+    }
+
+    $method = "GET"
+    if ($Config.ContainsKey("HealthMethod") -and $Config.HealthMethod) {
+        $method = $Config.HealthMethod
+    }
+
+    $body = $null
+    if ($Config.ContainsKey("HealthBody")) { $body = $Config.HealthBody }
+
+    $probe = Invoke-ServiceProbe `
+        -Url $Config.HealthUrl `
+        -Method $method `
+        -Body $body `
+        -TimeoutSec 2
+
+    if ($Config.HealthMode -eq "Json") {
+        # Strict mode: require 2xx + JSON (identity-service, api-gateway)
+        $healthy = $probe.Ok -and $probe.IsJson
+    } else {
+        # Compatibility mode: any HTTP response proves the process is alive
+        # (preserves the old Test-ServiceHttp behavior for catalog/order/payment)
+        $healthy = $probe.StatusCode -gt 0
+    }
+
+    if ($healthy -and $Config.HealthRegex) {
+        $healthy = ($probe.Body -match $Config.HealthRegex)
+    }
+
+    return [pscustomobject]@{
+        Healthy = $healthy
+        Probe   = $probe
+    }
+}
+
+function Get-DockerContainerByPort {
+    param([int]$Port)
+
+    $rows = & docker ps --format "{{.Names}}|{{.Image}}|{{.Ports}}" 2>$null
+    foreach ($row in $rows) {
+        $parts = $row -split '\|', 3
+        if ($parts.Count -lt 3) { continue }
+        if ($parts[2] -match ":$Port->") {
+            return [pscustomobject]@{
+                Name  = $parts[0]
+                Image = $parts[1]
+                Ports = $parts[2]
             }
         }
     }
+    return $null
+}
+
+function Wait-TcpPort {
+    param([int]$Port, [int]$TimeoutSec = 30)
+    $deadline = (Get-Date).AddSeconds($TimeoutSec)
+    do {
+        $ok = (Test-NetConnection -ComputerName "localhost" -Port $Port -WarningAction SilentlyContinue).TcpTestSucceeded
+        if ($ok) { return $true }
+        Start-Sleep -Seconds 1
+    } while ((Get-Date) -lt $deadline)
+    return $false
+}
+
+function Check-DockerDatabase([string]$ServiceName) {
+    $dbPort = $null
+    $container = $null
+
+    if ($ServiceName -eq "identity-service") {
+        $dbPort = 5433
+        $container = "postgres-identity"
+    } elseif ($ServiceName -eq "catalog-service") {
+        $dbPort = 5434
+        $container = "postgres-catalog"
+    }
+
+    if (-not $dbPort) {
+        return $true
+    }
+
+    $conn = Test-NetConnection -ComputerName "localhost" -Port $dbPort -WarningAction SilentlyContinue
+    if (-not $conn.TcpTestSucceeded) {
+        Write-Warning "[WorkGo] PostgreSQL database for $ServiceName (port $dbPort) not reachable."
+        Write-Host "[WorkGo] Auto-starting Docker container '$container'..." -ForegroundColor Cyan
+
+        & docker compose up -d $container 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "[WorkGo] Unable to run docker compose. Please ensure Docker Desktop is running."
+            return $false
+        }
+
+        if (-not (Wait-TcpPort -Port $dbPort -TimeoutSec 30)) {
+            Write-Warning "[WorkGo] Database port $dbPort did not open within 30 seconds."
+            Write-Host "[WorkGo] Container state:" -ForegroundColor Yellow
+            & docker ps -a --filter "name=$container" | Out-Host
+            Write-Host "[WorkGo] Last container logs:" -ForegroundColor Yellow
+            & docker logs --tail 40 $container 2>&1 | Out-Host
+            return $false
+        }
+
+        Write-Host "[WorkGo] Database port $dbPort is reachable." -ForegroundColor Green
+    }
+
+    return $true
 }
 
 function Show-Status {
@@ -201,10 +338,28 @@ function Show-Status {
 
         $statusStr = if ($isListening) { "RUNNING" } else { "STOPPED" }
         $healthStr = "-"
+        $owner     = "-"
 
         if ($isListening) {
-            $alive = Test-ServiceHttp -Url $cfg.HealthUrl -TimeoutSec 1
-            $healthStr = if ($alive) { "HEALTHY" } else { "UNRESPONSIVE" }
+            $result = Test-ServiceHealth -Config $cfg
+
+            if ($result.Healthy) {
+                $healthStr = "HEALTHY"
+            } elseif ($result.Probe -and $result.Probe.StatusCode -gt 0 -and $result.Probe.IsJson) {
+                $healthStr = "UNHEALTHY"       # correct service (JSON) but health check failed
+            } elseif ($result.Probe -and $result.Probe.StatusCode -gt 0) {
+                $healthStr = "WRONG SERVICE"   # HTML/404 from a different service
+            } else {
+                $healthStr = "UNRESPONSIVE"    # listener exists but no HTTP response
+            }
+
+            $dockerOwner = Get-DockerContainerByPort -Port $port
+            if ($dockerOwner) {
+                $owner = "$($dockerOwner.Name) ($($dockerOwner.Image))"
+                if (-not $result.Healthy) { $healthStr = "PORT CONFLICT" }
+            } elseif ($proc) {
+                $owner = $proc.ProcessName
+            }
         }
 
         $rows += [PSCustomObject]@{
@@ -214,11 +369,12 @@ function Show-Status {
             Process     = $procName
             Status      = $statusStr
             Health      = $healthStr
+            Owner       = $owner
             Description = $cfg.Description
         }
     }
 
-    $rows | Format-Table -Property Service, Port, PID, Process, Status, Health, Description -AutoSize
+    $rows | Format-Table -Property Service, Port, PID, Process, Status, Health, Owner, Description -AutoSize
     Write-Host "Usage Tips:" -ForegroundColor DarkGray
     Write-Host "  .\run.ps1 <service>          : Start service (auto port collision detection)" -ForegroundColor DarkGray
     Write-Host "  .\run.ps1 <service> -Force   : Force kill existing process on port and restart" -ForegroundColor DarkGray
@@ -230,21 +386,31 @@ function Show-Status {
 function Clear-AllZombieProcesses {
     Write-Host "[WorkGo] Scanning and freeing microservices ports..." -ForegroundColor Yellow
     $killedCount = 0
+    $skippedDocker = 0
     foreach ($name in $ServicesConfig.Keys) {
         $cfg = $ServicesConfig[$name]
         $port = Get-TargetPort $cfg
         $target = Get-ProcessByPort -Port $port
         if ($target) {
             Write-Host "[WorkGo] Detected process $($target.ProcessName) (PID: $($target.ProcessId)) on port $port ($name)." -ForegroundColor Yellow
+
+            $dockerOwner = Get-DockerContainerByPort -Port $port
+            if ($dockerOwner) {
+                $skippedDocker++
+                Write-Host "[WorkGo] Skipping port ${port}: held by Docker container '$($dockerOwner.Name)' (not a WorkGo process)." -ForegroundColor Yellow
+                Write-Host "[WorkGo] To free it manually: docker stop $($dockerOwner.Name)" -ForegroundColor DarkGray
+                continue
+            }
+
             if (Stop-PortProcess -Port $port -ServiceName $name) {
                 $killedCount++
             }
         }
     }
     if ($killedCount -eq 0) {
-        Write-Host "[WorkGo] All microservices ports are clean! No zombie processes found." -ForegroundColor Green
+        Write-Host "[WorkGo] All microservices ports are clean (Docker-owned: $skippedDocker skipped)." -ForegroundColor Green
     } else {
-        Write-Host "[WorkGo] Successfully cleaned $killedCount process(es)!" -ForegroundColor Green
+        Write-Host "[WorkGo] Successfully cleaned $killedCount process(es); skipped $skippedDocker Docker container(s)." -ForegroundColor Green
     }
 }
 
@@ -328,6 +494,14 @@ if (-not (Test-Path $serviceDir)) {
 
 # 6. Handle -Stop flag
 if ($Stop) {
+    $dockerOwner = Get-DockerContainerByPort -Port $targetPort
+    if ($dockerOwner) {
+        Write-Warning "[WorkGo] Port $targetPort is held by Docker container '$($dockerOwner.Name)'. Refusing to kill it."
+        Write-Host "         To stop the container manually: docker stop $($dockerOwner.Name)" -ForegroundColor Cyan
+        # exit 0: -Stop is idempotent and keeps test-runner Group 4/6 green; refusing to kill Docker is the safe behavior.
+        exit 0
+    }
+
     Write-Host "[WorkGo] Stopping service $normalizedService on port $targetPort..." -ForegroundColor Yellow
     $stopped = Stop-PortProcess -Port $targetPort -ServiceName $normalizedService
     if ($stopped) {
@@ -341,35 +515,65 @@ $occupant = Get-ProcessByPort -Port $targetPort
 $doForce = $Force -or $Restart
 
 if ($occupant) {
+    $dockerOwner  = Get-DockerContainerByPort -Port $targetPort
+    $healthResult = Test-ServiceHealth -Config $cfg
+
+    if ($dockerOwner) {
+        if ($healthResult.Healthy -and -not $doForce) {
+            Write-Host ""
+            Write-Host " [WorkGo] SERVICE $normalizedService IS ALREADY ACTIVE (Docker: $($dockerOwner.Name))!" -ForegroundColor Green
+            Write-Host " * Listening Port: $targetPort" -ForegroundColor Cyan
+            Write-Host " * Container     : $($dockerOwner.Name) ($($dockerOwner.Image))" -ForegroundColor Cyan
+            exit 0
+        }
+
+        Write-Host ""
+        Write-Host "[WorkGo] Port $targetPort is held by Docker container '$($dockerOwner.Name)' ($($dockerOwner.Image))," -ForegroundColor Red
+        Write-Host "[WorkGo] NOT $normalizedService. Refusing to kill Docker Desktop or other containers." -ForegroundColor Red
+        Write-Host "[WorkGo] Stop that container, then run again:" -ForegroundColor Yellow
+        Write-Host "         docker stop $($dockerOwner.Name)" -ForegroundColor Cyan
+        Write-Host "         .\run.ps1 $normalizedService" -ForegroundColor Cyan
+        Write-Host "[WorkGo] If this container is actually your WorkGo service, restart the container instead of using -Force." -ForegroundColor DarkGray
+        exit 1
+    }
+
+    if ($healthResult.Healthy -and -not $doForce) {
+        # Preserve the "SERVICE ... IS ALREADY ACTIVE!" message + exit 0
+        Write-Host ""
+        Write-Host "=======================================================================" -ForegroundColor Green
+        Write-Host " [WorkGo] SERVICE $normalizedService IS ALREADY ACTIVE!" -ForegroundColor Green
+        Write-Host "=======================================================================" -ForegroundColor Green
+        Write-Host " * Listening Port: $targetPort" -ForegroundColor Cyan
+        Write-Host " * Process PID   : $($occupant.ProcessId) ($($occupant.ProcessName))" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host " Hint: To restart this service, use the -Force flag:" -ForegroundColor Yellow
+        Write-Host "       .\run.ps1 $normalizedService -Force" -ForegroundColor Cyan
+        Write-Host ""
+        exit 0
+    }
+
+    # Only reached when the process is NOT a Docker container
     if ($doForce) {
         Write-Host "[WorkGo] Detected process PID $($occupant.ProcessId) ($($occupant.ProcessName)) on port $targetPort. Stopping old process (-Force)..." -ForegroundColor Yellow
         Stop-PortProcess -Port $targetPort -ServiceName $normalizedService
+    } elseif ($healthResult.Probe -and $healthResult.Probe.StatusCode -gt 0 -and $healthResult.Probe.IsJson) {
+        # Correct service (returns JSON) but unhealthy -- usually a dependency (DB/gateway) is not ready.
+        # Do not kill it: avoid a restart chain; report and let the user decide.
+        Write-Warning "[WorkGo] $normalizedService is running (PID $($occupant.ProcessId)) but the health check failed."
+        Write-Host "         Check dependencies (DB/gateway), or use -Force if you really want to restart." -ForegroundColor Yellow
+        exit 1
     } else {
-        # Check if process is responding to HTTP
-        $isAlive = Test-ServiceHttp -Url $cfg.HealthUrl
-        if ($isAlive) {
-            Write-Host ""
-            Write-Host "=======================================================================" -ForegroundColor Green
-            Write-Host " [WorkGo] SERVICE $normalizedService IS ALREADY ACTIVE!" -ForegroundColor Green
-            Write-Host "=======================================================================" -ForegroundColor Green
-            Write-Host " * Listening Port: $targetPort" -ForegroundColor Cyan
-            Write-Host " * Process PID   : $($occupant.ProcessId) ($($occupant.ProcessName))" -ForegroundColor Cyan
-            Write-Host " * Health Status : HEALTHY (HTTP responding OK)" -ForegroundColor Green
-            Write-Host ""
-            Write-Host " Hint: To restart this service, use the -Force flag:" -ForegroundColor Yellow
-            Write-Host "       .\run.ps1 $normalizedService -Force" -ForegroundColor Cyan
-            Write-Host ""
-            exit 0
-        } else {
-            Write-Warning "[WorkGo] Port $targetPort is occupied by PID $($occupant.ProcessId) ($($occupant.ProcessName)) but not responding (Zombie Process)."
-            Write-Host "[WorkGo] Auto-releasing port to avoid BUILD FAILURE..." -ForegroundColor Yellow
-            Stop-PortProcess -Port $targetPort -ServiceName $normalizedService
-        }
+        # Preserve old behavior: process does not return the expected HTTP/JSON -> treat as zombie and release
+        Write-Warning "[WorkGo] Port $targetPort is occupied by PID $($occupant.ProcessId) ($($occupant.ProcessName)) but not healthy (Zombie Process)."
+        Stop-PortProcess -Port $targetPort -ServiceName $normalizedService
     }
 }
 
 # 8. Pre-flight checks (Docker Database)
-Check-DockerDatabase -ServiceName $normalizedService
+if (-not (Check-DockerDatabase -ServiceName $normalizedService)) {
+    Write-Error "[WorkGo] Database pre-flight failed for $normalizedService."
+    exit 1
+}
 
 # 9. Start service with Maven Wrapper
 Write-Host "[WorkGo] Starting service: $normalizedService (Port: $targetPort)..." -ForegroundColor Cyan

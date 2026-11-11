@@ -18,7 +18,11 @@ services:
     networks:
       - identity-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${IDENTITY_DB:-identity_db}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USERNAME:-postgres} -d ${IDENTITY_DB:-identity_db}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,7 +42,11 @@ services:
     networks:
       - catalog-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${CATALOG_DB:-catalog_db}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USERNAME:-postgres} -d ${CATALOG_DB:-catalog_db}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -58,7 +66,11 @@ services:
     networks:
       - order-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${ORDER_DB:-order_db}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USERNAME:-postgres} -d ${ORDER_DB:-order_db}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -83,6 +95,26 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres-job:
+    image: postgres:16-alpine
+    container_name: job-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${JOB_DB:-job_db}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env or the environment}
+    ports:
+      - "${JOB_DB_PORT:-5437}:5432"
+    volumes:
+      - job_pgdata:/var/lib/postgresql/data
+    networks:
+      - job-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${JOB_DB:-job_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   identity_pgdata:
     driver: local
@@ -91,6 +123,8 @@ volumes:
   order_pgdata:
     driver: local
   payment_pgdata:
+    driver: local
+  job_pgdata:
     driver: local
 
 networks:
@@ -101,4 +135,6 @@ networks:
   order-net:
     driver: bridge
   payment-net:
+    driver: bridge
+  job-net:
     driver: bridge

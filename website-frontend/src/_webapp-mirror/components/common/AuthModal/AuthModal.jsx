@@ -3,6 +3,7 @@ import { X, Lock, User, Mail, CheckCircle2, AlertCircle } from 'lucide-react';
 import styles from './AuthModal.module.css';
 import { useFocusTrap } from '../../../hooks/useFocusTrap';
 import axiosClient, { setAccessToken } from '../../../api/axiosClient';
+import { authApi } from '../../../api/authApi';
 
 export default function AuthModal({ initialMode = 'login', onClose }) {
   const [mode, setMode] = useState(initialMode);
@@ -66,12 +67,26 @@ export default function AuthModal({ initialMode = 'login', onClose }) {
         });
       }
     } else {
-      await new Promise((resolve) => setTimeout(resolve, 350));
-      setFeedback({
-        type: 'success',
-        message: 'Đăng ký tài khoản thành công (Demo)! Bạn có thể đăng nhập ngay.'
-      });
-      setTimeout(() => setMode('login'), 1000);
+      try {
+        // identity-service has no role field on registration (see BACKEND_GAPS.md).
+        await authApi.register({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          userName: formData.userName,
+          password: formData.password,
+          email: formData.email,
+        });
+        setFeedback({
+          type: 'success',
+          message: 'Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay.'
+        });
+        setTimeout(() => setMode('login'), 1000);
+      } catch (err) {
+        setFeedback({
+          type: 'error',
+          message: `Không đăng ký được: ${err?.message || 'lỗi kết nối máy chủ'}`
+        });
+      }
     }
     setLoading(false);
   };

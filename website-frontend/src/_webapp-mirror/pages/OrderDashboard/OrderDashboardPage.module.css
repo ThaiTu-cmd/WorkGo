@@ -658,3 +658,14 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.pageTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.titleIcon {
+  flex-shrink: 0;
+  color: var(--wg-primary);
+}

@@ -8,19 +8,19 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO = path.resolve(__dirname, "../../");
-const SRC = path.join(REPO, "web-app", "src");
+const SRC = path.join(REPO, "website-frontend", "src", "_webapp-mirror");
 const MIRROR = path.join(REPO, "website-frontend", "src", "_webapp-mirror");
 
 const read = (p) => fs.readFileSync(p, "utf-8");
 const sha256 = (p) => crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex");
 
-// ---------- C2-1: 1024px band guard ----------
-test("C2-1: header has 900-1100px band tightening (gap + font + search width)", () => {
+// ---------- C2-1: 1100px band guard (UI fix 2026-10-17: 900→1100, 1100→1440) ----------
+test("C2-1: header has 1100-1440px band tightening (gap + font + search width)", () => {
   const css = read(path.join(SRC, "components/common/Header/Header.module.css"));
-  assert.match(css, /@media\s*\(min-width:\s*900px\)\s*and\s*\(max-width:\s*1100px\)/);
-  const band = css.slice(css.indexOf("@media (min-width: 900px) and (max-width: 1100px)"));
+  assert.match(css, /@media\s*\(min-width:\s*1100px\)\s*and\s*\(max-width:\s*1440px\)/);
+  const band = css.slice(css.indexOf("@media (min-width: 1100px) and (max-width: 1440px)"));
   assert.match(band, /\.desktopNav\s*\{[^}]*gap:\s*16px/);
-  assert.match(band, /\.navLink\s*\{[^}]*font-size:\s*0\.88rem/);
+  assert.match(band, /\.navLink\s*\{[^}]*font-size:\s*0\.9rem/);
   assert.match(band, /\.navSearch\s*\{[^}]*width:\s*240px/);
 });
 
@@ -106,52 +106,10 @@ test("C2-4: MyServicesPage wires onClearFilters/onCreateService (full reset)", (
   assert.match(jsx, /setSelectedCategory\('ALL'\)/);
 });
 
-// ---------- C2-5: persistence ----------
-test("C2-5: store uses single key with guarded read/write", () => {
-  const store = read(path.join(SRC, "pages/MyServices/providerServicesStore.js"));
-  assert.match(store, /workgo_provider_services_overrides/);
-  assert.match(store, /try\s*\{[\s\S]*localStorage\.getItem/);
-  assert.match(store, /try\s*\{[\s\S]*localStorage\.setItem/);
-  assert.match(store, /catch/);
-});
-
-test("C2-5: MyServicesPage lazy-inits + write-through persists", () => {
-  const jsx = read(path.join(SRC, "pages/MyServices/MyServicesPage.jsx"));
-  assert.match(jsx, /useState\(initialProviderServices\)/);
-  assert.match(jsx, /persistProviderServices\(services\)/);
-});
-
-test("C2-5: App owns providerServices so it lazy-inits + persists too (M8)", () => {
-  const app = read(path.join(SRC, "App.jsx"));
-  assert.match(app, /useState\(initialProviderServices\)/);
-  assert.match(app, /persistProviderServices\(providerServices\)/);
-});
-
-test("C2-5: bridge shell shares the same key and lazy-init", () => {
+test("C2-5: My Services loads provider services from catalog-service", () => {
   const shell = read(path.join(REPO, "website-frontend/src/components/webapp-bridge/webapp-shell.tsx"));
-  assert.match(shell, /providerServicesStore/);
-  assert.match(shell, /initialProviderServices\(\)/);
-  assert.match(shell, /persistProviderServices\(providerServices\)/);
+  assert.doesNotMatch(shell, /providerServicesStore|mockProviderServices/);
+  const page = read(path.join(REPO, "website-frontend/src/_webapp-mirror/pages/MyServices/MyServicesPage.jsx"));
+  assert.match(page, /useMyServices\(\)/);
 });
 
-// ---------- C2-6: mirror parity for all Cycle-2 files ----------
-test("C2-6: every Cycle-2 src file is byte-identical in _webapp-mirror", () => {
-  const files = [
-    "components/common/Header/Header.module.css",
-    "components/home/PopularServices/PopularServices.module.css",
-    "components/home/HeroBanner/HeroBanner.module.css",
-    "pages/CatalogSearch/components/SearchToolbar/SearchToolbar.module.css",
-    "pages/CatalogSearch/CatalogSearchPage.jsx",
-    "pages/MyServices/components/ServicesTable/ServicesTable.jsx",
-    "pages/MyServices/components/ServicesTable/ServicesTable.module.css",
-    "pages/MyServices/MyServicesPage.jsx",
-    "pages/MyServices/providerServicesStore.js",
-    "components/common/Skeleton/SkeletonServiceCard.jsx",
-    "components/common/Skeleton/SkeletonServiceCard.module.css",
-    "components/common/Skeleton/SkeletonTable.jsx",
-    "components/common/Skeleton/SkeletonTable.module.css",
-  ];
-  for (const f of files) {
-    assert.equal(sha256(path.join(MIRROR, f)), sha256(path.join(SRC, f)), `mirror mismatch: ${f}`);
-  }
-});

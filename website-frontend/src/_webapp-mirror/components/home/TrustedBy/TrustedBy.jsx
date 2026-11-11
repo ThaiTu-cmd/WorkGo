@@ -15,7 +15,7 @@ export default function TrustedBy() {
     <section className={styles.trustedSection}>
       <div className={`container ${styles.trustedContainer}`}>
         <span className={styles.trustedLabel}>
-          Được tin dùng bởi hơn 10.000+ cá nhân & doanh nghiệp:
+          Tin dùng bởi 10.000+ khách hàng
         </span>
         <div className={styles.partnerList}>
           {partners.map((partner, index) => (

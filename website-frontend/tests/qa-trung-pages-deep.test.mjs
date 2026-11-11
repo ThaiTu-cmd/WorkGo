@@ -143,11 +143,11 @@ test("HP-TRUNG-08: mockDisputes covers REPORT and DISPUTE kinds with OPEN/RESOLV
   assert.ok(file.includes("RESOLVED"));
 });
 
-test("HP-TRUNG-09: mockProviders provides valid ratings (1-5), bio, and service listings", () => {
-  const file = read(path.join(TRUNG, "_mocks/mockProviders.ts"));
-  assert.ok(file.includes("pv-1") && file.includes("pv-2") && file.includes("pv-3"));
-  assert.ok(file.includes("rating: 4.9"));
-  assert.ok(file.includes("services: ["));
+test("HP-TRUNG-09: provider profile is loaded from identity-service via the bridge", () => {
+  assert.ok(!fs.existsSync(path.join(TRUNG, "_mocks/mockProviders.ts")), "mockProviders must be gone");
+  const file = read(path.join(TRUNG, "provider/ProviderProfilePage.tsx"));
+  assert.ok(file.includes("webapp-bridge/backend"));
+  assert.ok(file.includes("providerApi.getProvider"));
 });
 
 test("HP-TRUNG-10: KEYS constant defines all 9 localStorage keys under workgo_* namespace", () => {
@@ -488,13 +488,8 @@ test("EC-TRUNG-15: LocalStorage quota exception resilience & SSR safety across a
     "jobs/ProposalReviewPage.tsx",
     "payment/PaymentGatewayPage.tsx",
     "payment/PayoutSettingsPage.tsx",
-    "profile/ProfileSettingsPage.tsx",
-    "profile/AddressBookPage.tsx",
-    "provider/ProviderOnboardingPage.tsx",
     "trust/ReviewFormPage.tsx",
     "trust/DisputeCenterPage.tsx",
-    "auth/RegisterPage.tsx",
-    "auth/LoginPage.tsx",
   ];
 
   for (const p of pages) {

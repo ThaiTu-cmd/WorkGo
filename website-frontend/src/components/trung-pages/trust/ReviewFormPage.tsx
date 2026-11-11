@@ -78,7 +78,9 @@ export default function ReviewFormPage({ onNavigate, onShowToast, orderId }: Tru
   return (
     <main className={styles.wrap}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Đánh giá đơn hàng</h1>
+        <h1 className={styles.title}>
+          <Star size={24} className={styles.titleIcon} aria-hidden="true" /> Đánh giá đơn hàng
+        </h1>
         <p className={styles.sub}>Chia sẻ trải nghiệm để cộng đồng chọn provider tốt hơn.</p>
         <form onSubmit={submit} noValidate className={styles.form}>
           <label className={styles.field}>

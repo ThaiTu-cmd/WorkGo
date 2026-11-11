@@ -40,17 +40,25 @@ export default function ProviderCard({
               )}
             </div>
 
-            <p className={styles.providerBadge}>{provider.badge || 'Chuyên gia uy tín'}</p>
+            {(provider.badge || provider.isVerified) && (
+              <p className={styles.providerBadge}>{provider.badge || 'Đã xác minh'}</p>
+            )}
 
-            <div className={styles.ratingRow}>
-              <div className={styles.stars}>
-                <Star size={15} className={styles.starIcon} />
-                <span className={styles.ratingVal}>{avgRating}</span>
-                <span className={styles.reviewCount}>({reviewCount} đánh giá)</span>
+            {(avgRating != null || ordersInQueue != null) && (
+              <div className={styles.ratingRow}>
+                {avgRating != null && (
+                  <div className={styles.stars}>
+                    <Star size={15} className={styles.starIcon} />
+                    <span className={styles.ratingVal}>{avgRating}</span>
+                    <span className={styles.reviewCount}>({reviewCount} đánh giá)</span>
+                  </div>
+                )}
+                {avgRating != null && ordersInQueue != null && <span className={styles.dotSep}>•</span>}
+                {ordersInQueue != null && (
+                  <span className={styles.queueText}>{ordersInQueue} đơn đang xử lý</span>
+                )}
               </div>
-              <span className={styles.dotSep}>•</span>
-              <span className={styles.queueText}>{ordersInQueue} đơn đang xử lý</span>
-            </div>
+            )}
           </div>
         </div>
 
@@ -59,37 +67,45 @@ export default function ProviderCard({
 
         {/* Stats Grid */}
         <div className={styles.statsGrid}>
-          <div className={styles.statItem}>
-            <Calendar size={16} className={styles.statIcon} />
-            <div className={styles.statText}>
-              <span className={styles.statLabel}>Thành viên từ</span>
-              <span className={styles.statVal}>{memberSince}</span>
+          {memberSince && (
+            <div className={styles.statItem}>
+              <Calendar size={16} className={styles.statIcon} />
+              <div className={styles.statText}>
+                <span className={styles.statLabel}>Thành viên từ</span>
+                <span className={styles.statVal}>{memberSince}</span>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className={styles.statItem}>
-            <Clock size={16} className={styles.statIcon} />
-            <div className={styles.statText}>
-              <span className={styles.statLabel}>Thời gian phản hồi</span>
-              <span className={styles.statVal}>{responseTime}</span>
+          {responseTime && (
+            <div className={styles.statItem}>
+              <Clock size={16} className={styles.statIcon} />
+              <div className={styles.statText}>
+                <span className={styles.statLabel}>Thời gian phản hồi</span>
+                <span className={styles.statVal}>{responseTime}</span>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className={styles.statItem}>
-            <Clock size={16} className={styles.statIcon} />
-            <div className={styles.statText}>
-              <span className={styles.statLabel}>Lần giao gần nhất</span>
-              <span className={styles.statVal}>{lastDelivery}</span>
+          {lastDelivery && (
+            <div className={styles.statItem}>
+              <Clock size={16} className={styles.statIcon} />
+              <div className={styles.statText}>
+                <span className={styles.statLabel}>Lần giao gần nhất</span>
+                <span className={styles.statVal}>{lastDelivery}</span>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className={styles.statItem}>
-            <Globe size={16} className={styles.statIcon} />
-            <div className={styles.statText}>
-              <span className={styles.statLabel}>Ngôn ngữ</span>
-              <span className={styles.statVal}>{languages.join(', ')}</span>
+          {languages?.length > 0 && (
+            <div className={styles.statItem}>
+              <Globe size={16} className={styles.statIcon} />
+              <div className={styles.statText}>
+                <span className={styles.statLabel}>Ngôn ngữ</span>
+                <span className={styles.statVal}>{languages.join(', ')}</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Action Button */}

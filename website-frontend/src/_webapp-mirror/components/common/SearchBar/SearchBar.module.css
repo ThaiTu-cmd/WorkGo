@@ -224,6 +224,7 @@
     width: 100%;
     padding: 14px;
     border-radius: 0 0 calc(var(--radius-md) - 2px) calc(var(--radius-md) - 2px);
+    height: auto; /* UI fix: hết nút 332×182 — height:100% trong column-flex */
   }
 
   .btnIcon {

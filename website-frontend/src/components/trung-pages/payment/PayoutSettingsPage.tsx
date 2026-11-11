@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Landmark } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { KEYS } from "../_stores/keys";
 import { mockPayout, type SavedPayout } from "../_mocks/mockPayout";
@@ -23,6 +24,19 @@ export function maskAccount(n: string): string {
   const digits = n.replace(/\D/g, "");
   if (digits.length <= 4) return digits;
   return `****${digits.slice(-4)}`;
+}
+
+export function validatePayoutBank(raw: string): string | undefined {
+  return sanitizeText(raw).length < 2 ? "Vui lòng nhập tên ngân hàng từ 2 ký tự!" : undefined;
+}
+
+export function validatePayoutHolder(raw: string): string | undefined {
+  return sanitizeText(raw).length < 2 ? "Vui lòng nhập tên chủ tài khoản từ 2 ký tự!" : undefined;
+}
+
+export function validatePayoutAccount(raw: string): string | undefined {
+  const digits = sanitizeText(raw).replace(/\D/g, "");
+  return /^\d{8,19}$/.test(digits) ? undefined : "Số tài khoản phải gồm 8-19 chữ số!";
 }
 
 function loadPayout(): SavedPayout {
@@ -53,15 +67,16 @@ export default function PayoutSettingsPage({ onShowToast }: TrungPageProps) {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    const next: typeof errors = {
+      bankName: validatePayoutBank(bankName),
+      accountName: validatePayoutHolder(accountName),
+      accountNumber: validatePayoutAccount(accountNumber),
+    };
+    setErrors(next);
+    if (next.bankName ?? next.accountName ?? next.accountNumber) return;
     const cleanBank = sanitizeText(bankName);
     const cleanName = sanitizeText(accountName);
     const digits = sanitizeText(accountNumber).replace(/\D/g, "");
-    const next: typeof errors = {};
-    if (cleanBank.length < 2) next.bankName = "Vui lòng nhập tên ngân hàng từ 2 ký tự!";
-    if (cleanName.length < 2) next.accountName = "Vui lòng nhập tên chủ tài khoản từ 2 ký tự!";
-    if (!/^\d{8,19}$/.test(digits)) next.accountNumber = "Số tài khoản phải gồm 8-19 chữ số!";
-    setErrors(next);
-    if (next.bankName ?? next.accountName ?? next.accountNumber) return;
     try {
       window.localStorage.setItem(
         KEYS.payout,
@@ -78,24 +93,74 @@ export default function PayoutSettingsPage({ onShowToast }: TrungPageProps) {
   return (
     <main className={styles.wrap}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Cài đặt rút tiền</h1>
+        <h1 className={styles.title}>
+          <Landmark size={24} className={styles.titleIcon} aria-hidden="true" /> Cài đặt rút tiền
+        </h1>
         <p className={styles.sub}>Tiền trong ví sẽ được chuyển về tài khoản này khi bạn yêu cầu rút.</p>
         {savedMask ? <p className={styles.saved}>Tài khoản đã lưu: {savedMask}</p> : null}
         <form onSubmit={submit} noValidate className={styles.form}>
           <label className={styles.field}>
             <span>Tên ngân hàng</span>
-            <input type="text" autoFocus value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Vietcombank" />
-            {errors.bankName ? <em className={styles.error}>{errors.bankName}</em> : null}
+            <input
+              type="text"
+              autoFocus
+              value={bankName}
+              onChange={(e) => {
+                setBankName(e.target.value);
+                if (errors.bankName) setErrors((prev) => ({ ...prev, bankName: validatePayoutBank(e.target.value) }));
+              }}
+              onBlur={() => setErrors((prev) => ({ ...prev, bankName: validatePayoutBank(bankName) }))}
+              placeholder="Vietcombank"
+              aria-invalid={errors.bankName ? true : undefined}
+              aria-describedby={errors.bankName ? "payout-bank-error" : undefined}
+            />
+            {errors.bankName ? (
+              <em id="payout-bank-error" className={styles.error}>
+                {errors.bankName}
+              </em>
+            ) : null}
           </label>
           <label className={styles.field}>
             <span>Chủ tài khoản</span>
-            <input type="text" value={accountName} onChange={(e) => setAccountName(e.target.value)} placeholder="NGUYEN VAN A" />
-            {errors.accountName ? <em className={styles.error}>{errors.accountName}</em> : null}
+            <input
+              type="text"
+              value={accountName}
+              onChange={(e) => {
+                setAccountName(e.target.value);
+                if (errors.accountName)
+                  setErrors((prev) => ({ ...prev, accountName: validatePayoutHolder(e.target.value) }));
+              }}
+              onBlur={() => setErrors((prev) => ({ ...prev, accountName: validatePayoutHolder(accountName) }))}
+              placeholder="NGUYEN VAN A"
+              aria-invalid={errors.accountName ? true : undefined}
+              aria-describedby={errors.accountName ? "payout-holder-error" : undefined}
+            />
+            {errors.accountName ? (
+              <em id="payout-holder-error" className={styles.error}>
+                {errors.accountName}
+              </em>
+            ) : null}
           </label>
           <label className={styles.field}>
             <span>Số tài khoản (8-19 số)</span>
-            <input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="0123456789" inputMode="numeric" />
-            {errors.accountNumber ? <em className={styles.error}>{errors.accountNumber}</em> : null}
+            <input
+              value={accountNumber}
+              onChange={(e) => {
+                setAccountNumber(e.target.value);
+                if (errors.accountNumber)
+                  setErrors((prev) => ({ ...prev, accountNumber: validatePayoutAccount(e.target.value) }));
+              }}
+              onBlur={() => setErrors((prev) => ({ ...prev, accountNumber: validatePayoutAccount(accountNumber) }))}
+              placeholder="0123456789"
+              inputMode="numeric"
+              aria-invalid={errors.accountNumber ? true : undefined}
+              aria-describedby={errors.accountNumber ? "payout-account-error" : undefined}
+            />
+            {errors.accountNumber ? (
+              <em id="payout-account-error" className={styles.error}>
+                {errors.accountNumber}
+              </em>
+            ) : null}
           </label>
           <button type="submit" className={styles.submit}>
             Lưu cài đặt

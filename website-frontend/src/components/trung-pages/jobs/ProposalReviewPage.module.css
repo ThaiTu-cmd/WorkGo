@@ -169,3 +169,14 @@
     padding-right: 20px;
   }
 }
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.titleIcon {
+  flex-shrink: 0;
+  color: var(--wg-primary);
+}

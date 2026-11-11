@@ -9,7 +9,6 @@ const EVIDENCE_DIR = path.resolve(".team/evidence/cycle3-final");
 if (!fs.existsSync(EVIDENCE_DIR)) fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
 
 const ORIGINS = [
-  { name: "5173", url: "http://localhost:5173/" },
   { name: "3000-vi", url: "http://localhost:3000/vi" },
 ];
 

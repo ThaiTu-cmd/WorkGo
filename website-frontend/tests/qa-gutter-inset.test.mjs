@@ -2,17 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO = path.resolve(__dirname, "../../");
-const SRC = path.join(REPO, "web-app", "src");
-const MIRROR = path.join(REPO, "website-frontend", "src", "_webapp-mirror");
+const SRC = path.join(REPO, "website-frontend", "src", "_webapp-mirror");
 
 const read = (p) => fs.readFileSync(p, "utf-8");
-const sha256 = (p) => crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex");
 
 // ---------- M1: page container gutter +8/+4 ----------
 test("gutter: .container is 32px desktop / 20px mobile", () => {
@@ -55,16 +52,3 @@ test("gutter: brand tokens untouched", () => {
   assert.match(vars, /--wg-primary:\s*#1dbf73/);
 });
 
-// ---------- S1: mirror parity for every touched source file ----------
-test("gutter: every touched source file is byte-identical in _webapp-mirror", () => {
-  const files = [
-    "styles/reset.css",
-    "components/common/Header/Header.module.css",
-    "pages/MyServices/MyServicesPage.module.css",
-    "pages/ServiceDetail/ServiceDetailPage.module.css",
-    "pages/ServiceForm/ServiceFormPage.module.css",
-  ];
-  for (const f of files) {
-    assert.equal(sha256(path.join(MIRROR, f)), sha256(path.join(SRC, f)), `mirror mismatch: ${f}`);
-  }
-});

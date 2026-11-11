@@ -18,7 +18,9 @@ public class TokenUtils {
     public UUID getCurrentProviderId() {
         UUID providerId = getCurrentProviderIdOrNull();
 
-        if (providerId == null) throw new AppException(ErrorCode.UNAUTHENTICATED);
+        // No providerId = signed in but not a (verified) provider: a permission
+        // problem (1007), not a bad token. UNAUTHENTICATED made clients log out.
+        if (providerId == null) throw new AppException(ErrorCode.UNAUTHORIZED);
 
         return providerId;
     }

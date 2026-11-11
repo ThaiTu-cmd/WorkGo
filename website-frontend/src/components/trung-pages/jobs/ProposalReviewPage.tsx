@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ClipboardCheck } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { mockJobs, type Job } from "../_mocks/mockJobs";
 import { mockProposals, type Proposal } from "../_mocks/mockProposals";
@@ -114,7 +115,9 @@ export default function ProposalReviewPage({ onNavigate, onShowToast, jobId }: T
 
   return (
     <main className={styles.wrap}>
-      <h1 className={styles.title}>Duyệt đề xuất</h1>
+      <h1 className={styles.title}>
+        <ClipboardCheck size={24} className={styles.titleIcon} aria-hidden="true" /> Duyệt đề xuất
+      </h1>
       <p className={styles.sub}>Client chọn 1 provider duy nhất cho mỗi việc, tiền được giữ hộ an toàn.</p>
       <label className={styles.field}>
         <span>Lọc theo việc</span>

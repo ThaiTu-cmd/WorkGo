@@ -72,7 +72,9 @@ public class DigitalFlowService {
 
         Instant now = Instant.now();
 
-        if (snapshot.getPackageSnapshot() != null
+        if (snapshot.getProposalSnapshot() != null) {
+            digital.setDeadlineAt(now.plus(Duration.ofDays(snapshot.getProposalSnapshot().estimatedDays())));
+        } else if (snapshot.getPackageSnapshot() != null
                 && snapshot.getPackageSnapshot().getDeliveryDay() != null) {
             digital.setDeadlineAt(now.plus(Duration.ofDays(
                     snapshot.getPackageSnapshot().getDeliveryDay())));

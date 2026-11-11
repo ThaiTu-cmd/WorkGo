@@ -2,6 +2,7 @@ package com.workgo.order.service;
 
 import com.workgo.order.dto.PageResponse;
 import com.workgo.order.dto.request.OrderCreationRequest;
+import com.workgo.order.dto.request.PaymentConfirmedRequest;
 import com.workgo.order.dto.request.SlotActionRequest;
 import com.workgo.order.dto.response.OrderDetailResponse;
 import com.workgo.order.dto.response.OrderItemResponse;
@@ -35,12 +36,14 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +51,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -55,6 +59,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@Slf4j
 public class OrderService {
 
     OrderRepository orderRepository;
@@ -72,11 +77,17 @@ public class OrderService {
     ExecutionRepository executionRepository;
     OnsiteExecutionRepository onsiteExecutionRepository;
     PasswordEncoder passwordEncoder;
+    TextEncryptor checkinCodeEncryptor;
+    CancellationService cancellationService;
     TokenUtils tokenUtils;
 
     @NonFinal
     @Value("${order.platform-fee-rate}")
     BigDecimal platformFeeRate;
+
+    @NonFinal
+    @Value("${order.payment-timeout-minutes}")
+    long paymentTimeoutMinutes;
 
     @Transactional
     public OrderResponse createOrder(OrderCreationRequest request){
@@ -163,20 +174,25 @@ public class OrderService {
     }
 
     @Transactional
-    public PaymentConfirmationResponse<Object> confirmPayment(UUID orderId) {
+    public PaymentConfirmationResponse<Object> confirmPayment(UUID orderId, PaymentConfirmedRequest request) {
+
+        if (request.getPaymentId() == null) {
+            throw new AppException(ErrorCode.ORDER_PAYMENT_ID_REQUIRED);
+        }
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        //da confirm roi (SUCCEEDED / RELEASED) hoac don da huy -> tra trang thai hien tai, payment tu xu ly
+        if (order.getPaymentStatus() != PaymentStatus.PENDING
+                || order.getOrderStatus() == OrderStatus.CANCELLED) {
+            return toConfirmationResponse(order, null);
+        }
 
         if (order.getOrderStatus() != OrderStatus.PENDING_PAYMENT) {
             throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
         }
 
-        order.setPaymentStatus(PaymentStatus.SUCCEEDED);
-
-        orderStatusService.transition(order, OrderStatus.CONFIRMED, null, RoleName.SYSTEM);
-
-        String checkinCode = null;
         Object executionStatus = null;
 
         //chi on site
@@ -189,23 +205,28 @@ public class OrderService {
                     .findByExecution_ExecutionId(execution.getExecutionId())
                     .orElseThrow(() -> new AppException(ErrorCode.ORDER_EXECUTION_NOT_FOUND));
 
-            //slot HELD -> BOOKED, loi thi rollback ca confirm
-            confirmSlot(onsite.getBookingSlotId(), orderId);
+            //slot HELD -> BOOKED, slot het han giu -> huy don, payment refund
+            if (!confirmSlot(onsite.getBookingSlotId(), orderId)) {
+                log.warn("Slot of order {} expired, cancel order, payment {} will refund", orderId, request.getPaymentId());
+                cancellationService.cancelBySystem(order);
+                return toConfirmationResponse(order, onsite.getStatus());
+            }
 
-            checkinCode = generateCheckinCode();
+            String checkinCode = generateCheckinCode();
             onsite.setCheckinCodeHash(passwordEncoder.encode(checkinCode));
+            onsite.setCheckinCodeEncrypted(checkinCodeEncryptor.encrypt(checkinCode));
             onsiteExecutionRepository.save(onsite);
 
             executionStatus = onsite.getStatus();
         }
 
-        return PaymentConfirmationResponse.builder()
-                .orderId(order.getOrderId())
-                .orderStatus(order.getOrderStatus())
-                .paymentStatus(order.getPaymentStatus())
-                .executionStatus(executionStatus)
-                .checkinCode(checkinCode)
-                .build();
+        order.setPaymentStatus(PaymentStatus.SUCCEEDED);
+        order.setPaymentId(request.getPaymentId());
+
+        orderStatusService.transition(order, OrderStatus.CONFIRMED, null, RoleName.SYSTEM);
+        log.info("Order {} confirmed by payment {}", orderId, request.getPaymentId());
+
+        return toConfirmationResponse(order, executionStatus);
     }
 
     //lay so tien + han thanh toan cua order
@@ -215,15 +236,20 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
-        Instant payableUntil = null;
+        //qua han nay PaymentTimeoutJob se huy don
+        Instant payableUntil = order.getCreatedAt().plus(Duration.ofMinutes(paymentTimeoutMinutes));
 
         //neu la onsite chi duoc thanh toan khi slot con duoc giu
         if (order.getExecutionType() == ExecutionType.ONSITE) {
-            payableUntil = executionRepository.findByOrder_OrderId(orderId)
+            Instant slotHoldExpiresAt = executionRepository.findByOrder_OrderId(orderId)
                     .flatMap(execution -> onsiteExecutionRepository
                             .findByExecution_ExecutionId(execution.getExecutionId()))
                     .map(OnsiteExecution::getSlotHoldExpiresAt)
                     .orElse(null);
+
+            if (slotHoldExpiresAt != null && slotHoldExpiresAt.isBefore(payableUntil)) {
+                payableUntil = slotHoldExpiresAt;
+            }
         }
 
         return OrderPaymentInfoResponse.builder()
@@ -247,18 +273,27 @@ public class OrderService {
         return String.format("%06d", new SecureRandom().nextInt(1_000_000));
     }
 
-    private void confirmSlot(UUID slotId, UUID orderId) {
+    private boolean confirmSlot(UUID slotId, UUID orderId) {
         try {
             catalogClient.confirmSlot(slotId, SlotActionRequest.builder()
                     .orderId(orderId)
                     .build());
+            return true;
         } catch (FeignException e) {
-            //slot khong con duoc giu boi order nay
             if (e.status() == HttpStatus.CONFLICT.value()) {
-                throw new AppException(ErrorCode.ORDER_SLOT_HOLD_EXPIRED);
+                return false;
             }
             throw new AppException(ErrorCode.CATALOG_UNAVAILABLE);
         }
+    }
+
+    private PaymentConfirmationResponse<Object> toConfirmationResponse(Order order, Object executionStatus) {
+        return PaymentConfirmationResponse.builder()
+                .orderId(order.getOrderId())
+                .orderStatus(order.getOrderStatus())
+                .paymentStatus(order.getPaymentStatus())
+                .executionStatus(executionStatus)
+                .build();
     }
 
     //loc ra addon duoc chon

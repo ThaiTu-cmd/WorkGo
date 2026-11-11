@@ -19,6 +19,4 @@ public class PaymentConfirmationResponse <S> {
     OrderStatus orderStatus;
     PaymentStatus paymentStatus;
     S executionStatus;
-
-    String checkinCode;
 }

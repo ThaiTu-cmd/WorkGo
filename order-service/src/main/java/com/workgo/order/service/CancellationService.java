@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -128,7 +129,9 @@ public class CancellationService {
                 throw new AppException(ErrorCode.ORDER_CANCEL_NOT_ALLOWED);
             }
 
+            //phase nay chi hoan 100%, payment-service tu refund sau khi commit
             cancellation.setStatus(CancellationStatus.ACCEPTED);
+            cancellation.setRefundPercent(100);
             cancellationRequestRepository.save(cancellation);
 
             cancelOrder(order, actorId, roleName);
@@ -151,6 +154,28 @@ public class CancellationService {
         return cancellationRequestRepository.findByOrder_OrderId(orderId)
                 .map(cancellationRequestMapper::toResponse)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_CANCELLATION_NOT_FOUND));
+    }
+
+    //he thong tu huy don
+    public void cancelBySystem(Order order) {
+        cancelOrder(order, null, RoleName.SYSTEM);
+    }
+
+    //qua han ma chua thanh toan -> he thong huy + nha slot (PaymentTimeoutJob)
+    @Transactional
+    public void cancelUnpaid(UUID orderId) {
+
+        Order order = orderRepository.findById(orderId).orElse(null);
+
+        //nap lai order, co the tien vua ve
+        if (order == null
+                || order.getOrderStatus() != OrderStatus.PENDING_PAYMENT
+                || order.getPaymentStatus() != PaymentStatus.PENDING) {
+            return;
+        }
+
+        log.info("Order {} not paid in time, cancel by system", orderId);
+        cancelOrder(order, null, RoleName.SYSTEM);
     }
 
     //=====================================

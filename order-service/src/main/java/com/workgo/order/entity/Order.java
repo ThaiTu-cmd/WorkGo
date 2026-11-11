@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.Check;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -23,8 +24,12 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "orders", uniqueConstraints = {
-    @UniqueConstraint(name = "orderId_orderNumber", columnNames = {"order_id", "order_number"})
+    @UniqueConstraint(name = "orderId_orderNumber", columnNames = {"order_id", "order_number"}),
+    @UniqueConstraint(name = "uq_order_proposal_source", columnNames = {"source_type", "source_id", "proposal_slot"})
 })
+@Check(name = "ck_order_proposal_slot", constraints =
+        "(source_type = 'PROPOSAL' and source_id is not null and proposal_slot is not null and proposal_slot = 1) "
+        + "or ((source_type is null or source_type <> 'PROPOSAL') and proposal_slot is null)")
 @SQLRestriction("is_deleted =  0")
 public class Order {
 
@@ -39,6 +44,17 @@ public class Order {
     @Enumerated(value = EnumType.STRING)
     @Column(name = "source_type")
     SourceType sourceType;
+
+    // NULL permits repeated SERVICE purchases; 1 reserves exactly one order per proposal source.
+    @Column(name = "proposal_slot")
+    @Setter(AccessLevel.NONE)
+    Integer proposalSlot;
+
+    @PrePersist
+    @PreUpdate
+    void maintainProposalSlot() {
+        proposalSlot = sourceType == SourceType.PROPOSAL ? 1 : null;
+    }
 
     @Enumerated(value = EnumType.STRING)
     @Column(name = "execution_type")
@@ -127,6 +143,9 @@ public class Order {
 
     @Column(name = "package_id")
     UUID packageId;
+
+    @Column(name = "payment_id")
+    UUID paymentId;
 
     @Builder.Default
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

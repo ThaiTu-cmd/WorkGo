@@ -24,12 +24,36 @@ spring:
           default:
             connect-timeout: 3000
             read-timeout: 3000
+            follow-redirects: false
+          orderJobClient:
+            connect-timeout: ${ORDER_CLIENT_CONNECT_TIMEOUT_MS:2000}
+            read-timeout: ${ORDER_CLIENT_READ_TIMEOUT_MS:5000}
+            follow-redirects: false
+          orderIdentityClient:
+            connect-timeout: ${ORDER_CLIENT_CONNECT_TIMEOUT_MS:2000}
+            read-timeout: ${ORDER_CLIENT_READ_TIMEOUT_MS:5000}
+            follow-redirects: false
+
+logging:
+  pattern:
+    #in requestId (RequestIdFilter) truoc moi dong log
+    level: "%5p [rid:%X{requestId:-}]"
 
 app:
+  internal-key: ${INTERNAL_API_KEY:}
+  clients:
+    connect-timeout-millis: ${ORDER_CLIENT_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-millis: ${ORDER_CLIENT_READ_TIMEOUT_MS:5000}
   services:
     catalog: ${CATALOG_SERVICE_URL:http://localhost:8082/catalog}
     identity: ${IDENTITY_SERVICE_URL:http://localhost:8081/identity}
-  internal-key: ${INTERNAL_API_KEY:dev-internal-key}
+    payment: ${PAYMENT_SERVICE_URL:http://localhost:8084/payment}
+    job: ${JOB_SERVICE_URL:http://localhost:8085/job}
 
 order:
   platform-fee-rate: 0.10
+  #don PENDING_PAYMENT qua han nay thi he thong tu huy (khop thoi gian giu slot ben catalog)
+  payment-timeout-minutes: 30
+  checkin-code:
+    secret: ${CHECKIN_CODE_SECRET:dev-checkin-code-secret}
+    salt: ${CHECKIN_CODE_SALT:5c0744940b5c369b}

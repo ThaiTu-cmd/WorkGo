@@ -42,12 +42,18 @@ public class SecurityConfig {
         "/internal/**"
     };
 
+    //chi ton tai o profile dev (DevPaymentController)
+    private final String[] DEV_ENDPOINTS = {
+        "/dev/**"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request ->{
             request.requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll()
                     .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS).permitAll()
                     .requestMatchers(INTERNAL_ENDPOINTS).permitAll()
+                    .requestMatchers(DEV_ENDPOINTS).permitAll()
                     .anyRequest().authenticated();
         });
 

@@ -45,6 +45,13 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             "/identity/auth/refresh"
     };
 
+    //vnpay / momo goi IPN + redirect trinh duyet ve, khong co token (payment-service tu check chu ky)
+    //dev: link mock /dev/payments/{code}/success mo bang trinh duyet
+    private final String[] PUBLIC_PREFIXES = {
+            "/payment/gateway/",
+            "/payment/dev/"
+    };
+
     // Read-only catalog and job data guests can browse without logging in.
     private final String[] PUBLIC_GET_ENDPOINTS = {
             "/catalog/categories", "/catalog/categories/**",
@@ -102,14 +109,19 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     private boolean isPublicEndpoint(ServerHttpRequest request){
         String path = request.getURI().getPath();
-        // MVC ignores matrix parameters; match protected paths with the same
-        // segment rules as the public wildcard (including repeated slashes).
         String protectedPath = path.replaceAll(";[^/]*", "");
 
         if (Arrays.stream(PUBLIC_ENDPOINTS)
                 .anyMatch(publicEndpoint -> path.equals(apiPrefix + publicEndpoint))) {
             return true;
         }
+
+        //vnpay / momo callback + dev mock: moi method, khong can token
+        if (!path.contains("..") && Arrays.stream(PUBLIC_PREFIXES)
+                .anyMatch(prefix -> path.startsWith(apiPrefix + prefix))) {
+            return true;
+        }
+
 
         return HttpMethod.GET.equals(request.getMethod())
                 && Arrays.stream(PROTECTED_GET_ENDPOINTS)

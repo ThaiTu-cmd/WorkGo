@@ -32,12 +32,22 @@ public enum ErrorCode {
     PAYMENT_IDEMPOTENCY_KEY_REUSED(3005, "Idempotency-Key was already used for another payment", HttpStatus.CONFLICT),
     PAYMENT_INVALID_STATUS_TRANSITION(3006, "Payment cannot move to that status", HttpStatus.BAD_REQUEST),
     PAYMENT_GATEWAY_NOT_SUPPORTED(3007, "Payment gateway is not supported yet", HttpStatus.BAD_REQUEST),
+    PAYMENT_AMOUNT_MISMATCH(3008, "Paid amount does not match payment amount", HttpStatus.BAD_REQUEST),
     PAYMENT_SLOT_HOLD_EXPIRED(3009, "Booking slot hold has expired or is about to expire, please create a new order", HttpStatus.CONFLICT),
     PAYMENT_ORDER_ID_REQUIRED(3010, "Order id is required", HttpStatus.BAD_REQUEST),
     PAYMENT_GATEWAY_REQUIRED(3011, "Payment gateway is required", HttpStatus.BAD_REQUEST),
+    PAYMENT_AMOUNT_OUT_OF_RANGE(3012, "Amount is out of range for this payment gateway", HttpStatus.BAD_REQUEST),
+
+    //===============ESCROW===================
+    ESCROW_NOT_FOUND(3101, "Escrow not found", HttpStatus.NOT_FOUND),
+    ESCROW_INVALID_STATUS(3102, "Escrow cannot be released or refunded in its current status", HttpStatus.CONFLICT),
+
+    //===============REFUND===================
+    REFUND_PERCENT_NOT_SUPPORTED(3201, "Only 100 percent refund is supported", HttpStatus.BAD_REQUEST),
 
     //===============GATEWAY==================
-    GATEWAY_UNAVAILABLE(3301, "Payment gateway is unavailable, please try again", HttpStatus.SERVICE_UNAVAILABLE);
+    GATEWAY_UNAVAILABLE(3301, "Payment gateway is unavailable, please try again", HttpStatus.SERVICE_UNAVAILABLE),
+    GATEWAY_INVALID_SIGNATURE(3302, "Invalid gateway signature", HttpStatus.BAD_REQUEST);
 
     private int code;
     private String message;

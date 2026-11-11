@@ -1,6 +1,7 @@
 package com.workgo.order.service;
 
 import com.workgo.order.dto.request.CheckinRequest;
+import com.workgo.order.dto.response.CheckinCodeResponse;
 import com.workgo.order.dto.response.OnsiteExecutionResponse;
 import com.workgo.order.entity.Execution;
 import com.workgo.order.entity.OnsiteExecution;
@@ -17,6 +18,7 @@ import com.workgo.order.utils.TokenUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +40,7 @@ public class OnsiteFlowService {
     ExecutionMapper executionMapper;
     TokenUtils tokenUtils;
     PasswordEncoder passwordEncoder;
+    TextEncryptor checkinCodeEncryptor;
 
     @Transactional
     public OnsiteExecutionResponse checkin(UUID orderId, CheckinRequest request){
@@ -167,6 +170,32 @@ public class OnsiteFlowService {
                 tokenUtils.getCurrentUserId(), RoleName.CLIENT);
 
         return executionMapper.toOnsiteExecutionResponse(onsite);
+    }
+
+    //client lay ma checkin de dua cho provider khi toi noi
+    public CheckinCodeResponse getCheckinCode(UUID orderId) {
+
+        Order order = loadOrder(orderId);
+        assertIsClient(order);
+        assertOnsite(order);
+
+        if (order.getOrderStatus() != OrderStatus.CONFIRMED) {
+            throw new AppException(ErrorCode.ORDER_CHECKIN_CODE_NOT_FOUND);
+        }
+
+        OnsiteExecution onsite = loadOnsite(loadExecution(orderId).getExecutionId());
+
+        //da checkin roi thi ma het tac dung
+        if (onsite.getStatus() != OnsiteExecutionStatus.SCHEDULED
+                || onsite.getCheckinCodeEncrypted() == null) {
+            throw new AppException(ErrorCode.ORDER_CHECKIN_CODE_NOT_FOUND);
+        }
+
+        return CheckinCodeResponse.builder()
+                .orderId(orderId)
+                .checkinCode(checkinCodeEncryptor.decrypt(onsite.getCheckinCodeEncrypted()))
+                .scheduledStart(onsite.getScheduledStart())
+                .build();
     }
 
     private Order loadOrder(UUID orderId) {

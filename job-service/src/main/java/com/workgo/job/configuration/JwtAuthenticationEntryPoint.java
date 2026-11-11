@@ -2,6 +2,7 @@ package com.workgo.job.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.workgo.job.dto.response.ApiResponse;
+import com.workgo.job.exception.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +22,11 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException exception) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        ErrorCode errorCode = ErrorCode.UNAUTHENTICATED;
+        response.setStatus(errorCode.getStatusCode().value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         objectMapper.writeValue(response.getWriter(), ApiResponse.builder()
-                .code(1006).message("Chưa xác thực").build());
+                .code(errorCode.getCode()).message(errorCode.getMessage()).build());
     }
 }

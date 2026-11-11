@@ -129,7 +129,9 @@ public class CancellationService {
                 throw new AppException(ErrorCode.ORDER_CANCEL_NOT_ALLOWED);
             }
 
+            //phase nay chi hoan 100%, payment-service tu refund sau khi commit
             cancellation.setStatus(CancellationStatus.ACCEPTED);
+            cancellation.setRefundPercent(100);
             cancellationRequestRepository.save(cancellation);
 
             cancelOrder(order, actorId, roleName);
@@ -156,6 +158,23 @@ public class CancellationService {
 
     //he thong tu huy don
     public void cancelBySystem(Order order) {
+        cancelOrder(order, null, RoleName.SYSTEM);
+    }
+
+    //qua han ma chua thanh toan -> he thong huy + nha slot (PaymentTimeoutJob)
+    @Transactional
+    public void cancelUnpaid(UUID orderId) {
+
+        Order order = orderRepository.findById(orderId).orElse(null);
+
+        //nap lai order, co the tien vua ve
+        if (order == null
+                || order.getOrderStatus() != OrderStatus.PENDING_PAYMENT
+                || order.getPaymentStatus() != PaymentStatus.PENDING) {
+            return;
+        }
+
+        log.info("Order {} not paid in time, cancel by system", orderId);
         cancelOrder(order, null, RoleName.SYSTEM);
     }
 

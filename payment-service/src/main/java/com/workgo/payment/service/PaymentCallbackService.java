@@ -5,6 +5,8 @@ import com.workgo.payment.dto.response.PaymentResponse;
 import com.workgo.payment.entity.Payment;
 import com.workgo.payment.enumeration.OrderSyncStatus;
 import com.workgo.payment.enumeration.PaymentStatus;
+import com.workgo.payment.enumeration.RefundReason;
+import com.workgo.payment.enumeration.TriggeredBy;
 import com.workgo.payment.exception.AppException;
 import com.workgo.payment.exception.ErrorCode;
 import com.workgo.payment.mapper.PaymentMapper;
@@ -30,6 +32,7 @@ public class PaymentCallbackService {
     PaymentStatusService paymentStatusService;
     EscrowService escrowService;
     OrderSyncService orderSyncService;
+    RefundService refundService;
     PaymentMapper paymentMapper;
 
     //ket qua thanh toan tu gateway IPN
@@ -56,17 +59,23 @@ public class PaymentCallbackService {
                 payment.setFailureCode(result.getFailureCode());
                 payment.setFailureMessage(result.getFailureMessage());
                 paymentStatusService.transition(payment, PaymentStatus.FAILED);
+                log.info("Payment {} of order {} failed: {}", payment.getPaymentCode(), payment.getOrderId(), result.getFailureCode());
             }
             return paymentMapper.toResponse(paymentRepository.save(payment));
         }
 
         //EXPIRED / CANCELLED van nhan, vi tien da bi tru that
         paymentStatusService.transition(payment, PaymentStatus.SUCCEEDED);
+        log.info("Payment {} of order {} succeeded, gatewayTxnId {}",
+                payment.getPaymentCode(), payment.getOrderId(), payment.getGatewayTxnId());
 
-        //order da co escrow (tra tre vao QR cu) -> khong hold, refund DUPLICATE_PAYMENT o P5
+        //order da co escrow (tra tre vao QR cu) -> khong hold, hoan lai payment nay
         if (escrowService.hold(payment).isEmpty()) {
-            log.warn("Order {} already has escrow, payment {} is a duplicate", payment.getOrderId(), payment.getPaymentCode());
-            return paymentMapper.toResponse(paymentRepository.save(payment));
+            log.warn("Order {} already has escrow, refund duplicate payment {}", payment.getOrderId(), payment.getPaymentCode());
+            payment.setOrderSyncStatus(OrderSyncStatus.NOT_REQUIRED);
+            payment = paymentRepository.save(payment);
+            refundService.refund(payment, null, RefundReason.DUPLICATE_PAYMENT, TriggeredBy.SYSTEM);
+            return paymentMapper.toResponse(payment);
         }
 
         payment.setOrderSyncStatus(OrderSyncStatus.PENDING);

@@ -3,6 +3,7 @@ package com.workgo.order.service;
 import com.workgo.order.entity.Order;
 import com.workgo.order.entity.OrderStatusHistory;
 import com.workgo.order.enumeration.OrderStatus;
+import com.workgo.order.enumeration.PaymentStatus;
 import com.workgo.order.enumeration.RoleName;
 import com.workgo.order.exception.AppException;
 import com.workgo.order.exception.ErrorCode;
@@ -11,9 +12,12 @@ import com.workgo.order.reppository.OrderStatusHistoryRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 
 import java.time.Instant;
@@ -22,10 +26,12 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@Slf4j
 public class OrderStatusService {
 
     OrderStatusHistoryRepository orderStatusHistoryRepository;
     OrderRepository orderRepository;
+    PaymentSyncService paymentSyncService;
 
     @Transactional(propagation = Propagation.MANDATORY )
     public void recordCreated(Order order, UUID clientId){
@@ -54,10 +60,49 @@ public class OrderStatusService {
 
         if(toStatus != OrderStatus.DELIVERED) order.setAutoCompleteAt(null);
 
+        order.setOrderStatus(toStatus);
         orderRepository.save(order);
 
         saveHistory(order, fromStatus, toStatus, actorId, roleName);
 
+        //3 cho COMPLETED (digital accept, onsite accept, auto complete) deu di qua day
+        if (toStatus == OrderStatus.COMPLETED && order.getPaymentStatus() == PaymentStatus.SUCCEEDED) {
+            releaseEscrowAfterCommit(order.getOrderId());
+        }
+
+        //huy don da thanh toan -> hoan tien cho client
+        if (toStatus == OrderStatus.CANCELLED && order.getPaymentStatus() == PaymentStatus.SUCCEEDED) {
+            refundEscrowAfterCommit(order.getOrderId());
+        }
+
+    }
+
+    //commit COMPLETED xong moi bao payment tra tien cho provider
+    private void releaseEscrowAfterCommit(UUID orderId) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    paymentSyncService.release(orderId);
+                } catch (Exception e) {
+                    log.warn("Release escrow failed for completed order {}", orderId, e);
+                }
+            }
+        });
+    }
+
+    //commit CANCELLED xong moi bao payment hoan tien
+    private void refundEscrowAfterCommit(UUID orderId) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    paymentSyncService.refund(orderId);
+                } catch (Exception e) {
+                    log.warn("Refund escrow failed for cancelled order {}", orderId, e);
+                }
+            }
+        });
     }
 
     private void saveHistory(Order order,

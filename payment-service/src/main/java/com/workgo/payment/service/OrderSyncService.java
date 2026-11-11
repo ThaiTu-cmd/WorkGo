@@ -3,10 +3,13 @@ package com.workgo.payment.service;
 import com.workgo.payment.dto.request.PaymentConfirmedRequest;
 import com.workgo.payment.dto.response.client.PaymentConfirmationResponse;
 import com.workgo.payment.entity.Payment;
+import com.workgo.payment.enumeration.RefundReason;
+import com.workgo.payment.enumeration.TriggeredBy;
 import com.workgo.payment.enumeration.OrderSyncStatus;
 import com.workgo.payment.enumeration.client.OrderStatus;
 import com.workgo.payment.exception.AppException;
 import com.workgo.payment.exception.ErrorCode;
+import com.workgo.payment.reppository.EscrowAccountRepository;
 import com.workgo.payment.reppository.PaymentRepository;
 import com.workgo.payment.reppository.client.OrderClient;
 import feign.FeignException;
@@ -30,6 +33,8 @@ import java.util.UUID;
 public class OrderSyncService {
 
     PaymentRepository paymentRepository;
+    EscrowAccountRepository escrowAccountRepository;
+    RefundService refundService;
     OrderClient orderClient;
 
     @NonFinal
@@ -53,12 +58,17 @@ public class OrderSyncService {
                             .paymentId(paymentId)
                             .build());
 
+            //order da huy / slot het han (order tu huy) -> hoan tien
             if (response.getOrderStatus() == OrderStatus.CANCELLED) {
-                log.warn("Order {} was cancelled, payment {} needs refund", payment.getOrderId(), payment.getPaymentCode());
+                log.warn("Order {} was cancelled, refund payment {}", payment.getOrderId(), payment.getPaymentCode());
                 payment.setOrderSyncStatus(OrderSyncStatus.FAILED);
+                refundService.refund(payment,
+                        escrowAccountRepository.findByPayment_PaymentId(paymentId).orElse(null),
+                        RefundReason.ORDER_NOT_PAYABLE, TriggeredBy.SYSTEM);
             } else {
                 payment.setOrderSyncStatus(OrderSyncStatus.SYNCED);
                 payment.setOrderSyncedAt(Instant.now());
+                log.info("Order {} confirmed for payment {}", payment.getOrderId(), payment.getPaymentCode());
             }
 
         } catch (FeignException e) {

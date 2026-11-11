@@ -162,6 +162,8 @@ public class PaymentService {
             payment.setQrCodeUrl(result.getQrCodeUrl());
             payment.setDeeplink(result.getDeeplink());
             paymentStatusService.transition(payment, PaymentStatus.PENDING);
+            log.info("Payment {} created for order {}, gateway {}, amount {}",
+                    payment.getPaymentCode(), payment.getOrderId(), payment.getGateway(), payment.getAmount());
 
         } catch (Exception e) {
 
@@ -169,6 +171,13 @@ public class PaymentService {
             payment.setFailureMessage(e.getMessage());
             paymentStatusService.transition(payment, PaymentStatus.FAILED);
             paymentRepository.save(payment);
+            log.warn("Create payment {} for order {} failed at gateway {}: {}",
+                    payment.getPaymentCode(), payment.getOrderId(), payment.getGateway(), e.getMessage());
+
+            //loi nghiep vu cua gateway (vd so tien ngoai gioi han) -> tra dung ma loi
+            if (e instanceof AppException appException) {
+                throw appException;
+            }
 
             throw new AppException(ErrorCode.GATEWAY_UNAVAILABLE);
         }
@@ -215,20 +224,23 @@ public class PaymentService {
 
     //=====================================
 
-    //onsite: payment het han truoc khi slot het han
+    //payment het han truoc khi slot het han (onsite) / truoc khi order tu huy (PaymentTimeoutJob)
     private Instant resolveExpiresAt(OrderPaymentInfoResponse order, Instant now) {
 
         Instant expiresAt = now.plus(Duration.ofMinutes(expireMinutes));
+        boolean onsite = order.getExecutionType() == ExecutionType.ONSITE;
+        Instant payableUntil = order.getPayableUntil();
 
-        if (order.getExecutionType() != ExecutionType.ONSITE) {
+        //digital chua co han -> +15'
+        if (!onsite && payableUntil == null) {
             return expiresAt;
         }
 
-        Instant payableUntil = order.getPayableUntil();
-
         if (payableUntil == null
                 || payableUntil.isBefore(now.plus(Duration.ofMinutes(slotMinRemainingMinutes)))) {
-            throw new AppException(ErrorCode.PAYMENT_SLOT_HOLD_EXPIRED);
+            throw new AppException(onsite
+                    ? ErrorCode.PAYMENT_SLOT_HOLD_EXPIRED
+                    : ErrorCode.PAYMENT_ORDER_NOT_PAYABLE);
         }
 
         return payableUntil.isBefore(expiresAt) ? payableUntil : expiresAt;

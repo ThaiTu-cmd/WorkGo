@@ -15,6 +15,6 @@ public class ServiceMediaUpdateRequest {
 
     MediaType mediaType;
 
-    boolean cover;
+    Boolean cover;
 
 }

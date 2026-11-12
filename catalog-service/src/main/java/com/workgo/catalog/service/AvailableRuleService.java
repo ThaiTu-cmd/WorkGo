@@ -5,6 +5,7 @@ import com.workgo.catalog.dto.request.AvailableRuleCreationRequest;
 import com.workgo.catalog.dto.request.AvailableRuleUpdateRequest;
 import com.workgo.catalog.dto.response.AvailableRuleResponse;
 import com.workgo.catalog.entity.AvailableRule;
+import com.workgo.catalog.enumeration.RuleStatus;
 import com.workgo.catalog.exception.AppException;
 import com.workgo.catalog.exception.ErrorCode;
 import com.workgo.catalog.mapper.AvailableRuleMapper;
@@ -31,6 +32,7 @@ public class AvailableRuleService {
     AvailableRuleMapper availableRuleMapper;
     ServiceRepository serviceRepository;
     TokenUtils tokenUtils;
+    BookingSlotService bookingSlotService;
 
     public AvailableRuleResponse createAvailableRule(
             UUID serviceId, AvailableRuleCreationRequest request){
@@ -38,12 +40,10 @@ public class AvailableRuleService {
         com.workgo.catalog.entity.Service service = serviceRepository.findById(serviceId)
                 .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_EXISTED));
 
-        if(request.getEndTime().isBefore(request.getStartTime())){
-            throw new AppException(ErrorCode.INVALID_START_END_TIME);
-        }
+        tokenUtils.assertServiceOwner(service);
 
         AvailableRule rule = AvailableRule.builder()
-                .status(request.getStatus())
+                .status(request.getStatus() != null ? request.getStatus() : RuleStatus.ACTIVE)
                 .slotDurationMinute(request.getSlotDurationMinute())
                 .endTime(request.getEndTime())
                 .startTime(request.getStartTime())
@@ -51,7 +51,11 @@ public class AvailableRuleService {
                 .service(service)
                 .build();
 
+        validateRule(rule);
+
         AvailableRule savedRule = availableRuleRepository.save(rule);
+
+        bookingSlotService.generateSlotsForRule(savedRule);
 
         return availableRuleMapper.toAvailableRuleResponse(savedRule);
     }
@@ -93,13 +97,15 @@ public class AvailableRuleService {
         AvailableRule rule = availableRuleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RULE_NOT_EXISTED));
 
-        if(request.getEndTime().isBefore(request.getStartTime())){
-            throw new AppException(ErrorCode.INVALID_START_END_TIME);
-        }
+        tokenUtils.assertServiceOwner(rule.getService());
 
         availableRuleMapper.updateRule(rule, request);
 
+        validateRule(rule);
+
         AvailableRule savedRule = availableRuleRepository.save(rule);
+
+        bookingSlotService.regenerateSlotsForRule(savedRule);
 
         return availableRuleMapper.toAvailableRuleResponse(savedRule);
     }
@@ -108,10 +114,30 @@ public class AvailableRuleService {
         AvailableRule rule = availableRuleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RULE_NOT_EXISTED));
 
+        tokenUtils.assertServiceOwner(rule.getService());
+
         rule.setIsDeleted(tokenUtils.createDeletedMark());
 
-        AvailableRule savedRule = availableRuleRepository.save(rule);
+        availableRuleRepository.save(rule);
 
+        bookingSlotService.removeUpcomingSlots(rule.getAvailableRuleId());
+
+    }
+
+    private void validateRule(AvailableRule rule){
+
+        if(rule.getStartTime() == null || rule.getEndTime() == null
+                || !rule.getEndTime().isAfter(rule.getStartTime())){
+            throw new AppException(ErrorCode.INVALID_START_END_TIME);
+        }
+
+        if(rule.getSlotDurationMinute() <= 0){
+            throw new AppException(ErrorCode.INVALID_SLOT_DURATION);
+        }
+
+        if(rule.getDayOfWeek() < 2 || rule.getDayOfWeek() > 8){
+            throw new AppException(ErrorCode.INVALID_DAY_OF_WEEK);
+        }
     }
 
 }

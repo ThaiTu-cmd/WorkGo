@@ -16,13 +16,13 @@ public class AvailableRuleUpdateRequest {
 
     RuleStatus status;
 
-    int slotDurationMinute;
+    Integer slotDurationMinute;
 
     Instant endTime;
 
     Instant startTime;
 
-    int dayOfWeek;
+    Integer dayOfWeek;
 
 
 }

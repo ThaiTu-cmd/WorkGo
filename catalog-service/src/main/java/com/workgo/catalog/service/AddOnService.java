@@ -38,6 +38,8 @@ public class AddOnService {
         com.workgo.catalog.entity.Service service = serviceRepository.findById(serviceId)
                 .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_EXISTED));
 
+        tokenUtils.assertServiceOwner(service);
+
         AddOn addOn = AddOn.builder()
                 .currency(request.getCurrency())
                 .description(request.getDescription())
@@ -86,6 +88,8 @@ public class AddOnService {
         AddOn addOn = addOnRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ADD_ON_NOT_EXISTED));
 
+        tokenUtils.assertServiceOwner(addOn.getService());
+
         addOnMapper.updateAddOn(addOn, request);
 
         AddOn savedAddOn = addOnRepository.save(addOn);
@@ -96,6 +100,8 @@ public class AddOnService {
     public void deleteAddOn(UUID id){
         AddOn addOn = addOnRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ADD_ON_NOT_EXISTED));
+
+        tokenUtils.assertServiceOwner(addOn.getService());
 
         addOn.setIsDeleted(tokenUtils.createDeletedMark());
 

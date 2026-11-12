@@ -38,6 +38,8 @@ public class ServiceMediaService {
         Service service = serviceRepository.findById(serviceId)
                 .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_EXISTED));
 
+        tokenUtils.assertServiceOwner(service);
+
         if(serviceMediaRepository.existsByService_ServiceIdAndUrl(serviceId, request.getUrl())){
             throw new AppException(ErrorCode.MEDIA_EXISTED);
         }
@@ -85,6 +87,8 @@ public class ServiceMediaService {
         ServiceMedia serviceMedia = serviceMediaRepository.findById(mediaId)
                 .orElseThrow(() -> new AppException(ErrorCode.MEDIA_NOT_EXISTED));
 
+        tokenUtils.assertServiceOwner(serviceMedia.getService());
+
         serviceMediaMapper.updateMediaService(serviceMedia, request);
 
         ServiceMedia saveMedia = serviceMediaRepository.save(serviceMedia);
@@ -97,6 +101,8 @@ public class ServiceMediaService {
 
         ServiceMedia serviceMedia = serviceMediaRepository.findById(mediaId)
                 .orElseThrow(() -> new AppException(ErrorCode.MEDIA_NOT_EXISTED));
+
+        tokenUtils.assertServiceOwner(serviceMedia.getService());
 
         serviceMedia.setIsDeleted(tokenUtils.createDeletedMark());
 

@@ -48,6 +48,9 @@ public class BookingSlot {
     @Column(name = "updated_at")
     Instant updatedAt;
 
+    @Column(name = "available_rule_id")
+    UUID availableRuleId;
+
     //=============FK==================
 
     @ManyToOne

@@ -1,11 +1,3 @@
-DELETE FROM booking_slots;
-DELETE FROM available_rules;
-DELETE FROM service_medias;
-DELETE FROM add_ons;
-DELETE FROM packages;
-DELETE FROM services;
-DELETE FROM categories;
-
 -- Providers come from identity-service (provider_profiles):
 --   99999999-... = Văn A Studio, 88888888-... = B Media
 
@@ -20,7 +12,8 @@ VALUES ('11111111-1111-1111-1111-111111111111', 'Thiết kế Đồ họa', 'thi
        ('11111111-1111-1111-1111-555555555555', 'Sửa chữa & Bảo trì', 'sua-chua-bao-tri', 'Sửa điện nước, điện lạnh, thiết bị gia dụng tại nhà', CURRENT_TIMESTAMP, '99999999-9999-9999-9999-999999999999', 0),
        ('11111111-1111-1111-1111-666666666666', 'Vệ sinh & Dọn dẹp', 've-sinh-don-dep', 'Dọn dẹp nhà cửa, giặt sofa, vệ sinh văn phòng', CURRENT_TIMESTAMP, '99999999-9999-9999-9999-999999999999', 0),
        ('11111111-1111-1111-1111-777777777777', 'Vận chuyển & Giao hàng', 'van-chuyen-giao-hang', 'Giao hàng hỏa tốc, chuyển nhà, chuyển văn phòng', CURRENT_TIMESTAMP, '99999999-9999-9999-9999-999999999999', 0),
-       ('11111111-1111-1111-1111-888888888888', 'Giáo dục & Gia sư', 'giao-duc-gia-su', 'Gia sư tại nhà, dạy kèm online, luyện thi', CURRENT_TIMESTAMP, '99999999-9999-9999-9999-999999999999', 0);
+       ('11111111-1111-1111-1111-888888888888', 'Giáo dục & Gia sư', 'giao-duc-gia-su', 'Gia sư tại nhà, dạy kèm online, luyện thi', CURRENT_TIMESTAMP, '99999999-9999-9999-9999-999999999999', 0)
+ON CONFLICT DO NOTHING;
 
 -- ==========================================================
 -- Services (20, at least 2 per category)
@@ -54,7 +47,8 @@ VALUES
 ('a0000000-0000-0000-0000-000000000015', 'Chuyển nhà trọn gói', 'chuyen-nha-tron-goi', 'Đóng gói, tháo lắp đồ đạc, vận chuyển và sắp xếp lại tại nhà mới.', 1500000, 'VND', 'ONSITE', 'PUBLISHED', '99999999-9999-9999-9999-999999999999', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, '11111111-1111-1111-1111-777777777777', 4.7, 64, 102),
 -- Giáo dục & Gia sư
 ('a0000000-0000-0000-0000-000000000016', 'Gia sư Toán THCS - THPT tại nhà', 'gia-su-toan-tai-nha', 'Gia sư Toán kèm 1-1 tại nhà, bám sát chương trình và luyện thi vào lớp 10, đại học.', 250000, 'VND', 'ONSITE', 'PUBLISHED', '88888888-8888-8888-8888-888888888888', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, '11111111-1111-1111-1111-888888888888', 4.9, 27, 48),
-('a0000000-0000-0000-0000-000000000017', 'Luyện IELTS Online 1 kèm 1', 'luyen-ielts-online-1-kem-1', 'Lộ trình IELTS cá nhân hóa qua Google Meet, chữa bài Writing và Speaking chi tiết.', 350000, 'VND', 'DIGITAL', 'PUBLISHED', '88888888-8888-8888-8888-888888888888', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, '11111111-1111-1111-1111-888888888888', 4.8, 39, 71);
+('a0000000-0000-0000-0000-000000000017', 'Luyện IELTS Online 1 kèm 1', 'luyen-ielts-online-1-kem-1', 'Lộ trình IELTS cá nhân hóa qua Google Meet, chữa bài Writing và Speaking chi tiết.', 350000, 'VND', 'DIGITAL', 'PUBLISHED', '88888888-8888-8888-8888-888888888888', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, '11111111-1111-1111-1111-888888888888', 4.8, 39, 71)
+ON CONFLICT DO NOTHING;
 
 -- ==========================================================
 -- Packages: hand-written for the logo service, 3 tiers for the rest
@@ -63,7 +57,8 @@ VALUES
 INSERT INTO packages (package_id, name, description, price, currency, delivery_days, duration_minute, revision_limit, package_status, created_at, is_deleted, service_id)
 VALUES ('66666666-6666-6666-6666-111111111111', 'Gói Cơ Bản', 'Thiết kế 1 concept logo, bàn giao JPG', 1000000, 'VND', 3, 0, 1, 'ACTIVE', CURRENT_TIMESTAMP, 0, '44444444-4444-4444-4444-444444444444'),
        ('66666666-6666-6666-6666-222222222222', 'Gói Tiêu Chuẩn', 'Thiết kế 2 concept, bàn giao Vector', 2000000, 'VND', 5, 0, 3, 'ACTIVE', CURRENT_TIMESTAMP, 0, '44444444-4444-4444-4444-444444444444'),
-       ('66666666-6666-6666-6666-333333333333', 'Gói Cao Cấp', 'Thiết kế 3 concept, bàn giao Vector + Brand Guideline', 5000000, 'VND', 7, 0, 5, 'ACTIVE', CURRENT_TIMESTAMP, 0, '44444444-4444-4444-4444-444444444444');
+       ('66666666-6666-6666-6666-333333333333', 'Gói Cao Cấp', 'Thiết kế 3 concept, bàn giao Vector + Brand Guideline', 5000000, 'VND', 7, 0, 5, 'ACTIVE', CURRENT_TIMESTAMP, 0, '44444444-4444-4444-4444-444444444444')
+ON CONFLICT DO NOTHING;
 
 INSERT INTO packages (package_id, name, description, price, currency, delivery_days, duration_minute, revision_limit, package_status, created_at, is_deleted, service_id)
 SELECT md5(s.service_id::text || t.name)::uuid,
@@ -81,7 +76,9 @@ CROSS JOIN (VALUES
     ('Gói Tiêu Chuẩn', 1.8, 5, 120, 3, 'Phạm vi mở rộng, thêm chỉnh sửa và hỗ trợ sau bàn giao', 'Thời lượng 2 giờ, kiểm tra tổng thể'),
     ('Gói Cao Cấp',    3.0, 7, 240, 5, 'Trọn gói, ưu tiên xử lý và hỗ trợ dài hạn',          'Thời lượng 4 giờ, đội 2 người, bảo hành dài hạn')
 ) AS t(name, price_factor, delivery_days, duration_minute, revision_limit, digital_desc, onsite_desc)
-WHERE s.service_id <> '44444444-4444-4444-4444-444444444444';
+WHERE s.service_id <> '44444444-4444-4444-4444-444444444444'
+  AND (s.service_id IN ('44444444-4444-4444-4444-444444444444', '55555555-5555-5555-5555-555555555555', '66666666-6666-6666-6666-666666666666') OR s.service_id::text LIKE 'a0000000-0000-0000-0000-%')
+ON CONFLICT DO NOTHING;
 
 -- ==========================================================
 -- Add-ons: hand-written for the logo service, 2 per type for the rest
@@ -89,7 +86,8 @@ WHERE s.service_id <> '44444444-4444-4444-4444-444444444444';
 INSERT INTO add_ons (add_on_id, name, description, price, currency, status, created_at, is_deleted, service_id)
 VALUES ('77777777-7777-7777-7777-111111111111', 'Giao file source', 'Cung cấp file PSD/AI gốc', 500000, 'VND', 'ACTIVE', CURRENT_TIMESTAMP, 0, '44444444-4444-4444-4444-444444444444'),
        ('77777777-7777-7777-7777-222222222222', 'Thêm 1 concept', 'Thiết kế thêm 1 phương án logo', 800000, 'VND', 'ACTIVE', CURRENT_TIMESTAMP, 0, '44444444-4444-4444-4444-444444444444'),
-       ('77777777-7777-7777-7777-333333333333', 'Giao gấp 24h', 'Hoàn thành và bàn giao trong vòng 24h', 1500000, 'VND', 'ACTIVE', CURRENT_TIMESTAMP, 0, '44444444-4444-4444-4444-444444444444');
+       ('77777777-7777-7777-7777-333333333333', 'Giao gấp 24h', 'Hoàn thành và bàn giao trong vòng 24h', 1500000, 'VND', 'ACTIVE', CURRENT_TIMESTAMP, 0, '44444444-4444-4444-4444-444444444444')
+ON CONFLICT DO NOTHING;
 
 INSERT INTO add_ons (add_on_id, name, description, price, currency, status, created_at, is_deleted, service_id)
 SELECT md5(s.service_id::text || a.name)::uuid,
@@ -104,7 +102,9 @@ JOIN (VALUES
     ('ONSITE',  'Cuối tuần & ngày lễ',   'Phục vụ vào thứ 7, chủ nhật và ngày lễ',   0.2)
 ) AS a(execution_type, name, description, price_factor)
   ON a.execution_type = s.execution_type
-WHERE s.service_id <> '44444444-4444-4444-4444-444444444444';
+WHERE s.service_id <> '44444444-4444-4444-4444-444444444444'
+  AND (s.service_id IN ('44444444-4444-4444-4444-444444444444', '55555555-5555-5555-5555-555555555555', '66666666-6666-6666-6666-666666666666') OR s.service_id::text LIKE 'a0000000-0000-0000-0000-%')
+ON CONFLICT DO NOTHING;
 
 -- ==========================================================
 -- Media: 2 placeholder images per service (picsum, seeded by slug)
@@ -114,7 +114,9 @@ SELECT md5(s.service_id::text || 'media' || m.n)::uuid,
        'https://picsum.photos/seed/' || s.slug || '-' || m.n || '/1200/800',
        'IMAGE', m.n = 1, CURRENT_TIMESTAMP, 0, s.service_id
 FROM services s
-CROSS JOIN (VALUES (1), (2)) AS m(n);
+CROSS JOIN (VALUES (1), (2)) AS m(n)
+WHERE (s.service_id IN ('44444444-4444-4444-4444-444444444444', '55555555-5555-5555-5555-555555555555', '66666666-6666-6666-6666-666666666666') OR s.service_id::text LIKE 'a0000000-0000-0000-0000-%')
+ON CONFLICT DO NOTHING;
 
 -- ==========================================================
 -- Availability: the landing-page sample rules, plus Mon-Sat
@@ -124,7 +126,8 @@ CROSS JOIN (VALUES (1), (2)) AS m(n);
 INSERT INTO available_rules (available_rule_id, status, slot_duration_minute, start_time, end_time, day_of_weeek, created_at, is_deleted, service_id)
 VALUES ('88888888-8888-8888-8888-111111111111', 'ACTIVE', 60, '1970-01-01 08:00:00', '1970-01-01 12:00:00', 2, CURRENT_TIMESTAMP, 0, '55555555-5555-5555-5555-555555555555'),
        ('88888888-8888-8888-8888-222222222222', 'ACTIVE', 60, '1970-01-01 13:00:00', '1970-01-01 17:00:00', 2, CURRENT_TIMESTAMP, 0, '55555555-5555-5555-5555-555555555555'),
-       ('88888888-8888-8888-8888-333333333333', 'ACTIVE', 30, '1970-01-01 08:00:00', '1970-01-01 17:00:00', 3, CURRENT_TIMESTAMP, 0, '55555555-5555-5555-5555-555555555555');
+       ('88888888-8888-8888-8888-333333333333', 'ACTIVE', 30, '1970-01-01 08:00:00', '1970-01-01 17:00:00', 3, CURRENT_TIMESTAMP, 0, '55555555-5555-5555-5555-555555555555')
+ON CONFLICT DO NOTHING;
 
 INSERT INTO available_rules (available_rule_id, status, slot_duration_minute, start_time, end_time, day_of_weeek, created_at, is_deleted, service_id)
 SELECT md5(s.service_id::text || 'rule' || d.day || h.shift)::uuid,
@@ -136,4 +139,6 @@ CROSS JOIN (VALUES
     ('am', '1970-01-01 08:00:00', '1970-01-01 12:00:00'),
     ('pm', '1970-01-01 13:00:00', '1970-01-01 17:00:00')
 ) AS h(shift, start_time, end_time)
-WHERE s.execution_type = 'ONSITE';
+WHERE s.execution_type = 'ONSITE'
+  AND (s.service_id IN ('44444444-4444-4444-4444-444444444444', '55555555-5555-5555-5555-555555555555', '66666666-6666-6666-6666-666666666666') OR s.service_id::text LIKE 'a0000000-0000-0000-0000-%')
+ON CONFLICT DO NOTHING;

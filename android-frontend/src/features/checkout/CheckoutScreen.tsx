@@ -15,6 +15,8 @@ import { useRequireAuth } from '@/auth/useRequireAuth';
 import { useServiceDetail } from '@/features/catalog/hooks';
 import { PackagePicker } from '@/features/catalog/PackagePicker';
 import { upcomingAvailableSlots } from '@/features/orders/orderStatus';
+import { findPaymentOption, MOCK_PAYMENT_ENABLED } from '@/features/payment/payment';
+import { PaymentOptionPicker } from '@/features/payment/PaymentOptionPicker';
 import { formatDateTime, formatVnd } from '@/lib/format';
 import { useSingleFlight } from '@/lib/useSingleFlight';
 import { Button, Card, colors, ErrorState, font, OptionRow, Screen, SkeletonList, spacing } from '@/ui';
@@ -36,6 +38,7 @@ export function CheckoutScreen() {
   const [slotId, setSlotId] = React.useState<string | null>(null);
   const [addressId, setAddressId] = React.useState<string | null>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [paymentOption, setPaymentOption] = React.useState(() => findPaymentOption(undefined, MOCK_PAYMENT_ENABLED).id);
 
   const slots = useQuery({
     queryKey: qk.slots(params.serviceId),
@@ -53,7 +56,9 @@ export function CheckoutScreen() {
     onSuccess: (res) => {
       void queryClient.invalidateQueries({ queryKey: qk.orders('CLIENT') });
       void queryClient.invalidateQueries({ queryKey: qk.slots(params.serviceId) });
-      router.replace({ pathname: '/orders/[id]', params: { id: res.result.orderId, role: 'CLIENT' } });
+      // The payment screen starts the chosen gateway; if that fails the order
+      // still exists and the user can retry from there or from the order.
+      router.replace({ pathname: '/payment/[orderId]', params: { orderId: res.result.orderId, option: paymentOption, start: '1' } });
     },
     onError: (err) => setSubmitError(errorMessage(err)),
   });
@@ -141,6 +146,9 @@ export function CheckoutScreen() {
         </>
       ) : null}
 
+      <Text style={styles.section}>Phương thức thanh toán</Text>
+      <PaymentOptionPicker value={paymentOption} onChange={setPaymentOption} />
+
       <Card>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Tạm tính</Text>
@@ -148,7 +156,7 @@ export function CheckoutScreen() {
             {formatVnd(estimateTotal(selectedPackage, service.addons, addonIds))}
           </Text>
         </View>
-        <Text style={styles.note}>Giá cuối cùng do hệ thống tính khi tạo đơn. Đơn mới sẽ ở trạng thái chờ thanh toán.</Text>
+        <Text style={styles.note}>Giá cuối cùng do hệ thống tính khi tạo đơn. Bạn có 30 phút để thanh toán, sau đó đơn sẽ tự hủy.</Text>
       </Card>
 
       {!check.ok ? <Text style={styles.error}>{check.error}</Text> : null}

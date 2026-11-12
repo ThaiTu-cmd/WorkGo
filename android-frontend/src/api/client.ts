@@ -26,8 +26,10 @@ function queryString(params?: Params): string {
   return `?${new URLSearchParams(pairs.map(([k, v]) => [k, String(v)]))}`;
 }
 
-async function request<T>(method: string, path: string, { params, data }: { params?: Params; data?: unknown } = {}): Promise<T> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+type RequestOpts = { params?: Params; headers?: Record<string, string> };
+
+async function request<T>(method: string, path: string, { params, data, headers: extra }: RequestOpts & { data?: unknown } = {}): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...extra };
   const token = hooks.getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -53,7 +55,7 @@ async function request<T>(method: string, path: string, { params, data }: { para
 
 export const http = {
   get: <T>(path: string, opts: { params?: Params } = {}) => request<T>('GET', path, opts),
-  post: <T>(path: string, data?: unknown, opts: { params?: Params } = {}) => request<T>('POST', path, { ...opts, data }),
+  post: <T>(path: string, data?: unknown, opts: RequestOpts = {}) => request<T>('POST', path, { ...opts, data }),
   put: <T>(path: string, data?: unknown, opts: { params?: Params } = {}) => request<T>('PUT', path, { ...opts, data }),
   delete: <T>(path: string, opts: { params?: Params } = {}) => request<T>('DELETE', path, opts),
 };

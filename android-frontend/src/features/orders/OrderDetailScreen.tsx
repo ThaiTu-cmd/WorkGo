@@ -1,12 +1,13 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { errorMessage } from '@/api/errors';
 import type { OrderRole } from '@/api/types';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
+import { EscrowCard } from '@/features/payment/EscrowCard';
 import { formatDateTime, formatVnd } from '@/lib/format';
-import { Badge, Card, colors, ErrorState, font, Screen, SkeletonList, spacing } from '@/ui';
+import { Badge, Button, Card, colors, ErrorState, font, Screen, SkeletonList, spacing } from '@/ui';
 
 import { CancellationCard } from './CancellationCard';
 import { EvidenceGrid } from './EvidenceGrid';
@@ -23,6 +24,7 @@ export function OrderDetailScreen({
   evidenceFooter?: (ctx: { orderId: string; role: OrderRole; detail: ReturnType<typeof useOrderDetail> }) => React.ReactNode;
 }) {
   const signedIn = useRequireAuth();
+  const router = useRouter();
   const { id, role: roleParam } = useLocalSearchParams<{ id: string; role?: string }>();
   const role: OrderRole = roleParam === 'PROVIDER' ? 'PROVIDER' : 'CLIENT';
   const detail = useOrderDetail(id, signedIn);
@@ -45,6 +47,7 @@ export function OrderDetailScreen({
   }
 
   const o = order.data;
+  const awaitingPayment = o.orderStatus === 'PENDING_PAYMENT';
   const onsite = execution.data?.onsite;
   const refresh = () => {
     void order.refetch();
@@ -63,12 +66,15 @@ export function OrderDetailScreen({
           <Badge label={ORDER_STATUS_LABEL[o.orderStatus]} tone={ORDER_STATUS_TONE[o.orderStatus]} />
         </View>
         <Text style={styles.title}>{o.title}</Text>
-        {o.orderStatus === 'PENDING_PAYMENT' ? (
-          <Text style={styles.muted}>Đơn đang chờ thanh toán. Thanh toán trong ứng dụng sẽ có ở phiên bản sau.</Text>
+        {awaitingPayment ? <Text style={styles.muted}>Đơn đang chờ thanh toán. Đơn sẽ tự hủy nếu chưa thanh toán trong 30 phút.</Text> : null}
+        {awaitingPayment && role === 'CLIENT' ? (
+          <Button title="Thanh toán" onPress={() => router.push({ pathname: '/payment/[orderId]', params: { orderId: o.orderId } })} />
         ) : null}
       </Card>
 
       <CancellationCard order={o} role={role} cancellation={cancellation} />
+
+      {!awaitingPayment ? <EscrowCard orderId={o.orderId} role={role} /> : null}
 
       <Card>
         <Line label="Tạm tính" value={money(o.subtotal)} />

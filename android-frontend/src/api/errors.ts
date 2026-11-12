@@ -55,6 +55,23 @@ const CANCELLATION_MESSAGES: Record<number, string> = {
   3019: 'Vui lòng chọn đồng ý hoặc từ chối.',
 };
 
+// payment-service codes. Its 3xxx range overlaps order-service's, so this map
+// stays apart from the order ones (same copy as the web client's paymentApi.js).
+const PAYMENT_MESSAGES: Record<number, string> = {
+  1005: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+  1008: 'Bạn không có quyền thanh toán đơn này.',
+  2001: 'Không tìm thấy đơn hàng cần thanh toán.',
+  2002: 'Dịch vụ đơn hàng đang bận. Vui lòng thử lại sau ít phút.',
+  3001: 'Không tìm thấy giao dịch thanh toán.',
+  3002: 'Đơn này không còn ở trạng thái chờ thanh toán.',
+  3003: 'Đơn này đã được thanh toán.',
+  3005: 'Yêu cầu thanh toán bị trùng. Vui lòng thử lại.',
+  3007: 'Cổng thanh toán này chưa được hỗ trợ.',
+  3009: 'Khung giờ đã hết thời gian giữ chỗ. Vui lòng đặt đơn mới.',
+  3012: 'Số tiền nằm ngoài hạn mức của cổng thanh toán này. Hãy chọn cổng khác.',
+  3301: 'Cổng thanh toán tạm thời không phản hồi. Vui lòng thử lại hoặc chọn cổng khác.',
+};
+
 function mappedMessage(err: unknown, messages: Record<number, string>, fallback: string): string {
   const apiErr = err instanceof ApiError ? err : null;
   return (apiErr?.code !== undefined && messages[apiErr.code]) || (err instanceof Error && err.message) || fallback;
@@ -66,4 +83,8 @@ export function evidenceErrorMessage(err: unknown): string {
 
 export function cancellationErrorMessage(err: unknown): string {
   return mappedMessage(err, CANCELLATION_MESSAGES, 'Không xử lý được yêu cầu huỷ. Vui lòng thử lại.');
+}
+
+export function paymentErrorMessage(err: unknown): string {
+  return mappedMessage(err, PAYMENT_MESSAGES, 'Không thực hiện được thanh toán. Vui lòng thử lại.');
 }

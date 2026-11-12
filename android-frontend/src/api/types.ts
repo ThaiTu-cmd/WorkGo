@@ -209,3 +209,44 @@ export type OrderCreationRequest = {
   bookingSlotId?: string;
   address?: string;
 };
+
+// ---- payment-service ----
+export type PaymentGateway = 'MOCK' | 'VNPAY' | 'MOMO';
+export type PaymentMethod = 'QR' | 'WALLET' | 'ATM_CARD' | 'INTL_CARD';
+export type PaymentStatus = 'INITIATED' | 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'EXPIRED' | 'CANCELLED';
+
+export type PaymentDto = {
+  paymentId: string;
+  paymentCode: string;
+  orderId: string;
+  amount?: Num | null;
+  currency?: string;
+  gateway: PaymentGateway;
+  paymentMethod?: PaymentMethod | null;
+  status: PaymentStatus;
+  paymentUrl?: string | null;
+  failureCode?: string | null;
+  failureMessage?: string | null;
+  paidAt?: string | null;
+  expiresAt?: string | null;
+  createdAt?: string;
+};
+
+export type PaymentCreationRequest = { orderId: string; gateway: PaymentGateway; paymentMethod?: PaymentMethod };
+
+export type EscrowStatus = 'PENDING' | 'HOLDING' | 'RELEASED' | 'REFUNDED' | 'PARTIALLY_REFUNDED' | 'FROZEN';
+
+export type EscrowDto = {
+  escrowAccountId: string;
+  orderId: string;
+  status: EscrowStatus;
+  heldAmount?: Num | null;
+  platformFeeAmount?: Num | null;
+  providerNetAmount?: Num | null;
+  releasedAmount?: Num | null;
+  refundedAmount?: Num | null;
+  currency?: string;
+  heldAt?: string | null;
+  releasedAt?: string | null;
+  refundedAt?: string | null;
+};

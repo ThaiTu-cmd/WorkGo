@@ -113,3 +113,13 @@ test('2xx without a body resolves to null', async () => {
   respond(200, undefined);
   await expect(http.delete('/identity/addresses/1')).resolves.toBeNull();
 });
+
+test('post merges extra headers (e.g. Idempotency-Key) with the defaults', async () => {
+  token = 't1';
+  respond(200, {});
+  await http.post('/payment/payments', { a: 1 }, { headers: { 'Idempotency-Key': 'k1' } });
+  const [, init] = fetchMock.mock.calls[0];
+  expect(init.headers['Idempotency-Key']).toBe('k1');
+  expect(init.headers.Authorization).toBe('Bearer t1');
+  expect(init.headers['Content-Type']).toBe('application/json');
+});

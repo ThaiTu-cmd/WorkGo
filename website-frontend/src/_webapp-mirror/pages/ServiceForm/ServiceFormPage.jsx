@@ -3,20 +3,19 @@ import React, { useState, useEffect } from 'react';
 import { catalogApi, catalogErrorMessage, isNotProvider } from '../../api/catalogApi';
 import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
 import { pageItems, toPackages } from '../../api/adapters';
-import { addonsToForm, applyMediaOp, attachGalleryIds, defaultPackages, mediasToForm, planAddonChanges, planMediaChanges, toAddonBody, toPackageBody } from './serviceFormSync';
+import { addonsToForm, applyMediaOp, attachGalleryIds, defaultPackages, mediasToForm, planAddonChanges, planMediaChanges, toAddonBody, toPackageBody, toServiceBody } from './serviceFormSync';
 const TIER_KEYS = {
   BASIC: 'basic',
   STANDARD: 'standard',
   PREMIUM: 'premium'
 };
-const toSlug = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0111/gi, 'd').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 import FormStepper from './components/FormStepper/FormStepper';
 import Step1Info from './components/Step1Info/Step1Info';
 import Step2Pricing from './components/Step2Pricing/Step2Pricing';
 import Step3Media from './components/Step3Media/Step3Media';
 import { ArrowLeft, Check, FilePlus2, PencilLine, Save } from 'lucide-react';
 import styles from './ServiceFormPage.module.css';
-import { validateTitle, validateDescription, validatePackagePrices, validateAddons, sanitizeText, clampPrice, isHttpUrl } from './formValidation';
+import { validateTitle, validateDescription, validatePackagePrices, validateAddons, isHttpUrl } from './formValidation';
 export default function ServiceFormPage({
   mode = 'create',
   serviceId = null,
@@ -49,7 +48,6 @@ export default function ServiceFormPage({
   // PackageResponse ids by tier, so an edit updates the existing packages.
   const [packageIds, setPackageIds] = useState({});
   // catalog ServiceStatus of the service being edited (kept on save).
-  const [existingStatus, setExistingStatus] = useState(null);
   // What the server had when editing started, so a save can create/update/delete
   // only the add-ons and media that changed.
   const [originalAddonIds, setOriginalAddonIds] = useState([]);
@@ -83,7 +81,6 @@ export default function ServiceFormPage({
           };
         };
         setPackageIds(Object.fromEntries(Object.entries(byTier).map(([k, p]) => [k, p.id])));
-        setExistingStatus(existing.status || null);
         setOriginalAddonIds(addons.map(a => a.id));
         setOriginalMedia(media);
         setFormData({
@@ -186,17 +183,7 @@ export default function ServiceFormPage({
     }
 
     // F1: save sanitized values only (slug from the sanitized title).
-    const cleanTitle = sanitizeText(formData.title);
-    const cleanDescription = sanitizeText(formData.description);
-    const serviceBody = {
-      categoryId: formData.categoryId,
-      executionType: formData.executionType,
-      title: cleanTitle,
-      slug: toSlug(cleanTitle),
-      description: cleanDescription,
-      currency: 'VND',
-      basePrice: clampPrice(formData.packages.basic.price)
-    };
+    const serviceBody = toServiceBody(formData);
     setSaving(true);
 
     // What the server holds as this save advances. On failure it is written
@@ -211,12 +198,7 @@ export default function ServiceFormPage({
     let media = id ? originalMedia : null;
     try {
       if (id) {
-        // The update mapper writes nulls too: always send the status back
-        // (a service created by an earlier, failed save is still DRAFT).
-        await catalogApi.updateService(id, {
-          ...serviceBody,
-          status: existingStatus || 'DRAFT'
-        });
+        await catalogApi.updateService(id, serviceBody);
       } else {
         const res = await catalogApi.createService(serviceBody);
         id = res?.result?.serviceId;
@@ -262,7 +244,7 @@ export default function ServiceFormPage({
       }
       if (onSaveSuccess) onSaveSuccess({
         serviceId: id,
-        title: cleanTitle
+        title: serviceBody.title
       }, isEdit);
     } catch (err) {
       if (id) {

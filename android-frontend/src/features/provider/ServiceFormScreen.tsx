@@ -4,7 +4,6 @@ import * as React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { errorMessage } from '@/api/errors';
-import type { ServiceStatus } from '@/api/types';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { useCategories, useServiceDetail } from '@/features/catalog/hooks';
@@ -60,7 +59,6 @@ export function ServiceFormScreen() {
     <ServiceForm
       serviceId={id ?? null}
       currentSlug={d?.slug}
-      currentStatus={d?.status}
       initialInfo={{
         title: d?.title ?? '',
         categoryId: d?.categoryId ?? '',
@@ -87,14 +85,12 @@ export function ServiceFormScreen() {
 function ServiceForm({
   serviceId,
   currentSlug,
-  currentStatus,
   initialInfo,
   initialPackages,
   existingImages,
 }: {
   serviceId: string | null;
   currentSlug?: string;
-  currentStatus?: ServiceStatus;
   initialInfo: ServiceInfo;
   initialPackages: PackageDraft[];
   existingImages: string[];
@@ -144,7 +140,6 @@ function ServiceForm({
           input: {
             serviceId,
             currentSlug,
-            currentStatus,
             info,
             packages: packages.map(toPackageInput),
             images,

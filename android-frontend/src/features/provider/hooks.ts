@@ -76,7 +76,6 @@ export function useDeleteService() {
 export type SaveServiceInput = {
   serviceId: string | null;
   currentSlug?: string;
-  currentStatus?: ServiceStatus;
   info: ServiceInfo;
   packages: PackageInput[];
   images: string[];
@@ -129,8 +128,8 @@ export async function saveService(input: SaveServiceInput, progress: SaveProgres
     serviceId = (await catalogApi.createService(body)).result.serviceId;
     progress.serviceId = serviceId;
   } else if (!isNew) {
-    // PUT writes nulls too: always send the status the service already has.
-    await catalogApi.updateService(serviceId, { ...body, status: input.currentStatus ?? 'DRAFT' });
+    // No status: PUT skips missing fields, so the stored status stays.
+    await catalogApi.updateService(serviceId, body);
   }
 
   for (const [i, p] of input.packages.entries()) {

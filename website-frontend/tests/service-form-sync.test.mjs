@@ -5,6 +5,7 @@ import {
   mediasToForm,
   planAddonChanges,
   planMediaChanges,
+  toServiceBody,
 } from "../src/_webapp-mirror/pages/ServiceForm/serviceFormSync.js";
 import { isHttpUrl, validateAddons } from "../src/_webapp-mirror/pages/ServiceForm/formValidation.js";
 
@@ -88,4 +89,21 @@ test("isHttpUrl accepts only http(s) URLs", () => {
   assert.equal(isHttpUrl("https://x/a.jpg"), true);
   assert.equal(isHttpUrl("javascript:alert(1)"), false);
   assert.equal(isHttpUrl(""), false);
+});
+
+test("toServiceBody builds the PUT/POST body without a status", () => {
+  const body = toServiceBody({
+    categoryId: "c1",
+    executionType: "ONSITE",
+    title: "Sửa máy lạnh",
+    description: "Tận nơi",
+    packages: { basic: { price: 250000 } },
+  });
+  assert.equal(body.slug, "sua-may-lanh");
+  assert.equal(body.currency, "VND");
+  assert.equal(body.basePrice, 250000);
+  assert.equal(body.categoryId, "c1");
+  assert.equal(body.executionType, "ONSITE");
+  // PUT skips missing fields now, so editing keeps the stored status.
+  assert.equal("status" in body, false);
 });

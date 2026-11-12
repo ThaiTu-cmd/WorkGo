@@ -4,6 +4,25 @@ import { clampPrice, sanitizeText } from './formValidation.js';
 
 const clean = (s) => String(s ?? '').trim();
 
+export const toSlug = (text) =>
+  text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0111/gi, 'd').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+// POST/PUT /catalog/services body from the form (sanitized values only, slug
+// from the sanitized title). No status: PUT keeps the stored one, and a new
+// service starts as DRAFT.
+export function toServiceBody(form) {
+  const title = sanitizeText(form.title);
+  return {
+    categoryId: form.categoryId,
+    executionType: form.executionType,
+    title,
+    slug: toSlug(title),
+    description: sanitizeText(form.description),
+    currency: 'VND',
+    basePrice: clampPrice(form.packages.basic.price),
+  };
+}
+
 // ONSITE packages: minutes of work per visit (PackageRequest.durationMinute).
 export const DURATION_OPTIONS = [30, 60, 90, 120, 180, 240, 360, 480];
 export const DEFAULT_MINUTES = { basic: 60, standard: 120, premium: 240 };

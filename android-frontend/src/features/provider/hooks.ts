@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { pageItems, toMyServiceRow } from '@/api/adapters';
 import { availabilityApi, type RuleBody } from '@/api/availabilityApi';
 import { catalogApi } from '@/api/catalogApi';
-import { ApiError } from '@/api/errors';
+import { ApiError, isNotProvider } from '@/api/errors';
 import { providerApi } from '@/api/providerApi';
 import { qk } from '@/api/queryKeys';
 import type { BookingSlotDto, PackageDto, RuleDto, ServiceDto, ServiceStatus } from '@/api/types';
@@ -11,7 +11,7 @@ import type { BookingSlotDto, PackageDto, RuleDto, ServiceDto, ServiceStatus } f
 import type { PackageInput, ServiceInfo } from './serviceFormSchema';
 import { slugify } from './slugify';
 
-export const isForbidden = (err: unknown) => err instanceof ApiError && err.status === 403;
+export const isForbidden = isNotProvider;
 
 // 404/400 from /providers/myProfile means "no profile yet", not an error to show.
 export function useMyProviderProfile(enabled: boolean) {

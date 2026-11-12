@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import React, { useState } from 'react';
 import { useMyServices } from '../../hooks/useMyServices';
 import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
+import { catalogErrorMessage } from '../../api/catalogApi';
 import ServicesToolbar from './components/ServicesToolbar/ServicesToolbar';
 import ServicesTable from './components/ServicesTable/ServicesTable';
 import { ArrowLeft, ShieldCheck, CalendarClock, Store } from 'lucide-react';
@@ -89,7 +90,7 @@ export default function MyServicesPage({
       }
     } catch (err) {
       if (onShowToast) onShowToast(tr("m1452", {
-        p0: err?.message || tr("m1303")
+        p0: catalogErrorMessage(err)
       }));
     }
   };

@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { listPublishedServices } from "../src/_webapp-mirror/api/catalogListing.js";
+import { catalogErrorMessage, isNotProvider } from "../src/_webapp-mirror/api/catalogApi.js";
+import { ApiError } from "../src/_webapp-mirror/api/axiosClient.js";
 import { fastestDeliveryDays, toPackages, toServiceCard, toServiceDetail } from "../src/_webapp-mirror/api/adapters.js";
 import {
   applyMediaOp,
@@ -181,4 +183,18 @@ test("defaultPackages starts neutral: tier names, empty descriptions, rising pri
   assert.deepEqual([p.basic.title, p.standard.title, p.premium.title], ["<m1764>", "<m1765>", "<m1766>"]);
   assert.deepEqual([p.basic.desc, p.standard.desc, p.premium.desc], ["", "", ""]);
   assert.ok(p.basic.price < p.standard.price && p.standard.price < p.premium.price);
+});
+
+test("catalogErrorMessage maps the new catalog codes", () => {
+  assert.equal(catalogErrorMessage(new ApiError(403, { code: 1025 })), "Bạn không phải chủ dịch vụ này.");
+  assert.equal(catalogErrorMessage(new ApiError(409, { code: 1017 })), "Giờ kết thúc phải sau giờ bắt đầu.");
+  assert.equal(catalogErrorMessage(new ApiError(400, { code: 1028 })), "Ngày trong tuần không hợp lệ.");
+  assert.equal(catalogErrorMessage(null), "Không lưu được thay đổi. Vui lòng thử lại.");
+});
+
+test("isNotProvider is true for 1007 / code-less 403, false for 1025", () => {
+  assert.equal(isNotProvider(new ApiError(401, { code: 1007 })), true); // ApiError turns 401+1007 into 403
+  assert.equal(isNotProvider(new ApiError(403, {})), true);
+  assert.equal(isNotProvider(new ApiError(403, { code: 1025 })), false);
+  assert.equal(isNotProvider(new ApiError(404, {})), false);
 });

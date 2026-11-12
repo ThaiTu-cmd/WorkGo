@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { catalogApi } from '../api/catalogApi';
+import { catalogApi, isNotProvider } from '../api/catalogApi';
 import { getAccessToken } from '../api/axiosClient';
 import { pageItems, toMyServiceRow, toRowStatus, toServiceStatus } from '../api/adapters';
 
@@ -30,7 +30,7 @@ export function useMyServices() {
         ),
       });
     } catch (err) {
-      const status = err?.status === 401 ? 'needs-login' : err?.status === 403 ? 'forbidden' : 'error';
+      const status = err?.status === 401 ? 'needs-login' : isNotProvider(err) ? 'forbidden' : 'error';
       setState({ status, services: [] });
     }
   }, []);

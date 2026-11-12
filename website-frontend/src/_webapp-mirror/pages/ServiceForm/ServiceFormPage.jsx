@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 import React, { useState, useEffect } from 'react';
-import { catalogApi } from '../../api/catalogApi';
+import { catalogApi, catalogErrorMessage, isNotProvider } from '../../api/catalogApi';
 import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
 import { pageItems, toPackages } from '../../api/adapters';
 import { addonsToForm, applyMediaOp, attachGalleryIds, defaultPackages, mediasToForm, planAddonChanges, planMediaChanges, toAddonBody, toPackageBody } from './serviceFormSync';
@@ -280,9 +280,9 @@ export default function ServiceFormPage({
         }));
       }
       if (onShowToast) {
-        if (err?.status === 403) onShowToast(NOT_PROVIDER_MESSAGE);else {
+        if (isNotProvider(err)) onShowToast(NOT_PROVIDER_MESSAGE);else {
           onShowToast(tr("m1459", {
-            p0: err?.message || tr("m1303")
+            p0: catalogErrorMessage(err)
           }));
           if (!isEdit && id) onShowToast(tr("m1570"));
         }

@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import React, { useState } from 'react';
 import { ArrowLeft, CalendarClock, Info, Loader2 } from 'lucide-react';
 import { useAvailability } from '../../hooks/useAvailability';
+import { catalogErrorMessage } from '../../api/catalogApi';
 import WeekGrid from './components/WeekGrid';
 import RuleForm, { emptyRule } from './components/RuleForm';
 import SlotList from './components/SlotList';
@@ -40,7 +41,7 @@ export default function AvailabilityPage({
       setEditing(emptyRule(editing.dayOfWeek));
     } catch (err) {
       toast(tr("m169", {
-        p0: err?.message || tr("m1466")
+        p0: catalogErrorMessage(err)
       }));
     } finally {
       setSaving(false);

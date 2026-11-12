@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
 import { instantToTime, timeToInstant, timeToMinutes, WEEK_DAYS } from '@/api/availabilityApi';
-import { errorMessage } from '@/api/errors';
+import { catalogErrorMessage, errorMessage } from '@/api/errors';
 import type { RuleDto } from '@/api/types';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
@@ -65,7 +65,7 @@ export function AvailabilityScreen() {
           status: 'ACTIVE',
         },
       },
-      { onSuccess: () => setDraft(null), onError: (err) => setError(errorMessage(err)) }
+      { onSuccess: () => setDraft(null), onError: (err) => setError(catalogErrorMessage(err)) }
     );
   };
 
@@ -115,7 +115,7 @@ export function AvailabilityScreen() {
                       text: 'Xoá',
                       style: 'destructive',
                       onPress: () =>
-                        deleteRule.mutate(r.availableRuleId, { onError: (err) => Alert.alert('Không xoá được', errorMessage(err)) }),
+                        deleteRule.mutate(r.availableRuleId, { onError: (err) => Alert.alert('Không xoá được', catalogErrorMessage(err)) }),
                     },
                   ])
                 }

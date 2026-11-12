@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
 import type { RowStatus } from '@/api/adapters';
-import { errorMessage } from '@/api/errors';
+import { catalogErrorMessage, errorMessage } from '@/api/errors';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { EXECUTION_LABEL } from '@/features/catalog/ServiceCardView';
@@ -34,7 +34,7 @@ export function MyServicesScreen() {
   }
 
   const rows = (services.data ?? []).filter((r) => tab === 'ALL' || r.status === tab);
-  const onError = (err: unknown) => Alert.alert('Không thực hiện được', errorMessage(err));
+  const onError = (err: unknown) => Alert.alert('Không thực hiện được', catalogErrorMessage(err));
 
   return (
     <Screen edges={['bottom']} onRefresh={() => void services.refetch()} refreshing={services.isRefetching}>

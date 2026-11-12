@@ -27,7 +27,7 @@ export const setAccessToken = (token) => {
 
 // Backend answers HTTP 401 both for a bad/expired token and for a missing
 // role (code 1007 "You do not have that permission"); tell them apart by code.
-const FORBIDDEN_CODES = [1007];
+export const FORBIDDEN_CODES = [1007];
 
 // Catalog provider endpoints answer 1007 until the account is a VERIFIED provider
 // and has signed in again (the PROVIDER role and providerId live in the token).

@@ -20,7 +20,8 @@ export function fold(text: string): string {
     .trim();
 }
 
-// The API has no keyword search: filtering runs on the full list on the device.
+// Filtering runs on the device: the API's keyword search neither ignores
+// Vietnamese diacritics nor matches provider names.
 export function filterServices(cards: ServiceCard[], f: ServiceFilters): ServiceCard[] {
   const q = f.query ? fold(f.query) : '';
   return cards.filter((c) => {

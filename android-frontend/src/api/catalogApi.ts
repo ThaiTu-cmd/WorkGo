@@ -34,8 +34,7 @@ export const catalogApi = {
 
   getService: (serviceId: string) => http.get<ApiResponse<ServiceDto>>(`/catalog/services/${serviceId}`),
 
-  // PUBLISHED services. The endpoint only matches when categoryId,
-  // executionType, minPrice and maxPrice are ALL present (see listAllServices).
+  // PUBLISHED services; every filter is optional.
   listServices: ({
     categoryId,
     executionType,

@@ -16,37 +16,49 @@ import { validatePackagePrices } from "../src/_webapp-mirror/pages/ServiceForm/f
 
 const page = (data) => ({ result: { data } });
 
-test("listPublishedServices sends all four filters per category × type and dedupes", async () => {
+const paged = (data, totalPages) => ({ result: { data, totalPages } });
+
+test("listPublishedServices pages through GET /catalog/services without filters", async () => {
   const calls = [];
   const api = {
-    getRootCategories: async () =>
-      page([{ categoryId: "r1", children: [{ categoryId: "c1" }] }]),
+    getRootCategories: async () => page([{ categoryId: "r1", children: [{ categoryId: "c1" }] }]),
     listServices: async (params) => {
       calls.push(params);
-      if (params.executionType === "ONSITE") return page([{ serviceId: "s1" }]);
-      if (params.categoryId === "c1") throw new Error("boom");
-      return page([{ serviceId: "s1" }, { serviceId: "s2" }]);
+      return paged([{ serviceId: `s${params.page}`, executionType: "DIGITAL" }], 3);
     },
   };
   const { services, categories } = await listPublishedServices({ api });
-  assert.deepEqual(services.map((s) => s.serviceId).sort(), ["s1", "s2"]);
+  assert.deepEqual(calls, [
+    { page: 0, size: 100 },
+    { page: 1, size: 100 },
+    { page: 2, size: 100 },
+  ]);
+  assert.deepEqual(services.map((s) => s.serviceId), ["s0", "s1", "s2"]);
   assert.deepEqual(categories.map((c) => c.categoryId), ["r1", "c1"]);
-  assert.equal(calls.length, 4);
-  for (const c of calls) {
-    assert.ok(c.categoryId && c.executionType, "categoryId and executionType are required by the API");
-    assert.equal(c.minPrice, 0);
-    assert.ok(c.maxPrice > 0);
-  }
 });
 
-test("listPublishedServices can be limited to ONSITE services", async () => {
-  const types = [];
+test("listPublishedServices keeps only the requested execution types", async () => {
   const api = {
     getRootCategories: async () => page([{ categoryId: "r1" }]),
-    listServices: async (p) => (types.push(p.executionType), page([])),
+    listServices: async () =>
+      paged([
+        { serviceId: "d1", executionType: "DIGITAL" },
+        { serviceId: "o1", executionType: "ONSITE" },
+      ], 1),
   };
-  await listPublishedServices({ api, executionTypes: ["ONSITE"] });
-  assert.deepEqual(types, ["ONSITE"]);
+  const { services } = await listPublishedServices({ api, executionTypes: ["ONSITE"] });
+  assert.deepEqual(services.map((s) => s.serviceId), ["o1"]);
+});
+
+test("listPublishedServices stops after the first page when totalPages is missing", async () => {
+  let n = 0;
+  const api = {
+    getRootCategories: async () => page([]),
+    listServices: async () => (n++, page([{ serviceId: "s1", executionType: "DIGITAL" }])),
+  };
+  const { services } = await listPublishedServices({ api });
+  assert.equal(n, 1);
+  assert.equal(services.length, 1);
 });
 
 test("fastestDeliveryDays ignores inactive and ONSITE (0 / null) packages", () => {

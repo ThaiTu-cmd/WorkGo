@@ -1,12 +1,8 @@
 import { catalogApi } from './catalogApi.js';
 import { pageItems } from './adapters.js';
 
-// GET /catalog/services only returns rows when categoryId, executionType,
-// minPrice and maxPrice are ALL sent, so "every published service" means one
-// call per (category × execution type) with an open price range.
 export const EXECUTION_TYPES = ['DIGITAL', 'ONSITE'];
-const PRICE_FLOOR = 0;
-const PRICE_CEILING = 1_000_000_000_000;
+const PAGE_SIZE = 100;
 
 // Root categories plus their direct children.
 export const flattenCategories = (roots = []) =>
@@ -21,20 +17,18 @@ export const flattenCategories = (roots = []) =>
 export async function listPublishedServices({ executionTypes = EXECUTION_TYPES, api = catalogApi } = {}) {
   const roots = pageItems(await api.getRootCategories());
   const categories = flattenCategories(roots);
-  if (categories.length === 0) return { services: [], categories };
 
-  const pages = await Promise.all(
-    categories.flatMap((c) =>
-      executionTypes.map((executionType) =>
-        api
-          .listServices({ categoryId: c.categoryId, executionType, minPrice: PRICE_FLOOR, maxPrice: PRICE_CEILING })
-          .catch(() => null)
-      )
-    )
-  );
+  // GET /catalog/services with no filters, page by page; merged by id in case
+  // a service moves between pages while reading.
   const byId = new Map();
-  pages.forEach((p) => pageItems(p).forEach((s) => byId.set(s.serviceId, s)));
-  return { services: [...byId.values()], categories };
+  for (let page = 0; ; page++) {
+    const res = await api.listServices({ page, size: PAGE_SIZE });
+    pageItems(res).forEach((s) => byId.set(s.serviceId, s));
+    const totalPages = res?.result?.totalPages;
+    if (totalPages === undefined || page + 1 >= totalPages) break;
+  }
+  const services = [...byId.values()].filter((s) => executionTypes.includes(s.executionType));
+  return { services, categories };
 }
 
 // Number of listed services per root category id (cards carry rootCategoryId).

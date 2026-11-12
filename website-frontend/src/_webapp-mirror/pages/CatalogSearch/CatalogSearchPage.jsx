@@ -39,7 +39,8 @@ export default function CatalogSearchPage({
     status: categoriesStatus
   } = useCatalogCategories();
   // All PUBLISHED services; category / type / price / rating / keyword filters
-  // and sorting below run on this list (the API has no keyword search).
+  // and sorting below run on this list (the API's keyword search neither
+  // ignores diacritics nor matches provider names).
   const {
     services: listedServices,
     status: servicesStatus

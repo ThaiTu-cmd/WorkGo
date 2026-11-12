@@ -29,32 +29,34 @@ beforeEach(() => {
   providers.getProvider.mockResolvedValue({ result: { providerProfileId: 'p1', businessName: 'Studio An' } } as never);
 });
 
-test('listAllServices queries every category × execution type with full price range', async () => {
-  catalog.listServices.mockResolvedValue(page([]));
-  await listAllServices();
-  expect(catalog.listServices).toHaveBeenCalledTimes(4);
-  const calls = catalog.listServices.mock.calls.map(([p]) => p);
-  expect(calls).toEqual(
-    expect.arrayContaining([
-      { categoryId: 'c1', executionType: 'DIGITAL', minPrice: 0, maxPrice: 1_000_000_000_000 },
-      { categoryId: 'c1', executionType: 'ONSITE', minPrice: 0, maxPrice: 1_000_000_000_000 },
-      { categoryId: 'c1a', executionType: 'DIGITAL', minPrice: 0, maxPrice: 1_000_000_000_000 },
-      { categoryId: 'c1a', executionType: 'ONSITE', minPrice: 0, maxPrice: 1_000_000_000_000 },
-    ])
-  );
-});
+const paged = <T>(data: T[], totalPages: number) => ({ result: { data, totalPages } }) as never;
 
-test('listAllServices dedupes by serviceId and survives one failing call', async () => {
+test('listAllServices pages through GET /catalog/services without filters', async () => {
   catalog.listServices
-    .mockResolvedValueOnce(page([svc('s1', 'c1'), svc('s2', 'c1')]))
-    .mockRejectedValueOnce(new ApiError(500, null))
-    .mockResolvedValueOnce(page([svc('s1', 'c1')]))
-    .mockResolvedValueOnce(page([svc('s3', 'c1a')]));
+    .mockResolvedValueOnce(paged([svc('s1', 'c1'), svc('s2', 'c1')], 3))
+    .mockResolvedValueOnce(paged([svc('s2', 'c1')], 3))
+    .mockResolvedValueOnce(paged([svc('s3', 'c1a')], 3));
   const cards = await listAllServices();
-  expect(cards.map((c) => c.serviceId).sort()).toEqual(['s1', 's2', 's3']);
+  expect(catalog.listServices.mock.calls.map(([p]) => p)).toEqual([
+    { page: 0, size: 100 },
+    { page: 1, size: 100 },
+    { page: 2, size: 100 },
+  ]);
+  expect(cards.map((c) => c.serviceId)).toEqual(['s1', 's2', 's3']);
   expect(cards.find((c) => c.serviceId === 's3')?.categoryName).toBe('Logo');
   expect(cards[0].provider.name).toBe('Studio An');
   expect(providers.getProvider).toHaveBeenCalledTimes(1);
+});
+
+test('listAllServices stops after the first page when totalPages is missing', async () => {
+  catalog.listServices.mockResolvedValue(page([svc('s1', 'c1')]));
+  await listAllServices();
+  expect(catalog.listServices).toHaveBeenCalledTimes(1);
+});
+
+test('listAllServices rethrows when a page cannot be loaded', async () => {
+  catalog.listServices.mockRejectedValue(new ApiError(0, null));
+  await expect(listAllServices()).rejects.toBeInstanceOf(ApiError);
 });
 
 test('listAllServices keeps services when provider lookup 401s', async () => {

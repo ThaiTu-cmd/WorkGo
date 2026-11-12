@@ -12,8 +12,7 @@ export const catalogApi = {
 
   getService: (serviceId) => axiosClient.get(`/catalog/services/${serviceId}`),
 
-  // PUBLISHED services. The current endpoint only matches when categoryId,
-  // executionType, minPrice and maxPrice are ALL present (see useServiceList).
+  // PUBLISHED services; every filter is optional.
   listServices: ({ categoryId, executionType, minPrice, maxPrice, page = 0, size = 50 } = {}) => {
     const params = { page, size };
     if (categoryId) params.categoryId = categoryId;

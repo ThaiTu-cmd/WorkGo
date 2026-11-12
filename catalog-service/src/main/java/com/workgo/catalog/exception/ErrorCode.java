@@ -31,6 +31,8 @@ public enum ErrorCode {
     //===============SERVICE==============================
     SERVICE_EXISTED(1011, "This service is already existed !", HttpStatus.BAD_REQUEST),
     SERVICE_NOT_EXISTED(1012, "This service is not existed !", HttpStatus.BAD_REQUEST),
+    NOT_SERVICE_OWNER(1025, "You are not the owner of this service", HttpStatus.FORBIDDEN),
+    INVALID_SERVICE_STATUS(1026, "The service status is invalid", HttpStatus.BAD_REQUEST),
 
     //===============PACKAGE==============================
     PACKAGE_EXISTED(1013, "This package name already exists in this service !", HttpStatus.BAD_REQUEST),
@@ -43,6 +45,8 @@ public enum ErrorCode {
 
     //==============AVAILABLE RULE========================
     RULE_NOT_EXISTED(1018, "This rule is not existed", HttpStatus.NOT_FOUND),
+    INVALID_SLOT_DURATION(1027, "The slot duration must be greater than 0", HttpStatus.BAD_REQUEST),
+    INVALID_DAY_OF_WEEK(1028, "The day of week must be from 2 (Monday) to 8 (Sunday)", HttpStatus.BAD_REQUEST),
 
     //=================ADD ON=====================
     ADD_ON_NOT_EXISTED(1019, "This add-on is not existed", HttpStatus.NOT_FOUND),

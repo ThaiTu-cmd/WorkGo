@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -27,6 +28,7 @@ public class CategoryController {
     CategoryService categoryService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     ApiResponse<CategoryCreationResponse> createCategory(
             @RequestBody CategoryCreationRequest request
             ){
@@ -91,6 +93,7 @@ public class CategoryController {
     }
 
     @PutMapping("/{categoryId}")
+    @PreAuthorize("hasRole('ADMIN')")
     ApiResponse<CategoryResponse> updateCategory(
             @PathVariable UUID categoryId,
             @RequestBody CategoryUpdateRequest request
@@ -103,6 +106,7 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{categoryId}")
+    @PreAuthorize("hasRole('ADMIN')")
     ApiResponse<Void> deleteCategory(
             @PathVariable UUID categoryId
     ){

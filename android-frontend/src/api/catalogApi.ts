@@ -57,21 +57,8 @@ export const catalogApi = {
 
   deleteService: (serviceId: string) => http.delete<ApiResponse<unknown>>(`/catalog/services/${serviceId}`),
 
-  // The update mapper writes nulls too, so re-send the whole record with the new status.
-  setServiceStatus: async (serviceId: string, status: ServiceStatus) => {
-    const current = (await http.get<ApiResponse<ServiceDto>>(`/catalog/services/${serviceId}`))?.result;
-    if (!current) throw new Error('Không tìm thấy dịch vụ');
-    return http.put<ApiResponse<ServiceDto>>(`/catalog/services/${serviceId}`, {
-      categoryId: current.categoryId,
-      executionType: current.executionType,
-      title: current.title,
-      slug: current.slug,
-      description: current.description,
-      currency: current.currency,
-      basePrice: current.basePrice,
-      status,
-    });
-  },
+  setServiceStatus: (serviceId: string, status: ServiceStatus) =>
+    http.patch<ApiResponse<ServiceDto>>(`/catalog/services/${serviceId}/status`, { status }),
 
   createPackage: (serviceId: string, body: PackageBody) =>
     http.post<ApiResponse<PackageDto>>(`/catalog/packages/services/${serviceId}`, body),

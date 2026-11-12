@@ -34,22 +34,9 @@ export const catalogApi = {
 
   deleteService: (serviceId) => axiosClient.delete(`/catalog/services/${serviceId}`),
 
-  // status: 'DRAFT' | 'PUBLISHED' | 'PAUSED' | 'ARCHIVED'. The update mapper
-  // writes nulls too, so re-send the whole record with the new status.
-  setServiceStatus: async (serviceId, status) => {
-    const current = (await axiosClient.get(`/catalog/services/${serviceId}`))?.result;
-    if (!current) throw new Error('Không tìm thấy dịch vụ');
-    return axiosClient.put(`/catalog/services/${serviceId}`, {
-      categoryId: current.categoryId,
-      executionType: current.executionType,
-      title: current.title,
-      slug: current.slug,
-      description: current.description,
-      currency: current.currency,
-      basePrice: current.basePrice,
-      status,
-    });
-  },
+  // status: 'DRAFT' | 'PUBLISHED' | 'PAUSED' | 'ARCHIVED'.
+  setServiceStatus: (serviceId, status) =>
+    axiosClient.patch(`/catalog/services/${serviceId}/status`, { status }),
 
   // Packages
   createPackage: (serviceId, body) => axiosClient.post(`/catalog/packages/services/${serviceId}`, body),

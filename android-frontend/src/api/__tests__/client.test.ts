@@ -123,3 +123,11 @@ test('post merges extra headers (e.g. Idempotency-Key) with the defaults', async
   expect(init.headers.Authorization).toBe('Bearer t1');
   expect(init.headers['Content-Type']).toBe('application/json');
 });
+
+test('patch sends method PATCH with the JSON body', async () => {
+  respond(200, {});
+  await http.patch('/x', { a: 1 });
+  const [, init] = fetchMock.mock.calls[0];
+  expect(init.method).toBe('PATCH');
+  expect(init.body).toBe('{"a":1}');
+});

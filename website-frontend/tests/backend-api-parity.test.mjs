@@ -272,3 +272,17 @@ test("Payment flow: payment-service and order-service error codes are mapped sep
   assert.match(paymentErrorMessage({ code: 3101 }), /escrow/);
   assert.equal(paymentErrorMessage({ message: "x" }), "x");
 });
+
+test("API Parity: setServiceStatus uses PATCH /status once", async () => {
+  const calls = [];
+  const original = { get: axiosClient.get, put: axiosClient.put, patch: axiosClient.patch };
+  axiosClient.get = async (url) => calls.push(["GET", url]);
+  axiosClient.put = async (url, body) => calls.push(["PUT", url, body]);
+  axiosClient.patch = async (url, body) => calls.push(["PATCH", url, body]);
+  try {
+    await catalogApi.setServiceStatus("s1", "PAUSED");
+  } finally {
+    Object.assign(axiosClient, original);
+  }
+  assert.deepEqual(calls, [["PATCH", "/catalog/services/s1/status", { status: "PAUSED" }]]);
+});

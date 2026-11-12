@@ -112,6 +112,7 @@ const axiosClient = {
   get: (url, config = {}) => request('GET', url, config),
   post: (url, data, config = {}) => request('POST', url, { ...config, data }),
   put: (url, data, config = {}) => request('PUT', url, { ...config, data }),
+  patch: (url, data, config = {}) => request('PATCH', url, { ...config, data }),
   delete: (url, config = {}) => request('DELETE', url, config),
 };
 

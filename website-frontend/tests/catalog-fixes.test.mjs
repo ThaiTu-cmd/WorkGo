@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { listPublishedServices } from "../src/_webapp-mirror/api/catalogListing.js";
 import { catalogErrorMessage, isNotProvider } from "../src/_webapp-mirror/api/catalogApi.js";
 import { ApiError } from "../src/_webapp-mirror/api/axiosClient.js";
+import { matchesSearch } from "../src/_webapp-mirror/pages/CatalogSearch/searchMatch.js";
 import { fastestDeliveryDays, toPackages, toServiceCard, toServiceDetail } from "../src/_webapp-mirror/api/adapters.js";
 import {
   applyMediaOp,
@@ -209,4 +210,14 @@ test("isNotProvider is true for 1007 / code-less 403, false for 1025", () => {
   assert.equal(isNotProvider(new ApiError(403, {})), true);
   assert.equal(isNotProvider(new ApiError(403, { code: 1025 })), false);
   assert.equal(isNotProvider(new ApiError(404, {})), false);
+});
+
+test("matchesSearch ignores case and Vietnamese diacritics", () => {
+  const service = { title: "Sửa máy giặt, tủ lạnh tại nhà", categoryName: "Sửa chữa & Bảo trì", provider: { name: "Điện lạnh Đức An" } };
+  assert.equal(matchesSearch(service, "sua may"), true);
+  assert.equal(matchesSearch(service, "  SỬA MÁY "), true);
+  assert.equal(matchesSearch(service, "bao tri"), true);
+  assert.equal(matchesSearch(service, "duc an"), true);
+  assert.equal(matchesSearch(service, "ve sinh"), false);
+  assert.equal(matchesSearch(service, ""), true);
 });

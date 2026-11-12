@@ -10,6 +10,7 @@ import { useServiceList, countByRootCategory } from '../../hooks/useServiceList'
 import { SearchX, RotateCcw, X } from 'lucide-react';
 import styles from './CatalogSearchPage.module.css';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { matchesSearch } from './searchMatch';
 export default function CatalogSearchPage({
   initialCategory = 'ALL',
   initialExecutionType = 'ALL',
@@ -125,15 +126,9 @@ export default function CatalogSearchPage({
         return false;
       }
 
-      // 7. Search query filter
-      if (searchQuery.trim() !== '') {
-        const q = searchQuery.toLowerCase().trim();
-        const matchesTitle = service.title.toLowerCase().includes(q);
-        const matchesCategory = service.categoryName.toLowerCase().includes(q);
-        const matchesProvider = service.provider.name.toLowerCase().includes(q);
-        if (!matchesTitle && !matchesCategory && !matchesProvider) {
-          return false;
-        }
+      // 7. Search query filter (ignores case and diacritics)
+      if (!matchesSearch(service, searchQuery)) {
+        return false;
       }
       return true;
     });

@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { errorMessage } from '@/api/errors';
+import { catalogErrorMessage, errorMessage } from '@/api/errors';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { useCategories, useServiceDetail } from '@/features/catalog/hooks';
@@ -149,7 +149,7 @@ function ServiceForm({
         })
         .then(
           () => router.back(),
-          (err) => setError(errorMessage(err))
+          (err) => setError(catalogErrorMessage(err))
         )
     );
   };

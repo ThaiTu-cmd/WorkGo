@@ -20,8 +20,11 @@ export const availabilityApi = {
 
   deleteRule: (ruleId: string) => http.delete<ApiResponse<unknown>>(`/catalog/rules/${ruleId}`),
 
-  getSlots: (serviceId: string, page = 0, size = 50) =>
-    http.get<Paged<BookingSlotDto>>(`/catalog/slots/services/${serviceId}`, { params: { page, size } }),
+  // Soonest first. The backend defaults the window to [now, now + 28 days].
+  getSlots: (serviceId: string, { from, to, page = 0, size = 50 }: { from?: string; to?: string; page?: number; size?: number } = {}) =>
+    http.get<Paged<BookingSlotDto>>(`/catalog/slots/services/${serviceId}`, {
+      params: { page, size, ...(from && { from }), ...(to && { to }) },
+    }),
 };
 
 // Rules store a time-of-day as an Instant on 1970-01-01, written in the

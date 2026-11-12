@@ -92,6 +92,8 @@ export default function RuleForm({
         <span>{tr("m198")}</span>
       </label>
 
+      <p className={styles.formHint}>{tr("m1767")}</p>
+
       {error && <p className={styles.formError}>{error}</p>}
 
       <div className={styles.panelActions}>

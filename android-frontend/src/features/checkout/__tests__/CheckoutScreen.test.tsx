@@ -85,6 +85,7 @@ test('ONSITE without slots shows the reason and never calls createOrder', async 
   expect(await screen.findByText('Dịch vụ chưa có lịch trống. Vui lòng quay lại sau.')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Đặt dịch vụ' })).toBeDisabled();
   expect(orderApi.createOrder).not.toHaveBeenCalled();
+  expect(availabilityApi.getSlots).toHaveBeenCalledWith('s1', { size: 100 });
 });
 
 test('server error is shown and the user stays on checkout', async () => {

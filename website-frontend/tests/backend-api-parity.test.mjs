@@ -286,3 +286,19 @@ test("API Parity: setServiceStatus uses PATCH /status once", async () => {
   }
   assert.deepEqual(calls, [["PATCH", "/catalog/services/s1/status", { status: "PAUSED" }]]);
 });
+
+test("API Parity: getSlots sends from/to only when given", async () => {
+  const calls = [];
+  const original = axiosClient.get;
+  axiosClient.get = async (url, config) => calls.push([url, config?.params]);
+  try {
+    await availabilityApi.getSlots("s1", 0, 100, { from: "A", to: "B" });
+    await availabilityApi.getSlots("s1");
+  } finally {
+    axiosClient.get = original;
+  }
+  assert.deepEqual(calls, [
+    ["/catalog/slots/services/s1", { page: 0, size: 100, from: "A", to: "B" }],
+    ["/catalog/slots/services/s1", { page: 0, size: 50 }],
+  ]);
+});

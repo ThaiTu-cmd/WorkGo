@@ -18,8 +18,11 @@ export const availabilityApi = {
 
   deleteRule: (ruleId) => axiosClient.delete(`/catalog/rules/${ruleId}`),
 
-  getSlots: (serviceId, page = 0, size = 50) =>
-    axiosClient.get(`/catalog/slots/services/${serviceId}`, { params: { page, size } }),
+  // Soonest first. The backend defaults the window to [now, now + 28 days].
+  getSlots: (serviceId, page = 0, size = 50, { from, to } = {}) =>
+    axiosClient.get(`/catalog/slots/services/${serviceId}`, {
+      params: { page, size, ...(from && { from }), ...(to && { to }) },
+    }),
 
   holdSlot: (slotId, orderId) =>
     axiosClient.post(`/catalog/slots/${slotId}/hold`, { orderId }),

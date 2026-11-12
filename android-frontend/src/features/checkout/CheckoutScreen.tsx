@@ -43,7 +43,7 @@ export function CheckoutScreen() {
   const slots = useQuery({
     queryKey: qk.slots(params.serviceId),
     enabled: signedIn && onsite,
-    queryFn: async () => upcomingAvailableSlots(pageItems<BookingSlotDto>(await availabilityApi.getSlots(params.serviceId)), Date.now()),
+    queryFn: async () => upcomingAvailableSlots(pageItems<BookingSlotDto>(await availabilityApi.getSlots(params.serviceId, { size: 100 })), Date.now()),
   });
   const addresses = useQuery({
     queryKey: qk.addresses(),

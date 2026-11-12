@@ -142,6 +142,7 @@ export function AvailabilityScreen() {
             </View>
           </View>
           <TextField label="Mỗi lượt (phút)" keyboardType="number-pad" value={draft.duration} onChangeText={(duration) => setDraft({ ...draft, duration })} />
+          <Text style={styles.muted}>Lưu khung giờ sẽ tự tạo lại các lượt trống trong 4 tuần tới. Lượt đã có người đặt được giữ nguyên.</Text>
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <View style={styles.row}>
             <Button title="Huỷ" variant="secondary" style={styles.flex} onPress={() => setDraft(null)} />

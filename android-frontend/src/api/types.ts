@@ -88,6 +88,7 @@ export type BookingSlotDto = {
   startedAt: string;
   endAt: string;
   status: 'AVAILABLE' | 'HELD' | 'BOOKED' | 'BLOCKED';
+  availableRuleId?: string | null;
 };
 
 // ---- identity-service ----

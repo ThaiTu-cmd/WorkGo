@@ -5,9 +5,11 @@ import com.workgo.catalog.dto.request.AddOnUpdateRequest;
 import com.workgo.catalog.dto.response.AddOnResponse;
 import com.workgo.catalog.entity.AddOn;
 import org.mapstruct.Builder;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 @Mapper(componentModel = "spring", builder = @Builder(disableBuilder = true))
 public interface AddOnMapper {
@@ -15,6 +17,7 @@ public interface AddOnMapper {
     @Mapping(target = "service", source = "service.serviceId")
     AddOnResponse toAddOnResponse(AddOn addOn);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateAddOn(@MappingTarget AddOn addOn, AddOnUpdateRequest request);
 
 }

@@ -2,6 +2,7 @@ package com.workgo.catalog.service;
 
 import com.workgo.catalog.dto.PageResponse;
 import com.workgo.catalog.dto.request.ServiceCreationRequest;
+import com.workgo.catalog.dto.request.ServiceStatusUpdateRequest;
 import com.workgo.catalog.dto.request.ServiceUpdateRequest;
 import com.workgo.catalog.dto.response.ServiceCreationResponse;
 import com.workgo.catalog.dto.response.ServiceResponse;
@@ -15,6 +16,7 @@ import com.workgo.catalog.mapper.ServiceMapper;
 import com.workgo.catalog.repository.CategoryRepository;
 import com.workgo.catalog.repository.ServiceRepository;
 import com.workgo.catalog.utils.TokenUtils;
+import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -22,11 +24,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @org.springframework.stereotype.Service
@@ -104,10 +109,7 @@ public class ServiceService {
         Service service = serviceRepository.findById(serviceId)
                 .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_EXISTED));
 
-//        UUID currentProviderId = getCurrentProviderId();
-//        if (!service.getProviderId().equals(currentProviderId)) {
-//            throw new AppException(ErrorCode.UNAUTHORIZED);
-//        }
+        tokenUtils.assertServiceOwner(service);
 
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())
@@ -116,6 +118,11 @@ public class ServiceService {
         }
 
         serviceMapper.updateService(service, request);
+
+        if (service.getStatus() == ServiceStatus.PUBLISHED && service.getPublishedAt() == null) {
+            service.setPublishedAt(Instant.now());
+        }
+
         service.setUpdatedAt(Instant.now());
 
         Service savedService = serviceRepository.save(service);
@@ -128,10 +135,7 @@ public class ServiceService {
         Service service = serviceRepository.findById(serviceId)
                 .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_EXISTED));
 
-//        UUID currentProviderId = getCurrentProviderId();
-//        if (!service.getProviderId().equals(currentProviderId)) {
-//            throw new AppException(ErrorCode.UNAUTHORIZED);
-//        }
+        tokenUtils.assertServiceOwner(service);
 
         int mark = Instant.now().getNano() * 1000;
         service.setIsDeleted(mark);
@@ -139,7 +143,32 @@ public class ServiceService {
         serviceRepository.save(service);
     }
 
-    public PageResponse<ServiceResponse> getServices(UUID categoryId,
+    public ServiceResponse updateServiceStatus(UUID serviceId, ServiceStatusUpdateRequest request) {
+
+        if (request.getStatus() == null) {
+            throw new AppException(ErrorCode.INVALID_SERVICE_STATUS);
+        }
+
+        Service service = serviceRepository.findById(serviceId)
+                .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_EXISTED));
+
+        tokenUtils.assertServiceOwner(service);
+
+        service.setStatus(request.getStatus());
+
+        if (request.getStatus() == ServiceStatus.PUBLISHED && service.getPublishedAt() == null) {
+            service.setPublishedAt(Instant.now());
+        }
+
+        service.setUpdatedAt(Instant.now());
+
+        Service savedService = serviceRepository.save(service);
+
+        return serviceMapper.toServiceResponse(savedService);
+    }
+
+    public PageResponse<ServiceResponse> getServices(String keyword,
+                                                     UUID categoryId,
                                                      ExecutionType executionType,
                                                      BigDecimal minPrice,
                                                      BigDecimal maxPrice,
@@ -148,15 +177,10 @@ public class ServiceService {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-        Page<Service> pageData = serviceRepository
-                .findAllByStatusAndCategory_CategoryIdAndExecutionTypeAndBasePriceBetween(
-                        ServiceStatus.PUBLISHED,
-                        categoryId,
-                        executionType,
-                        minPrice,
-                        maxPrice,
-                        pageable
-                );
+        Page<Service> pageData = serviceRepository.findAll(
+                buildServiceFilter(keyword, categoryId, executionType, minPrice, maxPrice),
+                pageable
+        );
 
         return PageResponse.<ServiceResponse>builder()
                 .currentPage(page)
@@ -167,5 +191,45 @@ public class ServiceService {
                         .map(serviceMapper::toServiceResponse)
                         .toList())
                 .build();
+    }
+
+    private Specification<Service> buildServiceFilter(String keyword,
+                                                      UUID categoryId,
+                                                      ExecutionType executionType,
+                                                      BigDecimal minPrice,
+                                                      BigDecimal maxPrice) {
+
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            predicates.add(cb.equal(root.get("status"), ServiceStatus.PUBLISHED));
+
+            if (keyword != null && !keyword.isBlank()) {
+                String pattern = "%" + keyword.trim().toLowerCase() + "%";
+
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("title")), pattern),
+                        cb.like(cb.lower(root.get("description")), pattern)
+                ));
+            }
+
+            if (categoryId != null) {
+                predicates.add(cb.equal(root.get("category").get("categoryId"), categoryId));
+            }
+
+            if (executionType != null) {
+                predicates.add(cb.equal(root.get("executionType"), executionType));
+            }
+
+            if (minPrice != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("basePrice"), minPrice));
+            }
+
+            if (maxPrice != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("basePrice"), maxPrice));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
     }
 }

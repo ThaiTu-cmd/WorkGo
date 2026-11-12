@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @RestController
@@ -24,6 +25,8 @@ public class BookingSlotController {
     @GetMapping("/services/{serviceId}")
     ApiResponse<PageResponse<BookingSlotResponse>> getAllSlotByService(
             @PathVariable UUID serviceId,
+            @RequestParam(value = "from", required = false) Instant from,
+            @RequestParam(value = "to", required = false) Instant to,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size
             ){
@@ -31,7 +34,7 @@ public class BookingSlotController {
         return ApiResponse.<PageResponse<BookingSlotResponse>>builder()
                 .code(ErrorCode.SUCCESS.getCode())
                 .message(ErrorCode.SUCCESS.getMessage())
-                .result(bookingSlotService.getAllSlot(serviceId, page, size))
+                .result(bookingSlotService.getAllSlot(serviceId, from, to, page, size))
                 .build();
 
     }

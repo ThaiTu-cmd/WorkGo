@@ -3,6 +3,7 @@ package com.workgo.catalog.controller;
 import com.workgo.catalog.dto.ApiResponse;
 import com.workgo.catalog.dto.PageResponse;
 import com.workgo.catalog.dto.request.ServiceCreationRequest;
+import com.workgo.catalog.dto.request.ServiceStatusUpdateRequest;
 import com.workgo.catalog.dto.request.ServiceUpdateRequest;
 import com.workgo.catalog.dto.response.ServiceCreationResponse;
 import com.workgo.catalog.dto.response.ServiceResponse;
@@ -64,6 +65,7 @@ public class ServiceController {
 
     @GetMapping
     ApiResponse<PageResponse<ServiceResponse>> getServices(
+            @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "categoryId", required = false) UUID categoryId,
             @RequestParam(value = "executionType", required = false) ExecutionType executionType,
             @RequestParam(value = "minPrice", required = false)BigDecimal minPrice,
@@ -74,7 +76,7 @@ public class ServiceController {
         return ApiResponse.<PageResponse<ServiceResponse>>builder()
                 .code(ErrorCode.SUCCESS.getCode())
                 .message(ErrorCode.SUCCESS.getMessage())
-                .result(serviceService.getServices(categoryId, executionType, minPrice, maxPrice, page, size))
+                .result(serviceService.getServices(keyword, categoryId, executionType, minPrice, maxPrice, page, size))
                 .build();
     }
 
@@ -89,6 +91,20 @@ public class ServiceController {
                 .code(ErrorCode.SUCCESS.getCode())
                 .message(ErrorCode.SUCCESS.getMessage())
                 .result(serviceService.updateService(serviceId, request))
+                .build();
+    }
+
+
+    @PatchMapping("/{serviceId}/status")
+    @PreAuthorize("hasAnyRole('PROVIDER', 'ADMIN')")
+    ApiResponse<ServiceResponse> updateServiceStatus(
+            @PathVariable UUID serviceId,
+            @RequestBody ServiceStatusUpdateRequest request
+    ) {
+        return ApiResponse.<ServiceResponse>builder()
+                .code(ErrorCode.SUCCESS.getCode())
+                .message(ErrorCode.SUCCESS.getMessage())
+                .result(serviceService.updateServiceStatus(serviceId, request))
                 .build();
     }
 

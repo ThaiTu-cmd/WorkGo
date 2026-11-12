@@ -41,6 +41,8 @@ public class PackageService {
         Service service = serviceRepository.findById(serviceId)
                 .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_EXISTED));
 
+        tokenUtils.assertServiceOwner(service);
+
         if (packageRepository.existsByService_ServiceIdAndName(serviceId, request.getName()))
             throw new AppException(ErrorCode.PACKAGE_EXISTED);
 
@@ -88,6 +90,8 @@ public class PackageService {
         Package pkg = packageRepository.findById(packageId)
                 .orElseThrow(() -> new AppException(ErrorCode.PACKAGE_NOT_EXISTED));
 
+        tokenUtils.assertServiceOwner(pkg.getService());
+
         packageMapper.updatePackage(pkg, request);
         pkg.setUpdatedAt(Instant.now());
 
@@ -98,6 +102,8 @@ public class PackageService {
     public void deletePackage(UUID packageId) {
         Package pkg = packageRepository.findById(packageId)
                 .orElseThrow(() -> new AppException(ErrorCode.PACKAGE_NOT_EXISTED));
+
+        tokenUtils.assertServiceOwner(pkg.getService());
 
         pkg.setIsDeleted(tokenUtils.createDeletedMark());
         packageRepository.save(pkg);

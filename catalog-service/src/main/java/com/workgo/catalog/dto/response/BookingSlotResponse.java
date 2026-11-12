@@ -38,4 +38,6 @@ public class BookingSlotResponse {
 
     UUID order;
 
+    UUID availableRuleId;
+
 }

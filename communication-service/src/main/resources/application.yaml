@@ -1,0 +1,12 @@
+server:
+  port: ${COMMUNICATION_PORT:8086}
+  servlet:
+    context-path: /communication
+
+spring:
+  application:
+    name: communication-service
+  data:
+    mongodb:
+      uri: ${COMMUNICATION_MONGODB_URI:mongodb://localhost:${COMMUNICATION_DB_PORT:27017}/${COMMUNICATION_DB:communication_db}}
+      auto-index-creation: ${COMMUNICATION_AUTO_INDEX_CREATION:false}

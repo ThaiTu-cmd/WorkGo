@@ -1,15 +1,16 @@
 import { z } from 'zod';
+import { translate } from '@/i18n';
 
-export const PHONE_MESSAGE = 'Số điện thoại gồm 10 số, bắt đầu bằng 0';
+export const phoneMessage = () => translate('addressSchema.so_dien_thoai_gom_10');
 
 export const addressSchema = z.object({
   label: z.string(),
-  receiver: z.string().trim().min(1, 'Vui lòng nhập người nhận'),
-  phone: z.string().trim().regex(/^0\d{9}$/, PHONE_MESSAGE),
-  line1: z.string().trim().min(1, 'Vui lòng nhập số nhà, đường'),
+  receiver: z.string().trim().min(1, { error: () => translate('addressSchema.vui_long_nhap_nguoi_nhan') }),
+  phone: z.string().trim().regex(/^0\d{9}$/, { error: phoneMessage }),
+  line1: z.string().trim().min(1, { error: () => translate('addressSchema.vui_long_nhap_so_nha') }),
   ward: z.string(),
   district: z.string(),
-  city: z.string().trim().min(1, 'Vui lòng nhập tỉnh/thành phố'),
+  city: z.string().trim().min(1, { error: () => translate('addressSchema.vui_long_nhap_tinh_thanh') }),
   note: z.string(),
 });
 

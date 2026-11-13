@@ -1,12 +1,17 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import type { ServiceCard } from '@/api/adapters';
 import { formatVnd } from '@/lib/format';
-import { Avatar, Badge, Card, colors, font, spacing } from '@/ui';
+import { Avatar, Badge, Card, font, makeStyles, spacing } from '@/ui';
+import { translate, useT } from '@/i18n';
 
-export const EXECUTION_LABEL = { DIGITAL: 'Online', ONSITE: 'Tại nhà' } as const;
+export const EXECUTION_LABEL = { DIGITAL: 'Online', get ONSITE() {
+    return translate('serviceCardView.tai_nha');
+  } } as const;
 
 export function ServiceCardView({ service, onPress }: { service: ServiceCard; onPress: () => void }) {
+  const t = useT();
+  const styles = useStyles();
   return (
     <Card onPress={onPress} accessibilityLabel={service.title}>
       <View style={styles.row}>
@@ -22,14 +27,14 @@ export function ServiceCardView({ service, onPress }: { service: ServiceCard; on
           {service.provider.name}
         </Text>
       </View>
-      <Text style={styles.price}>Từ {formatVnd(service.basePrice)}</Text>
+      <Text style={styles.price}>{t('serviceCardView.tu', { p0: formatVnd(service.basePrice) })}</Text>
     </Card>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   title: { fontSize: font.title - 2, fontWeight: '700', color: colors.text },
   muted: { fontSize: font.small, color: colors.muted, flexShrink: 1 },
   price: { fontSize: font.body, fontWeight: '700', color: colors.primaryDark },
-});
+}));

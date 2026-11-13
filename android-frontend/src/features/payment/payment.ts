@@ -1,4 +1,5 @@
 import type { EscrowStatus, OrderDto, PaymentDto, PaymentGateway, PaymentMethod } from '@/api/types';
+import { translate } from '@/i18n';
 
 // Mirrors order-service `order.payment-timeout-minutes`: an unpaid order is
 // cancelled (and its booking slot released) this long after it was placed.
@@ -20,14 +21,44 @@ export type PaymentOption = {
 const MOCK_OPTION: PaymentOption = {
   id: 'mock',
   gateway: 'MOCK',
-  name: 'Thanh toán thử nghiệm',
-  description: 'Môi trường dev: giả lập kết quả, không trừ tiền thật',
+  get name() {
+    return translate('payment.thanh_toan_thu_nghiem');
+  },
+  get description() {
+    return translate('payment.moi_truong_dev_gia_lap');
+  },
 };
 
 const REAL_OPTIONS: PaymentOption[] = [
-  { id: 'vnpay-qr', gateway: 'VNPAY', paymentMethod: 'QR', name: 'VNPay QR', description: 'Quét mã QR bằng ứng dụng ngân hàng' },
-  { id: 'vnpay-card', gateway: 'VNPAY', paymentMethod: 'INTL_CARD', name: 'Thẻ quốc tế', description: 'Visa, Mastercard, JCB qua VNPay' },
-  { id: 'momo', gateway: 'MOMO', paymentMethod: 'WALLET', name: 'Ví MoMo', description: 'Thanh toán bằng ví MoMo' },
+  {
+    id: 'vnpay-qr',
+    gateway: 'VNPAY',
+    paymentMethod: 'QR',
+    name: 'VNPay QR',
+    get description() {
+      return translate('payment.quet_ma_qr_bang_ung');
+    },
+  },
+  {
+    id: 'vnpay-card',
+    gateway: 'VNPAY',
+    paymentMethod: 'INTL_CARD',
+    get name() {
+      return translate('payment.the_quoc_te');
+    },
+    description: 'Visa, Mastercard, JCB qua VNPay',
+  },
+  {
+    id: 'momo',
+    gateway: 'MOMO',
+    paymentMethod: 'WALLET',
+    get name() {
+      return translate('payment.vi_momo');
+    },
+    get description() {
+      return translate('payment.thanh_toan_bang_vi_momo');
+    },
+  },
 ];
 
 // The MOCK gateway only exists while payment-service runs with the "dev"
@@ -61,8 +92,7 @@ export function paymentDeadline(order: Pick<OrderDto, 'placedAt' | 'createdAt'>)
   return Number.isNaN(t) ? null : new Date(t + ORDER_PAYMENT_TIMEOUT_MINUTES * 60_000);
 }
 
-export const isPaymentWaiting = (p: PaymentDto | null | undefined): boolean =>
-  p?.status === 'INITIATED' || p?.status === 'PENDING';
+export const isPaymentWaiting = (p: PaymentDto | null | undefined): boolean => p?.status === 'INITIATED' || p?.status === 'PENDING';
 
 // The newest payment still waiting for a result, so reopening the screen
 // continues it instead of starting another one.
@@ -80,10 +110,22 @@ export function pollInterval(payment: PaymentDto | null | undefined, polls: numb
 }
 
 export const ESCROW_STATUS_LABEL: Record<EscrowStatus, string> = {
-  PENDING: 'Đang chờ',
-  HOLDING: 'Đang giữ tiền',
-  RELEASED: 'Đã giải ngân',
-  REFUNDED: 'Đã hoàn tiền',
-  PARTIALLY_REFUNDED: 'Hoàn tiền một phần',
-  FROZEN: 'Tạm khóa',
+  get PENDING() {
+    return translate('payment.dang_cho');
+  },
+  get HOLDING() {
+    return translate('payment.dang_giu_tien');
+  },
+  get RELEASED() {
+    return translate('payment.da_giai_ngan');
+  },
+  get REFUNDED() {
+    return translate('payment.da_hoan_tien');
+  },
+  get PARTIALLY_REFUNDED() {
+    return translate('payment.hoan_tien_mot_phan');
+  },
+  get FROZEN() {
+    return translate('payment.tam_khoa');
+  },
 };

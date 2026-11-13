@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, View } from 'react-native';
 
 import { joinFullName } from '@/api/adapters';
 import { errorMessage } from '@/api/errors';
@@ -9,7 +9,7 @@ import { useMe } from '@/features/account/hooks';
 import { buildHomeRails } from '@/features/catalog/homeRails';
 import { useCategories, useServices } from '@/features/catalog/hooks';
 import { useActiveOrder } from '@/features/orders/hooks';
-import { colors, ErrorState, Skeleton, spacing } from '@/ui';
+import { ErrorState, makeStyles, Skeleton, spacing } from '@/ui';
 
 import { ActiveOrderCard } from './ActiveOrderCard';
 import { CategoryGrid } from './CategoryGrid';
@@ -18,6 +18,7 @@ import { ProviderShortcuts } from './ProviderShortcuts';
 import { ServiceRail } from './ServiceRail';
 
 export function HomeScreen() {
+  const styles = useStyles();
   const { status, claims } = useAuth();
   const signedIn = status === 'signedIn';
   const services = useServices();
@@ -70,8 +71,8 @@ export function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   page: { flex: 1, backgroundColor: colors.bg },
   content: { gap: spacing.xl, paddingBottom: spacing.xl },
   section: { paddingHorizontal: spacing.lg },
-});
+}));

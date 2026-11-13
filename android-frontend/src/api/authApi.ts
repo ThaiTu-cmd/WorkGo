@@ -1,5 +1,6 @@
 import { http } from './client';
 import type { ApiResponse } from './types';
+import { translate } from '@/i18n';
 
 export type UserDto = {
   userId: string;
@@ -24,7 +25,7 @@ type TokenResult = ApiResponse<{ token?: string; authenticated?: boolean }>;
 
 function tokenOf(res: TokenResult | null): string {
   const token = res?.result?.token;
-  if (!token) throw new Error('Không nhận được token từ máy chủ.');
+  if (!token) throw new Error(translate('authApi.khong_nhan_duoc_token_tu'));
   return token;
 }
 

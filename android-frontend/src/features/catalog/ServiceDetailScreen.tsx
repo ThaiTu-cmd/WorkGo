@@ -1,21 +1,24 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, ScrollView, Text, View } from 'react-native';
 
 import { errorMessage } from '@/api/errors';
 import { useAuth } from '@/auth/AuthProvider';
 import { buildRedirect } from '@/auth/useRequireAuth';
 import { formatVnd } from '@/lib/format';
-import { Avatar, Badge, Button, Card, colors, ErrorState, font, Screen, SkeletonList, spacing } from '@/ui';
+import { Avatar, Badge, Button, Card, ErrorState, font, makeStyles, Screen, SkeletonList, spacing } from '@/ui';
 
 import { useServiceDetail } from './hooks';
 import { PackagePicker } from './PackagePicker';
 import { EXECUTION_LABEL } from './ServiceCardView';
+import { useT } from '@/i18n';
 
 const WIDTH = Dimensions.get('window').width;
 
 export function ServiceDetailScreen() {
+  const t = useT();
+  const styles = useStyles();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { status } = useAuth();
@@ -65,11 +68,9 @@ export function ServiceDetailScreen() {
           <Text style={styles.muted}>{service.categoryName}</Text>
         </View>
         <Text style={styles.title}>{service.title}</Text>
-        <Text style={styles.price}>Từ {formatVnd(service.basePrice)}</Text>
+        <Text style={styles.price}>{t('serviceDetailScreen.tu', { p0: formatVnd(service.basePrice) })}</Text>
         {service.avgRating !== null ? (
-          <Text style={styles.muted}>
-            ★ {service.avgRating.toFixed(1)} ({service.reviewCount} đánh giá) · {service.orderCount} đơn
-          </Text>
+          <Text style={styles.muted}>{t('serviceDetailScreen.danh_gia_don', { p0: service.avgRating.toFixed(1), p1: service.reviewCount, p2: service.orderCount })}</Text>
         ) : null}
 
         <Card>
@@ -77,7 +78,7 @@ export function ServiceDetailScreen() {
             <Avatar name={service.provider.name} />
             <View style={styles.flex}>
               <Text style={styles.providerName}>{service.provider.name}</Text>
-              {service.provider.isVerified ? <Text style={styles.verified}>Đã xác minh</Text> : null}
+              {service.provider.isVerified ? <Text style={styles.verified}>{t('serviceDetailScreen.da_xac_minh')}</Text> : null}
             </View>
           </View>
           {service.provider.bio ? <Text style={styles.text}>{service.provider.bio}</Text> : null}
@@ -85,21 +86,21 @@ export function ServiceDetailScreen() {
 
         {service.description ? (
           <>
-            <Text style={styles.section}>Mô tả</Text>
+            <Text style={styles.section}>{t('serviceDetailScreen.mo_ta')}</Text>
             <Text style={styles.text}>{service.description}</Text>
           </>
         ) : null}
 
-        <Text style={styles.section}>Gói dịch vụ</Text>
+        <Text style={styles.section}>{t('serviceDetailScreen.goi_dich_vu')}</Text>
         {service.packages.length ? (
           <PackagePicker packages={service.packages} selectedId={selected} onSelect={setPackageId} />
         ) : (
-          <Text style={styles.muted}>Dịch vụ chưa có gói để đặt.</Text>
+          <Text style={styles.muted}>{t('serviceDetailScreen.dich_vu_chua_co_goi')}</Text>
         )}
 
         {service.addons.length ? (
           <>
-            <Text style={styles.section}>Tuỳ chọn thêm</Text>
+            <Text style={styles.section}>{t('serviceDetailScreen.tuy_chon_them')}</Text>
             {service.addons.map((a) => (
               <View key={a.id} style={styles.addon}>
                 <Text style={styles.text}>{a.name}</Text>
@@ -109,13 +110,13 @@ export function ServiceDetailScreen() {
           </>
         ) : null}
 
-        <Button title="Đặt dịch vụ" onPress={order} disabled={!service.packages.length} />
+        <Button title={t('serviceDetailScreen.dat_dich_vu')} onPress={order} disabled={!service.packages.length} />
       </View>
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   content: { padding: 0, gap: 0 },
   image: { width: WIDTH, height: WIDTH * 0.6, backgroundColor: colors.border },
   body: { padding: spacing.lg, gap: spacing.md },
@@ -129,4 +130,4 @@ const styles = StyleSheet.create({
   providerName: { fontSize: font.body, fontWeight: '700', color: colors.text },
   verified: { fontSize: font.small, color: colors.primaryDark },
   addon: { flexDirection: 'row', justifyContent: 'space-between' },
-});
+}));

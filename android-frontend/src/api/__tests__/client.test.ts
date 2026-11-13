@@ -1,5 +1,5 @@
 import { configureClient, http } from '../client';
-import { ApiError, UNREACHABLE_MESSAGE } from '../errors';
+import { ApiError, unreachableMessage } from '../errors';
 
 const fetchMock = jest.fn();
 global.fetch = fetchMock as unknown as typeof fetch;
@@ -91,14 +91,14 @@ test('network failure → ApiError status 0 with UNREACHABLE_MESSAGE', async () 
   fetchMock.mockRejectedValueOnce(new TypeError('Network request failed'));
   const err = await caught(http.get('/x'));
   expect(err.status).toBe(0);
-  expect(err.message).toBe(UNREACHABLE_MESSAGE);
+  expect(err.message).toBe(unreachableMessage());
 });
 
 test('502 without JSON body → UNREACHABLE_MESSAGE', async () => {
   respond(502, undefined);
   const err = await caught(http.get('/x'));
   expect(err.status).toBe(502);
-  expect(err.message).toBe(UNREACHABLE_MESSAGE);
+  expect(err.message).toBe(unreachableMessage());
 });
 
 test('400 with body { code: 2022, message } → ApiError code 2022', async () => {

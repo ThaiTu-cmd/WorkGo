@@ -1,4 +1,4 @@
-import { Appearance, ColorSchemeName, useColorScheme } from 'react-native';
+import { Appearance, ColorSchemeName, StyleSheet, useColorScheme } from 'react-native';
 
 export type ThemeColors = {
   primary: string;
@@ -69,4 +69,15 @@ export function getColors(scheme: ColorSchemeName | null | undefined): ThemeColo
 export function useColors(): ThemeColors {
   const scheme = useColorScheme();
   return getColors(scheme);
+}
+
+// Builds a style hook from a factory of the theme colours. The sheet is made
+// once per scheme and the hook re-renders its component when Android switches
+// between light and dark, so screens recolour without restarting the app.
+export function makeStyles<T extends StyleSheet.NamedStyles<T>>(factory: (colors: ThemeColors) => T) {
+  const sheets: { light?: T; dark?: T } = {};
+  return function useStyles(): T {
+    const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+    return (sheets[scheme] ??= StyleSheet.create(factory(getColors(scheme))));
+  };
 }

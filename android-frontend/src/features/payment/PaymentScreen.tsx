@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import * as React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { errorMessage, paymentErrorMessage } from '@/api/errors';
 import { orderApi } from '@/api/orderApi';
@@ -13,7 +13,7 @@ import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { formatDateTime, formatVnd } from '@/lib/format';
 import { useSingleFlight } from '@/lib/useSingleFlight';
-import { Button, Card, colors, ErrorState, font, Screen, SkeletonList, spacing } from '@/ui';
+import { Button, Card, ErrorState, font, makeStyles, Screen, SkeletonList, spacing, useColors } from '@/ui';
 
 import {
   findPaymentOption,
@@ -26,6 +26,7 @@ import {
   newIdempotencyKey,
 } from './payment';
 import { PaymentOptionPicker } from './PaymentOptionPicker';
+import { useT } from '@/i18n';
 
 const money = (v: unknown) => formatVnd(Number(v ?? 0));
 
@@ -33,6 +34,9 @@ const money = (v: unknown) => formatVnd(Number(v ?? 0));
 // Checkout lands here with start=1 so the chosen gateway opens right away;
 // the order screen links here without it so the user picks first.
 export function PaymentScreen() {
+  const t = useT();
+  const styles = useStyles();
+  const colors = useColors();
   const signedIn = useRequireAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -153,12 +157,10 @@ export function PaymentScreen() {
     return (
       <Screen edges={['bottom']}>
         <Card>
-          <Text style={[styles.title, { color: colors.success }]}>Thanh toán thành công</Text>
-          <Text style={styles.text}>
-            Đã thanh toán {money(current.amount ?? o.totalAmount)}. Tiền được giữ an toàn trong ký quỹ cho tới khi bạn nghiệm thu.
-          </Text>
+          <Text style={[styles.title, { color: colors.success }]}>{t('paymentScreen.thanh_toan_thanh_cong')}</Text>
+          <Text style={styles.text}>{t('paymentScreen.da_thanh_toan_tien_duoc', { p0: money(current.amount ?? o.totalAmount) })}</Text>
         </Card>
-        <Button title="Xem đơn hàng" onPress={goToOrder} />
+        <Button title={t('paymentScreen.xem_don_hang')} onPress={goToOrder} />
       </Screen>
     );
   }
@@ -167,9 +169,9 @@ export function PaymentScreen() {
     return (
       <Screen edges={['bottom']}>
         <Card>
-          <Text style={styles.text}>Đơn này không còn ở trạng thái chờ thanh toán.</Text>
+          <Text style={styles.text}>{t('paymentScreen.don_nay_khong_con_o')}</Text>
         </Card>
-        <Button title="Xem đơn hàng" onPress={goToOrder} />
+        <Button title={t('paymentScreen.xem_don_hang')} onPress={goToOrder} />
       </Screen>
     );
   }
@@ -186,57 +188,57 @@ export function PaymentScreen() {
   return (
     <Screen edges={['bottom']} onRefresh={() => void payment.refetch()} refreshing={payment.isRefetching}>
       <Card>
-        <Line label="Mã đơn" value={o.orderNumber ?? o.orderId} />
+        <Line label={t('paymentScreen.ma_don')} value={o.orderNumber ?? o.orderId} />
         <Text style={styles.text}>{o.title}</Text>
         <View style={styles.row}>
-          <Text style={styles.muted}>Số tiền thanh toán</Text>
+          <Text style={styles.muted}>{t('paymentScreen.so_tien_thanh_toan')}</Text>
           <Text testID="payment-amount" style={styles.amount}>
             {amount}
           </Text>
         </View>
-        {deadline ? <Text style={styles.muted}>Hạn thanh toán: {formatDateTime(deadline.toISOString())}. Đơn sẽ tự hủy nếu chưa thanh toán trước thời điểm này.</Text> : null}
+        {deadline ? <Text style={styles.muted}>{t('paymentScreen.han_thanh_toan_don_se', { p0: formatDateTime(deadline.toISOString()) })}</Text> : null}
       </Card>
 
       {waitingPayment?.gateway === 'MOCK' ? (
         <Card>
-          <Text style={styles.section}>Cổng thanh toán thử nghiệm</Text>
-          <Text style={styles.muted}>Chọn kết quả để giả lập phản hồi từ cổng thanh toán. Không có tiền thật bị trừ.</Text>
-          <Button title="Giả lập thành công" loading={simulate.isPending} onPress={() => void once(() => simulate.mutateAsync(true).catch(() => undefined))} />
-          <Button title="Giả lập thất bại" variant="danger" disabled={simulate.isPending} onPress={() => void once(() => simulate.mutateAsync(false).catch(() => undefined))} />
+          <Text style={styles.section}>{t('paymentScreen.cong_thanh_toan_thu_nghiem')}</Text>
+          <Text style={styles.muted}>{t('paymentScreen.chon_ket_qua_de_gia')}</Text>
+          <Button title={t('paymentScreen.gia_lap_thanh_cong')} loading={simulate.isPending} onPress={() => void once(() => simulate.mutateAsync(true).catch(() => undefined))} />
+          <Button title={t('paymentScreen.gia_lap_that_bai')} variant="danger" disabled={simulate.isPending} onPress={() => void once(() => simulate.mutateAsync(false).catch(() => undefined))} />
         </Card>
       ) : null}
 
       {waitingPayment && waitingPayment.gateway !== 'MOCK' ? (
         <Card>
-          <Text style={styles.section}>Đang chờ xác nhận thanh toán…</Text>
+          <Text style={styles.section}>{t('paymentScreen.dang_cho_xac_nhan_thanh')}</Text>
           <Text style={styles.muted}>
             {pollsExhausted
-              ? 'Cổng thanh toán chưa xác nhận sau một lúc. Hãy kiểm tra lại sau trong mục Đơn hàng.'
-              : 'Hệ thống đang chờ cổng thanh toán xác nhận. Màn hình sẽ tự cập nhật.'}
+              ? t('paymentScreen.cong_thanh_toan_chua_xac')
+              : t('paymentScreen.he_thong_dang_cho_cong')}
           </Text>
           {waitingPayment.paymentUrl ? (
-            <Button title="Mở lại trang thanh toán" onPress={() => void once(() => openGateway(waitingPayment))} />
+            <Button title={t('paymentScreen.mo_lai_trang_thanh_toan')} onPress={() => void once(() => openGateway(waitingPayment))} />
           ) : null}
-          <Button title="Kiểm tra lại" variant="secondary" loading={payment.isRefetching} onPress={() => void payment.refetch()} />
+          <Button title={t('paymentScreen.kiem_tra_lai')} variant="secondary" loading={payment.isRefetching} onPress={() => void payment.refetch()} />
         </Card>
       ) : null}
 
-      {waiting ? <Button title="Đổi cách thanh toán" variant="secondary" onPress={() => setChoosing(true)} /> : null}
+      {waiting ? <Button title={t('paymentScreen.doi_cach_thanh_toan')} variant="secondary" onPress={() => setChoosing(true)} /> : null}
 
       {failedPayment ? (
         <Card>
-          <Text style={[styles.section, { color: colors.danger }]}>Thanh toán không thành công</Text>
+          <Text style={[styles.section, { color: colors.danger }]}>{t('paymentScreen.thanh_toan_khong_thanh_cong')}</Text>
           <Text style={styles.muted}>
             {failedPayment.status === 'FAILED'
-              ? (failedPayment.failureMessage ?? 'Giao dịch không thành công. Bạn có thể thử lại hoặc chọn cổng khác.')
-              : 'Giao dịch đã hết hạn hoặc bị hủy.'}
+              ? (failedPayment.failureMessage ?? t('paymentScreen.giao_dich_khong_thanh_cong'))
+              : t('paymentScreen.giao_dich_da_het_han')}
           </Text>
         </Card>
       ) : null}
 
       {!waiting ? (
         <>
-          <Text style={styles.section}>Phương thức thanh toán</Text>
+          <Text style={styles.section}>{t('paymentScreen.phuong_thuc_thanh_toan')}</Text>
           <PaymentOptionPicker value={optionId} onChange={setOptionId} />
         </>
       ) : null}
@@ -244,13 +246,14 @@ export function PaymentScreen() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       {!waiting ? (
-        <Button title={failed ? 'Thử thanh toán lại' : `Thanh toán ${amount}`} loading={pay.isPending} onPress={startPay} />
+        <Button title={failed ? t('paymentScreen.thu_thanh_toan_lai') : t('paymentScreen.thanh_toan', { p0: amount })} loading={pay.isPending} onPress={startPay} />
       ) : null}
     </Screen>
   );
 }
 
 function Line({ label, value }: { label: string; value: string }) {
+  const styles = useStyles();
   return (
     <View style={styles.row}>
       <Text style={styles.muted}>{label}</Text>
@@ -261,7 +264,7 @@ function Line({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
   title: { fontSize: font.title, fontWeight: '700', color: colors.text },
   section: { fontSize: font.title, fontWeight: '700', color: colors.text },
@@ -269,4 +272,4 @@ const styles = StyleSheet.create({
   amount: { fontSize: font.title, fontWeight: '700', color: colors.primaryDark },
   muted: { fontSize: font.small + 1, color: colors.muted, flexShrink: 1 },
   error: { fontSize: font.body, color: colors.danger },
-});
+}));

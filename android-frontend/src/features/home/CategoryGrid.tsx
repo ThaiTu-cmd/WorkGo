@@ -1,12 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import type { CategoryDto } from '@/api/types';
-import { categoryVisual } from '@/features/catalog/categoryVisuals';
-import { colors, font, radius, spacing } from '@/ui';
+import { categoryVisual, FALLBACK_VISUAL } from '@/features/catalog/categoryVisuals';
+import { font, makeStyles, radius, spacing } from '@/ui';
 
 export function CategoryGrid({ categories }: { categories: CategoryDto[] }) {
+  const styles = useStyles();
   const router = useRouter();
   return (
     <View style={styles.grid}>
@@ -23,7 +24,7 @@ export function CategoryGrid({ categories }: { categories: CategoryDto[] }) {
               <Ionicons name={v.icon} size={24} color={v.fg} />
             </View>
             <Text style={styles.label} numberOfLines={1}>
-              {v.short === 'Khác' ? c.name : v.short}
+              {v === FALLBACK_VISUAL ? c.name : v.short}
             </Text>
           </Pressable>
         );
@@ -32,9 +33,9 @@ export function CategoryGrid({ categories }: { categories: CategoryDto[] }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: spacing.md },
   cell: { width: '25%', alignItems: 'center', gap: spacing.xs },
   tile: { width: 52, height: 52, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
   label: { fontSize: font.small, color: colors.text, paddingHorizontal: 2 },
-});
+}));

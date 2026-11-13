@@ -1,24 +1,27 @@
 import { useRouter } from 'expo-router';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 
-import { Button, Card, colors, font, Screen } from '@/ui';
+import { Button, Card, font, makeStyles, Screen } from '@/ui';
+import { useT } from '@/i18n';
 
 // Inline state for a protected screen seen by a guest.
-export function LoginRequired({ message = 'Đăng nhập để tiếp tục.', edges }: { message?: string; edges?: ('top' | 'bottom')[] }) {
+export function LoginRequired({ message, edges }: { message?: string; edges?: ('top' | 'bottom')[] }) {
+  const t = useT();
+  const styles = useStyles();
   const router = useRouter();
   return (
     <Screen edges={edges}>
       <Card>
-        <Text style={styles.title}>Bạn chưa đăng nhập</Text>
-        <Text style={styles.text}>{message}</Text>
-        <Button title="Đăng nhập" onPress={() => router.push('/auth/login')} />
-        <Button title="Đăng ký" variant="secondary" onPress={() => router.push('/auth/register')} />
+        <Text style={styles.title}>{t('loginRequired.ban_chua_dang_nhap')}</Text>
+        <Text style={styles.text}>{message ?? t('loginRequired.dang_nhap_de_tiep_tuc')}</Text>
+        <Button title={t('loginRequired.dang_nhap')} onPress={() => router.push('/auth/login')} />
+        <Button title={t('loginRequired.dang_ky')} variant="secondary" onPress={() => router.push('/auth/register')} />
       </Card>
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   title: { fontSize: font.title, fontWeight: '700', color: colors.text },
   text: { fontSize: font.body, color: colors.muted },
-});
+}));

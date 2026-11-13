@@ -4,9 +4,9 @@ import {
   errorMessage,
   evidenceErrorMessage,
   isNotProvider,
-  NOT_PROVIDER_MESSAGE,
+  notProviderMessage,
   paymentErrorMessage,
-  UNREACHABLE_MESSAGE,
+  unreachableMessage,
 } from '../errors';
 
 test('evidenceErrorMessage maps 2023', () => {
@@ -28,13 +28,13 @@ test('evidenceErrorMessage falls back to the server message, then a generic one'
 });
 
 test('errorMessage uses ApiError message and a generic fallback', () => {
-  expect(errorMessage(new ApiError(0, null))).toBe(UNREACHABLE_MESSAGE);
+  expect(errorMessage(new ApiError(0, null))).toBe(unreachableMessage());
   expect(errorMessage(new ApiError(400, { message: 'Bad' }))).toBe('Bad');
   expect(errorMessage(undefined)).toBe('Đã có lỗi xảy ra. Vui lòng thử lại.');
 });
 
 test('NOT_PROVIDER_MESSAGE matches the web copy', () => {
-  expect(NOT_PROVIDER_MESSAGE).toContain('Tài khoản chưa có quyền Chuyên gia.');
+  expect(notProviderMessage()).toContain('Tài khoản chưa có quyền Chuyên gia.');
 });
 
 test('paymentErrorMessage maps payment-service codes, which overlap order-service 3xxx', () => {

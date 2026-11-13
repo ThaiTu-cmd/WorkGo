@@ -1,12 +1,15 @@
 import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Stack } from 'expo-router';
+import { Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as React from 'react';
 import { AppState, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from '@/auth/AuthProvider';
-import { colors, OfflineBanner } from '@/ui';
+import { loadPreferences } from '@/settings/preferences';
+import { OfflineBanner } from '@/ui';
+import { navigationTheme } from '@/ui/navigationTheme';
+import { useT } from '@/i18n';
 
 // React Query refetches stale data when the app comes back to the foreground.
 focusManager.setEventListener((setFocused) => {
@@ -19,36 +22,38 @@ const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
+  const t = useT();
   const scheme = useColorScheme();
+  React.useEffect(() => {
+    void loadPreferences();
+  }, []);
   const isDark = scheme === 'dark';
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider queryClient={queryClient}>
-          <StatusBar style={isDark ? 'light' : 'dark'} />
-          <OfflineBanner />
-          <Stack
-            screenOptions={{
-              headerTintColor: isDark ? '#f8fafc' : colors.text,
-              headerBackTitle: 'Quay lại',
-              contentStyle: { backgroundColor: isDark ? '#121212' : colors.bg },
-            }}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="auth/login" options={{ title: 'Đăng nhập' }} />
-            <Stack.Screen name="auth/register" options={{ title: 'Đăng ký' }} />
-            <Stack.Screen name="service/[id]" options={{ title: 'Chi tiết dịch vụ' }} />
-            <Stack.Screen name="checkout" options={{ title: 'Đặt dịch vụ' }} />
-            <Stack.Screen name="orders/[id]" options={{ title: 'Chi tiết đơn hàng' }} />
-            <Stack.Screen name="payment/[orderId]" options={{ title: 'Thanh toán' }} />
-            <Stack.Screen name="account/profile" options={{ title: 'Thông tin cá nhân' }} />
-            <Stack.Screen name="account/addresses/index" options={{ title: 'Sổ địa chỉ' }} />
-            <Stack.Screen name="account/addresses/[id]" options={{ title: 'Địa chỉ' }} />
-            <Stack.Screen name="provider/onboarding" options={{ title: 'Trở thành chuyên gia' }} />
-            <Stack.Screen name="provider/services/index" options={{ title: 'Dịch vụ của tôi' }} />
-            <Stack.Screen name="provider/services/new" options={{ title: 'Tạo dịch vụ' }} />
-            <Stack.Screen name="provider/services/[id]/edit" options={{ title: 'Sửa dịch vụ' }} />
-            <Stack.Screen name="provider/services/[id]/availability" options={{ title: 'Lịch trống' }} />
-          </Stack>
+          <ThemeProvider value={navigationTheme(scheme)}>
+            <StatusBar style={isDark ? 'light' : 'dark'} />
+            <OfflineBanner />
+            <Stack screenOptions={{ headerBackTitle: t('stack.quay_lai') }}>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="auth/login" options={{ title: t('stack.dang_nhap') }} />
+              <Stack.Screen name="auth/register" options={{ title: t('stack.dang_ky') }} />
+              <Stack.Screen name="service/[id]" options={{ title: t('stack.chi_tiet_dich_vu') }} />
+              <Stack.Screen name="checkout" options={{ title: t('stack.dat_dich_vu') }} />
+              <Stack.Screen name="orders/[id]" options={{ title: t('stack.chi_tiet_don_hang') }} />
+              <Stack.Screen name="payment/[orderId]" options={{ title: t('stack.thanh_toan') }} />
+              <Stack.Screen name="account/profile" options={{ title: t('stack.thong_tin_ca_nhan') }} />
+              <Stack.Screen name="account/addresses/index" options={{ title: t('stack.so_dia_chi') }} />
+              <Stack.Screen name="account/addresses/[id]" options={{ title: t('stack.dia_chi') }} />
+              <Stack.Screen name="account/settings" options={{ title: t('stack.cai_dat') }} />
+              <Stack.Screen name="provider/onboarding" options={{ title: t('stack.tro_thanh_chuyen_gia') }} />
+              <Stack.Screen name="provider/services/index" options={{ title: t('stack.dich_vu_cua_toi') }} />
+              <Stack.Screen name="provider/services/new" options={{ title: t('stack.tao_dich_vu') }} />
+              <Stack.Screen name="provider/services/[id]/edit" options={{ title: t('stack.sua_dich_vu') }} />
+              <Stack.Screen name="provider/services/[id]/availability" options={{ title: t('stack.lich_trong') }} />
+            </Stack>
+          </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>
     </SafeAreaProvider>

@@ -2,22 +2,23 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 import { z } from 'zod';
 
 import { joinFullName, splitFullName } from '@/api/adapters';
 import { errorMessage } from '@/api/errors';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
-import { Button, colors, ErrorState, font, Screen, SkeletonList, TextField } from '@/ui';
+import { Button, ErrorState, font, makeStyles, Screen, SkeletonList, TextField } from '@/ui';
 
-import { PHONE_MESSAGE } from './addressSchema';
+import { phoneMessage } from './addressSchema';
 import { useMe, useUpdateMe } from './hooks';
+import { translate, useT } from '@/i18n';
 
 const schema = z.object({
-  fullName: z.string().trim().min(2, 'Vui lòng nhập họ và tên'),
-  email: z.string().trim().email('Email không hợp lệ'),
-  phone: z.string().trim().regex(/^0\d{9}$/, PHONE_MESSAGE),
+  fullName: z.string().trim().min(2, { error: () => translate('profileScreen.vui_long_nhap_ho_va') }),
+  email: z.string().trim().email({ error: () => translate('profileScreen.email_khong_hop_le') }),
+  phone: z.string().trim().regex(/^0\d{9}$/, { error: phoneMessage }),
 });
 type Values = z.infer<typeof schema>;
 
@@ -47,6 +48,8 @@ export function ProfileScreen() {
 }
 
 function ProfileForm({ initial }: { initial: Values }) {
+  const t = useT();
+  const styles = useStyles();
   const router = useRouter();
   const update = useUpdateMe();
   const [formError, setFormError] = React.useState<string | null>(null);
@@ -79,14 +82,14 @@ function ProfileForm({ initial }: { initial: Values }) {
   return (
     <Screen edges={['bottom']}>
       {formError ? <Text style={styles.error}>{formError}</Text> : null}
-      {field('fullName', 'Họ và tên')}
+      {field('fullName', t('profileScreen.ho_va_ten'))}
       {field('email', 'Email', { autoCapitalize: 'none', keyboardType: 'email-address' })}
-      {field('phone', 'Số điện thoại', { keyboardType: 'phone-pad' })}
-      <Button title="Lưu" loading={isSubmitting} onPress={onSubmit} />
+      {field('phone', t('profileScreen.so_dien_thoai'), { keyboardType: 'phone-pad' })}
+      <Button title={t('profileScreen.luu')} loading={isSubmitting} onPress={onSubmit} />
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   error: { color: colors.danger, fontSize: font.body },
-});
+}));

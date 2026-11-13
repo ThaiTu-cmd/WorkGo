@@ -1,5 +1,6 @@
 import type { ServiceCard } from '@/api/adapters';
 import type { ExecutionType } from '@/api/types';
+import { translate } from '@/i18n';
 
 export type HomeRail = {
   key: 'popular' | 'onsite' | 'digital' | 'new';
@@ -17,22 +18,22 @@ const byRating = (a: ServiceCard, b: ServiceCard) => b.avgRating - a.avgRating;
 // Horizontal rails on the home screen; empty rails are dropped.
 export function buildHomeRails(cards: ServiceCard[]): HomeRail[] {
   const rails: HomeRail[] = [
-    { key: 'popular', title: 'Phổ biến nhất', items: top(cards, (a, b) => b.orderCount - a.orderCount), explore: {} },
+    { key: 'popular', title: translate('homeRails.pho_bien_nhat'), items: top(cards, (a, b) => b.orderCount - a.orderCount), explore: {} },
     {
       key: 'onsite',
-      title: 'Thợ tận nhà',
+      title: translate('homeRails.tho_tan_nha'),
       items: top(cards.filter((c) => c.executionType === 'ONSITE'), byRating),
       explore: { executionType: 'ONSITE' },
     },
     {
       key: 'digital',
-      title: 'Làm việc online',
+      title: translate('homeRails.lam_viec_online'),
       items: top(cards.filter((c) => c.executionType === 'DIGITAL'), byRating),
       explore: { executionType: 'DIGITAL' },
     },
     {
       key: 'new',
-      title: 'Mới đăng',
+      title: translate('homeRails.moi_dang'),
       items: top(cards, (a, b) => Date.parse(b.createdAt ?? '') - Date.parse(a.createdAt ?? '')),
       explore: {},
     },

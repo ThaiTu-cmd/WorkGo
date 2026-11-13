@@ -1,10 +1,21 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import type { Package } from '@/api/adapters';
 import { formatVnd } from '@/lib/format';
-import { colors, font, radius, spacing } from '@/ui';
+import { font, makeStyles, radius, spacing } from '@/ui';
+import { translate, useT } from '@/i18n';
 
-const TIER_LABEL = { BASIC: 'Cơ bản', STANDARD: 'Tiêu chuẩn', PREMIUM: 'Cao cấp' } as const;
+const TIER_LABEL = {
+  get BASIC() {
+    return translate('packagePicker.co_ban');
+  },
+  get STANDARD() {
+    return translate('packagePicker.tieu_chuan');
+  },
+  get PREMIUM() {
+    return translate('packagePicker.cao_cap');
+  },
+} as const;
 
 export function PackagePicker({
   packages,
@@ -15,6 +26,8 @@ export function PackagePicker({
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
+  const t = useT();
+  const styles = useStyles();
   return (
     <View style={styles.list}>
       {packages.map((p) => {
@@ -35,9 +48,9 @@ export function PackagePicker({
             {p.description ? <Text style={styles.desc}>{p.description}</Text> : null}
             <Text style={styles.meta}>
               {[
-                p.deliveryDays ? `Giao trong ${p.deliveryDays} ngày` : null,
-                p.durationMinute ? `${p.durationMinute} phút` : null,
-                p.revisionLimit ? `${p.revisionLimit} lần chỉnh sửa` : null,
+                p.deliveryDays ? t('packagePicker.giao_trong_ngay', { p0: p.deliveryDays }) : null,
+                p.durationMinute ? t('packagePicker.phut', { p0: p.durationMinute }) : null,
+                p.revisionLimit ? t('packagePicker.lan_chinh_sua', { p0: p.revisionLimit }) : null,
               ]
                 .filter(Boolean)
                 .join(' · ')}
@@ -49,9 +62,9 @@ export function PackagePicker({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   list: { gap: spacing.sm },
-  item: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, gap: 2, backgroundColor: colors.white },
+  item: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, gap: 2, backgroundColor: colors.card },
   selected: { borderColor: colors.primary, borderWidth: 2 },
   head: { flexDirection: 'row', justifyContent: 'space-between' },
   tier: { fontSize: font.small, fontWeight: '700', color: colors.muted, textTransform: 'uppercase' },
@@ -59,4 +72,4 @@ const styles = StyleSheet.create({
   name: { fontSize: font.body, fontWeight: '600', color: colors.text },
   desc: { fontSize: font.small + 1, color: colors.muted },
   meta: { fontSize: font.small, color: colors.muted },
-});
+}));

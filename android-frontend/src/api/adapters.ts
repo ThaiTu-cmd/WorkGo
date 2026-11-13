@@ -2,6 +2,7 @@
 // the screens render. Ported from website-frontend/src/_webapp-mirror/api/adapters.js;
 // fields the backend does not expose yet are left out.
 import type { AddonDto, AddressDto, CategoryDto, MediaDto, PackageDto, ProviderProfileDto, ServiceDto } from './types';
+import { translate } from '@/i18n';
 
 // Spring PageResponse lands either wrapped (ApiResponse.result) or bare.
 export function pageItems<T>(res: unknown): T[] {
@@ -106,7 +107,7 @@ export function toMediaList(medias: MediaDto[] = []): Media[] {
 export function toProvider(profile: ProviderProfileDto | null | undefined): Provider {
   return {
     providerId: profile?.providerProfileId ?? null,
-    name: profile?.businessName || 'Nhà cung cấp',
+    name: profile?.businessName || translate('adapters.nha_cung_cap'),
     isVerified: profile?.verificationStatus === 'VERIFIED',
     bio: profile?.bio || '',
     providerType: profile?.providerType ?? null,
@@ -148,7 +149,7 @@ export function toServiceDetail({
   const pkgs = toPackages(packages);
   return {
     ...card,
-    categoryName: category?.name ?? 'Dịch vụ',
+    categoryName: category?.name ?? translate('adapters.dich_vu'),
     slug: service.slug,
     description: service.description || '',
     status: service.status,

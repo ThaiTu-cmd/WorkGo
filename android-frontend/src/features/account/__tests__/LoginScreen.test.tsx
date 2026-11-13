@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
-import { ApiError, UNREACHABLE_MESSAGE } from '@/api/errors';
+import { ApiError, unreachableMessage } from '@/api/errors';
 import { useAuth } from '@/auth/AuthProvider';
 
 import { LoginScreen } from '../LoginScreen';
@@ -76,7 +76,7 @@ test('shows UNREACHABLE_MESSAGE when backend is down', async () => {
   await render(<LoginScreen />);
   await fill('an', 'pw');
   await fireEvent.press(screen.getByRole('button', { name: 'Đăng nhập' }));
-  expect(await screen.findByText(UNREACHABLE_MESSAGE)).toBeTruthy();
+  expect(await screen.findByText(unreachableMessage())).toBeTruthy();
 });
 
 test('on success replaces to redirect param', async () => {

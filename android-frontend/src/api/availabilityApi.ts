@@ -1,5 +1,6 @@
 import { http } from './client';
 import type { ApiResponse, BookingSlotDto, Paged, RuleDto } from './types';
+import { translate } from '@/i18n';
 
 export type RuleBody = {
   dayOfWeek: number;
@@ -46,11 +47,25 @@ export const timeToMinutes = (hhmm: string): number => {
 
 // catalog AvailableRule.dayOfWeek: 2 = Monday … 8 = Sunday.
 export const WEEK_DAYS = [
-  { value: 2, label: 'Thứ 2', short: 'T2' },
-  { value: 3, label: 'Thứ 3', short: 'T3' },
-  { value: 4, label: 'Thứ 4', short: 'T4' },
-  { value: 5, label: 'Thứ 5', short: 'T5' },
-  { value: 6, label: 'Thứ 6', short: 'T6' },
-  { value: 7, label: 'Thứ 7', short: 'T7' },
-  { value: 8, label: 'Chủ nhật', short: 'CN' },
+  { value: 2, get label() {
+    return translate('availabilityApi.thu_2');
+  }, short: 'T2' },
+  { value: 3, get label() {
+    return translate('availabilityApi.thu_3');
+  }, short: 'T3' },
+  { value: 4, get label() {
+    return translate('availabilityApi.thu_4');
+  }, short: 'T4' },
+  { value: 5, get label() {
+    return translate('availabilityApi.thu_5');
+  }, short: 'T5' },
+  { value: 6, get label() {
+    return translate('availabilityApi.thu_6');
+  }, short: 'T6' },
+  { value: 7, get label() {
+    return translate('availabilityApi.thu_7');
+  }, short: 'T7' },
+  { value: 8, get label() {
+    return translate('availabilityApi.chu_nhat');
+  }, short: 'CN' },
 ] as const;

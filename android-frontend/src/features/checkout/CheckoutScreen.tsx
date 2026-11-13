@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { addressApi } from '@/api/addressApi';
 import { pageItems, toAddress } from '@/api/adapters';
@@ -19,11 +19,14 @@ import { findPaymentOption, MOCK_PAYMENT_ENABLED } from '@/features/payment/paym
 import { PaymentOptionPicker } from '@/features/payment/PaymentOptionPicker';
 import { formatDateTime, formatVnd } from '@/lib/format';
 import { useSingleFlight } from '@/lib/useSingleFlight';
-import { Button, Card, colors, ErrorState, font, OptionRow, Screen, SkeletonList, spacing } from '@/ui';
+import { Button, Card, ErrorState, font, makeStyles, OptionRow, Screen, SkeletonList, spacing } from '@/ui';
 
 import { estimateTotal, validateCheckout } from './checkout';
+import { useT } from '@/i18n';
 
 export function CheckoutScreen() {
+  const t = useT();
+  const styles = useStyles();
   const signedIn = useRequireAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -98,12 +101,12 @@ export function CheckoutScreen() {
     <Screen edges={['bottom']}>
       <Text style={styles.title}>{service.title}</Text>
 
-      <Text style={styles.section}>Chọn gói</Text>
+      <Text style={styles.section}>{t('checkoutScreen.chon_goi')}</Text>
       <PackagePicker packages={service.packages} selectedId={packageId} onSelect={setPackageId} />
 
       {service.addons.length ? (
         <>
-          <Text style={styles.section}>Tuỳ chọn thêm</Text>
+          <Text style={styles.section}>{t('checkoutScreen.tuy_chon_them')}</Text>
           {service.addons.map((a) => (
             <OptionRow
               key={a.id}
@@ -119,19 +122,19 @@ export function CheckoutScreen() {
 
       {onsite ? (
         <>
-          <Text style={styles.section}>Thời gian</Text>
+          <Text style={styles.section}>{t('checkoutScreen.thoi_gian')}</Text>
           {slotList.map((s) => (
             <OptionRow
               key={s.bookingSlotId}
               kind="radio"
               label={formatDateTime(s.startedAt)}
-              detail={`đến ${formatDateTime(s.endAt).slice(11)}`}
+              detail={t('checkoutScreen.den', { p0: formatDateTime(s.endAt).slice(11) })}
               selected={slotId === s.bookingSlotId}
               onPress={() => setSlotId(s.bookingSlotId)}
             />
           ))}
 
-          <Text style={styles.section}>Địa chỉ</Text>
+          <Text style={styles.section}>{t('checkoutScreen.dia_chi')}</Text>
           {addressList.map((a) => (
             <OptionRow
               key={a.id}
@@ -142,27 +145,27 @@ export function CheckoutScreen() {
               onPress={() => setAddressId(a.id)}
             />
           ))}
-          <Button title="Thêm địa chỉ" variant="secondary" onPress={() => router.push('/account/addresses/new')} />
+          <Button title={t('checkoutScreen.them_dia_chi')} variant="secondary" onPress={() => router.push('/account/addresses/new')} />
         </>
       ) : null}
 
-      <Text style={styles.section}>Phương thức thanh toán</Text>
+      <Text style={styles.section}>{t('checkoutScreen.phuong_thuc_thanh_toan')}</Text>
       <PaymentOptionPicker value={paymentOption} onChange={setPaymentOption} />
 
       <Card>
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Tạm tính</Text>
+          <Text style={styles.totalLabel}>{t('checkoutScreen.tam_tinh')}</Text>
           <Text testID="checkout-total" style={styles.total}>
             {formatVnd(estimateTotal(selectedPackage, service.addons, addonIds))}
           </Text>
         </View>
-        <Text style={styles.note}>Giá cuối cùng do hệ thống tính khi tạo đơn. Bạn có 30 phút để thanh toán, sau đó đơn sẽ tự hủy.</Text>
+        <Text style={styles.note}>{t('checkoutScreen.gia_cuoi_cung_do_he')}</Text>
       </Card>
 
       {!check.ok ? <Text style={styles.error}>{check.error}</Text> : null}
       {submitError ? <Text style={styles.error}>{submitError}</Text> : null}
       <Button
-        title="Đặt dịch vụ"
+        title={t('checkoutScreen.dat_dich_vu')}
         loading={create.isPending}
         disabled={!check.ok}
         onPress={() => {
@@ -176,7 +179,7 @@ export function CheckoutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   title: { fontSize: font.hero, fontWeight: '700', color: colors.text },
   section: { fontSize: font.title, fontWeight: '700', color: colors.text, marginTop: spacing.sm },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -184,4 +187,4 @@ const styles = StyleSheet.create({
   total: { fontSize: font.title, fontWeight: '700', color: colors.primaryDark },
   note: { fontSize: font.small, color: colors.muted },
   error: { fontSize: font.body, color: colors.danger },
-});
+}));

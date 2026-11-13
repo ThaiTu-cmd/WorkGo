@@ -1,19 +1,23 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { errorMessage } from '@/api/errors';
-import { Chip, colors, EmptyState, ErrorState, font, radius, SkeletonList, spacing } from '@/ui';
+import { Chip, EmptyState, ErrorState, font, makeStyles, radius, SkeletonList, spacing, useColors } from '@/ui';
 
 import { filtersFromParams } from './exploreParams';
 import { FilterSheet } from './FilterSheet';
 import { filterServices, type ServiceFilters } from './filterServices';
 import { useCategories, useServices } from './hooks';
 import { ServiceCardView } from './ServiceCardView';
+import { useT } from '@/i18n';
 
 export function ExploreScreen() {
+  const t = useT();
+  const styles = useStyles();
+  const colors = useColors();
   const router = useRouter();
   // `t` is a nonce the home screen sends so the same link re-applies on a tab that is already open.
   const params = useLocalSearchParams<{ categoryId?: string; executionType?: string; focus?: string; t?: string }>();
@@ -46,21 +50,21 @@ export function ExploreScreen() {
           <Ionicons name="search" size={18} color={colors.muted} />
           <TextInput
             ref={searchRef}
-            accessibilityLabel="Tìm dịch vụ"
-            placeholder="Tìm dịch vụ, danh mục, chuyên gia…"
+            accessibilityLabel={t('exploreScreen.tim_dich_vu')}
+            placeholder={t('exploreScreen.tim_dich_vu_danh_muc')}
             placeholderTextColor={colors.muted}
             value={filters.query ?? ''}
             onChangeText={(query) => setFilters((f) => ({ ...f, query }))}
             style={styles.searchInput}
           />
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="Bộ lọc" onPress={() => setSheetOpen(true)} style={styles.filterBtn}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('exploreScreen.bo_loc')} onPress={() => setSheetOpen(true)} style={styles.filterBtn}>
           <Ionicons name="options-outline" size={20} color={filterCount ? colors.primaryDark : colors.text} />
         </Pressable>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} style={styles.chipBar}>
-        <Chip label="Tất cả" selected={!filters.categoryId} onPress={() => setFilters((f) => ({ ...f, categoryId: undefined }))} />
+        <Chip label={t('exploreScreen.tat_ca')} selected={!filters.categoryId} onPress={() => setFilters((f) => ({ ...f, categoryId: undefined }))} />
         {(categories.data?.all ?? []).map((c) => (
           <Chip
             key={c.categoryId}
@@ -84,7 +88,7 @@ export function ExploreScreen() {
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={services.isRefetching} onRefresh={() => void services.refetch()} />}
           renderItem={({ item }) => <ServiceCardView service={item} onPress={() => router.push(`/service/${item.serviceId}`)} />}
-          ListEmptyComponent={<EmptyState title="Không tìm thấy dịch vụ" hint="Thử từ khoá khác hoặc bỏ bớt bộ lọc." />}
+          ListEmptyComponent={<EmptyState title={t('exploreScreen.khong_tim_thay_dich_vu')} hint={t('exploreScreen.thu_tu_khoa_khac_hoac')} />}
         />
       )}
 
@@ -103,7 +107,7 @@ export function ExploreScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   safe: { flex: 1, backgroundColor: colors.bg },
   searchRow: { flexDirection: 'row', gap: spacing.sm, padding: spacing.lg, paddingBottom: spacing.sm },
   search: {
@@ -111,7 +115,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
@@ -125,11 +129,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
   },
   // ScrollView shrinks by default: without flexShrink 0 a long list below squeezes the chips.
   chipBar: { flexGrow: 0, flexShrink: 0 },
   chips: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
   list: { padding: spacing.lg, gap: spacing.md },
   pad: { padding: spacing.lg },
-});
+}));

@@ -1,13 +1,17 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { Button } from './Button';
-import { colors, font, radius, spacing } from './theme';
+import { font, makeStyles, radius, spacing } from './theme';
+import { useT } from '@/i18n';
 
 export function Skeleton({ height = 72 }: { height?: number }) {
-  return <View accessibilityLabel="Đang tải" style={[styles.skeleton, { height }]} />;
+  const t = useT();
+  const styles = useStyles();
+  return <View accessibilityLabel={t('states.dang_tai')} style={[styles.skeleton, { height }]} />;
 }
 
 export function SkeletonList({ count = 4, height = 72 }: { count?: number; height?: number }) {
+  const styles = useStyles();
   return (
     <View style={styles.list}>
       {Array.from({ length: count }, (_, i) => (
@@ -18,6 +22,7 @@ export function SkeletonList({ count = 4, height = 72 }: { count?: number; heigh
 }
 
 export function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: React.ReactNode }) {
+  const styles = useStyles();
   return (
     <View style={styles.center}>
       <Text style={styles.title}>{title}</Text>
@@ -28,19 +33,21 @@ export function EmptyState({ title, hint, action }: { title: string; hint?: stri
 }
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  const t = useT();
+  const styles = useStyles();
   return (
     <View style={styles.center}>
-      <Text style={styles.title}>Không tải được dữ liệu</Text>
+      <Text style={styles.title}>{t('states.khong_tai_duoc_du_lieu')}</Text>
       <Text style={styles.hint}>{message}</Text>
-      {onRetry ? <Button title="Thử lại" variant="secondary" onPress={onRetry} /> : null}
+      {onRetry ? <Button title={t('states.thu_lai')} variant="secondary" onPress={onRetry} /> : null}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   skeleton: { backgroundColor: colors.border, borderRadius: radius.lg, opacity: 0.6 },
   list: { gap: spacing.md },
   center: { alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: spacing.md },
   title: { fontSize: font.title, fontWeight: '700', color: colors.text, textAlign: 'center' },
   hint: { fontSize: font.body, color: colors.muted, textAlign: 'center' },
-});
+}));

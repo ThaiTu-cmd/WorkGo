@@ -1,12 +1,13 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import type { OrderDto } from '@/api/types';
 import { formatDateTime, formatVnd } from '@/lib/format';
-import { Badge, Card, colors, font, spacing } from '@/ui';
+import { Badge, Card, font, makeStyles, spacing } from '@/ui';
 
 import { ORDER_STATUS_LABEL, ORDER_STATUS_TONE } from './orderStatus';
 
 export function OrderRow({ order, onPress }: { order: OrderDto; onPress: () => void }) {
+  const styles = useStyles();
   return (
     <Card onPress={onPress} accessibilityLabel={order.title}>
       <View style={styles.head}>
@@ -29,11 +30,11 @@ export function OrderRow({ order, onPress }: { order: OrderDto; onPress: () => v
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
   number: { flexShrink: 1, fontSize: font.small, color: colors.muted, fontWeight: '600' },
   badge: { flexShrink: 0 },
   title: { fontSize: font.body, fontWeight: '700', color: colors.text },
   muted: { fontSize: font.small, color: colors.muted },
   amount: { fontSize: font.body, fontWeight: '700', color: colors.primaryDark },
-});
+}));

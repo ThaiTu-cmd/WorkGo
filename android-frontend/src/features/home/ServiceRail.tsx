@@ -1,14 +1,17 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 
 import type { ServiceCard } from '@/api/adapters';
 import { categoryVisual } from '@/features/catalog/categoryVisuals';
 import type { HomeRail } from '@/features/catalog/homeRails';
 import { formatVnd } from '@/lib/format';
-import { colors, font, radius, spacing } from '@/ui';
+import { font, makeStyles, radius, spacing } from '@/ui';
+import { useT } from '@/i18n';
 
 export function ServiceRail({ rail }: { rail: HomeRail }) {
+  const t = useT();
+  const styles = useStyles();
   const router = useRouter();
   return (
     <View style={styles.wrap}>
@@ -16,10 +19,10 @@ export function ServiceRail({ rail }: { rail: HomeRail }) {
         <Text style={styles.title}>{rail.title}</Text>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Xem tất cả ${rail.title}`}
+          accessibilityLabel={t('serviceRail.xem_tat_ca', { p0: rail.title })}
           hitSlop={8}
           onPress={() => router.push({ pathname: '/explore', params: { ...rail.explore, t: String(Date.now()) } })}>
-          <Text style={styles.more}>Xem tất cả</Text>
+          <Text style={styles.more}>{t('serviceRail.xem_tat_ca_2')}</Text>
         </Pressable>
       </View>
       <FlatList
@@ -35,6 +38,8 @@ export function ServiceRail({ rail }: { rail: HomeRail }) {
 }
 
 function ServiceTile({ service, onPress }: { service: ServiceCard; onPress: () => void }) {
+  const t = useT();
+  const styles = useStyles();
   const v = categoryVisual(service.categorySlug);
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={service.title} onPress={onPress} style={styles.tile}>
@@ -42,7 +47,7 @@ function ServiceTile({ service, onPress }: { service: ServiceCard; onPress: () =
         <Ionicons name={v.icon} size={30} color={v.fg} />
         {service.executionType === 'ONSITE' ? (
           <View style={styles.pill}>
-            <Text style={styles.pillText}>Tại nhà</Text>
+            <Text style={styles.pillText}>{t('serviceRail.tai_nha')}</Text>
           </View>
         ) : null}
       </View>
@@ -52,9 +57,7 @@ function ServiceTile({ service, onPress }: { service: ServiceCard; onPress: () =
         </Text>
         <View style={styles.meta}>
           <Ionicons name="star" size={12} color="#EF9F27" />
-          <Text style={styles.metaText}>
-            {service.reviewCount > 0 ? service.avgRating.toFixed(1) : 'Mới'} · {service.orderCount} đơn
-          </Text>
+          <Text style={styles.metaText}>{t('serviceRail.don', { p0: service.reviewCount > 0 ? service.avgRating.toFixed(1) : t('serviceRail.moi'), p1: service.orderCount })}</Text>
         </View>
         <Text style={styles.price}>{formatVnd(service.basePrice)}</Text>
       </View>
@@ -62,7 +65,7 @@ function ServiceTile({ service, onPress }: { service: ServiceCard; onPress: () =
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   wrap: { gap: spacing.sm },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: spacing.lg },
   title: { fontSize: font.title, fontWeight: '700', color: colors.text },
@@ -85,4 +88,4 @@ const styles = StyleSheet.create({
   meta: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   metaText: { fontSize: font.small - 1, color: colors.muted },
   price: { fontSize: font.small + 1, fontWeight: '700', color: colors.primaryDark },
-});
+}));

@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { errorMessage } from '@/api/errors';
@@ -9,12 +9,15 @@ import { useAuth } from '@/auth/AuthProvider';
 import { hasRole } from '@/auth/jwt';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
-import { Chip, colors, EmptyState, ErrorState, font, SkeletonList, spacing } from '@/ui';
+import { Chip, EmptyState, ErrorState, font, makeStyles, SkeletonList, spacing } from '@/ui';
 
 import { useOrders } from './hooks';
 import { OrderRow } from './OrderRow';
+import { useT } from '@/i18n';
 
 export function OrdersScreen() {
+  const t = useT();
+  const styles = useStyles();
   const signedIn = useRequireAuth({ prompt: false });
   const { claims } = useAuth();
   const router = useRouter();
@@ -39,17 +42,17 @@ export function OrdersScreen() {
     }, [signedIn, refetch])
   );
 
-  if (!signedIn) return <LoginRequired edges={['top']} message="Đăng nhập để xem đơn hàng của bạn." />;
+  if (!signedIn) return <LoginRequired edges={['top']} message={t('ordersScreen.dang_nhap_de_xem_don')} />;
   const items = orders.data?.pages.flatMap((p) => p.items) ?? [];
 
   return (
     <SafeAreaView edges={['top']} style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Đơn hàng</Text>
+        <Text style={styles.title}>{t('ordersScreen.don_hang')}</Text>
         {isProvider ? (
           <View style={styles.switch}>
-            <Chip label="Tôi đặt" selected={activeRole === 'CLIENT'} onPress={() => setRole('CLIENT')} />
-            <Chip label="Tôi nhận" selected={activeRole === 'PROVIDER'} onPress={() => setRole('PROVIDER')} />
+            <Chip label={t('ordersScreen.toi_dat')} selected={activeRole === 'CLIENT'} onPress={() => setRole('CLIENT')} />
+            <Chip label={t('ordersScreen.toi_nhan')} selected={activeRole === 'PROVIDER'} onPress={() => setRole('PROVIDER')} />
           </View>
         ) : null}
       </View>
@@ -78,8 +81,8 @@ export function OrdersScreen() {
           )}
           ListEmptyComponent={
             <EmptyState
-              title="Chưa có đơn hàng"
-              hint={activeRole === 'CLIENT' ? 'Các dịch vụ bạn đặt sẽ hiện ở đây.' : 'Đơn khách đặt dịch vụ của bạn sẽ hiện ở đây.'}
+              title={t('ordersScreen.chua_co_don_hang')}
+              hint={activeRole === 'CLIENT' ? t('ordersScreen.cac_dich_vu_ban_dat') : t('ordersScreen.don_khach_dat_dich_vu')}
             />
           }
         />
@@ -88,11 +91,11 @@ export function OrdersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   safe: { flex: 1, backgroundColor: colors.bg },
   header: { padding: spacing.lg, paddingBottom: spacing.sm, gap: spacing.md },
   title: { fontSize: font.hero, fontWeight: '700', color: colors.text },
   switch: { flexDirection: 'row', gap: spacing.sm },
   list: { padding: spacing.lg, gap: spacing.md },
   pad: { padding: spacing.lg },
-});
+}));

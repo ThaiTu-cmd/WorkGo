@@ -1,6 +1,6 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Pressable, Text, type ViewStyle } from 'react-native';
 
-import { colors, font, radius, spacing, useColors } from './theme';
+import { font, makeStyles, radius, spacing, useColors } from './theme';
 
 type Props = {
   title: string;
@@ -12,6 +12,7 @@ type Props = {
 };
 
 export function Button({ title, onPress, variant = 'primary', loading = false, disabled = false, style }: Props) {
+  const styles = useStyles();
   const c = useColors();
   const inactive = disabled || loading;
   const variantStyle =
@@ -37,7 +38,7 @@ export function Button({ title, onPress, variant = 'primary', loading = false, d
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   base: {
     minHeight: 48,
     paddingHorizontal: spacing.lg,
@@ -48,4 +49,4 @@ const styles = StyleSheet.create({
   inactive: { opacity: 0.5 },
   pressed: { opacity: 0.8 },
   label: { color: colors.white, fontSize: font.body, fontWeight: '600' },
-});
+}));

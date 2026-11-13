@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { catalogErrorMessage, errorMessage } from '@/api/errors';
 import { LoginRequired } from '@/auth/LoginRequired';
@@ -9,7 +9,7 @@ import { useRequireAuth } from '@/auth/useRequireAuth';
 import { useCategories, useServiceDetail } from '@/features/catalog/hooks';
 import { pickImage } from '@/lib/image';
 import { useSingleFlight } from '@/lib/useSingleFlight';
-import { Button, Chip, colors, ErrorState, font, radius, Screen, SkeletonList, spacing, TextField } from '@/ui';
+import { Button, Chip, ErrorState, font, makeStyles, radius, Screen, SkeletonList, spacing, TextField } from '@/ui';
 
 import { newSaveProgress, useSaveService, type SaveProgress } from './hooks';
 import {
@@ -19,11 +19,12 @@ import {
   type PackageInput,
   type ServiceInfo,
 } from './serviceFormSchema';
+import { translate, useT } from '@/i18n';
 
 type PackageDraft = { id?: string; name: string; price: string; deliveryDay: string; durationMinute: string; revisionLimit: string };
 
 const EMPTY_PACKAGE: PackageDraft = { name: '', price: '', deliveryDay: '', durationMinute: '', revisionLimit: '' };
-const STEPS = ['Thông tin', 'Gói & giá', 'Ảnh'] as const;
+const stepLabels = () => [translate('serviceFormScreen.thong_tin'), translate('serviceFormScreen.goi_gia'), translate('serviceFormScreen.anh')];
 
 const intOrUndefined = (s: string) => (s.trim() ? Number(s.replace(/\D/g, '')) : undefined);
 const toPackageInput = (d: PackageDraft): PackageInput => ({
@@ -95,6 +96,8 @@ function ServiceForm({
   initialPackages: PackageDraft[];
   existingImages: string[];
 }) {
+  const t = useT();
+  const styles = useStyles();
   const router = useRouter();
   const categories = useCategories();
   const save = useSaveService();
@@ -160,7 +163,7 @@ function ServiceForm({
   return (
     <Screen edges={['bottom']}>
       <View style={styles.stepper}>
-        {STEPS.map((label, i) => (
+        {stepLabels().map((label, i) => (
           <View key={label} style={[styles.step, i <= step && styles.stepActive]}>
             <Text style={[styles.stepText, i <= step && styles.stepTextActive]}>
               {i + 1}. {label}
@@ -171,20 +174,20 @@ function ServiceForm({
 
       {step === 0 ? (
         <>
-          <TextField label="Tiêu đề" value={info.title} onChangeText={(title) => setInfo({ ...info, title })} />
-          <Text style={styles.label}>Danh mục</Text>
+          <TextField label={t('serviceFormScreen.tieu_de')} value={info.title} onChangeText={(title) => setInfo({ ...info, title })} />
+          <Text style={styles.label}>{t('serviceFormScreen.danh_muc')}</Text>
           <View style={styles.wrap}>
             {(categories.data?.all ?? []).map((c) => (
               <Chip key={c.categoryId} label={c.name} selected={info.categoryId === c.categoryId} onPress={() => setInfo({ ...info, categoryId: c.categoryId })} />
             ))}
           </View>
-          <Text style={styles.label}>Hình thức</Text>
+          <Text style={styles.label}>{t('serviceFormScreen.hinh_thuc')}</Text>
           <View style={styles.wrap}>
             <Chip label="Online" selected={info.executionType === 'DIGITAL'} onPress={() => setInfo({ ...info, executionType: 'DIGITAL' })} />
-            <Chip label="Tại nhà" selected={info.executionType === 'ONSITE'} onPress={() => setInfo({ ...info, executionType: 'ONSITE' })} />
+            <Chip label={t('serviceFormScreen.tai_nha')} selected={info.executionType === 'ONSITE'} onPress={() => setInfo({ ...info, executionType: 'ONSITE' })} />
           </View>
           <TextField
-            label="Mô tả"
+            label={t('serviceFormScreen.mo_ta')}
             multiline
             style={styles.multiline}
             value={info.description}
@@ -197,35 +200,35 @@ function ServiceForm({
         <>
           {packages.map((p, i) => (
             <View key={p.id ?? `new-${i}`} style={styles.pkg}>
-              <Text style={styles.label}>Gói {i + 1}</Text>
-              <TextField label="Tên gói" value={p.name} onChangeText={(name) => setPkg(i, { name })} />
-              <TextField label="Giá (₫)" keyboardType="number-pad" value={p.price} onChangeText={(price) => setPkg(i, { price })} />
+              <Text style={styles.label}>{t('serviceFormScreen.goi', { p0: i + 1 })}</Text>
+              <TextField label={t('serviceFormScreen.ten_goi')} value={p.name} onChangeText={(name) => setPkg(i, { name })} />
+              <TextField label={t('serviceFormScreen.gia')} keyboardType="number-pad" value={p.price} onChangeText={(price) => setPkg(i, { price })} />
               <View style={styles.row}>
                 <View style={styles.flex}>
-                  <TextField label="Số ngày giao" keyboardType="number-pad" value={p.deliveryDay} onChangeText={(deliveryDay) => setPkg(i, { deliveryDay })} />
+                  <TextField label={t('serviceFormScreen.so_ngay_giao')} keyboardType="number-pad" value={p.deliveryDay} onChangeText={(deliveryDay) => setPkg(i, { deliveryDay })} />
                 </View>
                 <View style={styles.flex}>
-                  <TextField label="Thời lượng (phút)" keyboardType="number-pad" value={p.durationMinute} onChangeText={(durationMinute) => setPkg(i, { durationMinute })} />
+                  <TextField label={t('serviceFormScreen.thoi_luong_phut')} keyboardType="number-pad" value={p.durationMinute} onChangeText={(durationMinute) => setPkg(i, { durationMinute })} />
                 </View>
               </View>
-              <TextField label="Số lần chỉnh sửa" keyboardType="number-pad" value={p.revisionLimit} onChangeText={(revisionLimit) => setPkg(i, { revisionLimit })} />
+              <TextField label={t('serviceFormScreen.so_lan_chinh_sua')} keyboardType="number-pad" value={p.revisionLimit} onChangeText={(revisionLimit) => setPkg(i, { revisionLimit })} />
               {!p.id && packages.length > 1 ? (
-                <Button title="Bỏ gói này" variant="secondary" onPress={() => setPackages((list) => list.filter((_, j) => j !== i))} />
+                <Button title={t('serviceFormScreen.bo_goi_nay')} variant="secondary" onPress={() => setPackages((list) => list.filter((_, j) => j !== i))} />
               ) : null}
             </View>
           ))}
-          {packages.length < 3 ? <Button title="Thêm gói" variant="secondary" onPress={() => setPackages((l) => [...l, EMPTY_PACKAGE])} /> : null}
+          {packages.length < 3 ? <Button title={t('serviceFormScreen.them_goi')} variant="secondary" onPress={() => setPackages((l) => [...l, EMPTY_PACKAGE])} /> : null}
         </>
       ) : null}
 
       {step === 2 ? (
         <>
-          <Text style={styles.muted}>Tối đa {MAX_SERVICE_IMAGES} ảnh mới. Ảnh đầu tiên là ảnh bìa nếu dịch vụ chưa có ảnh.</Text>
+          <Text style={styles.muted}>{t('serviceFormScreen.toi_da_anh_moi_anh', { p0: MAX_SERVICE_IMAGES })}</Text>
           <View style={styles.wrap}>
             {[...existingImages, ...images].map((uri, i) => (
               <Pressable
                 key={`${i}-${uri.length}`}
-                accessibilityLabel={i < existingImages.length ? 'Ảnh đã có' : 'Bỏ ảnh này'}
+                accessibilityLabel={i < existingImages.length ? t('serviceFormScreen.anh_da_co') : t('serviceFormScreen.bo_anh_nay')}
                 disabled={i < existingImages.length}
                 onPress={() => setImages((list) => list.filter((_, j) => j !== i - existingImages.length))}>
                 <Image source={{ uri }} style={styles.thumb} contentFit="cover" />
@@ -234,8 +237,8 @@ function ServiceForm({
           </View>
           {images.length < MAX_SERVICE_IMAGES ? (
             <View style={styles.row}>
-              <Button title="Chụp ảnh" variant="secondary" style={styles.flex} onPress={() => void addImage('camera')} />
-              <Button title="Chọn ảnh" variant="secondary" style={styles.flex} onPress={() => void addImage('library')} />
+              <Button title={t('serviceFormScreen.chup_anh')} variant="secondary" style={styles.flex} onPress={() => void addImage('camera')} />
+              <Button title={t('serviceFormScreen.chon_anh')} variant="secondary" style={styles.flex} onPress={() => void addImage('library')} />
             </View>
           ) : null}
         </>
@@ -243,18 +246,18 @@ function ServiceForm({
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <View style={styles.row}>
-        {step > 0 ? <Button title="Quay lại" variant="secondary" style={styles.flex} onPress={() => setStep((s) => s - 1)} /> : null}
-        {step < STEPS.length - 1 ? (
-          <Button title="Tiếp" style={styles.flex} onPress={next} />
+        {step > 0 ? <Button title={t('serviceFormScreen.quay_lai')} variant="secondary" style={styles.flex} onPress={() => setStep((s) => s - 1)} /> : null}
+        {step < stepLabels().length - 1 ? (
+          <Button title={t('serviceFormScreen.tiep')} style={styles.flex} onPress={next} />
         ) : (
-          <Button title={serviceId ? 'Lưu thay đổi' : 'Đăng dịch vụ'} style={styles.flex} loading={save.isPending} onPress={submit} />
+          <Button title={serviceId ? t('serviceFormScreen.luu_thay_doi') : t('serviceFormScreen.dang_dich_vu')} style={styles.flex} loading={save.isPending} onPress={submit} />
         )}
       </View>
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   stepper: { flexDirection: 'row', gap: spacing.xs },
   step: { flex: 1, paddingVertical: spacing.sm, borderRadius: radius.sm, backgroundColor: colors.border, alignItems: 'center' },
   stepActive: { backgroundColor: colors.primary },
@@ -264,9 +267,9 @@ const styles = StyleSheet.create({
   muted: { fontSize: font.body, color: colors.muted },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   multiline: { minHeight: 120, textAlignVertical: 'top', paddingTop: spacing.sm },
-  pkg: { gap: spacing.sm, padding: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, backgroundColor: colors.white },
+  pkg: { gap: spacing.sm, padding: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, backgroundColor: colors.card },
   row: { flexDirection: 'row', gap: spacing.sm },
   flex: { flex: 1 },
   thumb: { width: 96, height: 96, borderRadius: radius.md, backgroundColor: colors.border },
   error: { fontSize: font.body, color: colors.danger },
-});
+}));

@@ -1,12 +1,16 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Avatar, colors, font, radius, spacing } from '@/ui';
+import { Avatar, font, makeStyles, radius, spacing, useColors } from '@/ui';
+import { useT } from '@/i18n';
 
 // Green band under the status bar: greeting + a search box that opens Explore.
 export function HomeHeader({ name }: { name: string | null }) {
+  const t = useT();
+  const styles = useStyles();
+  const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -15,19 +19,19 @@ export function HomeHeader({ name }: { name: string | null }) {
       <View style={styles.row}>
         {name ? (
           <View style={styles.flex}>
-            <Text style={styles.hello}>Xin chào,</Text>
+            <Text style={styles.hello}>{t('homeHeader.xin_chao')}</Text>
             <Text style={styles.name} numberOfLines={1}>
               {name}
             </Text>
           </View>
         ) : (
           <View style={styles.flex}>
-            <Text style={styles.name}>Chào bạn</Text>
-            <Text style={styles.hello}>Tìm thợ, chuyên gia uy tín gần bạn</Text>
+            <Text style={styles.name}>{t('homeHeader.chao_ban')}</Text>
+            <Text style={styles.hello}>{t('homeHeader.tim_tho_chuyen_gia_uy')}</Text>
           </View>
         )}
         {name ? (
-          <Pressable accessibilityRole="button" accessibilityLabel="Tài khoản" onPress={() => router.push('/account')}>
+          <Pressable accessibilityRole="button" accessibilityLabel={t('homeHeader.tai_khoan')} onPress={() => router.push('/account')}>
             <View style={styles.avatarRing}>
               <Avatar name={name} size={38} />
             </View>
@@ -35,27 +39,27 @@ export function HomeHeader({ name }: { name: string | null }) {
         ) : (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Đăng nhập"
+            accessibilityLabel={t('homeHeader.dang_nhap')}
             onPress={() => router.push('/auth/login')}
             style={styles.signIn}>
-            <Text style={styles.signInText}>Đăng nhập</Text>
+            <Text style={styles.signInText}>{t('homeHeader.dang_nhap')}</Text>
           </Pressable>
         )}
       </View>
 
       <Pressable
         accessibilityRole="search"
-        accessibilityLabel="Tìm dịch vụ"
+        accessibilityLabel={t('homeHeader.tim_dich_vu')}
         onPress={() => router.push({ pathname: '/explore', params: { focus: '1', t: String(Date.now()) } })}
         style={styles.search}>
         <Ionicons name="search" size={18} color={colors.muted} />
-        <Text style={styles.searchText}>Bạn cần dịch vụ gì hôm nay?</Text>
+        <Text style={styles.searchText}>{t('homeHeader.ban_can_dich_vu_gi')}</Text>
       </Pressable>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   band: {
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.lg,
@@ -81,4 +85,4 @@ const styles = StyleSheet.create({
     minHeight: 46,
   },
   searchText: { color: colors.muted, fontSize: font.body },
-});
+}));

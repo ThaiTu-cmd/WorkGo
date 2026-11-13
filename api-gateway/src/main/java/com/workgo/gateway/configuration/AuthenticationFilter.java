@@ -22,6 +22,7 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -78,6 +79,15 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        if (isCommunicationInternalEndpoint(exchange.getRequest())) {
+            exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+            return exchange.getResponse().setComplete();
+        }
+
+        if (isCommunicationWebSocketHandshake(exchange.getRequest())) {
+            return chain.filter(exchange);
+        }
+
         if(isPublicEndpoint(exchange.getRequest())){
             return chain.filter(exchange);
         }
@@ -88,7 +98,6 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         }
 
         String token = authHeader.getFirst().replace("Bearer ", "");
-        log.info("Token: {}", token);
 
         // Only a failed/invalid introspection means "unauthenticated". Errors from the
         // downstream service (e.g. it is down) must not become 401, or clients drop
@@ -105,6 +114,21 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     @Override
     public int getOrder() {
         return -1;
+    }
+
+    private boolean isCommunicationInternalEndpoint(ServerHttpRequest request) {
+        String path = StringUtils.cleanPath(request.getURI().getPath()
+                .replaceAll(";[^/]*", "").replaceAll("/{2,}", "/"));
+        String internalPath = apiPrefix + "/communication/internal";
+        return path.equals(internalPath) || path.startsWith(internalPath + "/");
+    }
+
+    private boolean isCommunicationWebSocketHandshake(ServerHttpRequest request) {
+        return HttpMethod.GET.equals(request.getMethod())
+                && (apiPrefix + "/communication/ws").equals(request.getURI().getRawPath())
+                && "websocket".equalsIgnoreCase(request.getHeaders().getUpgrade())
+                && request.getHeaders().getConnection().stream()
+                        .anyMatch(value -> "upgrade".equalsIgnoreCase(value));
     }
 
     private boolean isPublicEndpoint(ServerHttpRequest request){

@@ -1,4 +1,5 @@
 server:
+  address: ${COMMUNICATION_BIND_ADDRESS:127.0.0.1}
   port: ${COMMUNICATION_PORT:8086}
   servlet:
     context-path: /communication
@@ -8,5 +9,20 @@ spring:
     name: communication-service
   data:
     mongodb:
-      uri: ${COMMUNICATION_MONGODB_URI:mongodb://localhost:${COMMUNICATION_DB_PORT:27017}/${COMMUNICATION_DB:communication_db}}
+      uri: ${COMMUNICATION_MONGODB_URI:mongodb://localhost:${COMMUNICATION_DB_PORT:27017}/${COMMUNICATION_DB:communication_db}?replicaSet=rs0&directConnection=true}
       auto-index-creation: ${COMMUNICATION_AUTO_INDEX_CREATION:false}
+
+app:
+  internal-api-key: ${INTERNAL_API_KEY:}
+  attachments:
+    max-count-per-message: ${COMMUNICATION_MAX_ATTACHMENTS:10}
+    max-file-size-bytes: ${COMMUNICATION_MAX_FILE_SIZE_BYTES:20971520}
+    max-total-size-bytes: ${COMMUNICATION_MAX_TOTAL_SIZE_BYTES:104857600}
+  clients:
+    connect-timeout-millis: ${COMMUNICATION_CLIENT_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-millis: ${COMMUNICATION_CLIENT_READ_TIMEOUT_MS:5000}
+  services:
+    identity: ${IDENTITY_SERVICE_URL:http://localhost:8081/identity}
+    catalog: ${CATALOG_SERVICE_URL:http://localhost:8082/catalog}
+    order: ${ORDER_SERVICE_URL:http://localhost:8083/order}
+    job: ${JOB_SERVICE_URL:http://localhost:8085/job}

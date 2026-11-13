@@ -20,13 +20,17 @@ public interface ProposalRepository extends JpaRepository<Proposal, UUID> {
     Optional<Proposal> findLockedById(@Param("id") UUID id);
     // Read FK values before materializing the composite Application association. A hidden parent
     // must produce a controlled 404, rather than a Hibernate proxy resolution exception.
-    @Query("SELECT p.job.jobId AS jobId, p.application.applicationId AS applicationId FROM Proposal p "
+    @Query("SELECT p.job.jobId AS jobId, p.application.applicationId AS applicationId, "
+            + "p.job.clientId AS clientId, p.application.providerId AS providerId, p.status AS status FROM Proposal p "
             + "WHERE p.proposalId = :proposalId")
     Optional<SourceIds> findSourceIds(@Param("proposalId") UUID proposalId);
 
     interface SourceIds {
         UUID getJobId();
         UUID getApplicationId();
+        UUID getClientId();
+        UUID getProviderId();
+        ProposalStatus getStatus();
     }
 
     List<Proposal> findByJob_JobId(UUID jobId);

@@ -63,6 +63,7 @@ public class ApplicationService {
                 Pages.request(page, size, sort, Set.of("createdAt", "status"))).map(this::dto));
     }
 
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
     public ProviderProfileResponse eligible(UUID providerId) {
         ProviderProfileResponse profile = profile(providerId);
         if (!"ACTIVE".equals(profile.getUserStatus()) || !profile.isAcceptingOrders()) throw new AppException(ErrorCode.PROVIDER_NOT_ACTIVE);

@@ -17,7 +17,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +35,7 @@ public class ProposalService {
     private final ObjectMapper json;
     private final JobAccess access;
     private final TokenUtils token;
+    private final PlatformTransactionManager transactions;
     @Value("${app.proposals.accept-enabled:false}") private boolean acceptEnabled;
 
     @Transactional
@@ -70,8 +75,21 @@ public class ProposalService {
         return mapper.toDto(proposal);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public ProposalAcceptanceDto accept(UUID id) {
+        // Scalar projection keeps preflight reads out of the persistence context used for locking.
+        var ids = proposals.findSourceIds(id).orElseThrow(() -> new AppException(ErrorCode.PROPOSAL_NOT_FOUND));
+        access.role("ROLE_CLIENT");
+        if (!ids.getClientId().equals(token.getCurrentUserId())) throw new AccessDeniedException("Job owner required");
+        if (!acceptEnabled) throw new AppException(ErrorCode.ACCEPTANCE_DISABLED);
+        UUID providerUserId = ids.getStatus() == ProposalStatus.ACCEPTED
+                ? null : applicationService.eligible(ids.getProviderId()).getUserId();
+        TransactionTemplate tx = new TransactionTemplate(transactions);
+        tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        return tx.execute(status -> acceptLocked(id, ids.getProviderId(), providerUserId));
+    }
+
+    private ProposalAcceptanceDto acceptLocked(UUID id, UUID providerId, UUID providerUserId) {
         Locked source = lock(id);
         access.owner(source.job());
         if (!acceptEnabled) throw new AppException(ErrorCode.ACCEPTANCE_DISABLED);
@@ -82,8 +100,9 @@ public class ProposalService {
         pendingApplication(source.app());
         if (p.getExpiresAt() != null && !p.getExpiresAt().isAfter(Instant.now())) throw new AppException(ErrorCode.PROPOSAL_EXPIRED);
         if (source.job().getExecutionType() != ExecutionType.DIGITAL) throw new AppException(ErrorCode.UNSUPPORTED_EXECUTION_TYPE);
-        var profile = applicationService.eligible(source.app().getProviderId());
-        if (profile.getUserId().equals(source.job().getClientId())) throw new AppException(ErrorCode.CANNOT_APPLY_OWN_JOB);
+        if (!providerId.equals(source.app().getProviderId()) || providerUserId == null)
+            throw new AppException(ErrorCode.APPLICATION_NOT_VALID);
+        if (providerUserId.equals(source.job().getClientId())) throw new AppException(ErrorCode.CANNOT_APPLY_OWN_JOB);
         p.setStatus(ProposalStatus.ACCEPTED);
         source.app().setStatus(ApplicationStatus.ACCEPTED);
         source.job().setStatus(JobStatus.CLOSED);

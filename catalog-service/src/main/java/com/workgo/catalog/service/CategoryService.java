@@ -21,6 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import com.workgo.catalog.utils.TokenUtils;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -31,6 +32,7 @@ public class CategoryService {
 
     CategoryRepository categoryRepository;
     CategoryMapper categoryMapper;
+    TokenUtils tokenUtils;
 
     public CategoryCreationResponse createCategory(CategoryCreationRequest request){
 
@@ -167,9 +169,7 @@ public class CategoryService {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
 
-       int mark = Instant.now().getNano() * 1000;
-
-       category.setIsDeleted(mark);
+       category.setIsDeleted(tokenUtils.createDeletedMark());
        categoryRepository.save(category);
 
     }

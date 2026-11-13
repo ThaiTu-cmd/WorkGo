@@ -14,7 +14,7 @@ let providerToken = '';
 let adminToken = '';
 let providerId = '';
 let categoryId = '';
-const created = { services: [], categories: [] };
+const created = { services: [], categories: [], rules: [] };
 
 function queryCatalogDb(sql) {
   const cmd = `docker exec catalog-postgres psql -U postgres -d catalog_db -t -A -c "${sql.replace(/"/g, '\\"')}"`;
@@ -80,6 +80,9 @@ test.before(async () => {
 });
 
 test.after(async () => {
+  // Rules first: an ACTIVE rule left on a deleted service stops catalog-service
+  // from starting (slot generation at startup reads its service).
+  for (const id of created.rules) await api('DELETE', `/catalog/rules/${id}`, { token: providerToken });
   for (const id of created.services) {
     try {
       queryCatalogDb(`DELETE FROM booking_slots WHERE service_id = '${id}'`);
@@ -149,6 +152,7 @@ test('rule create generates slots, update keeps booked ones, delete removes open
   const createdRule = await api('POST', `/catalog/rules/services/${id}`, { token: providerToken, body: rule });
   assert.equal(createdRule.code, 1000);
   const ruleId = createdRule.result.availableRuleId;
+  created.rules.push(ruleId);
 
   const first = await slotsOf(id, window);
   assert.equal(first.length, 2);
@@ -183,7 +187,9 @@ test('slots are sorted by startedAt and honour from/to', async () => {
   const id = await createService('ONSITE', `E2E Window ${ts}`);
   const day = tomorrowVn();
   const rule = { status: 'ACTIVE', slotDurationMinute: 60, dayOfWeek: day.dayOfWeek, startTime: ruleTime(8), endTime: ruleTime(12) };
-  assert.equal((await api('POST', `/catalog/rules/services/${id}`, { token: providerToken, body: rule })).code, 1000);
+  const createdRule = await api('POST', `/catalog/rules/services/${id}`, { token: providerToken, body: rule });
+  assert.equal(createdRule.code, 1000);
+  created.rules.push(createdRule.result.availableRuleId);
 
   const all = await slotsOf(id);
   const starts = all.map((s) => Date.parse(s.startedAt));

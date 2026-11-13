@@ -17,6 +17,7 @@ import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
@@ -29,6 +30,7 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -38,6 +40,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
@@ -101,6 +104,9 @@ public class BookingSlotService {
 
         com.workgo.catalog.entity.Service service = rule.getService();
 
+        // The service was deleted (soft delete hides it): nothing to generate.
+        if(service == null) return;
+
         Set<Instant> existedStarts = bookingSlotRepository
                 .findAllByService_ServiceIdAndStartedAtBetween(service.getServiceId(), fromTime, toTime)
                 .stream()
@@ -108,8 +114,10 @@ public class BookingSlotService {
                 .collect(Collectors.toSet());
 
         DayOfWeek dayOfWeek = DayOfWeek.of(rule.getDayOfWeek() - 1);
-        int startMinute = rule.getStartTime().atZone(SLOT_ZONE).toLocalTime().toSecondOfDay() / 60;
-        int endMinute = rule.getEndTime().atZone(SLOT_ZONE).toLocalTime().toSecondOfDay() / 60;
+        LocalTime startOfDay = rule.getStartTime().atZone(SLOT_ZONE).toLocalTime();
+        // From the instants, not the clock times: a rule ending at 24:00 has an end
+        // clock time of 00:00, which is before its start.
+        long windowMinutes = Duration.between(rule.getStartTime(), rule.getEndTime()).toMinutes();
         int duration = rule.getSlotDurationMinute();
 
         Instant now = Instant.now();
@@ -118,9 +126,10 @@ public class BookingSlotService {
         fromDate.datesUntil(toDate)
                 .filter(date -> date.getDayOfWeek() == dayOfWeek)
                 .forEach(date -> {
-                    for(int minute = startMinute; minute + duration <= endMinute; minute += duration){
+                    LocalDateTime windowStart = date.atTime(startOfDay);
+                    for(long offset = 0; offset + duration <= windowMinutes; offset += duration){
 
-                        Instant startedAt = date.atTime(LocalTime.ofSecondOfDay(minute * 60L))
+                        Instant startedAt = windowStart.plusMinutes(offset)
                                 .atZone(SLOT_ZONE)
                                 .toInstant();
 
@@ -154,19 +163,33 @@ public class BookingSlotService {
                 ruleId, BookingStatus.AVAILABLE, Instant.now());
     }
 
+    // Open slots of a deleted service; held and booked ones stay with their orders.
+    @Transactional
+    public void removeUpcomingSlotsOfService(UUID serviceId){
+
+        bookingSlotRepository.deleteAllByService_ServiceIdAndStatusAndStartedAtAfter(
+                serviceId, BookingStatus.AVAILABLE, Instant.now());
+    }
+
     @Transactional
     @EventListener(ApplicationReadyEvent.class)
     @Scheduled(cron = "0 0 1 * * *", zone = "Asia/Ho_Chi_Minh")
     public void generateUpcomingSlots(){
 
-        availableRuleRepository.findAllByStatus(RuleStatus.ACTIVE)
-                .forEach(this::generateSlotsForRule);
+        // One bad rule must not stop startup or the nightly run for every other service.
+        for(AvailableRule rule : availableRuleRepository.findAllByStatus(RuleStatus.ACTIVE)){
+            if(rule.getService() == null){
+                log.warn("Skipping rule {}: its service was deleted", rule.getAvailableRuleId());
+                continue;
+            }
+            generateSlotsForRule(rule);
+        }
     }
 
     @Transactional
     public BookingSlotResponse holdSlot(UUID slotId, UUID orderId){
 
-        BookingSlot bookingSlot = bookingSlotRepository.findById(slotId)
+        BookingSlot bookingSlot = bookingSlotRepository.findByIdForUpdate(slotId)
                 .orElseThrow(() -> new AppException(ErrorCode.SLOT_NOT_EXISTED));
 
         Instant now = Instant.now();
@@ -196,7 +219,7 @@ public class BookingSlotService {
     @Transactional
     public BookingSlotResponse confirmSlot(UUID slotId, UUID orderId){
 
-        BookingSlot bookingSlot = bookingSlotRepository.findById(slotId)
+        BookingSlot bookingSlot = bookingSlotRepository.findByIdForUpdate(slotId)
                 .orElseThrow(() -> new AppException(ErrorCode.SLOT_NOT_EXISTED));
 
         if(bookingSlot.getStatus() != BookingStatus.HELD
@@ -216,7 +239,7 @@ public class BookingSlotService {
     @Transactional
     public BookingSlotResponse releaseSlot(UUID slotId, UUID orderId){
 
-        BookingSlot bookingSlot = bookingSlotRepository.findById(slotId)
+        BookingSlot bookingSlot = bookingSlotRepository.findByIdForUpdate(slotId)
                 .orElseThrow(() -> new AppException(ErrorCode.SLOT_NOT_EXISTED));
 
         if(bookingSlot.getStatus() == BookingStatus.AVAILABLE){

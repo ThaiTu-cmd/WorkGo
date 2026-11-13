@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "npm run test:unit",
     "test:unit": "node --test tests/backend-api-parity.test.mjs tests/backend-adapters.test.mjs tests/service-form-sync.test.mjs tests/catalog-fixes.test.mjs tests/i18n-translator-scope.test.mjs tests/trung-pages.test.mjs tests/qa-url-navigation.test.mjs",
-    "test:e2e": "node --test --test-concurrency=1 tests/auth-flow-e2e.test.mjs tests/full-lifecycle-e2e.test.mjs tests/catalog-pr52-e2e.test.mjs tests/qa-cycle2-features.test.mjs tests/qa-edge-cases.test.mjs",
+    "test:e2e": "node --test --test-concurrency=1 tests/auth-flow-e2e.test.mjs tests/full-lifecycle-e2e.test.mjs tests/catalog-pr52-e2e.test.mjs tests/catalog-backend-fixes-e2e.test.mjs tests/qa-cycle2-features.test.mjs tests/qa-edge-cases.test.mjs",
     "test:all": "node --test tests/backend-api-parity.test.mjs tests/backend-adapters.test.mjs tests/service-form-sync.test.mjs tests/catalog-fixes.test.mjs tests/i18n-translator-scope.test.mjs tests/auth-flow-e2e.test.mjs tests/full-lifecycle-e2e.test.mjs tests/qa-cycle2-features.test.mjs tests/qa-edge-cases.test.mjs tests/trung-pages.test.mjs tests/qa-url-navigation.test.mjs",
     "audit:browser": "node ../scripts/qa-browser-matrix-audit.mjs"
   },

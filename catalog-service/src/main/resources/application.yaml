@@ -28,6 +28,7 @@ jwt:
   signerKey: ${JWT_SIGNER_KEY}
 
 app:
+  internal-key: ${INTERNAL_API_KEY:}
   service:
     identity:
       url: ${APP_SERVICE_IDENTITY_URL}

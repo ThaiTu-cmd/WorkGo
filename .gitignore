@@ -105,3 +105,7 @@ job-service/test/
 identity-service/src/test/
 order-service/src/test/
 .worktrees/
+
+# Local tests for communication-service
+communication-service/src/test/
+communication-service/test/

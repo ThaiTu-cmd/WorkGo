@@ -13,6 +13,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ProposalRepository extends JpaRepository<Proposal, UUID> {
+    boolean existsByJob_JobId(UUID jobId);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Proposal p where p.proposalId = :id")
+    Optional<Proposal> findLockedById(@Param("id") UUID id);
     // Read FK values before materializing the composite Application association. A hidden parent
     // must produce a controlled 404, rather than a Hibernate proxy resolution exception.
     @Query("SELECT p.job.jobId AS jobId, p.application.applicationId AS applicationId FROM Proposal p "

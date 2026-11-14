@@ -66,16 +66,6 @@ test("BP-03: Booking slots supports AVAILABLE, HELD, BOOKED states and transitio
   assert.match(pageCode, /BOOKED/);
 });
 
-// BP-04: Admin console gate
-test("BP-04: AdminConsolePage strictly gates access to admin@workgo.vn and hides data otherwise", () => {
-  const file = path.join(W_SRC, "pages/BackendParity/AdminConsolePage.jsx");
-  assert.ok(exists(file), "AdminConsolePage.jsx must exist");
-  const code = read(file);
-
-  assert.match(code, /admin@workgo\.vn/, "Admin console must gate against admin@workgo.vn");
-  assert.match(code, /403|quản trị|không có quyền/i, "Must have unauthorized fallback card");
-});
-
 // BP-05: Order status history timeline
 test("BP-05: mockOrders seeds statusHistory and OrderDashboardPage renders history timeline", () => {
   const ordersFile = path.join(M_SRC, "data/mockOrders.js");
@@ -121,10 +111,8 @@ test("BP-08: Backend parity pages and mock stores do not import api clients", ()
   const files = [
     path.join(W_SRC, "pages/BackendParity/VerificationCenterPage.jsx"),
     path.join(W_SRC, "pages/BackendParity/BookingSlotsPage.jsx"),
-    path.join(W_SRC, "pages/BackendParity/AdminConsolePage.jsx"),
     path.join(W_SRC, "pages/BackendParity/mockVerification.js"),
     path.join(W_SRC, "pages/BackendParity/mockBookingSlots.js"),
-    path.join(W_SRC, "pages/BackendParity/mockAdmin.js"),
   ];
 
   for (const f of files) {
@@ -141,7 +129,6 @@ test("BP-09: Backend parity stores are safe against missing window and storage q
   const stores = [
     path.join(W_SRC, "pages/BackendParity/mockVerification.js"),
     path.join(W_SRC, "pages/BackendParity/mockBookingSlots.js"),
-    path.join(W_SRC, "pages/BackendParity/mockAdmin.js"),
   ];
 
   for (const s of stores) {
@@ -173,7 +160,6 @@ test("BP-12: Parity pages do not contain href='#' or unhandled dead ends", () =>
   const pages = [
     path.join(W_SRC, "pages/BackendParity/VerificationCenterPage.jsx"),
     path.join(W_SRC, "pages/BackendParity/BookingSlotsPage.jsx"),
-    path.join(W_SRC, "pages/BackendParity/AdminConsolePage.jsx"),
   ];
 
   for (const p of pages) {

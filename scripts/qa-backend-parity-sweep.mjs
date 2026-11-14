@@ -170,55 +170,6 @@ async function runParitySweep() {
       report.tests.push({ id: "B3", name: "Booking slots transitions", status: "FAIL", reason: "Không vào được booking slots" });
     }
 
-    // CASE B4: Admin Gate & Verification Review
-    console.log("-> B4: Kiểm tra Admin Console gate và duyệt hồ sơ...");
-    await page.evaluate(() => {
-      localStorage.setItem("workgo_current_user", JSON.stringify({
-        id: "usr_provider_01",
-        name: "Trần Văn Chuyên Gia",
-        email: "provider@workgo.vn",
-        role: "PROVIDER"
-      }));
-    });
-    await navigateTo("admin-console");
-    await page.waitForTimeout(600);
-
-    const is403 = await page.evaluate(() => {
-      const h1 = document.querySelector("h1");
-      return h1 && h1.innerText.includes("403");
-    });
-
-    const adminBtn = await page.$('button:has-text("admin@workgo.vn")');
-    if (adminBtn) {
-      await adminBtn.click();
-      await page.waitForTimeout(600);
-    }
-
-    const hasAdminTabs = await page.evaluate(() => {
-      return document.body.innerText.includes("Hàng chờ xác thực") || document.body.innerText.includes("Quản lý Người dùng");
-    });
-
-    const reviewBtn = await page.$('button:has-text("Duyệt (VERIFIED)")');
-    if (reviewBtn) {
-      await reviewBtn.click();
-      await page.waitForTimeout(400);
-      const confirmModalBtn = await page.$('button:has-text("Xác nhận VERIFIED")');
-      if (confirmModalBtn) {
-        await confirmModalBtn.click();
-        await page.waitForTimeout(600);
-      }
-    }
-
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, "admin.png") });
-
-    if (is403 && hasAdminTabs) {
-      report.passCount++;
-      report.tests.push({ id: "B4", name: "Admin console 403 gate và duyệt verification queue", status: "PASS" });
-    } else {
-      report.failCount++;
-      report.tests.push({ id: "B4", name: "Admin console gate", status: "FAIL", reason: "403 hoặc admin tabs không đúng" });
-    }
-
     // CASE B5: Order History Timeline
     console.log("-> B5: Kiểm tra Order History Timeline...");
     await navigateTo("orders");

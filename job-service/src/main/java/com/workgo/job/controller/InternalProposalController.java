@@ -13,6 +13,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/internal/proposals")
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("hasAuthority('INTERNAL_SERVICE')")
 public class InternalProposalController {
     private final ProposalSnapshotService snapshots;
 

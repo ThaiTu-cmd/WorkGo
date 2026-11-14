@@ -17,6 +17,9 @@ import java.util.Objects;
 import java.util.UUID;
 
 public interface JobRepository extends JpaRepository<Job, UUID>, JpaSpecificationExecutor<Job> {
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select j from Job j where j.jobId = :id")
+    java.util.Optional<Job> findLockedById(@org.springframework.data.repository.query.Param("id") UUID id);
     Page<Job> findByClientId(UUID clientId, Pageable pageable);
 
     /** Public jobs at the caller's clock instant; budget filters use inclusive interval overlap. */

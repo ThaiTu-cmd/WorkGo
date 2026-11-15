@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.util.List;
 import java.util.UUID;
+import java.time.Clock;
 
 @Configuration
 @EnableTransactionManagement
@@ -21,7 +22,11 @@ public class MongoConfig {
     }
 
     @Bean MongoTransactionManager mongoTransactionManager(MongoDatabaseFactory factory) {
-        return new MongoTransactionManager(factory);
+        return new RetryingMongoTransactionManager(factory);
+    }
+
+    @Bean Clock communicationClock() {
+        return Clock.systemUTC();
     }
 
     @WritingConverter

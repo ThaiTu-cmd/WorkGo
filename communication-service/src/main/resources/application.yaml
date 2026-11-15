@@ -14,6 +14,12 @@ spring:
 
 app:
   internal-api-key: ${INTERNAL_API_KEY:}
+  http:
+    max-json-body-bytes: ${COMMUNICATION_MAX_JSON_BODY_BYTES:65536}
+    send-rate-limit:
+      max-requests: ${COMMUNICATION_SEND_MAX_REQUESTS:60}
+      window-millis: ${COMMUNICATION_SEND_WINDOW_MS:60000}
+      max-users: ${COMMUNICATION_SEND_MAX_USERS:10000}
   websocket:
     allowed-origins: ${COMMUNICATION_WS_ALLOWED_ORIGINS:http://localhost:5173}
     connect-timeout-ms: ${COMMUNICATION_WS_CONNECT_TIMEOUT_MS:10000}

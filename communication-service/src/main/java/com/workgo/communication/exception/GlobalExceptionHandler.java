@@ -2,6 +2,8 @@ package com.workgo.communication.exception;
 
 import com.workgo.communication.dto.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -15,6 +17,12 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(DataAccessResourceFailureException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDatabaseUnavailable(DataAccessResourceFailureException exception) {
+        log.error("Communication database unavailable: {}", exception.getClass().getName());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body(ErrorCode.UNCATEGORIZED_EXCEPTION));
+    }
+
     @ExceptionHandler(AppException.class)
     public ResponseEntity<ApiResponse<Void>> handleAppException(AppException exception) {
         return response(exception.getErrorCode());

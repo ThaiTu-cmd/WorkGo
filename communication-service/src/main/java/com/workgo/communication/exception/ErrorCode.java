@@ -23,7 +23,8 @@ public enum ErrorCode {
     INVALID_ATTACHMENT_METADATA(4008, "Thông tin tệp đính kèm không hợp lệ hoặc vượt quá giới hạn", HttpStatus.BAD_REQUEST),
     NOTIFICATION_NOT_FOUND(4009, "Không tìm thấy thông báo", HttpStatus.NOT_FOUND),
     INVALID_STATUS_TRANSITION(4010, "Chuyển đổi trạng thái hội thoại không hợp lệ", HttpStatus.BAD_REQUEST),
-    IDEMPOTENCY_CONFLICT(4011, "Khóa chống trùng đã được dùng với nội dung khác", HttpStatus.CONFLICT);
+    IDEMPOTENCY_CONFLICT(4011, "Khóa chống trùng đã được dùng với nội dung khác", HttpStatus.CONFLICT),
+    SEND_RATE_LIMITED(4012, "Bạn gửi tin nhắn quá nhanh, vui lòng thử lại sau", HttpStatus.TOO_MANY_REQUESTS);
 
     private final int code;
     private final String message;

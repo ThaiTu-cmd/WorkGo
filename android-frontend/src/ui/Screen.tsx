@@ -1,7 +1,8 @@
+import { useColorScheme } from 'react-native';
 import { RefreshControl, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
-import { colors, spacing } from './theme';
+import { spacing } from './theme';
 
 type Props = {
   children: React.ReactNode;
@@ -12,11 +13,12 @@ type Props = {
   contentStyle?: ViewStyle;
 };
 
-// Safe-area page with optional scrolling and pull-to-refresh. Stack screens
-// with a header pass edges={['bottom']}.
 export function Screen({ children, scroll = true, refreshing = false, onRefresh, edges = ['top'], contentStyle }: Props) {
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
+  const bg = isDark ? '#121212' : '#f9fafb';
   return (
-    <SafeAreaView edges={edges} style={styles.safe}>
+    <SafeAreaView edges={edges} style={[styles.safe, { backgroundColor: bg }]}>
       {scroll ? (
         <ScrollView
           contentContainerStyle={[styles.content, contentStyle]}
@@ -32,7 +34,7 @@ export function Screen({ children, scroll = true, refreshing = false, onRefresh,
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
+  safe: { flex: 1 },
   content: { padding: spacing.lg, gap: spacing.lg },
   fill: { flex: 1 },
 });

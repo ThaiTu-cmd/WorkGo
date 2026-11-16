@@ -10,7 +10,7 @@ export function sanitizeText(s: unknown): string {
 
 export const emailSchema = z
   .string()
-  .transform((v) => stripHtml(v))
+  .transform((v) => stripHtml(v).trim())
   .pipe(z.string().email("Email chưa đúng định dạng!"));
 
 export const passwordSchema = z
@@ -33,6 +33,13 @@ export const userNameSchema = z
       .regex(/^[A-Za-z0-9._-]+$/, "Tên đăng nhập chỉ gồm chữ, số, dấu . _ -")
   );
 
+export const loginIdentifierSchema = z
+  .string()
+  .transform((v) => stripHtml(v).trim())
+  .pipe(
+    z.string().min(3, "Tên đăng nhập hoặc Email tối thiểu 3 ký tự!")
+  );
+
 export const phoneSchema = z
   .string()
   .transform((v) => stripHtml(v).replace(/\s+/g, ""))
@@ -46,9 +53,9 @@ export const registerSchema = z.object({
   password: passwordSchema,
 });
 
-// identity-service authenticates by userName (POST /auth/token).
+// identity-service authenticates by userName or email (POST /auth/token).
 export const loginSchema = z.object({
-  userName: userNameSchema,
+  userName: loginIdentifierSchema,
   password: passwordSchema,
 });
 

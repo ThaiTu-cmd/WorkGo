@@ -5,7 +5,7 @@
   margin: 0 auto;
   padding: 24px 20px 60px;
   box-sizing: border-box;
-  color: #1e293b;
+  color: var(--wg-text);
 }
 
 /* Breadcrumb */
@@ -43,7 +43,7 @@
 }
 
 .breadcrumbCurrent {
-  color: #334155;
+  color: var(--wg-text-secondary);
   font-weight: 600;
   padding: 4px 0;
 }
@@ -58,7 +58,7 @@
 .title {
   font-size: 1.875rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 0 0 8px;
   line-height: 1.3;
 }
@@ -84,7 +84,7 @@
 }
 
 .card {
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 24px;
@@ -94,7 +94,7 @@
 .sectionHeading {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 0 0 20px;
 }
 
@@ -114,7 +114,7 @@
 .label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #334155;
+  color: var(--wg-text-secondary);
 }
 
 .input,
@@ -125,8 +125,8 @@
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 0.95rem;
-  color: #1e293b;
-  background-color: #ffffff;
+  color: var(--wg-text);
+  background-color: var(--wg-surface);
   box-sizing: border-box;
   font-family: inherit;
   min-height: 44px;
@@ -161,6 +161,17 @@
   margin-bottom: 16px;
 }
 
+.alertWarning {
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309;
+  padding: 12px 14px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
 /* Verifications List */
 .verifList {
   display: flex;
@@ -172,7 +183,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 18px;
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
 }
 
 .verifHeader {
@@ -199,8 +210,8 @@
 
 .verifBadgeType {
   font-size: 0.75rem;
-  background-color: #e2e8f0;
-  color: #334155;
+  background-color: var(--wg-surface-alt);
+  color: var(--wg-text-secondary);
   padding: 2px 8px;
   border-radius: 4px;
   font-weight: 600;
@@ -208,7 +219,7 @@
 
 .verifDocTitle {
   font-size: 0.95rem;
-  color: #0f172a;
+  color: var(--wg-text);
 }
 
 /* Badges */
@@ -266,7 +277,7 @@
 }
 
 .timelineVal {
-  color: #1e293b;
+  color: var(--wg-text);
   font-weight: 500;
 }
 
@@ -296,7 +307,7 @@
 }
 
 .btnWithdraw:hover {
-  background-color: #fef2f2;
+  background-color: rgba(239, 68, 68, 0.12);
   border-color: #fca5a5;
 }
 
@@ -322,7 +333,7 @@
   max-width: 480px;
   margin: 40px auto;
   text-align: center;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 40px 24px;
@@ -337,7 +348,7 @@
 .gateTitle {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 0 0 12px;
 }
 
@@ -386,8 +397,8 @@
 }
 
 .btnSecondary {
-  background-color: #f1f5f9;
-  color: #1e293b;
+  background-color: var(--wg-surface);
+  color: var(--wg-text);
   border: 1px solid #cbd5e1;
   padding: 10px 20px;
   font-size: 0.95rem;
@@ -401,5 +412,5 @@
 }
 
 .btnSecondary:hover {
-  background-color: #e2e8f0;
+  background-color: var(--wg-surface-alt);
 }

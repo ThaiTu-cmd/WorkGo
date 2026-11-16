@@ -1,5 +1,6 @@
 import type { Addon, Address, Package } from '@/api/adapters';
 import type { ExecutionType, OrderCreationRequest } from '@/api/types';
+import { translate } from '@/i18n';
 
 // Shown to the client before ordering; the server computes the real price.
 export function estimateTotal(pkg: Package | null, addons: Addon[], selectedAddonIds: string[]): number {
@@ -22,7 +23,7 @@ export type CheckoutResult = { ok: true; body: OrderCreationRequest } | { ok: fa
 // order-service requires bookingSlotId + address for ONSITE orders and
 // rejects them otherwise; catch every missing piece before the request.
 export function validateCheckout(input: CheckoutInput): CheckoutResult {
-  if (!input.packageId) return { ok: false, error: 'Vui lòng chọn gói dịch vụ.' };
+  if (!input.packageId) return { ok: false, error: translate('checkout.vui_long_chon_goi_dich') };
   const body: OrderCreationRequest = {
     serviceId: input.service.serviceId,
     packageId: input.packageId,
@@ -30,9 +31,9 @@ export function validateCheckout(input: CheckoutInput): CheckoutResult {
   };
   if (input.service.executionType !== 'ONSITE') return { ok: true, body };
 
-  if (input.availableSlotCount === 0) return { ok: false, error: 'Dịch vụ chưa có lịch trống. Vui lòng quay lại sau.' };
-  if (!input.slotId) return { ok: false, error: 'Vui lòng chọn thời gian.' };
-  if (input.addressCount === 0) return { ok: false, error: 'Bạn chưa có địa chỉ. Hãy thêm địa chỉ trong Tài khoản.' };
-  if (!input.address) return { ok: false, error: 'Vui lòng chọn địa chỉ.' };
+  if (input.availableSlotCount === 0) return { ok: false, error: translate('checkout.dich_vu_chua_co_lich') };
+  if (!input.slotId) return { ok: false, error: translate('checkout.vui_long_chon_thoi_gian') };
+  if (input.addressCount === 0) return { ok: false, error: translate('checkout.ban_chua_co_dia_chi') };
+  if (!input.address) return { ok: false, error: translate('checkout.vui_long_chon_dia_chi') };
   return { ok: true, body: { ...body, bookingSlotId: input.slotId, address: input.address.detail } };
 }

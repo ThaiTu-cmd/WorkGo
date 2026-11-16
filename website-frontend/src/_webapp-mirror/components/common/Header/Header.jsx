@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Menu,
   X,
@@ -6,7 +7,7 @@ import {
   Sparkles,
   LayoutGrid,
   Package,
-  Workflow,
+  Wallet,
   LogIn,
   UserPlus,
   House,
@@ -18,8 +19,12 @@ import { useFocusTrap } from '../../../hooks/useFocusTrap';
 import { useAuthToken } from '../../../hooks/useAuthToken';
 import { authApi } from '../../../api/authApi';
 import AccountMenu, { accountGroupsFor, openAccountItem } from './AccountMenu';
+import ThemeToggle from '@/components/common/ThemeToggle';
+import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) {
+  const t = useTranslations('header');
+  const tMisc = useTranslations('misc');
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [miniSearchQuery, setMiniSearchQuery] = useState('');
@@ -80,6 +85,12 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
     }
   };
 
+  const handleLogoClick = (e) => {
+    e.preventDefault();
+    // Signed-in users land on the catalog; guests see the marketing landing.
+    if (onNavigate) onNavigate(isLoggedIn ? 'catalog' : 'home');
+  };
+
   return (
     <header className={`${styles.header} ${isScrolled || activePage !== 'home' ? styles.headerScrolled : ''}`}>
       <div className={`container ${styles.headerContainer}`}>
@@ -88,10 +99,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
           <a
             href="#"
             className={styles.logo}
-            onClick={(e) => {
-              e.preventDefault();
-              onNavigate && onNavigate('home');
-            }}
+            onClick={handleLogoClick}
           >
             <span className={styles.logoText}>
               <span className={styles.logoWork}>Work</span>
@@ -99,23 +107,22 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
             </span>
           </a>
 
-          {/* Compact search in navbar */}
-          {(isScrolled || activePage !== 'home') && (
-            <form onSubmit={handleMiniSearchSubmit} className={styles.navSearch}>
+          {/* Compact search in navbar — always present on wide screens so the
+              bar never reflows when the scroll state changes. */}
+          <form onSubmit={handleMiniSearchSubmit} className={styles.navSearch}>
               <Search size={16} className={styles.navSearchIcon} />
               <input
                 type="text"
                 value={miniSearchQuery}
                 onChange={(e) => setMiniSearchQuery(e.target.value)}
-                placeholder="Bạn muốn tìm dịch vụ gì?"
+                placeholder={t('searchPlaceholder')}
                 className={styles.navSearchInput}
               />
-              <button className={styles.navSearchBtn} type="submit" aria-label="Tìm kiếm">
+              <button className={styles.navSearchBtn} type="submit" aria-label={t('searchAria')}>
                 <Search size={15} />
               </button>
             </form>
-          )}
-        </div>
+          </div>
 
         {/* Center/Right Desktop Navigation */}
         <nav className={styles.desktopNav}>
@@ -125,7 +132,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
             onClick={() => onNavigate && onNavigate('catalog')}
           >
             <LayoutGrid size={18} aria-hidden="true" />
-            Danh mục
+            {t('navCatalog')}
           </button>
           <button
             type="button"
@@ -133,33 +140,30 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
             onClick={() => onNavigate && onNavigate('orders')}
           >
             <Package size={18} aria-hidden="true" />
-            Đơn hàng
+            {t('navOrders')}
           </button>
-          <a
-            href="#how-it-works"
-            className={styles.navLink}
-            onClick={(e) => {
-              if (activePage !== 'home') {
-                e.preventDefault();
-                onNavigate && onNavigate('home');
-              }
-            }}
-          >
-            <Workflow size={18} aria-hidden="true" />
-            Quy trình
-          </a>
           <button
             type="button"
-            className={`${styles.navLink} ${styles.highlightLink} ${activePage === 'my-services' ? styles.navLinkActive : ''}`}
+            className={`${styles.navLink} ${activePage === 'finance' ? styles.navLinkActive : ''}`}
+            onClick={() => onNavigate && onNavigate('finance')}
+          >
+            <Wallet size={18} aria-hidden="true" />
+            {t('navFinance')}
+          </button>
+          <button
+            type="button"
+            className={`${styles.navLink} ${activePage === 'my-services' ? styles.navLinkActive : ''}`}
             onClick={() => onNavigate && onNavigate('my-services')}
           >
-            <Sparkles size={18} className={styles.highlightIcon} aria-hidden="true" />
+            <Sparkles size={18} aria-hidden="true" />
             Provider
           </button>
         </nav>
 
         {/* Action Buttons */}
         <div className={styles.actionButtons}>
+          <LanguageSwitcher variant="pill" className={styles.headerLangSwitcher} />
+          <ThemeToggle className={styles.headerThemeToggle} />
           {isLoggedIn ? (
             <AccountMenu onNavigate={onNavigate} activePage={activePage} />
           ) : (
@@ -170,7 +174,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
                 onClick={() => onOpenAuth && onOpenAuth('login')}
               >
                 <LogIn size={18} aria-hidden="true" />
-                Đăng nhập
+                {t('signIn')}
               </button>
               <button
                 type="button"
@@ -178,7 +182,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
                 onClick={() => onOpenAuth && onOpenAuth('register')}
               >
                 <UserPlus size={18} aria-hidden="true" />
-                Đăng ký
+                {t('signUp')}
               </button>
             </>
           )}
@@ -199,11 +203,16 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
       {mobileMenuOpen && (
         <div className={styles.mobileDrawer} ref={drawerRef}>
           <div className={styles.mobileDrawerContent}>
+            <div className={styles.mobileDrawerControls}>
+              <LanguageSwitcher variant="pill" />
+              <ThemeToggle showLabel />
+            </div>
             {[
-              { key: 'catalog', icon: LayoutGrid, label: 'Danh mục' },
-              { key: 'home', icon: House, label: 'Trang chủ' },
-              { key: 'availability', icon: CalendarClock, label: 'Lịch rảnh' },
-              { key: 'orders', icon: Package, label: 'Đơn hàng' },
+              { key: 'catalog', icon: LayoutGrid, label: t('mobileCatalog') },
+              { key: 'home', icon: House, label: t('mobileHome') },
+              { key: 'finance', icon: Wallet, label: t('mobileFinance') },
+              { key: 'orders', icon: Package, label: t('mobileOrders') },
+              { key: 'availability', icon: CalendarClock, label: t('mobileAvailability') },
             ].map(({ key, icon: Icon, label }) => (
               <button
                 key={key}
@@ -219,25 +228,17 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
               </button>
             ))}
             <a
-              href="#how-it-works"
-              className={styles.mobileNavLink}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <Workflow size={18} aria-hidden="true" />
-              Quy trình
-            </a>
-            <a
               href="#cta"
               className={styles.mobileNavLink}
               onClick={() => setMobileMenuOpen(false)}
             >
               <Sparkles size={18} aria-hidden="true" />
-              Trở thành Provider
+              {t('becomeProvider')}
             </a>
 
             {isLoggedIn ? (
               <>
-                {accountGroupsFor(token).map((group) => (
+                {accountGroupsFor(token, tMisc).map((group) => (
                   <div key={group.title} className={styles.mobileGroup}>
                     <p className={styles.mobileGroupTitle}>{group.title}</p>
                     {/* "Đơn hàng của tôi" is already listed above in the drawer. */}
@@ -268,7 +269,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
                     }}
                   >
                     <LogOut size={18} aria-hidden="true" />
-                    Đăng xuất
+                    {t('logout')}
                   </button>
                 </div>
               </>
@@ -283,7 +284,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
                   }}
                 >
                   <LogIn size={18} aria-hidden="true" />
-                  Đăng nhập
+                  {t('signIn')}
                 </button>
                 <button
                   type="button"
@@ -294,7 +295,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
                   }}
                 >
                   <UserPlus size={18} aria-hidden="true" />
-                  Đăng ký miễn phí
+                  {t('registerFree')}
                 </button>
               </div>
             )}

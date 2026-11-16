@@ -14,7 +14,7 @@
 .sectionTitle {
   font-size: 1.35rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 0;
 }
 
@@ -29,7 +29,7 @@
   overflow-x: auto;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  background: #ffffff;
+  background: var(--wg-surface);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
@@ -43,7 +43,7 @@
 /* Headers */
 .comparisonTable th {
   padding: 20px 16px;
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   border-bottom: 2px solid #e2e8f0;
   vertical-align: top;
 }
@@ -51,7 +51,7 @@
 .thFeature {
   width: 32%;
   font-weight: 700;
-  color: #334155;
+  color: var(--wg-text-secondary);
   font-size: 0.95rem;
 }
 
@@ -63,7 +63,7 @@
 }
 
 .standardTh {
-  background-color: #f0fdf4;
+  background-color: var(--wg-primary-light);
 }
 
 .popularBadge {
@@ -85,7 +85,7 @@
   font-size: 0.82rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--wg-text-secondary);
   margin-top: 6px;
 }
 
@@ -99,7 +99,7 @@
 
 .pkgName {
   font-size: 0.8rem;
-  color: #475569;
+  color: var(--wg-text-secondary);
   font-weight: 500;
   line-height: 1.3;
 }
@@ -111,23 +111,23 @@
 }
 
 .altRow {
-  background-color: #fafbfc;
+  background-color: var(--wg-surface-alt);
 }
 
 .tdFeature {
   font-weight: 600;
-  color: #1e293b;
+  color: var(--wg-text);
 }
 
 .tdValue {
   text-align: center;
-  color: #475569;
+  color: var(--wg-text-secondary);
 }
 
 .cellText {
   font-size: 0.88rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--wg-text);
 }
 
 .iconCheck {
@@ -139,13 +139,13 @@
 }
 
 .activeCol {
-  background-color: #f0fdf4 !important;
+  background-color: var(--wg-primary-light) !important;
 }
 
 /* Footer Action Buttons */
 .comparisonTable tfoot td {
   padding: 20px 16px;
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   border-top: 2px solid #e2e8f0;
 }
 
@@ -153,9 +153,9 @@
   width: 100%;
   max-width: 150px;
   padding: 9px 12px;
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   border: 1px solid #cbd5e1;
-  color: #334155;
+  color: var(--wg-text-secondary);
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 700;
@@ -166,7 +166,7 @@
 .selectBtn:hover {
   border-color: #10b981;
   color: #059669;
-  background-color: #ecfdf5;
+  background-color: var(--wg-primary-light);
 }
 
 .primarySelectBtn {

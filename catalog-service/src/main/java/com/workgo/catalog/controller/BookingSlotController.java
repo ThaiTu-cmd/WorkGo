@@ -2,7 +2,6 @@ package com.workgo.catalog.controller;
 
 import com.workgo.catalog.dto.ApiResponse;
 import com.workgo.catalog.dto.PageResponse;
-import com.workgo.catalog.dto.request.SlotActionRequest;
 import com.workgo.catalog.dto.response.BookingSlotResponse;
 import com.workgo.catalog.exception.ErrorCode;
 import com.workgo.catalog.service.BookingSlotService;
@@ -39,48 +38,5 @@ public class BookingSlotController {
 
     }
 
-    @PostMapping("/{slotId}/hold")
-    ApiResponse<BookingSlotResponse> holdSlot(
-            @PathVariable UUID slotId,
-            @RequestBody SlotActionRequest request
-            ){
-
-        return ApiResponse.<BookingSlotResponse>builder()
-                .code(ErrorCode.SUCCESS.getCode())
-                .message(ErrorCode.SUCCESS.getMessage())
-                .result(bookingSlotService.holdSlot(slotId, request.getOrderId()))
-                .build();
-
-    }
-
-
-    @PostMapping("/{slotId}/confirm")
-    ApiResponse<BookingSlotResponse> confirmSlot(
-            @PathVariable UUID slotId,
-            @RequestBody SlotActionRequest request
-    ){
-
-        return ApiResponse.<BookingSlotResponse>builder()
-                .code(ErrorCode.SUCCESS.getCode())
-                .message(ErrorCode.SUCCESS.getMessage())
-                .result(bookingSlotService.confirmSlot(slotId, request.getOrderId()))
-                .build();
-
-    }
-
-    @PostMapping("/{slotId}/release")
-    ApiResponse<BookingSlotResponse> releaseSlot(
-            @PathVariable UUID slotId,
-            @RequestBody SlotActionRequest request
-    ){
-
-        return ApiResponse.<BookingSlotResponse>builder()
-                .code(ErrorCode.SUCCESS.getCode())
-                .message(ErrorCode.SUCCESS.getMessage())
-                .result(bookingSlotService.releaseSlot(slotId, request.getOrderId()))
-                .build();
-
-    }
-
-
+    // Hold, confirm and release are order-service only: see InternalBookingSlotController.
 }

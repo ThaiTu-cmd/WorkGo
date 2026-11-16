@@ -44,3 +44,19 @@ spring:
             - Path=${app.api-prefix}/job/**
           filters:
             - StripPrefix=2
+
+        - id: communication_websocket
+          uri: ${COMMUNICATION_WS_URL:ws://localhost:8086}
+          predicates:
+            - Path=${app.api-prefix}/communication/ws
+            - Method=GET
+            - Header=Upgrade, (?i)websocket
+          filters:
+            - StripPrefix=2
+
+        - id: communication_service
+          uri: ${COMMUNICATION_HTTP_URL:http://localhost:8086}
+          predicates:
+            - Path=${app.api-prefix}/communication/**
+          filters:
+            - StripPrefix=2

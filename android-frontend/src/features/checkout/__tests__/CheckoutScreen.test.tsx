@@ -57,13 +57,26 @@ test('shows the estimate for package + selected add-on', async () => {
   expect(screen.getByTestId('checkout-total')).toHaveTextContent('600.000 ₫');
 });
 
-test('on success navigates to /orders/<orderId>', async () => {
+test('on success goes to the payment screen, which starts the chosen option (MOCK in dev)', async () => {
   (useServiceDetail as jest.Mock).mockReturnValue(detail('DIGITAL'));
   (orderApi.createOrder as jest.Mock).mockResolvedValue({ result: { orderId: 'o9' } });
   await renderCheckout();
   await fireEvent.press(screen.getByRole('button', { name: 'Đặt dịch vụ' }));
-  await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ pathname: '/orders/[id]', params: { id: 'o9', role: 'CLIENT' } }));
+  await waitFor(() =>
+    expect(mockReplace).toHaveBeenCalledWith({ pathname: '/payment/[orderId]', params: { orderId: 'o9', option: 'mock', start: '1' } })
+  );
   expect(orderApi.createOrder).toHaveBeenCalledWith({ serviceId: 's1', packageId: 'pk1', addonIds: [] });
+});
+
+test('the payment option picked at checkout is passed on', async () => {
+  (useServiceDetail as jest.Mock).mockReturnValue(detail('DIGITAL'));
+  (orderApi.createOrder as jest.Mock).mockResolvedValue({ result: { orderId: 'o9' } });
+  await renderCheckout();
+  await fireEvent.press(screen.getByRole('radio', { name: 'Ví MoMo' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Đặt dịch vụ' }));
+  await waitFor(() =>
+    expect(mockReplace).toHaveBeenCalledWith({ pathname: '/payment/[orderId]', params: { orderId: 'o9', option: 'momo', start: '1' } })
+  );
 });
 
 test('ONSITE without slots shows the reason and never calls createOrder', async () => {
@@ -72,6 +85,7 @@ test('ONSITE without slots shows the reason and never calls createOrder', async 
   expect(await screen.findByText('Dịch vụ chưa có lịch trống. Vui lòng quay lại sau.')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Đặt dịch vụ' })).toBeDisabled();
   expect(orderApi.createOrder).not.toHaveBeenCalled();
+  expect(availabilityApi.getSlots).toHaveBeenCalledWith('s1', { size: 100 });
 });
 
 test('server error is shown and the user stays on checkout', async () => {

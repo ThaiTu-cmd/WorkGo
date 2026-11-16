@@ -1,5 +1,5 @@
 .card {
-  background: #ffffff;
+  background: var(--wg-surface);
   border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 16px;
   padding: 2rem;
@@ -16,7 +16,7 @@
   font-family: var(--font-heading, sans-serif);
   font-size: 1.25rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--wg-text);
   margin-bottom: 0.25rem;
 }
 
@@ -39,7 +39,7 @@
   display: block;
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin-bottom: 0.5rem;
 }
 
@@ -53,7 +53,7 @@
   border: 1.5px solid #e2e8f0;
   border-radius: 10px;
   font-size: 0.9375rem;
-  color: #1e293b;
+  color: var(--wg-text);
   outline: none;
 }
 
@@ -67,7 +67,7 @@
   overflow: hidden;
   border: 1px solid #e2e8f0;
   aspect-ratio: 16 / 9;
-  background: #f1f5f9;
+  background: var(--wg-surface);
   position: relative;
   margin-top: 0.75rem;
 }
@@ -110,7 +110,7 @@
   color: #64748b;
   cursor: pointer;
   transition: all 0.2s;
-  background: #f8fafc;
+  background: var(--wg-surface);
   overflow: hidden;
   position: relative;
 }
@@ -125,9 +125,54 @@
   object-fit: cover;
 }
 
+.galleryRemove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.7);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.galleryRemove:hover {
+  background: #dc2626;
+}
+
+.galleryAddRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.galleryAddBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0 1rem;
+  border: 1.5px solid #10b981;
+  border-radius: 10px;
+  background: var(--wg-surface);
+  color: #047857;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.galleryAddBtn:hover {
+  background: var(--wg-primary-light);
+}
+
 /* Right Card Preview */
 .livePreviewBox {
-  background: #ffffff;
+  background: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 16px;
   padding: 1.5rem;
@@ -160,7 +205,7 @@
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  background: #ffffff;
+  background: var(--wg-surface);
 }
 
 .mockCardImg {
@@ -191,13 +236,13 @@
 .mockPname {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--wg-text);
 }
 
 .mockTitle {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   line-height: 1.35;
   margin-bottom: 0.5rem;
   display: -webkit-box;
@@ -228,7 +273,7 @@
 .mockPriceVal {
   font-family: var(--font-heading, sans-serif);
   font-weight: 800;
-  color: #0f172a;
+  color: var(--wg-text);
   font-size: 0.9375rem;
 }
 

@@ -1,36 +1,39 @@
 import { Image } from 'expo-image';
 import * as React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { errorMessage } from '@/api/errors';
 import { phaseOf } from '@/api/evidenceApi';
 import type { EvidenceDto } from '@/api/types';
 import { formatDateTime } from '@/lib/format';
 import { Lightbox } from '@/ui/Lightbox';
-import { colors, font, radius, Skeleton, spacing } from '@/ui';
+import { font, makeStyles, radius, Skeleton, spacing } from '@/ui';
 
 import { useEvidence } from './hooks';
+import { useT } from '@/i18n';
 
 export function EvidenceGrid({ orderId, footer }: { orderId: string; footer?: React.ReactNode }) {
+  const t = useT();
+  const styles = useStyles();
   const evidence = useEvidence(orderId, true);
   const [open, setOpen] = React.useState<EvidenceDto | null>(null);
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.section}>Bằng chứng công việc</Text>
+      <Text style={styles.section}>{t('evidenceGrid.bang_chung_cong_viec')}</Text>
       {evidence.isPending ? (
         <Skeleton height={96} />
       ) : evidence.isError ? (
         <Text style={styles.muted}>{errorMessage(evidence.error)}</Text>
       ) : evidence.data.length === 0 ? (
-        <Text style={styles.muted}>Chưa có ảnh bằng chứng.</Text>
+        <Text style={styles.muted}>{t('evidenceGrid.chua_co_anh_bang_chung')}</Text>
       ) : (
         <View style={styles.grid}>
           {evidence.data.map((e) => (
             <Pressable
               key={e.workEvidenceId}
               accessibilityRole="imagebutton"
-              accessibilityLabel={`Bằng chứng ${phaseOf(e.phase).label}`}
+              accessibilityLabel={t('evidenceGrid.bang_chung', { p0: phaseOf(e.phase).label })}
               onPress={() => setOpen(e)}
               style={styles.tile}>
               <Image source={{ uri: e.fileUrl }} style={styles.img} contentFit="cover" />
@@ -49,7 +52,7 @@ export function EvidenceGrid({ orderId, footer }: { orderId: string; footer?: Re
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   wrap: { gap: spacing.sm },
   section: { fontSize: font.title, fontWeight: '700', color: colors.text },
   muted: { fontSize: font.body, color: colors.muted },
@@ -66,4 +69,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     borderRadius: radius.sm,
   },
-});
+}));

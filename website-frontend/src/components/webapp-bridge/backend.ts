@@ -6,7 +6,7 @@ export { providerApi } from "@/_webapp-mirror/api/providerApi";
 export { verificationApi } from "@/_webapp-mirror/api/verificationApi";
 export { catalogApi } from "@/_webapp-mirror/api/catalogApi";
 export { availabilityApi, instantToTime, timeToInstant, timeToMinutes, WEEK_DAYS } from "@/_webapp-mirror/api/availabilityApi";
-export { orderApi, isOrderable, ORDERABLE_EXECUTION_TYPES, NOT_ORDERABLE_MESSAGE } from "@/_webapp-mirror/api/orderApi";
+export { orderApi, isOrderable, orderErrorMessage, ORDERABLE_EXECUTION_TYPES, NOT_ORDERABLE_MESSAGE } from "@/_webapp-mirror/api/orderApi";
 export { evidenceApi, EVIDENCE_PHASES, phaseOf, evidenceErrorMessage } from "@/_webapp-mirror/api/evidenceApi";
 export { fromAddressForm, pageItems, toAddress, toProvider, toPackages, toAddons, toMediaList, toServiceCard, toServiceDetail, toMyServiceRow, toRowStatus, toServiceStatus } from "@/_webapp-mirror/api/adapters";
 export { NOT_PROVIDER_MESSAGE, getAccessToken, setAccessToken, buildApiErrorMessage } from "@/_webapp-mirror/api/axiosClient";

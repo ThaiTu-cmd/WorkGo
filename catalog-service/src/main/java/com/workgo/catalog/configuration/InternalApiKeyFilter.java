@@ -18,8 +18,10 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.List;
 
-//chi service noi bo co X-Internal-Key moi goi duoc /internal/**
+// Guards /internal/**: only a caller holding INTERNAL_API_KEY in X-Internal-Key
+// gets through. A blank configured key rejects every call.
 public class InternalApiKeyFilter extends OncePerRequestFilter {
+
     private final String internalApiKey;
     private final ObjectMapper objectMapper;
 

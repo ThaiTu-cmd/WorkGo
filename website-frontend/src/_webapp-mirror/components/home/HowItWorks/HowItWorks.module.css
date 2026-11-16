@@ -1,4 +1,5 @@
 .section {
+  scroll-margin-top: calc(var(--header-bar-height, var(--header-height, 76px)) + 16px);
   padding: 88px 0;
   background-color: var(--wg-surface);
   border-bottom: 1px solid var(--wg-border-light);
@@ -7,7 +8,7 @@
 .header {
   text-align: center;
   max-width: 720px;
-  margin: 0 auto 56px auto;
+  margin: 0 auto 52px auto;
 }
 
 .tagline {
@@ -65,6 +66,7 @@
               box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
               background-color 0.2s ease,
               border-color 0.2s ease;
+  cursor: default;
 }
 
 .stepCard:hover {
@@ -72,6 +74,10 @@
   box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.12), 0 4px 14px rgba(29, 191, 115, 0.14);
   transform: translateY(-6px);
   border-color: var(--wg-primary);
+}
+
+.stepCard:active {
+  transform: translateY(-2px) scale(0.985);
 }
 
 .stepTop {
@@ -134,3 +140,83 @@
   line-height: 1.6;
 }
 
+/* Bottom Assurance Bar */
+.bottomBar {
+  margin-top: 48px;
+  background: linear-gradient(135deg, rgba(29, 191, 115, 0.08) 0%, rgba(22, 119, 255, 0.05) 100%);
+  border: 1px solid rgba(29, 191, 115, 0.25);
+  border-radius: 20px;
+  padding: 24px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .bottomBar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px 24px;
+  }
+}
+
+.assuranceLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.assuranceIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background-color: rgba(29, 191, 115, 0.15);
+  color: var(--wg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.assuranceTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--wg-text);
+  margin-bottom: 4px;
+}
+
+.assuranceDesc {
+  font-size: 0.9rem;
+  color: var(--wg-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.detailLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 9999px;
+  background-color: var(--wg-primary);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(29, 191, 115, 0.25);
+  transition: all var(--transition-fast), transform 0.14s cubic-bezier(0.2, 0, 0, 1);
+  cursor: pointer;
+}
+
+.detailLink:hover {
+  background-color: var(--wg-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(29, 191, 115, 0.35);
+}
+
+.detailLink:active {
+  transform: translateY(0) scale(0.96);
+}

@@ -24,6 +24,14 @@ jwt:
   signerKey: ${JWT_SIGNER_KEY}
 
 app:
+  outbox:
+    scheduling-enabled: ${JOB_OUTBOX_ENABLED:true}
+    max-attempts: ${JOB_OUTBOX_MAX_ATTEMPTS:5}
+    lease-seconds: ${JOB_OUTBOX_LEASE_SECONDS:60}
+    poll-delay-ms: ${JOB_OUTBOX_POLL_DELAY_MS:5000}
+  proposals:
+    # Enable only after deploying the step-5 DIGITAL/idempotency/internal-key contracts.
+    accept-enabled: ${JOB_PROPOSAL_ACCEPT_ENABLED:false}
   internal-api-key: ${INTERNAL_API_KEY:}
   clients:
     connect-timeout-millis: ${JOB_CLIENT_CONNECT_TIMEOUT_MS:2000}

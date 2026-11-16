@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Header from "@/_webapp-mirror/components/common/Header/Header";
 import HeroBanner from "@/_webapp-mirror/components/home/HeroBanner/HeroBanner";
 import TrustedBy from "@/_webapp-mirror/components/home/TrustedBy/TrustedBy";
@@ -18,6 +18,10 @@ import ServiceFormPage from "@/_webapp-mirror/pages/ServiceForm/ServiceFormPage"
 import AvailabilityPage from "@/_webapp-mirror/pages/Availability/AvailabilityPage";
 import CheckoutPage from "@/_webapp-mirror/pages/Checkout/CheckoutPage";
 import OrderDashboardPage from "@/_webapp-mirror/pages/OrderDashboard/OrderDashboardPage";
+import OrderPaymentPage from "@/_webapp-mirror/pages/OrderPayment/OrderPaymentPage";
+import BookingSlotsPage from "@/_webapp-mirror/pages/BackendParity/BookingSlotsPage";
+import VerificationCenterPage from "@/_webapp-mirror/pages/BackendParity/VerificationCenterPage";
+import AdminConsolePage from "@/_webapp-mirror/pages/BackendParity/AdminConsolePage";
 import RegisterPage from "../trung-pages/auth/RegisterPage";
 import LoginPage from "../trung-pages/auth/LoginPage";
 import ProfileSettingsPage from "../trung-pages/profile/ProfileSettingsPage";
@@ -31,6 +35,7 @@ import ProposalReviewPage from "../trung-pages/jobs/ProposalReviewPage";
 import PaymentGatewayPage from "../trung-pages/payment/PaymentGatewayPage";
 import WalletPage from "../trung-pages/payment/WalletPage";
 import PayoutSettingsPage from "../trung-pages/payment/PayoutSettingsPage";
+import FinancePage, { type FinanceTab } from "../trung-pages/finance/FinancePage";
 import ReviewFormPage from "../trung-pages/trust/ReviewFormPage";
 import DisputeCenterPage from "../trung-pages/trust/DisputeCenterPage";
 import PublicInfoPage, { isPublicInfoPageKey, type PublicInfoPageKey } from "../trung-pages/public/PublicInfoPage";
@@ -51,7 +56,12 @@ export type CatalogFilterParams = {
   jobId?: string;
   providerId?: string;
   orderId?: string;
+  // "order-payment": payment to follow (otherwise the order's gateway picker).
+  paymentId?: string;
   serviceId?: string;
+  section?: string;
+  // Finance hub pre-selected tab ("wallet" | "deposit" | "payout").
+  tab?: string;
   // "messages": thread to open (created if this is the first contact).
   chat?: ChatTarget;
 };
@@ -65,6 +75,10 @@ export type TrungPageKey =
   | "availability"
   | "checkout"
   | "orders"
+  | "order-payment"
+  | "booking-slots"
+  | "verification-center"
+  | "admin-console"
   | "register"
   | "login"
   | "profile-settings"
@@ -78,6 +92,7 @@ export type TrungPageKey =
   | "payment-gateway"
   | "wallet"
   | "payout-settings"
+  | "finance"
   | "review-form"
   | "dispute-center"
   | "how-it-works"
@@ -109,6 +124,7 @@ const TRUNG_PAGE_KEYS = new Set<string>([
   "payment-gateway",
   "wallet",
   "payout-settings",
+  "finance",
   "review-form",
   "dispute-center",
   ...PUBLIC_INFO_PAGE_KEYS,
@@ -124,9 +140,60 @@ const CORE_PAGE_KEYS = new Set<string>([
   "availability",
   "checkout",
   "orders",
+  "order-payment",
+  "booking-slots",
+  "verification-center",
+  "admin-console",
 ]);
 
-const KNOWN_PAGE_KEYS = new Set<string>([...CORE_PAGE_KEYS, ...TRUNG_PAGE_KEYS]);
+export const KNOWN_PAGE_KEYS = new Set<string>([...CORE_PAGE_KEYS, ...TRUNG_PAGE_KEYS]);
+
+export function buildTargetUrl(page: TrungPageKey, params: CatalogFilterParams = {}): string {
+  if (typeof window === "undefined") return "";
+  const q = new URLSearchParams();
+  if (page !== "home") q.set("page", page);
+  if (params.category && params.category !== "ALL") q.set("category", params.category);
+  if (params.executionType && params.executionType !== "ALL") q.set("executionType", params.executionType);
+  if (params.query) q.set("query", params.query);
+  if (params.serviceId) q.set("serviceId", params.serviceId);
+  if (params.jobId) q.set("jobId", params.jobId);
+  if (params.providerId) q.set("providerId", params.providerId);
+  if (params.orderId) q.set("orderId", params.orderId);
+  if (params.paymentId) q.set("paymentId", params.paymentId);
+  if (params.tab) q.set("tab", params.tab);
+
+  const pathname = window.location.pathname;
+  const localePrefix = pathname.startsWith("/en") ? "/en" : "/vi";
+  const qs = q.toString();
+  const hash = params.section ? `#${params.section}` : "";
+  return qs ? `${localePrefix}?${qs}${hash}` : `${localePrefix}${hash}`;
+}
+
+export function parseUrlParams(search: string = typeof window !== "undefined" ? window.location.search : ""): {
+  page: TrungPageKey;
+  params: CatalogFilterParams;
+} {
+  const searchParams = new URLSearchParams(search);
+  const pageParam = searchParams.get("page") as TrungPageKey | null;
+  const targetPage = pageParam && KNOWN_PAGE_KEYS.has(pageParam) ? pageParam : "home";
+
+  const params: CatalogFilterParams = {
+    category: searchParams.get("category") || "ALL",
+    executionType: searchParams.get("executionType") || "ALL",
+    query: searchParams.get("query") || "",
+    serviceId: searchParams.get("serviceId") || "",
+    jobId: searchParams.get("jobId") || "",
+    providerId: searchParams.get("providerId") || "",
+    orderId: searchParams.get("orderId") || "",
+    paymentId: searchParams.get("paymentId") || "",
+    tab: searchParams.get("tab") || "wallet",
+  };
+
+  return { page: targetPage, params };
+}
+
+// Explicit "home" visits while signed in: one-shot override for R7 redirect.
+const HOME_INTENT_KEY = "workgo-home-intent";
 
 type CategorySelection = {
   slug: string;
@@ -168,13 +235,21 @@ function scrollToTopInstant() {
 // which carries the Turbopack-impure `main` selector). Data import resolves
 // through turbopack.resolveAlias to engine-backed shims; without the alias
 // it falls back to the mirror's own web-app mocks.
-export default function WebAppShell() {
-  const [currentPage, setCurrentPage] = useState<TrungPageKey>("home"); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form' | 'availability' | 'checkout' | 'orders' + 15 trung-pages
+export default function WebAppShell({ initialPage }: { initialPage?: string } = {}) {
+  const [currentPage, setCurrentPage] = useState<TrungPageKey>(() => {
+    if (typeof window !== "undefined") return parseUrlParams(window.location.search).page;
+    if (initialPage && KNOWN_PAGE_KEYS.has(initialPage)) return initialPage as TrungPageKey;
+    return "home";
+  }); // 'home' | 'catalog' | 'detail' | 'my-services' | 'service-form' | 'availability' | 'checkout' | 'orders' + 16 trung-pages
   const [previousPage, setPreviousPage] = useState<TrungPageKey>("home");
+  const [financeTab, setFinanceTab] = useState<FinanceTab>("wallet");
   const [selectedServiceId, setSelectedServiceId] = useState("");
   const [selectedJobId, setSelectedJobId] = useState("");
   const [selectedProviderId, setSelectedProviderId] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState("");
+  // "order-payment": payment to follow, and the gateway verdict from /payment/result.
+  const [selectedPaymentId, setSelectedPaymentId] = useState("");
+  const [paymentResult, setPaymentResult] = useState("");
   const [chatConversationId, setChatConversationId] = useState("");
   // { service, pkg, addons } handed over by ServiceDetailPage "Tiếp tục đặt hàng".
   const [checkoutOrder, setCheckoutOrder] = useState<Record<string, unknown> | null>(null);
@@ -198,12 +273,41 @@ export default function WebAppShell() {
       window.removeEventListener("offline", goOffline);
     };
   }, []);
+  // Keep theme (data-theme + html class) in sync even on soft client navigations
+  // (e.g. language switch via window.location.href), where beforeInteractive
+  // scripts do not re-run.
+  useLayoutEffect(() => {
+    try {
+      const saved = localStorage.getItem("workgo_theme");
+      const t =
+        saved === "light" || saved === "dark"
+          ? saved
+          : document.documentElement.getAttribute("data-theme") === "light"
+            ? "light"
+            : "dark";
+      document.documentElement.setAttribute("data-theme", t);
+      document.documentElement.classList.remove("light", "dark");
+      document.documentElement.classList.add(t);
+    } catch {
+      // storage / DOM blocked
+    }
+  }, []);
+
   const [serviceFormMode, setServiceFormMode] = useState<"create" | "edit">("create");
   const [editServiceId, setEditServiceId] = useState<string | null>(null);
-  const [catalogFilters, setCatalogFilters] = useState({
-    category: "ALL",
-    executionType: "ALL",
-    query: "",
+  const [catalogFilters, setCatalogFilters] = useState(() => {
+    if (typeof window === "undefined") {
+      return { category: "ALL", executionType: "ALL", query: "" };
+    }
+    const { page, params } = parseUrlParams(window.location.search);
+    if (page === "catalog") {
+      return {
+        category: params.category || "ALL",
+        executionType: params.executionType || "ALL",
+        query: params.query || "",
+      };
+    }
+    return { category: "ALL", executionType: "ALL", query: "" };
   });
 
   const [authModal, setAuthModal] = useState<"login" | "register" | null>(null);
@@ -232,8 +336,100 @@ export default function WebAppShell() {
     toastTimersRef.current[id] = setTimeout(() => dismissToast(id), 3500);
   }, []);
 
+  // 1. Mount effect: Sync with URL parameters or fallback to signed-in catalog
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const { page: targetPage, params: parsedParams } = parseUrlParams(window.location.search);
+    const searchParams = new URLSearchParams(window.location.search);
+    const hasPageParam = searchParams.has("page");
+
+    if (hasPageParam && KNOWN_PAGE_KEYS.has(targetPage)) {
+      if ((targetPage === "messages" || targetPage === "finance") && !getAccessToken()) {
+        showToast(targetPage === "messages" ? "Vui lòng đăng nhập để nhắn tin." : "Vui lòng đăng nhập để dùng Tài chính.");
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setAuthModal("login");
+        setCurrentPage("home");
+        return;
+      }
+      if (targetPage === "detail" && !parsedParams.serviceId) {
+        showToast("Vui lòng chọn dịch vụ để xem chi tiết.");
+        setCurrentPage("catalog");
+        return;
+      }
+
+      setCurrentPage(targetPage);
+      if (targetPage === "catalog") {
+        setCatalogFilters({
+          category: parsedParams.category || "ALL",
+          executionType: parsedParams.executionType || "ALL",
+          query: parsedParams.query || "",
+        });
+      }
+      if (parsedParams.serviceId) setSelectedServiceId(parsedParams.serviceId);
+      if (parsedParams.jobId) setSelectedJobId(parsedParams.jobId);
+      if (parsedParams.providerId) setSelectedProviderId(parsedParams.providerId);
+      if (parsedParams.orderId) setSelectedOrderId(parsedParams.orderId);
+      if (targetPage === "order-payment") {
+        setSelectedOrderId(parsedParams.orderId || "");
+        setSelectedPaymentId(parsedParams.paymentId || "");
+        setPaymentResult(searchParams.get("result") || "");
+      }
+      if (parsedParams.tab) {
+        const t = parsedParams.tab;
+        if (t === "wallet" || t === "deposit" || t === "payout") setFinanceTab(t as FinanceTab);
+      }
+      return;
+    }
+
+    // R7: signed-in users without specific page param default to catalog
+    if (getAccessToken()) {
+      if (window.sessionStorage.getItem(HOME_INTENT_KEY)) {
+        window.sessionStorage.removeItem(HOME_INTENT_KEY);
+        return;
+      }
+      setCurrentPage("catalog");
+    }
+  }, [showToast]);
+
+  // 2. Popstate effect: Listen to browser Back / Forward buttons
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onPopState = () => {
+      const { page: targetPage, params: parsedParams } = parseUrlParams(window.location.search);
+      setCurrentPage(targetPage);
+      if (targetPage === "catalog") {
+        setCatalogFilters({
+          category: parsedParams.category || "ALL",
+          executionType: parsedParams.executionType || "ALL",
+          query: parsedParams.query || "",
+        });
+      }
+      if (parsedParams.serviceId) setSelectedServiceId(parsedParams.serviceId);
+      if (parsedParams.jobId) setSelectedJobId(parsedParams.jobId);
+      if (parsedParams.providerId) setSelectedProviderId(parsedParams.providerId);
+      if (parsedParams.orderId) setSelectedOrderId(parsedParams.orderId);
+      if (targetPage === "order-payment") {
+        setSelectedOrderId(parsedParams.orderId || "");
+        setSelectedPaymentId(parsedParams.paymentId || "");
+        setPaymentResult(new URLSearchParams(window.location.search).get("result") || "");
+      }
+      if (parsedParams.tab) {
+        const t = parsedParams.tab;
+        if (t === "wallet" || t === "deposit" || t === "payout") setFinanceTab(t as FinanceTab);
+      }
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
   // Reset scroll to top on every page change and manage landmark focus
   useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash && currentPage === "home") {
+      return;
+    }
     scrollToTopInstant();
 
     // A11y focus management: Focus main heading or main landmark on navigation
@@ -264,6 +460,17 @@ export default function WebAppShell() {
       setAuthModal("login");
       return;
     }
+    // Same for the Finance hub: wallet / top-up / payout are account features.
+    if (page === "finance" && !getAccessToken()) {
+      showToast("Vui lòng đăng nhập để dùng Tài chính.");
+      setAuthModal("login");
+      return;
+    }
+    // Visiting the guest landing is an explicit choice -> one-shot override
+    // for the signed-in "default to catalog" redirect.
+    if (page === "home" && getAccessToken() && typeof window !== "undefined") {
+      window.sessionStorage.setItem(HOME_INTENT_KEY, "1");
+    }
     setPreviousPage(currentPage);
     setCurrentPage(page);
     if (page === "catalog") {
@@ -273,17 +480,61 @@ export default function WebAppShell() {
         query: params.query || "",
       });
     }
+    if (page === "finance") {
+      const t = params.tab;
+      if (t === "wallet" || t === "deposit" || t === "payout") setFinanceTab(t);
+    }
     if (page === "provider-profile" && params.providerId) setSelectedProviderId(params.providerId);
     if (page === "submit-proposal" && params.jobId) setSelectedJobId(params.jobId);
     if (page === "proposal-review" && params.jobId) setSelectedJobId(params.jobId);
     if (page === "review-form" && params.orderId) setSelectedOrderId(params.orderId);
+    if (page === "order-payment") {
+      setSelectedOrderId(params.orderId || "");
+      setSelectedPaymentId(params.paymentId || "");
+      setPaymentResult("");
+    }
     if (page === "detail" && params.serviceId) setSelectedServiceId(params.serviceId);
     if (page === "messages") {
       const { chat } = params;
       setChatConversationId(chat ? messageApi.openConversation(chat, chat.context) : "");
     }
-    scrollToTopInstant();
+
+    // Synchronize browser history (pushState)
+    if (typeof window !== "undefined") {
+      const targetUrl = buildTargetUrl(page, params);
+      if (targetUrl) {
+        window.history.pushState({ page, params }, "", targetUrl);
+      }
+    }
+
+    if (params.section) {
+      if (typeof window !== "undefined") {
+        window.location.hash = params.section;
+      }
+      setTimeout(() => {
+        const el = document.getElementById(params.section!);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 350);
+    } else {
+      scrollToTopInstant();
+    }
   };
+
+  // Smooth scroll to hash anchor on home page load if present
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash && currentPage === "home") {
+      const id = window.location.hash.replace("#", "");
+      const timer = setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [currentPage]);
 
   // Navigation event listener for programmatic / test triggering
   useEffect(() => {
@@ -305,51 +556,38 @@ export default function WebAppShell() {
     keyword?: string;
     executionType?: string;
   }) => {
-    setPreviousPage("home");
-    setCurrentPage("catalog");
-    setCatalogFilters({
+    handleNavigate("catalog", {
       category: "ALL",
       executionType: executionType || "ALL",
       query: keyword || "",
     });
     showToast(`Đang tìm: "${keyword || "Tất cả dịch vụ"}"`);
-    scrollToTopInstant();
   };
 
   // Select category from Home Category Grid
   const handleSelectCategory = (category: CategorySelection) => {
-    setPreviousPage(currentPage);
-    setCurrentPage("catalog");
-    setCatalogFilters({
+    handleNavigate("catalog", {
       category: category.slug,
       executionType: category.executionType || "ALL",
       query: "",
     });
     showToast(`Xem danh mục: ${category.name}`);
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   };
 
   const handleSelectService = (service: ServiceSelection) => {
-    setPreviousPage(currentPage);
-    setSelectedServiceId(service.serviceId);
-    setCurrentPage("detail");
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    handleNavigate("detail", { serviceId: service.serviceId });
   };
 
   const handleOpenCreateForm = () => {
     setServiceFormMode("create");
     setEditServiceId(null);
-    setPreviousPage(currentPage);
-    setCurrentPage("service-form");
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    handleNavigate("service-form");
   };
 
   const handleOpenEditForm = (serviceId: string) => {
     setServiceFormMode("edit");
     setEditServiceId(serviceId);
-    setPreviousPage(currentPage);
-    setCurrentPage("service-form");
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    handleNavigate("service-form", { serviceId });
   };
 
   const handleServiceFormSuccess = (savedService: SavedService, isEdit: boolean) => {
@@ -358,8 +596,7 @@ export default function WebAppShell() {
         ? `Đã cập nhật dịch vụ "${savedService.title}"!`
         : `Đã tạo thành công dịch vụ mới "${savedService.title}"!`
     );
-    setCurrentPage("my-services");
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    handleNavigate("my-services");
   };
 
   return (
@@ -464,6 +701,21 @@ export default function WebAppShell() {
           onShowToast={showToast}
           onDone={() => handleNavigate("home")}
           onViewOrders={() => handleNavigate("orders")}
+          onOpenAddressBook={() => handleNavigate("address-book")}
+          onOpenPayment={(p: CatalogFilterParams) => handleNavigate("order-payment", p)}
+        />
+      )}
+
+      {currentPage === "order-payment" && (
+        /* Pay a PENDING_PAYMENT order / follow a payment back from the gateway */
+        <OrderPaymentPage
+          orderId={selectedOrderId}
+          paymentId={selectedPaymentId}
+          gatewayResult={paymentResult}
+          onOpenPayment={(p: CatalogFilterParams) => handleNavigate("order-payment", p)}
+          onViewOrders={() => handleNavigate("orders")}
+          onGoHome={() => handleNavigate("home")}
+          onShowToast={showToast}
         />
       )}
 
@@ -473,6 +725,7 @@ export default function WebAppShell() {
           onGoHome={() => handleNavigate("home")}
           onShowToast={showToast}
           onOpenChat={(chat: ChatTarget) => handleNavigate("messages", { chat })}
+          onOpenPayment={(p: CatalogFilterParams) => handleNavigate("order-payment", p)}
         />
       )}
 
@@ -509,6 +762,27 @@ export default function WebAppShell() {
             window.scrollTo({ top: 0, left: 0, behavior: "auto" });
           }}
           onSaveSuccess={handleServiceFormSuccess}
+          onShowToast={showToast}
+        />
+      )}
+
+      {currentPage === "booking-slots" && (
+        <BookingSlotsPage
+          onNavigate={(page: string) => handleNavigate(page as TrungPageKey)}
+          onShowToast={showToast}
+        />
+      )}
+
+      {currentPage === "verification-center" && (
+        <VerificationCenterPage
+          onNavigate={(page: string) => handleNavigate(page as TrungPageKey)}
+          onShowToast={showToast}
+        />
+      )}
+
+      {currentPage === "admin-console" && (
+        <AdminConsolePage
+          onNavigate={(page: string) => handleNavigate(page as TrungPageKey)}
           onShowToast={showToast}
         />
       )}
@@ -580,6 +854,15 @@ export default function WebAppShell() {
         <PayoutSettingsPage onNavigate={handleNavigate} onShowToast={showToast} />
       )}
 
+      {currentPage === "finance" && (
+        <FinancePage
+          activeTab={financeTab}
+          onOpenTab={setFinanceTab}
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+        />
+      )}
+
       {currentPage === "review-form" && (
         <ReviewFormPage
           onNavigate={handleNavigate}
@@ -624,7 +907,15 @@ export default function WebAppShell() {
 
       {/* Authentication Modal */}
       {authModal && (
-        <AuthModal initialMode={authModal} onClose={() => setAuthModal(null)} />
+        <AuthModal
+          initialMode={authModal}
+          onClose={() => setAuthModal(null)}
+          onLoginSuccess={() => {
+            // After a header-modal sign-in the default view is the catalog.
+            setAuthModal(null);
+            handleNavigate("catalog");
+          }}
+        />
       )}
     </div>
   );

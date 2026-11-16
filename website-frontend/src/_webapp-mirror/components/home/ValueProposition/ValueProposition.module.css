@@ -1,4 +1,5 @@
 .section {
+  scroll-margin-top: calc(var(--header-bar-height, var(--header-height, 76px)) + 16px);
   padding: 88px 0;
   background-color: var(--wg-bg);
 }
@@ -6,7 +7,7 @@
 .header {
   text-align: center;
   max-width: 760px;
-  margin: 0 auto 56px auto;
+  margin: 0 auto 52px auto;
 }
 
 .tagline {
@@ -62,6 +63,7 @@
   flex-direction: column;
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease;
   will-change: transform;
+  cursor: default;
 }
 
 .card:hover {
@@ -70,32 +72,43 @@
   border-color: rgba(29, 191, 115, 0.35);
 }
 
+.card:active {
+  transform: translateY(-2px) scale(0.985);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
 .iconBox {
-  width: 60px;
-  height: 60px;
+  width: 54px;
+  height: 54px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 22px;
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .card:hover .iconBox {
-  transform: scale(1.12) rotate(4deg);
+  transform: scale(1.1) rotate(4deg);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .card,
-  .iconBox {
-    transition: none !important;
-    transform: none !important;
-  }
+.valueBadge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid;
+  letter-spacing: 0.2px;
 }
 
 .cardTitle {
   font-family: var(--font-heading);
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--wg-text);
   margin-bottom: 12px;
@@ -106,4 +119,5 @@
   font-size: 0.92rem;
   color: var(--wg-text-secondary);
   line-height: 1.6;
+  margin: 0;
 }

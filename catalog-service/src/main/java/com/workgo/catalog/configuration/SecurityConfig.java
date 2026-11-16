@@ -1,7 +1,6 @@
 package com.workgo.catalog.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.workgo.catalog.configuration.CustomJwtDecoder;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,11 +42,11 @@ public class SecurityConfig {
         "/slots/**"
     };
 
-    //order-service, review-service goi /internal/** kem X-Internal-Key
+    // Service-to-service calls (order-service) carry X-Internal-Key, not a user token.
     @Bean
     @Order(1)
     public SecurityFilterChain internalSecurityFilterChain(HttpSecurity http,
-            @Value("${app.internal-api-key:}") String internalApiKey) throws Exception {
+            @Value("${app.internal-key:}") String internalApiKey) throws Exception {
         return http.securityMatcher("/internal/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

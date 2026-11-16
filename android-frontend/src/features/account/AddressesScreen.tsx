@@ -1,14 +1,17 @@
 import { useRouter } from 'expo-router';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 
 import { errorMessage } from '@/api/errors';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
-import { Button, Card, colors, EmptyState, ErrorState, font, Screen, SkeletonList, spacing } from '@/ui';
+import { Button, Card, EmptyState, ErrorState, font, makeStyles, Screen, SkeletonList, spacing } from '@/ui';
 
 import { useAddresses, useDeleteAddress } from './hooks';
+import { useT } from '@/i18n';
 
 export function AddressesScreen() {
+  const t = useT();
+  const styles = useStyles();
   const signedIn = useRequireAuth();
   const router = useRouter();
   const addresses = useAddresses(signedIn);
@@ -17,24 +20,24 @@ export function AddressesScreen() {
   if (!signedIn) return <LoginRequired edges={['bottom']} />;
 
   const confirmDelete = (id: string, name: string) =>
-    Alert.alert('Xoá địa chỉ', `Xoá địa chỉ "${name}"?`, [
-      { text: 'Huỷ', style: 'cancel' },
+    Alert.alert(t('addressesScreen.xoa_dia_chi'), t('addressesScreen.xoa_dia_chi_2', { p0: name }), [
+      { text: t('addressesScreen.huy'), style: 'cancel' },
       {
-        text: 'Xoá',
+        text: t('addressesScreen.xoa'),
         style: 'destructive',
-        onPress: () => remove.mutate(id, { onError: (err) => Alert.alert('Không xoá được', errorMessage(err)) }),
+        onPress: () => remove.mutate(id, { onError: (err) => Alert.alert(t('addressesScreen.khong_xoa_duoc'), errorMessage(err)) }),
       },
     ]);
 
   return (
     <Screen edges={['bottom']} onRefresh={() => void addresses.refetch()} refreshing={addresses.isRefetching}>
-      <Button title="Thêm địa chỉ" onPress={() => router.push('/account/addresses/new')} />
+      <Button title={t('addressesScreen.them_dia_chi')} onPress={() => router.push('/account/addresses/new')} />
       {addresses.isPending ? (
         <SkeletonList count={3} height={90} />
       ) : addresses.isError ? (
         <ErrorState message={errorMessage(addresses.error)} onRetry={() => void addresses.refetch()} />
       ) : addresses.data.length === 0 ? (
-        <EmptyState title="Chưa có địa chỉ" hint="Thêm địa chỉ để đặt dịch vụ tại nhà." />
+        <EmptyState title={t('addressesScreen.chua_co_dia_chi')} hint={t('addressesScreen.them_dia_chi_de_dat')} />
       ) : (
         addresses.data.map((a) => (
           <Card key={a.id}>
@@ -44,8 +47,8 @@ export function AddressesScreen() {
             </Text>
             <Text style={styles.muted}>{a.detail}</Text>
             <View style={styles.actions}>
-              <Button title="Sửa" variant="secondary" style={styles.flex} onPress={() => router.push(`/account/addresses/${a.id}`)} />
-              <Button title="Xoá" variant="secondary" style={styles.flex} onPress={() => confirmDelete(a.id, a.label || a.detail)} />
+              <Button title={t('addressesScreen.sua')} variant="secondary" style={styles.flex} onPress={() => router.push(`/account/addresses/${a.id}`)} />
+              <Button title={t('addressesScreen.xoa')} variant="secondary" style={styles.flex} onPress={() => confirmDelete(a.id, a.label || a.detail)} />
             </View>
           </Card>
         ))
@@ -54,10 +57,10 @@ export function AddressesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   title: { fontSize: font.body, fontWeight: '700', color: colors.text },
   text: { fontSize: font.body, color: colors.text },
   muted: { fontSize: font.small + 1, color: colors.muted },
   actions: { flexDirection: 'row', gap: spacing.sm },
   flex: { flex: 1 },
-});
+}));

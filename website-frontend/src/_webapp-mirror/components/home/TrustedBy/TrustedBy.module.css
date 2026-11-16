@@ -1,5 +1,5 @@
 .trustedSection {
-  background-color: #fafafa;
+  background-color: var(--wg-surface-alt);
   border-bottom: 1px solid var(--wg-border-light);
   padding: 22px 0;
 }

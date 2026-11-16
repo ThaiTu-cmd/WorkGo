@@ -29,7 +29,12 @@ public enum ErrorCode {
     PROVIDER_NOT_VERIFIED(3013, "Provider chưa được xác minh", HttpStatus.FORBIDDEN),
     PROPOSAL_EXPIRED(3014, "Đề xuất đã hết hạn", HttpStatus.BAD_REQUEST),
     APPLICATION_NOT_VALID(3015, "Hồ sơ ứng tuyển không còn hợp lệ", HttpStatus.BAD_REQUEST),
-    ORDER_CREATION_FAILED(3016, "Chưa thể tạo đơn hàng, vui lòng thử lại sau", HttpStatus.SERVICE_UNAVAILABLE);
+    ORDER_CREATION_FAILED(3016, "Chưa thể tạo đơn hàng, vui lòng thử lại sau", HttpStatus.SERVICE_UNAVAILABLE),
+    CONCURRENT_MODIFICATION(3017, "Dữ liệu đã thay đổi, vui lòng tải lại", HttpStatus.CONFLICT),
+    PROPOSAL_ALREADY_PENDING(3018, "Đã có đề xuất đang chờ duyệt", HttpStatus.CONFLICT),
+    UNSUPPORTED_EXECUTION_TYPE(3019, "Tạo đơn từ đề xuất chỉ hỗ trợ DIGITAL", HttpStatus.BAD_REQUEST),
+    ACCEPTANCE_DISABLED(3020, "Chưa bật tính năng chấp nhận đề xuất", HttpStatus.SERVICE_UNAVAILABLE),
+    DEPENDENCY_UNAVAILABLE(3021, "Dịch vụ phụ thuộc tạm không sẵn sàng", HttpStatus.SERVICE_UNAVAILABLE);
 
     private final int code;
     private final String message;

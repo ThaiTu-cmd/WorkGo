@@ -2,7 +2,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import type { ColorValue } from 'react-native';
 
-import { colors } from '@/ui';
+import { useColors } from '@/ui';
+import { useT } from '@/i18n';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -14,12 +15,14 @@ function tabIcon(name: IconName) {
 }
 
 export default function TabsLayout() {
+  const t = useT();
+  const colors = useColors();
   return (
     <Tabs screenOptions={{ headerShown: false, tabBarActiveTintColor: colors.primaryDark }}>
-      <Tabs.Screen name="index" options={{ title: 'Trang chủ', tabBarIcon: tabIcon('home-outline') }} />
-      <Tabs.Screen name="explore" options={{ title: 'Khám phá', tabBarIcon: tabIcon('search-outline') }} />
-      <Tabs.Screen name="orders" options={{ title: 'Đơn hàng', tabBarIcon: tabIcon('receipt-outline') }} />
-      <Tabs.Screen name="account" options={{ title: 'Tài khoản', tabBarIcon: tabIcon('person-outline') }} />
+      <Tabs.Screen name="index" options={{ title: t('tabs.trang_chu'), tabBarIcon: tabIcon('home-outline') }} />
+      <Tabs.Screen name="explore" options={{ title: t('tabs.kham_pha'), tabBarIcon: tabIcon('search-outline') }} />
+      <Tabs.Screen name="orders" options={{ title: t('tabs.don_hang'), tabBarIcon: tabIcon('receipt-outline') }} />
+      <Tabs.Screen name="account" options={{ title: t('tabs.tai_khoan'), tabBarIcon: tabIcon('person-outline') }} />
     </Tabs>
   );
 }

@@ -8,13 +8,13 @@
 .sectionTitle {
   font-size: 1.35rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--wg-text);
   margin: 0;
 }
 
 /* Summary Card */
 .summaryCard {
-  background: #ffffff;
+  background: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 24px;
@@ -37,7 +37,7 @@
 .bigScore {
   font-size: 3rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--wg-text);
   font-family: var(--font-heading);
   line-height: 1;
 }
@@ -74,13 +74,13 @@
 .barLabel {
   width: 45px;
   font-weight: 600;
-  color: #475569;
+  color: var(--wg-text-secondary);
 }
 
 .barTrack {
   flex: 1;
   height: 8px;
-  background-color: #f1f5f9;
+  background-color: var(--wg-surface);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -106,9 +106,9 @@
 
 .filterBtn {
   padding: 7px 14px;
-  background-color: #f8fafc;
+  background-color: var(--wg-surface);
   border: 1px solid #e2e8f0;
-  color: #475569;
+  color: var(--wg-text-secondary);
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -117,8 +117,8 @@
 }
 
 .filterBtn:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: var(--wg-surface);
+  color: var(--wg-text);
 }
 
 .filterBtn.filterActive {
@@ -135,7 +135,7 @@
 }
 
 .reviewCard {
-  background: #ffffff;
+  background: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 20px;
@@ -171,7 +171,7 @@
 
 .reviewerName {
   font-size: 0.95rem;
-  color: #0f172a;
+  color: var(--wg-text);
 }
 
 .verifiedTag {
@@ -210,8 +210,8 @@
 
 .packageUsedBadge {
   font-size: 0.8rem;
-  color: #475569;
-  background-color: #f8fafc;
+  color: var(--wg-text-secondary);
+  background-color: var(--wg-surface);
   padding: 4px 10px;
   border-radius: 6px;
   align-self: flex-start;
@@ -220,7 +220,7 @@
 
 .reviewComment {
   font-size: 0.92rem;
-  color: #334155;
+  color: var(--wg-text-secondary);
   line-height: 1.6;
   margin: 0;
 }
@@ -246,8 +246,8 @@
 }
 
 .helpfulBtn:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: var(--wg-surface);
+  color: var(--wg-text);
 }
 
 @media (max-width: 640px) {

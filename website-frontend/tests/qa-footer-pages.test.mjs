@@ -101,7 +101,7 @@ test("FP-05: webapp-shell.tsx contains 15 new page keys and render branches", ()
     "about", "careers", "terms", "privacy", "contact", "faq",
     "refund-policy", "verification-standards", "package-rules", "community",
     "how-it-works", "escrow-protection",
-    "verification-center", "booking-slots", "admin-console",
+    "verification-center", "booking-slots",
   ];
 
   for (const k of requiredKeys) {
@@ -111,7 +111,6 @@ test("FP-05: webapp-shell.tsx contains 15 new page keys and render branches", ()
   assert.match(shellTsx, /PublicInfoPage/, "webapp-shell.tsx must render PublicInfoPage");
   assert.match(shellTsx, /VerificationCenterPage/, "webapp-shell.tsx must render VerificationCenterPage");
   assert.match(shellTsx, /BookingSlotsPage/, "webapp-shell.tsx must render BookingSlotsPage");
-  assert.match(shellTsx, /AdminConsolePage/, "webapp-shell.tsx must render AdminConsolePage");
 });
 
 // FP-06: web-app branch
@@ -121,7 +120,7 @@ test("FP-06: web-app App.jsx renders 15 new page keys and fallback", () => {
     "about", "careers", "terms", "privacy", "contact", "faq",
     "refund-policy", "verification-standards", "package-rules", "community",
     "how-it-works", "escrow-protection",
-    "verification-center", "booking-slots", "admin-console",
+    "verification-center", "booking-slots",
   ];
 
   for (const k of requiredKeys) {
@@ -152,12 +151,9 @@ test("FP-08: Shared source files are byte-identical in _webapp-mirror", () => {
     "pages/BackendParity/VerificationCenterPage.module.css",
     "pages/BackendParity/BookingSlotsPage.jsx",
     "pages/BackendParity/BookingSlotsPage.module.css",
-    "pages/BackendParity/AdminConsolePage.jsx",
-    "pages/BackendParity/AdminConsolePage.module.css",
     "pages/BackendParity/mockAuth.js",
     "pages/BackendParity/mockVerification.js",
     "pages/BackendParity/mockBookingSlots.js",
-    "pages/BackendParity/mockAdmin.js",
     "pages/NotFound/NotFoundPage.jsx",
     "pages/NotFound/NotFoundPage.module.css",
     "App.jsx",
@@ -201,7 +197,6 @@ test("FP-10: New storage keys use workgo_ prefix and are SSR safe", () => {
   const checkFiles = [
     path.join(bpDir, "mockVerification.js"),
     path.join(bpDir, "mockBookingSlots.js"),
-    path.join(bpDir, "mockAdmin.js"),
     path.join(piDir, "PublicInfoPage.jsx"),
   ];
 

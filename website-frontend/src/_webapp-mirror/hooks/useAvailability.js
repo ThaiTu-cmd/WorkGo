@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { availabilityApi, instantToTime, timeToInstant } from '../api/availabilityApi';
 import { getAccessToken } from '../api/axiosClient';
+import { isNotProvider } from '../api/catalogApi';
 
 // status: 'loading' | 'api' | 'needs-login' | 'forbidden' | 'error'
 //  - api         : services from /services/my-services, rules/slots live
@@ -53,7 +54,7 @@ export function useAvailability() {
         setStatus('api');
       } catch (err) {
         if (cancelled) return;
-        fail(err?.status === 401 ? 'needs-login' : err?.status === 403 ? 'forbidden' : 'error');
+        fail(err?.status === 401 ? 'needs-login' : isNotProvider(err) ? 'forbidden' : 'error');
       }
     };
     load();

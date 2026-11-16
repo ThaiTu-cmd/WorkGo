@@ -15,6 +15,12 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler({org.springframework.orm.ObjectOptimisticLockingFailureException.class,
+            org.springframework.dao.PessimisticLockingFailureException.class})
+    public ResponseEntity<ApiResponse<Void>> handleConcurrentModification(Exception exception) {
+        return response(ErrorCode.CONCURRENT_MODIFICATION);
+    }
+
     @ExceptionHandler(AppException.class)
     public ResponseEntity<ApiResponse<Void>> handleAppException(AppException exception) {
         return response(exception.getErrorCode());

@@ -14,6 +14,8 @@ import com.workgo.catalog.enumeration.ServiceStatus;
 import com.workgo.catalog.exception.AppException;
 import com.workgo.catalog.exception.ErrorCode;
 import com.workgo.catalog.mapper.ServiceMapper;
+import com.workgo.catalog.entity.AvailableRule;
+import com.workgo.catalog.repository.AvailableRuleRepository;
 import com.workgo.catalog.repository.CategoryRepository;
 import com.workgo.catalog.repository.ServiceRepository;
 import com.workgo.catalog.utils.TokenUtils;
@@ -45,6 +47,8 @@ public class ServiceService {
     ServiceMapper serviceMapper;
     CategoryRepository categoryRepository;
     TokenUtils tokenUtils;
+    AvailableRuleRepository availableRuleRepository;
+    BookingSlotService bookingSlotService;
 
     public ServiceCreationResponse createService(ServiceCreationRequest request) {
 
@@ -150,6 +154,9 @@ public class ServiceService {
         return serviceMapper.toServiceResponse(savedService);
     }
 
+    // Retires the service's rules and open slots with it: an ACTIVE rule left on a
+    // deleted service has no service to generate slots for.
+    @Transactional
     public void deleteService(UUID serviceId) {
 
         Service service = serviceRepository.findById(serviceId)
@@ -157,8 +164,12 @@ public class ServiceService {
 
         tokenUtils.assertServiceOwner(service);
 
-        int mark = Instant.now().getNano() * 1000;
-        service.setIsDeleted(mark);
+        for (AvailableRule rule : availableRuleRepository.findAllByService_ServiceId(serviceId)) {
+            rule.setIsDeleted(tokenUtils.createDeletedMark());
+        }
+        bookingSlotService.removeUpcomingSlotsOfService(serviceId);
+
+        service.setIsDeleted(tokenUtils.createDeletedMark());
 
         serviceRepository.save(service);
     }

@@ -1,16 +1,19 @@
-import { useLocalSearchParams } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Text, View } from 'react-native';
 
 import { errorMessage } from '@/api/errors';
 import type { OrderRole } from '@/api/types';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
+import { EscrowCard } from '@/features/payment/EscrowCard';
 import { formatDateTime, formatVnd } from '@/lib/format';
-import { Badge, Card, colors, ErrorState, font, Screen, SkeletonList, spacing } from '@/ui';
+import { Badge, Button, Card, ErrorState, font, makeStyles, Screen, SkeletonList, spacing } from '@/ui';
 
+import { CancellationCard } from './CancellationCard';
 import { EvidenceGrid } from './EvidenceGrid';
 import { useOrderDetail } from './hooks';
 import { ONSITE_STATUS_LABEL, ORDER_STATUS_LABEL, ORDER_STATUS_TONE } from './orderStatus';
+import { useT } from '@/i18n';
 
 const money = (v: unknown) => formatVnd(Number(v ?? 0));
 
@@ -21,11 +24,14 @@ export function OrderDetailScreen({
 }: {
   evidenceFooter?: (ctx: { orderId: string; role: OrderRole; detail: ReturnType<typeof useOrderDetail> }) => React.ReactNode;
 }) {
+  const t = useT();
+  const styles = useStyles();
   const signedIn = useRequireAuth();
+  const router = useRouter();
   const { id, role: roleParam } = useLocalSearchParams<{ id: string; role?: string }>();
   const role: OrderRole = roleParam === 'PROVIDER' ? 'PROVIDER' : 'CLIENT';
   const detail = useOrderDetail(id, signedIn);
-  const { order, history, execution } = detail;
+  const { order, history, execution, cancellation } = detail;
 
   if (!signedIn) return <LoginRequired edges={['bottom']} />;
   if (order.isPending) {
@@ -44,45 +50,54 @@ export function OrderDetailScreen({
   }
 
   const o = order.data;
+  const awaitingPayment = o.orderStatus === 'PENDING_PAYMENT';
   const onsite = execution.data?.onsite;
   const refresh = () => {
     void order.refetch();
     void history.refetch();
     void execution.refetch();
+    void cancellation.refetch();
   };
 
   return (
     <Screen edges={['bottom']} onRefresh={refresh} refreshing={order.isRefetching}>
       <Card>
         <View style={styles.row}>
-          <Text style={styles.muted}>{o.orderNumber ?? o.orderId}</Text>
+          <Text style={styles.muted} numberOfLines={1} ellipsizeMode="middle">
+            {o.orderNumber ?? o.orderId}
+          </Text>
           <Badge label={ORDER_STATUS_LABEL[o.orderStatus]} tone={ORDER_STATUS_TONE[o.orderStatus]} />
         </View>
         <Text style={styles.title}>{o.title}</Text>
-        {o.orderStatus === 'PENDING_PAYMENT' ? (
-          <Text style={styles.muted}>Đơn đang chờ thanh toán. Thanh toán trong ứng dụng sẽ có ở phiên bản sau.</Text>
+        {awaitingPayment ? <Text style={styles.muted}>{t('orderDetailScreen.don_dang_cho_thanh_toan')}</Text> : null}
+        {awaitingPayment && role === 'CLIENT' ? (
+          <Button title={t('orderDetailScreen.thanh_toan')} onPress={() => router.push({ pathname: '/payment/[orderId]', params: { orderId: o.orderId } })} />
         ) : null}
       </Card>
 
+      <CancellationCard order={o} role={role} cancellation={cancellation} />
+
+      {!awaitingPayment ? <EscrowCard orderId={o.orderId} role={role} /> : null}
+
       <Card>
-        <Line label="Tạm tính" value={money(o.subtotal)} />
-        <Line label="Phí nền tảng" value={money(o.platformFee)} />
-        <Line label="Tổng cộng" value={money(o.totalAmount)} strong />
+        <Line label={t('orderDetailScreen.tam_tinh')} value={money(o.subtotal)} />
+        <Line label={t('orderDetailScreen.phi_nen_tang')} value={money(o.platformFee)} />
+        <Line label={t('orderDetailScreen.tong_cong')} value={money(o.totalAmount)} strong />
       </Card>
 
       {onsite ? (
         <Card>
-          <Text style={styles.section}>Thực hiện tại nhà</Text>
-          <Line label="Trạng thái" value={ONSITE_STATUS_LABEL[onsite.status]} />
-          {onsite.scheduledStart ? <Line label="Lịch hẹn" value={formatDateTime(onsite.scheduledStart)} /> : null}
+          <Text style={styles.section}>{t('orderDetailScreen.thuc_hien_tai_nha')}</Text>
+          <Line label={t('orderDetailScreen.trang_thai')} value={ONSITE_STATUS_LABEL[onsite.status]} />
+          {onsite.scheduledStart ? <Line label={t('orderDetailScreen.lich_hen')} value={formatDateTime(onsite.scheduledStart)} /> : null}
           {onsite.addressSnapshot ? <Text style={styles.text}>{onsite.addressSnapshot}</Text> : null}
         </Card>
       ) : null}
 
       <Card>
-        <Text style={styles.section}>Lịch sử</Text>
+        <Text style={styles.section}>{t('orderDetailScreen.lich_su')}</Text>
         {(history.data ?? []).length === 0 ? (
-          <Text style={styles.muted}>Đặt lúc {formatDateTime(o.placedAt ?? o.createdAt)}</Text>
+          <Text style={styles.muted}>{t('orderDetailScreen.dat_luc', { p0: formatDateTime(o.placedAt ?? o.createdAt) })}</Text>
         ) : (
           (history.data ?? []).map((h, i) => (
             <View key={h.orderStatusHistoryId ?? i} style={styles.row}>
@@ -101,6 +116,7 @@ export function OrderDetailScreen({
 }
 
 function Line({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+  const styles = useStyles();
   return (
     <View style={styles.row}>
       <Text style={styles.muted}>{label}</Text>
@@ -109,11 +125,11 @@ function Line({ label, value, strong = false }: { label: string; value: string; 
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
   title: { fontSize: font.title, fontWeight: '700', color: colors.text },
   section: { fontSize: font.body, fontWeight: '700', color: colors.text },
   text: { fontSize: font.body, color: colors.text },
   strong: { fontWeight: '700', color: colors.primaryDark },
   muted: { fontSize: font.small + 1, color: colors.muted, flexShrink: 1 },
-});
+}));

@@ -11,7 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.UUID;
 
 @Component
@@ -31,11 +31,11 @@ public class TokenUtils {
         return UUID.fromString(providerId);
     }
 
+    // Any non-zero value marks a row deleted; random so two deleted rows with the
+    // same slug do not collide on the (slug, is_deleted) unique key.
     public int createDeletedMark(){
 
-        int mark = Instant.now().getNano() * 1000;
-
-        return mark;
+        return ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE);
 
     }
 

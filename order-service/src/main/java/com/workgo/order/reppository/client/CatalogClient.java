@@ -1,6 +1,5 @@
 package com.workgo.order.reppository.client;
 
-import com.workgo.order.configuration.FeignInternalConfig;
 import com.workgo.order.dto.ApiResponse;
 import com.workgo.order.dto.request.SlotActionRequest;
 import com.workgo.order.dto.response.client.AddOnResponse;
@@ -18,7 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "catalog-service", url = "${app.services.catalog}", configuration = FeignInternalConfig.class)
+@FeignClient(name = "catalog-service", url = "${app.services.catalog}",
+        configuration = InternalFeignConfiguration.class)
 public interface CatalogClient {
 
     @GetMapping("/internal/services/{serviceId}")

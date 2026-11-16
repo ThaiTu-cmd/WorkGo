@@ -10,6 +10,16 @@ import org.springframework.data.repository.query.Param;
 import java.util.UUID;
 
 public interface ApplicationRepository extends JpaRepository<Application, UUID> {
+    long countByJob_JobId(UUID jobId);
+
+    java.util.List<Application> findAllByJob_JobId(UUID jobId);
+
+    @Query("select a.job.jobId from Application a where a.applicationId = :id")
+    java.util.Optional<UUID> findJobId(@Param("id") UUID id);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select a from Application a where a.applicationId = :id")
+    java.util.Optional<Application> findLockedById(@Param("id") UUID id);
     // Deliberately bypass SQLRestriction: uniqueness includes soft-deleted applications.
     @Query(value = "SELECT EXISTS (SELECT 1 FROM applications WHERE job_id = :jobId AND provider_id = :providerId)",
             nativeQuery = true)

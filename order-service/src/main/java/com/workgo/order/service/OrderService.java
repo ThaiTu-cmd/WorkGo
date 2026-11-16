@@ -4,6 +4,7 @@ import com.workgo.order.dto.PageResponse;
 import com.workgo.order.dto.request.OrderCreationRequest;
 import com.workgo.order.dto.request.PaymentConfirmedRequest;
 import com.workgo.order.dto.request.SlotActionRequest;
+import com.workgo.order.dto.response.InternalOrderTrustSnapshot;
 import com.workgo.order.dto.response.OrderDetailResponse;
 import com.workgo.order.dto.response.OrderItemResponse;
 import com.workgo.order.dto.response.OrderPaymentInfoResponse;
@@ -265,6 +266,30 @@ public class OrderService {
                 .providerNetAmount(order.getProviderNetAmount())
                 .currency(order.getCurrency())
                 .payableUntil(payableUntil)
+                .build();
+    }
+
+    //review/dispute lay thong tin don de kiem tra quyen
+    @Transactional(readOnly = true)
+    public InternalOrderTrustSnapshot getTrustSnapshot(UUID orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        return InternalOrderTrustSnapshot.builder()
+                .orderId(order.getOrderId())
+                .orderNumber(order.getOrderNumber())
+                .clientId(order.getClientId())
+                .providerId(order.getProviderId())
+                .serviceId(order.getServiceId())
+                .sourceType(order.getSourceType())
+                .executionType(order.getExecutionType())
+                .orderStatus(order.getOrderStatus())
+                .paymentStatus(order.getPaymentStatus())
+                .placedAt(order.getPlacedAt())
+                .deliveredAt(order.getDeliveredAt())
+                .completedAt(order.getCompletedAt())
+                .cancelledAt(order.getCancelledAt())
                 .build();
     }
 

@@ -34,4 +34,13 @@ public class InternalProviderProfileRepository {
                 rs.getObject("user_id", UUID.class), rs.getString("user_status")), providerId)
                 .stream().findFirst();
     }
+
+    //ghi de gia tri tong, tra so dong da update (0 = khong co provider)
+    public int updateRatingStats(UUID providerId, double ratingAvg, long ratingCount) {
+        return jdbcTemplate.update("""
+                UPDATE provider_profiles
+                   SET rating_avg = ?, rating_count = ?
+                 WHERE provider_profile_id = ? AND is_deleted = 0
+                """, ratingAvg, ratingCount, providerId);
+    }
 }

@@ -21,4 +21,7 @@ public class EscrowRefundRequest {
 
     RefundReason reasonCode;
 
+    //chi dispute phan xu xong moi duoc refund escrow dang FROZEN
+    UUID disputeId;
+
 }

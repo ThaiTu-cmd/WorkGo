@@ -1,5 +1,6 @@
 package com.workgo.payment.controller.internal;
 
+import com.workgo.payment.dto.request.EscrowFreezeRequest;
 import com.workgo.payment.dto.request.EscrowRefundRequest;
 import com.workgo.payment.dto.request.EscrowReleaseRequest;
 import com.workgo.payment.dto.response.EscrowAccountResponse;
@@ -33,6 +34,18 @@ public class InternalEscrowController {
     @PostMapping("/refund")
     EscrowAccountResponse refund(@RequestBody EscrowRefundRequest request) {
         return refundService.refundOrder(request);
+    }
+
+    //dispute mo tranh chap -> khoa tien
+    @PostMapping("/freeze")
+    EscrowAccountResponse freeze(@RequestBody EscrowFreezeRequest request) {
+        return escrowService.freeze(request);
+    }
+
+    //nguoi mo rut tranh chap khi chua phan xu -> mo khoa
+    @PostMapping("/unfreeze")
+    EscrowAccountResponse unfreeze(@RequestBody EscrowFreezeRequest request) {
+        return escrowService.unfreeze(request);
     }
 
 }

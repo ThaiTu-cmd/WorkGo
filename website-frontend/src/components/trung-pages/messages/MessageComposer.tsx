@@ -2,13 +2,15 @@
 
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
-import { Paperclip, SendHorizontal, X } from "lucide-react";
+import { SendHorizontal } from "lucide-react";
 import styles from "./MessagesPage.module.css";
+// communication-service accepts up to 5000 characters; attachments are not
+// accepted yet (no upload/verification on the backend), so there is no picker.
 const MAX_LENGTH = 2000;
 const MAX_HEIGHT = 140;
 type Props = {
   disabled?: boolean;
-  onSend: (text: string, attachments: string[]) => void;
+  onSend: (text: string) => void;
 };
 export default function MessageComposer({
   disabled,
@@ -16,21 +18,18 @@ export default function MessageComposer({
 }: Props) {
   const tr = useTranslations("misc");
   const [text, setText] = useState("");
-  const [files, setFiles] = useState<string[]>([]);
   const areaRef = useRef<HTMLTextAreaElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   const resize = () => {
     const el = areaRef.current;
     if (!el) return;
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, MAX_HEIGHT)}px`;
   };
-  const canSend = !disabled && (text.trim() !== "" || files.length > 0);
+  const canSend = !disabled && text.trim() !== "";
   const submit = () => {
     if (!canSend) return;
-    onSend(text.trim(), files);
+    onSend(text.trim());
     setText("");
-    setFiles([]);
     requestAnimationFrame(resize);
     areaRef.current?.focus();
   };
@@ -38,27 +37,7 @@ export default function MessageComposer({
     e.preventDefault();
     submit();
   }}>
-      {files.length > 0 && <ul className={styles.fileChips} aria-label={tr("m1246")}>
-          {files.map((name, i) => <li key={`${name}-${i}`} className={styles.fileChip}>
-              <Paperclip size={13} aria-hidden="true" />
-              <span>{name}</span>
-              <button type="button" aria-label={tr("m1247", {
-          p0: name
-        })} onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))}>
-                <X size={13} />
-              </button>
-            </li>)}
-        </ul>}
       <div className={styles.composerRow}>
-        {/* Mock upload: only file names are kept until a storage service exists. */}
-        <input ref={fileRef} type="file" multiple hidden onChange={e => {
-        const names = Array.from(e.target.files ?? [], f => f.name);
-        setFiles(prev => [...prev, ...names].slice(0, 5));
-        e.target.value = "";
-      }} />
-        <button type="button" className={styles.iconBtn} aria-label={tr("m1248")} disabled={disabled} onClick={() => fileRef.current?.click()}>
-          <Paperclip size={20} />
-        </button>
         <textarea ref={areaRef} className={styles.composerInput} rows={1} value={text} maxLength={MAX_LENGTH} disabled={disabled} placeholder={tr("m1249")} title={tr("m1250")} aria-label={tr("m1251")} onChange={e => {
         setText(e.target.value);
         resize();

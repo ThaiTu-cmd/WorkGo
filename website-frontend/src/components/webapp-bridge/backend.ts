@@ -14,5 +14,5 @@ export { useAuthToken } from "@/_webapp-mirror/hooks/useAuthToken";
 export { adminApi } from "@/_webapp-mirror/api/adminApi";
 export { ApiError } from "@/_webapp-mirror/api/axiosClient";
 export { decodeToken, hasRole } from "@/_webapp-mirror/utils/jwt";
-export { messageApi, ME, unreadOf, totalUnread } from "@/_webapp-mirror/api/messageApi";
+export { messageApi, messageErrorMessage, ME, unreadOf, totalUnread } from "@/_webapp-mirror/api/messageApi";
 export { useMessages } from "@/_webapp-mirror/hooks/useMessages";

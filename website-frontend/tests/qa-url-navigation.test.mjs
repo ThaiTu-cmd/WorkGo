@@ -186,7 +186,6 @@ test('TC-URL-06: Xác nhận 100% các màn hình Mock Data có gắn nhãn cả
     { file: 'src/components/trung-pages/jobs/SubmitProposalPage.tsx', keyword: 'Prototype Mode' },
     { file: 'src/components/trung-pages/jobs/ProposalReviewPage.tsx', keyword: 'Prototype Mode' },
     { file: 'src/components/trung-pages/trust/DisputeCenterPage.tsx', keyword: 'Trung Tâm Khiếu Nại Demo' },
-    { file: 'src/components/trung-pages/messages/MessagesPage.tsx', keyword: 'Hệ Thống Trò Chuyện Giả Lập' },
     { file: 'src/components/trung-pages/public/PublicInfoPage.tsx', keyword: 'chế độ demo' },
   ];
 

@@ -1,40 +1,69 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Fragment, useEffect, useRef } from "react";
-import { ArrowLeft, Check, CheckCheck, ExternalLink, Package, Paperclip, Store } from "lucide-react";
+import { Fragment, useLayoutEffect, useRef, useState } from "react";
+import { AlertCircle, ArrowLeft, Check, CheckCheck, Clock, ExternalLink, Package, Paperclip, Store } from "lucide-react";
 import { ME } from "../../webapp-bridge/backend";
 import MessageComposer from "./MessageComposer";
 import { avatarColor, formatDay, formatTime, initialOf, ORDER_STATUS_LABEL, ROLE_LABEL } from "./format";
-import type { ChatMessage, Conversation } from "./types";
+import type { ChatMessage, ConversationView } from "./types";
 import styles from "./MessagesPage.module.css";
 type Props = {
-  conversation: Conversation;
+  conversation: ConversationView;
   messages: ChatMessage[];
-  typing: boolean;
+  hasOlder: boolean;
+  onLoadOlder: () => Promise<unknown>;
   onBack: () => void;
-  onSend: (text: string, attachments: string[]) => void;
+  onSend: (text: string) => void;
+  onResend: (message: ChatMessage) => void;
   onOpenContext: () => void;
 };
 export default function ChatWindow({
   conversation,
   messages,
-  typing,
+  hasOlder,
+  onLoadOlder,
   onBack,
   onSend,
+  onResend,
   onOpenContext
 }: Props) {
   const tr = useTranslations("misc");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const ctx = conversation.context;
-  // Seeded demo threads have no real service/order to open.
   const canOpenContext = ctx ? ctx.type === "order" || Boolean(ctx.id) : false;
 
-  // Keep the newest message in view (scroll the thread, not the page).
-  useEffect(() => {
+  // New messages (last id changes) scroll to the bottom; older history
+  // prepended above keeps the reader where they were.
+  const firstId = messages[0]?.id;
+  const lastId = messages[messages.length - 1]?.id;
+  const prev = useRef({
+    conversationId: "",
+    firstId: undefined as string | undefined,
+    lastId: undefined as string | undefined,
+    height: 0
+  });
+  useLayoutEffect(() => {
     const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [conversation.id, messages.length, typing]);
+    if (!el) return;
+    const p = prev.current;
+    if (p.conversationId !== conversation.id || p.lastId !== lastId) {
+      el.scrollTop = el.scrollHeight;
+    } else if (p.firstId !== firstId) {
+      el.scrollTop += el.scrollHeight - p.height;
+    }
+    prev.current = {
+      conversationId: conversation.id,
+      firstId,
+      lastId,
+      height: el.scrollHeight
+    };
+  }, [conversation.id, firstId, lastId]);
+  const loadOlder = () => {
+    setLoadingOlder(true);
+    onLoadOlder().finally(() => setLoadingOlder(false));
+  };
   return <section className={styles.chatPane} aria-label={tr("m1221", {
     p0: conversation.participantName
   })}>
@@ -49,7 +78,7 @@ export default function ChatWindow({
         </span>
         <div className={styles.chatPeer}>
           <strong>{conversation.participantName}</strong>
-          <span>{typing ? tr("m1222") : ROLE_LABEL[conversation.participantRole]}</span>
+          {conversation.participantRole && <span>{ROLE_LABEL[conversation.participantRole]}</span>}
         </div>
         {ctx && canOpenContext && <button type="button" className={styles.ghostBtn} onClick={onOpenContext}>
             <ExternalLink size={15} aria-hidden="true" />
@@ -73,37 +102,37 @@ export default function ChatWindow({
         </div>}
 
       <div className={styles.thread} ref={scrollRef} role="log" aria-live="polite">
+        {hasOlder && <button type="button" className={`${styles.ghostBtn} ${styles.olderBtn}`} disabled={loadingOlder} onClick={loadOlder}>
+            {loadingOlder ? tr("m8") : tr("m1773")}
+          </button>}
         {messages.length === 0 && <p className={styles.threadEmpty}>{tr("m1560")}{conversation.participantName}{tr("m1561")}</p>}
         {messages.map((m, i) => {
         const mine = m.senderId === ME;
         const newDay = i === 0 || formatDay(messages[i - 1].createdAt) !== formatDay(m.createdAt);
         const lastOfMine = mine && messages.slice(i + 1).every(x => x.senderId !== ME);
+        const bubbleClass = [styles.bubble, mine && styles.bubbleMine, m.pending && styles.bubblePending, m.failed && styles.bubbleFailed].filter(Boolean).join(" ");
         return <Fragment key={m.id}>
               {newDay && <div className={styles.daySep}>
                   <span>{formatDay(m.createdAt)}</span>
                 </div>}
               <div className={mine ? `${styles.msgRow} ${styles.msgRowMine}` : styles.msgRow}>
-                <div className={mine ? `${styles.bubble} ${styles.bubbleMine}` : styles.bubble}>
+                <div className={bubbleClass}>
                   {m.text && <p className={styles.bubbleText}>{m.text}</p>}
                   {m.attachments?.map((name, j) => <span key={`${name}-${j}`} className={styles.attachment}>
                       <Paperclip size={13} aria-hidden="true" /> {name}
                     </span>)}
                   <span className={styles.meta}>
                     <time dateTime={m.createdAt}>{formatTime(m.createdAt)}</time>
-                    {mine && (m.seen ? <CheckCheck size={14} aria-label={tr("m1226")} /> : <Check size={14} aria-label={tr("m1227")} />)}
+                    {mine && (m.failed ? <AlertCircle size={14} aria-hidden="true" /> : m.pending ? <Clock size={14} aria-label={tr("m1771")} /> : m.seen ? <CheckCheck size={14} aria-label={tr("m1226")} /> : <Check size={14} aria-label={tr("m1227")} />)}
                   </span>
                 </div>
               </div>
-              {lastOfMine && m.seen && <span className={styles.seenNote}>{tr("m1226")}</span>}
+              {m.failed && <button type="button" className={styles.failedNote} onClick={() => onResend(m)}>
+                  {tr("m1772")}
+                </button>}
+              {lastOfMine && !m.pending && !m.failed && m.seen && <span className={styles.seenNote}>{tr("m1226")}</span>}
             </Fragment>;
       })}
-        {typing && <div className={styles.msgRow}>
-            <div className={`${styles.bubble} ${styles.typing}`} aria-label={tr("m1228")}>
-              <span />
-              <span />
-              <span />
-            </div>
-          </div>}
       </div>
 
       <MessageComposer key={conversation.id} onSend={onSend} />

@@ -83,7 +83,8 @@ export default function ServiceDetailPage({
   const handleContactSeller = () => {
     if (onContactSeller && service.providerId) {
       onContactSeller({
-        participantId: service.providerId,
+        // Provider profile id; the chat resolves it to the provider's user id.
+        providerId: service.providerId,
         participantName: service.provider.name,
         participantRole: 'PROVIDER',
         context: {

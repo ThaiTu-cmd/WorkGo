@@ -2447,6 +2447,16 @@
     "m1764": "Basic package",
     "m1765": "Standard package",
     "m1766": "Premium package",
-    "m1767": "Saving regenerates the open slots for the next 4 weeks. Booked slots are kept."
+    "m1767": "Saving regenerates the open slots for the next 4 weeks. Booked slots are kept.",
+    "m1768": "User #{p0}",
+    "m1769": "Couldn't open the conversation: {p0}",
+    "m1770": "Message not sent: {p0}",
+    "m1771": "Sending",
+    "m1772": "Not sent · Tap to resend",
+    "m1773": "Load older messages",
+    "m1774": "Loading conversations...",
+    "m1775": "Couldn't load messages: {p0}",
+    "m1776": "Opening conversation...",
+    "m1777": "Retry"
   }
 }

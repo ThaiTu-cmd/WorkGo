@@ -2447,6 +2447,16 @@
     "m1764": "Gói Cơ bản",
     "m1765": "Gói Tiêu chuẩn",
     "m1766": "Gói Cao cấp",
-    "m1767": "Lưu khung giờ sẽ tự tạo lại các lượt trống trong 4 tuần tới. Lượt đã có người đặt được giữ nguyên."
+    "m1767": "Lưu khung giờ sẽ tự tạo lại các lượt trống trong 4 tuần tới. Lượt đã có người đặt được giữ nguyên.",
+    "m1768": "Người dùng #{p0}",
+    "m1769": "Không mở được cuộc trò chuyện: {p0}",
+    "m1770": "Không gửi được tin nhắn: {p0}",
+    "m1771": "Đang gửi",
+    "m1772": "Gửi không thành công · Bấm để gửi lại",
+    "m1773": "Xem tin nhắn cũ hơn",
+    "m1774": "Đang tải cuộc trò chuyện...",
+    "m1775": "Không tải được tin nhắn: {p0}",
+    "m1776": "Đang mở cuộc trò chuyện...",
+    "m1777": "Thử lại"
   }
 }

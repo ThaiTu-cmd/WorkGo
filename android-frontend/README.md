@@ -24,6 +24,12 @@ URL backend được gắn vào app **lúc build**. Tạo `.env.local` (không c
 - Bản dev (`npx expo run:android`) vốn cho phép HTTP; cờ `WORKGO_ALLOW_HTTP` chỉ ảnh hưởng APK release.
 - APK dùng cho server HTTPS thật phải build **không** bật cờ này.
 
+### Thanh toán
+
+- Bản dev hiện thêm lựa chọn **Thanh toán thử nghiệm** (cổng `MOCK`): bấm "Giả lập thành công/thất bại" ngay trong app, không cần VNPay/MoMo. Cổng này chỉ có khi payment-service chạy profile `dev` (mặc định).
+- APK release ẩn lựa chọn này; đặt `EXPO_PUBLIC_ENABLE_MOCK_PAYMENT=true` trong `.env.local` để bật lại (vd. APK demo với backend local), hoặc `false` để tắt trong bản dev.
+- VNPay/MoMo mở trang thanh toán trong trình duyệt của app. Kết quả về qua IPN của cổng, nên app tự kiểm tra lại sau khi đóng trình duyệt (mỗi 3 giây, khoảng 2 phút). IPN chỉ tới được backend có URL công khai (ngrok/cloudflared hoặc server đã deploy).
+
 ### Test khi chưa deploy
 
 1. Chạy backend trên laptop: `docker-compose up -d` (database) rồi `.\run.ps1` ở thư mục gốc repo (gateway cổng 8888).
@@ -95,8 +101,10 @@ Hoặc copy file APK sang điện thoại và mở để cài (cho phép "cài t
 2. Đăng ký → đăng nhập → sửa thông tin → thêm/sửa/xoá địa chỉ.
 3. Đặt một dịch vụ Tại nhà (chọn lịch + địa chỉ) và một dịch vụ Online; đơn hiện ở tab Đơn hàng.
 4. Chi tiết đơn: trạng thái, lịch sử.
+   - Đặt đơn với "Thanh toán thử nghiệm" → "Giả lập thành công" → đơn sang `CONFIRMED`, chi tiết đơn hiện thẻ Ký quỹ "Đang giữ tiền".
+   - "Giả lập thất bại" → "Thử thanh toán lại"; đơn chờ thanh toán có nút "Thanh toán" trong chi tiết đơn.
 5. Đăng ký chuyên gia → admin duyệt trên web → "Cập nhật quyền" → thấy "Dịch vụ của tôi".
-6. Tạo dịch vụ có ảnh chụp từ camera, thêm khung giờ, thấy lịch sắp tới.
+6. Tạo dịch vụ có ảnh chụp từ camera, thêm khung giờ: các lượt trong 4 tuần tới hiện ngay ở "Lịch sắp tới" (backend tự sinh). Sửa khung giờ thì lượt trống được tạo lại, lượt đã đặt vẫn giữ.
 7. Đơn Tại nhà đã ở `IN_PROGRESS` + onsite `IN_SERVICE` (chỉnh trong database): chuyên gia gửi bằng chứng bằng camera; khách thấy ảnh.
 8. Tắt mạng: hiện banner "Mất kết nối mạng", "Thử lại" hoạt động khi có mạng.
 9. Để app chạy nền rồi mở lại: vẫn đăng nhập; token được làm mới khi còn dưới 2 giờ.
@@ -105,7 +113,7 @@ Hoặc copy file APK sang điện thoại và mở để cài (cho phép "cài t
 
 ```
 src/app/       route expo-router (chỉ re-export màn hình)
-src/features/  màn hình + hook theo nghiệp vụ: catalog, checkout, orders, account, provider
+src/features/  màn hình + hook theo nghiệp vụ: catalog, checkout, orders, payment, account, provider
 src/api/       client fetch, module API, adapters, query keys
 src/auth/      phiên đăng nhập (JWT trong SecureStore), refresh token
 src/ui/        component dùng chung

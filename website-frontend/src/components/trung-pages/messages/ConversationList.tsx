@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 import { ME } from "../../webapp-bridge/backend";
 import { avatarColor, formatListTime, initialOf, ROLE_LABEL } from "./format";
@@ -11,11 +11,14 @@ type Props = {
   conversations: ConversationView[];
   activeId: string | null;
   onSelect: (id: string) => void;
+  // Loading / error block shown in place of the list.
+  status?: ReactNode;
 };
 export default function ConversationList({
   conversations,
   activeId,
-  onSelect
+  onSelect,
+  status
 }: Props) {
   const tr = useTranslations("misc");
   const [query, setQuery] = useState("");
@@ -36,12 +39,13 @@ export default function ConversationList({
         </div>
       </div>
 
-      {visible.length === 0 ? <p className={styles.listEmpty}>
+      {status && conversations.length === 0 ? status : visible.length === 0 ? <p className={styles.listEmpty}>
           {conversations.length === 0 ? tr("m1238") : tr("m1239")}
         </p> : <ul className={styles.convList}>
           {visible.map(c => {
         const last = c.lastMessage;
-        const preview = last ? `${last.senderId === ME ? tr("m1562") : ""}${last.text || (last.attachments?.length ? tr("m1563") : "")}` : tr("m1241");
+        const preview = last ? `${last.senderId === ME ? `${tr("m1562")} ` : ""}${last.text || (last.attachments?.length ? tr("m1563") : "")}` : c.hasMessages ? "" : tr("m1241");
+        const time = last?.createdAt ?? c.lastMessageAt;
         return <li key={c.id}>
                 <button type="button" className={c.id === activeId ? `${styles.convItem} ${styles.convItemActive}` : styles.convItem} aria-current={c.id === activeId ? "true" : undefined} onClick={() => onSelect(c.id)}>
                   <span className={styles.avatar} style={{
@@ -52,14 +56,14 @@ export default function ConversationList({
                   <span className={styles.convBody}>
                     <span className={styles.convTop}>
                       <strong className={styles.convName}>{c.participantName}</strong>
-                      <time className={styles.convTime} dateTime={last?.createdAt ?? c.lastMessageAt}>
-                        {formatListTime(last?.createdAt ?? c.lastMessageAt)}
-                      </time>
+                      {time && <time className={styles.convTime} dateTime={time}>
+                          {formatListTime(time)}
+                        </time>}
                     </span>
-                    <span className={styles.convRole}>
-                      {ROLE_LABEL[c.participantRole]}
-                      {c.context ? ` · ${c.context.title}` : ""}
-                    </span>
+                    {(c.participantRole || c.context) && <span className={styles.convRole}>
+                        {c.participantRole ? ROLE_LABEL[c.participantRole] : ""}
+                        {c.context ? `${c.participantRole ? " · " : ""}${c.context.title}` : ""}
+                      </span>}
                     <span className={styles.convBottom}>
                       <span className={c.unread > 0 ? `${styles.convPreview} ${styles.convPreviewUnread}` : styles.convPreview}>
                         {preview}

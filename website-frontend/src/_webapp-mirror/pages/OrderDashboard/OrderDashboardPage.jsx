@@ -465,10 +465,12 @@ export default function OrderDashboardPage({
 
   // The counterpart is the provider when I'm the client, and vice versa.
   const openChat = o => {
+    // o.providerId is a provider profile id (resolved to a user id by the
+    // chat); o.clientId is already the client's user id.
     const participantId = role === 'CLIENT' ? o.providerId : o.clientId;
     if (!onOpenChat || !participantId) return;
     onOpenChat({
-      participantId,
+      ...(role === 'CLIENT' ? { providerId: participantId } : { participantId }),
       participantName: o.counterpartName || `${partnerHeader} #${String(participantId).slice(0, 6)}`,
       participantRole: role === 'CLIENT' ? 'PROVIDER' : 'CLIENT',
       context: {

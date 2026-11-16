@@ -44,7 +44,6 @@ import NotFoundPage from "../trung-pages/NotFoundPage";
 import MessagesPage from "../trung-pages/messages/MessagesPage";
 import type { ChatTarget } from "../trung-pages/messages/types";
 import { getAccessToken } from "@/_webapp-mirror/api/axiosClient";
-import { messageApi } from "./backend";
 import { Info } from "lucide-react";
 import ScrollEnhancements from "../common/ScrollEnhancements";
 import styles from "./webapp-shell.module.css";
@@ -250,7 +249,9 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
   // "order-payment": payment to follow, and the gateway verdict from /payment/result.
   const [selectedPaymentId, setSelectedPaymentId] = useState("");
   const [paymentResult, setPaymentResult] = useState("");
-  const [chatConversationId, setChatConversationId] = useState("");
+  // "messages": thread to open on arrival; the nonce remounts MessagesPage per navigation.
+  const [chatTarget, setChatTarget] = useState<ChatTarget | null>(null);
+  const [chatNonce, setChatNonce] = useState(0);
   // { service, pkg, addons } handed over by ServiceDetailPage "Tiếp tục đặt hàng".
   const [checkoutOrder, setCheckoutOrder] = useState<Record<string, unknown> | null>(null);
   // S4: offline state for the banner (M3) — refreshed on online/offline events.
@@ -495,8 +496,8 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
     }
     if (page === "detail" && params.serviceId) setSelectedServiceId(params.serviceId);
     if (page === "messages") {
-      const { chat } = params;
-      setChatConversationId(chat ? messageApi.openConversation(chat, chat.context) : "");
+      setChatTarget(params.chat ?? null);
+      setChatNonce(n => n + 1);
     }
 
     // Synchronize browser history (pushState)
@@ -885,10 +886,10 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
 
       {currentPage === "messages" && (
         <MessagesPage
-          key={chatConversationId}
+          key={chatNonce}
           onNavigate={handleNavigate}
           onShowToast={showToast}
-          conversationId={chatConversationId || undefined}
+          chatTarget={chatTarget}
         />
       )}
       </div>

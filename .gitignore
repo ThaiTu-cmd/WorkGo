@@ -109,3 +109,7 @@ order-service/src/test/
 # Local tests for communication-service
 communication-service/src/test/
 communication-service/test/
+
+# Local tests for trust-service
+trust-service/src/test/
+trust-service/test/

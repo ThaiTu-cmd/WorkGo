@@ -1,0 +1,40 @@
+server:
+  port: ${TRUST_PORT:8087}
+  servlet:
+    context-path: /trust
+
+spring:
+  application:
+    name: trust-service
+  datasource:
+    url: jdbc:postgresql://localhost:${TRUST_DB_PORT:5438}/${TRUST_DB:trust_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+app:
+  internal-api-key: ${INTERNAL_API_KEY:}
+  review:
+    window-days: ${TRUST_REVIEW_WINDOW_DAYS:14}
+    publication-cron: ${TRUST_REVIEW_PUBLICATION_CRON:0 */5 * * * *}
+  outbox:
+    poll-interval-ms: ${TRUST_OUTBOX_POLL_MS:5000}
+    max-attempts: ${TRUST_OUTBOX_MAX_ATTEMPTS:5}
+  clients:
+    connect-timeout-millis: ${TRUST_CLIENT_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-millis: ${TRUST_CLIENT_READ_TIMEOUT_MS:5000}
+  services:
+    identity: ${IDENTITY_SERVICE_URL:http://localhost:8081/identity}
+    catalog: ${CATALOG_SERVICE_URL:http://localhost:8082/catalog}
+    order: ${ORDER_SERVICE_URL:http://localhost:8083/order}
+    payment: ${PAYMENT_SERVICE_URL:http://localhost:8084/payment}
+    job: ${JOB_SERVICE_URL:http://localhost:8085/job}
+    communication: ${COMMUNICATION_SERVICE_URL:http://localhost:8086/communication}

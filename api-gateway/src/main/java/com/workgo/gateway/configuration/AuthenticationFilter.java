@@ -53,7 +53,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             "/payment/dev/"
     };
 
-    // Read-only catalog and job data guests can browse without logging in.
+    // Read-only listings and reviews guests can browse without logging in.
     private final String[] PUBLIC_GET_ENDPOINTS = {
             "/catalog/categories", "/catalog/categories/**",
             "/catalog/services", "/catalog/services/*",
@@ -62,7 +62,9 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             "/catalog/medias/**",
             "/catalog/rules/**",
             "/catalog/slots/**",
-            "/job/jobs", "/job/jobs/*"
+            "/job/jobs", "/job/jobs/*",
+            "/trust/providers/*/reviews",
+            "/trust/services/*/reviews"
     };
 
     // Matches PUBLIC_GET_ENDPOINTS but still needs the caller's identity.
@@ -79,7 +81,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        if (isCommunicationInternalEndpoint(exchange.getRequest())) {
+        if (isInternalEndpoint(exchange.getRequest())) {
             exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
             return exchange.getResponse().setComplete();
         }
@@ -116,11 +118,12 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         return -1;
     }
 
-    private boolean isCommunicationInternalEndpoint(ServerHttpRequest request) {
+    private boolean isInternalEndpoint(ServerHttpRequest request) {
         String path = StringUtils.cleanPath(request.getURI().getPath()
                 .replaceAll(";[^/]*", "").replaceAll("/{2,}", "/"));
-        String internalPath = apiPrefix + "/communication/internal";
-        return path.equals(internalPath) || path.startsWith(internalPath + "/");
+        return Arrays.stream(new String[]{"/communication/internal", "/trust/internal"})
+                .map(endpoint -> apiPrefix + endpoint)
+                .anyMatch(internalPath -> path.equals(internalPath) || path.startsWith(internalPath + "/"));
     }
 
     private boolean isCommunicationWebSocketHandshake(ServerHttpRequest request) {

@@ -60,3 +60,10 @@ spring:
             - Path=${app.api-prefix}/communication/**
           filters:
             - StripPrefix=2
+
+        - id: trust_service
+          uri: ${TRUST_HTTP_URL:http://localhost:8087}
+          predicates:
+            - Path=${app.api-prefix}/trust/**
+          filters:
+            - StripPrefix=2

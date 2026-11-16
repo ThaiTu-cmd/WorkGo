@@ -12,6 +12,7 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: update
     show-sql: false
@@ -28,6 +29,9 @@ app:
   outbox:
     poll-interval-ms: ${TRUST_OUTBOX_POLL_MS:5000}
     max-attempts: ${TRUST_OUTBOX_MAX_ATTEMPTS:5}
+    lease-seconds: ${TRUST_OUTBOX_LEASE_SECONDS:60}
+  dispute:
+    window-days: ${TRUST_DISPUTE_WINDOW_DAYS:14}
   clients:
     connect-timeout-millis: ${TRUST_CLIENT_CONNECT_TIMEOUT_MS:2000}
     read-timeout-millis: ${TRUST_CLIENT_READ_TIMEOUT_MS:5000}

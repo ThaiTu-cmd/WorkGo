@@ -16,4 +16,6 @@ public class RatingStatsRequest {
 
     Long ratingCount;
 
+    Long aggregateVersion;
+
 }

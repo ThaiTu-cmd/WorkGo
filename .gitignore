@@ -113,3 +113,7 @@ communication-service/test/
 # Local tests for trust-service
 trust-service/src/test/
 trust-service/test/
+
+# Local receiver verification for Trust integrations
+payment-service/src/test/
+catalog-service/src/test/

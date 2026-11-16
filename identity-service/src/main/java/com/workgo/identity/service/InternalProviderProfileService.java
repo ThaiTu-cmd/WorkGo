@@ -23,14 +23,23 @@ public class InternalProviderProfileService {
     //review-service cap nhat diem trung binh cua provider
     @Transactional
     public InternalProviderProfileResponse updateRatingStats(UUID providerId, RatingStatsRequest request) {
-        if (request.getRatingAvg() == null || request.getRatingCount() == null
+        if (request == null || request.getRatingAvg() == null || request.getRatingCount() == null
+                || request.getAggregateVersion() == null || request.getAggregateVersion() <= 0
+                || !Double.isFinite(request.getRatingAvg())
                 || request.getRatingAvg() < 0 || request.getRatingAvg() > 5
-                || request.getRatingCount() < 0) {
+                || request.getRatingCount() < 0
+                || (request.getRatingCount() == 0 && request.getRatingAvg() != 0)) {
             throw new AppException(ErrorCode.RATING_STATS_INVALID);
         }
 
-        if (repository.updateRatingStats(providerId, request.getRatingAvg(), request.getRatingCount()) == 0) {
-            throw new AppException(ErrorCode.PROVIDER_PROFILE_NOT_EXISTED);
+        var current = repository.lockRatingSnapshot(providerId)
+                .orElseThrow(() -> new AppException(ErrorCode.PROVIDER_PROFILE_NOT_EXISTED));
+        if (request.getAggregateVersion() == current.version()
+                && (request.getRatingAvg() != current.average() || request.getRatingCount() != current.count())) {
+            throw new AppException(ErrorCode.RATING_SNAPSHOT_CONFLICT);
+        }
+        if (request.getAggregateVersion() > current.version()) {
+            repository.updateRatingStats(providerId, request.getRatingAvg(), request.getRatingCount(), request.getAggregateVersion());
         }
 
         return getProviderProfile(providerId);

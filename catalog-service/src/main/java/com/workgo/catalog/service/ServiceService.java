@@ -93,19 +93,33 @@ public class ServiceService {
     //review-service ghi de diem trung binh cua service
     @Transactional
     public ServiceResponse updateRatingStats(UUID serviceId, ServiceRatingStatsRequest request) {
-        if (request.getAvgRating() == null || request.getReviewCount() == null
+        if (request == null || request.getAvgRating() == null || request.getReviewCount() == null
+                || request.getAggregateVersion() == null || request.getAggregateVersion() <= 0
+                || !Double.isFinite(request.getAvgRating())
                 || request.getAvgRating() < 0 || request.getAvgRating() > 5
-                || request.getReviewCount() < 0) {
+                || request.getReviewCount() < 0
+                || (request.getReviewCount() == 0 && request.getAvgRating() != 0)) {
             throw new AppException(ErrorCode.RATING_STATS_INVALID);
         }
 
-        Service service = serviceRepository.findById(serviceId)
+        Service service = serviceRepository.findByIdForRatingUpdate(serviceId)
                 .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_EXISTED));
 
+        if (request.getAggregateVersion() < service.getRatingAggregateVersion()) {
+            return serviceMapper.toServiceResponse(service);
+        }
+        if (request.getAggregateVersion() == service.getRatingAggregateVersion()) {
+            if (request.getAvgRating() != service.getAvgRating() || request.getReviewCount() != service.getReviewCount()) {
+                throw new AppException(ErrorCode.RATING_SNAPSHOT_CONFLICT);
+            }
+            return serviceMapper.toServiceResponse(service);
+        }
+        serviceRepository.updateRatingSnapshot(serviceId, request.getAvgRating(), request.getReviewCount(), request.getAggregateVersion());
         service.setAvgRating(request.getAvgRating());
         service.setReviewCount(request.getReviewCount());
+        service.setRatingAggregateVersion(request.getAggregateVersion());
 
-        return serviceMapper.toServiceResponse(serviceRepository.save(service));
+        return serviceMapper.toServiceResponse(service);
     }
 
     public PageResponse<ServiceResponse> getMyServices(int page, int size) {

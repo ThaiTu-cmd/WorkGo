@@ -24,6 +24,10 @@ spring:
           default:
             connect-timeout: 3000
             read-timeout: 5000
+          trust-service:
+            connect-timeout: 2000
+            read-timeout: 5000
+            follow-redirects: false
 
 logging:
   pattern:
@@ -33,6 +37,7 @@ logging:
 app:
   services:
     order: ${ORDER_SERVICE_URL:http://localhost:8083/order}
+    trust: ${TRUST_HTTP_URL:http://localhost:8087/trust}
   internal-key: ${INTERNAL_API_KEY:dev-internal-key}
   frontend-result-url: ${PAYMENT_RESULT_URL:http://localhost:3000/payment/result}
 

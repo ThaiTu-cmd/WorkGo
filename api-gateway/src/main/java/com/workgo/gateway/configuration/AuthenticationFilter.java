@@ -121,7 +121,8 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     private boolean isInternalEndpoint(ServerHttpRequest request) {
         String path = StringUtils.cleanPath(request.getURI().getPath()
                 .replaceAll(";[^/]*", "").replaceAll("/{2,}", "/"));
-        return Arrays.stream(new String[]{"/communication/internal", "/trust/internal"})
+        return Arrays.stream(new String[]{"/communication/internal", "/trust/internal", "/order/internal",
+                        "/payment/internal", "/identity/internal", "/catalog/internal", "/job/internal"})
                 .map(endpoint -> apiPrefix + endpoint)
                 .anyMatch(internalPath -> path.equals(internalPath) || path.startsWith(internalPath + "/"));
     }

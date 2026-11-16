@@ -43,12 +43,16 @@ public class ProviderProfile {
     VerificationStatus verificationStatus;
 
     @Builder.Default
-    @Column(name = "rating_avg")
+    @Column(name = "rating_avg", updatable = false)
     double ratingAvg = 0.0;
 
     @Builder.Default
-    @Column(name = "rating_count")
+    @Column(name = "rating_count", updatable = false)
     long ratingCount = 0;
+
+    @Builder.Default
+    @Column(name = "rating_aggregate_version", nullable = false, updatable = false)
+    long ratingAggregateVersion = 0;
 
     @Column(name = "completed_order_count")
     int completedOrderCount;

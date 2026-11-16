@@ -16,4 +16,6 @@ public class ServiceRatingStatsRequest {
 
     Long reviewCount;
 
+    Long aggregateVersion;
+
 }

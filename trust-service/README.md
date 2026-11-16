@@ -1,8 +1,8 @@
 # Trust Service
 
-Infrastructure configured following the existing WorkGo backend service structure.
+Infrastructure and service security follow the existing WorkGo backend structure.
 Feign scanning and scheduling are enabled. Business logic, endpoints, entities,
-service security, scheduled workers and service integrations are planned separately.
+scheduled workers and service integrations are planned separately.
 
 ## Stack
 
@@ -55,7 +55,16 @@ The root runner is not wired up yet.
 
 `app` configuration includes review publication, outbox retries, client timeouts,
 and URLs for Identity, Catalog, Order, Payment, Job and Communication.
-Supply `INTERNAL_API_KEY` through the environment when internal APIs are implemented.
+Supply `INTERNAL_API_KEY` through the environment for `/trust/internal/**` access.
+The internal security chain requires `X-Internal-Key`; a missing or blank configured
+key rejects every internal request. Bearer JWTs cannot replace this key.
+
+The API security chain permits only the two public GET patterns above; all other
+requests require a Bearer JWT. The Gateway introspects JWTs before forwarding them;
+this service parses those verified claims and preserves `ROLE_*` authorities from
+`scope`. Keep direct service access restricted to the trusted internal network.
+Both security chains are stateless. Authentication failures return HTTP 401 with
+the shared JSON response code `1006`.
 
 Build from the repository root:
 

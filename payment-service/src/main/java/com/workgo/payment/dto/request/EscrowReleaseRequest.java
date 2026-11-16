@@ -15,4 +15,7 @@ public class EscrowReleaseRequest {
 
     UUID orderId;
 
+    //chi dispute phan xu xong moi duoc release escrow dang FROZEN
+    UUID disputeId;
+
 }

@@ -63,6 +63,11 @@ public class RefundService {
             return escrowMapper.toResponse(escrow);
         }
 
+        //dang tranh chap -> order huy don khong duoc lay tien, PaymentSyncJob goi lai sau
+        if (escrow.getStatus() == EscrowStatus.FROZEN && request.getDisputeId() == null) {
+            throw new AppException(ErrorCode.ESCROW_FROZEN);
+        }
+
         RefundReason reason = request.getReasonCode() == null
                 ? RefundReason.ORDER_CANCELLED : request.getReasonCode();
 

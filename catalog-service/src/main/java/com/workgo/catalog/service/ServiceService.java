@@ -2,6 +2,7 @@ package com.workgo.catalog.service;
 
 import com.workgo.catalog.dto.PageResponse;
 import com.workgo.catalog.dto.request.ServiceCreationRequest;
+import com.workgo.catalog.dto.request.ServiceRatingStatsRequest;
 import com.workgo.catalog.dto.request.ServiceStatusUpdateRequest;
 import com.workgo.catalog.dto.request.ServiceUpdateRequest;
 import com.workgo.catalog.dto.response.ServiceCreationResponse;
@@ -27,6 +28,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -82,6 +84,24 @@ public class ServiceService {
                 .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_EXISTED));
 
         return serviceMapper.toServiceResponse(service);
+    }
+
+    //review-service ghi de diem trung binh cua service
+    @Transactional
+    public ServiceResponse updateRatingStats(UUID serviceId, ServiceRatingStatsRequest request) {
+        if (request.getAvgRating() == null || request.getReviewCount() == null
+                || request.getAvgRating() < 0 || request.getAvgRating() > 5
+                || request.getReviewCount() < 0) {
+            throw new AppException(ErrorCode.RATING_STATS_INVALID);
+        }
+
+        Service service = serviceRepository.findById(serviceId)
+                .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_EXISTED));
+
+        service.setAvgRating(request.getAvgRating());
+        service.setReviewCount(request.getReviewCount());
+
+        return serviceMapper.toServiceResponse(serviceRepository.save(service));
     }
 
     public PageResponse<ServiceResponse> getMyServices(int page, int size) {

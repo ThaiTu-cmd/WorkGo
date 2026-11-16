@@ -1,21 +1,26 @@
 package com.workgo.catalog.configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.workgo.catalog.configuration.CustomJwtDecoder;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -25,10 +30,6 @@ public class SecurityConfig {
 
     @Autowired
     CustomJwtDecoder customJwtDecoder;
-
-    private final String[] PUBLIC_ENDPOINTS = {
-        "/internal/**"
-    };
 
     // Read-only catalog data guests can browse without logging in.
     // /services/my-services stays protected by its @PreAuthorize.
@@ -42,11 +43,25 @@ public class SecurityConfig {
         "/slots/**"
     };
 
+    //order-service, review-service goi /internal/** kem X-Internal-Key
     @Bean
+    @Order(1)
+    public SecurityFilterChain internalSecurityFilterChain(HttpSecurity http,
+            @Value("${app.internal-api-key:}") String internalApiKey) throws Exception {
+        return http.securityMatcher("/internal/**")
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(request -> request.anyRequest().hasAuthority("INTERNAL_SERVICE"))
+                .addFilterBefore(new InternalApiKeyFilter(internalApiKey, new ObjectMapper()),
+                        UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
+
+    @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request ->{
-            request.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                    .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll()
+            request.requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll()
                     .anyRequest().authenticated();
         });
 

@@ -66,6 +66,22 @@ this service parses those verified claims and preserves `ROLE_*` authorities fro
 Both security chains are stateless. Authentication failures return HTTP 401 with
 the shared JSON response code `1006`.
 
+## Error handling
+
+`GlobalExceptionHandler` wraps application, validation, authentication, authorization,
+and optimistic locking failures in `ApiResponse`. Trust business codes use
+`5001–5020`; common errors use `1004`, `1006`, `1007`, `1008`, and `9999`.
+Unexpected failures return a generic message and are logged on the server.
+MVC client errors retain their HTTP status and protocol headers.
+
+Run the service tests with Maven:
+
+```powershell
+mvn -f trust-service/pom.xml test
+```
+
+Tests under `src/test/` are local only under the repository's current `.gitignore`.
+
 Build from the repository root:
 
 ```powershell

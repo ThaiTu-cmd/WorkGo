@@ -4,7 +4,7 @@
      Tailwind preflight makes inputs `color: inherit`, so without this, fields
      with a white background render white-on-white text. */
   color: var(--wg-text);
-  color-scheme: light;
+  color-scheme: light dark;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -108,7 +108,8 @@
 }
 
 /* Scoped re-declaration of web-app design tokens (mirror styles/variables.css :root).
-   Scoped under .webapp-scope so bridge pages never leak tokens into the host site. */
+   Scoped under .webapp-scope so bridge pages never leak tokens into the host site.
+   Light (default) + Dark (responds to host <html data-theme>). */
 .webapp-scope {
   --wg-primary: #1dbf73;
   --wg-primary-hover: #19a463;
@@ -120,24 +121,24 @@
   --wg-hero-bg: #012b1d;
   --wg-hero-gradient: linear-gradient(
     135deg,
-    #032115 0%,
-    #063923 55%,
-    #0b4e33 100%
+    #012b1d 0%,
+    #032115 55%,
+    #158852 100%
   );
-  --wg-hero-banner-accent: #0f6844;
+  --wg-hero-banner-accent: #158852;
 
   --wg-accent: #ff7640;
   --wg-accent-hover: #e86330;
   --wg-star: #ffb33e;
 
-  --wg-bg: #fafafa;
+  --wg-bg: #F5F9FF;
   --wg-surface: #ffffff;
-  --wg-surface-alt: #f5f5f5;
-  --wg-text: #222325;
-  --wg-text-secondary: #62646a;
-  --wg-text-muted: #95979d;
-  --wg-border: #e4e5e7;
-  --wg-border-light: #efeff0;
+  --wg-surface-alt: #EDF5FF;
+  --wg-text: #06142F;
+  --wg-text-secondary: #3D4E73;
+  --wg-text-muted: #7A8DB5;
+  --wg-border: #D3E3F8;
+  --wg-border-light: #E4EEFB;
 
   --badge-digital-bg: #e0f2fe;
   --badge-digital-text: #0369a1;
@@ -159,12 +160,12 @@
     var(--font-be-vietnam-pro), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-heading: var(--font-sans);
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.07);
-  --shadow-card-hover: 0 12px 28px rgba(0, 0, 0, 0.12);
-  --shadow-header: 0 2px 10px rgba(0, 0, 0, 0.06);
-  --shadow-search: 0 8px 30px rgba(0, 0, 0, 0.22);
-  --shadow-dropdown: 0 10px 30px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 1px 3px rgba(3, 11, 28, 0.05);
+  --shadow-card: 0 2px 8px rgba(3, 11, 28, 0.07);
+  --shadow-card-hover: 0 12px 28px rgba(3, 11, 28, 0.12);
+  --shadow-header: 0 2px 10px rgba(3, 11, 28, 0.06);
+  --shadow-search: 0 8px 30px rgba(3, 11, 28, 0.22);
+  --shadow-dropdown: 0 10px 30px rgba(3, 11, 28, 0.12);
 
   --radius-xs: 4px;
   --radius-sm: 6px;
@@ -178,9 +179,59 @@
   --transition-smooth: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 
   --container-max: 1240px;
-  /* Fixed chrome = header bar only; pages offset their content with --header-height. */
   --header-bar-height: 76px;
   --header-height: var(--header-bar-height);
+
+  color-scheme: light;
+}
+
+/* Dark mode: override tokens when host is in dark theme */
+:global([data-theme="dark"]) .webapp-scope,
+:global(.dark) .webapp-scope {
+  --wg-primary: #1dbf73;
+  --wg-primary-hover: #34d399;
+  /* Used as text / focus-ring color (never as a fill): the light theme's
+     #158852 is too dark to read on dark green tints. */
+  --wg-primary-active: #34d399;
+  --wg-primary-light: rgba(29, 191, 115, 0.14);
+  --wg-primary-glow: rgba(29, 191, 115, 0.35);
+
+  --wg-hero-bg: #121212;
+  --wg-hero-gradient: linear-gradient(
+    135deg,
+    #121212 0%,
+    #1e1e1e 55%,
+    #158852 100%
+  );
+  --wg-hero-banner-accent: #158852;
+
+  --wg-bg: #121212;
+  --wg-surface: #1e1e1e;
+  --wg-surface-alt: #2a2a2a;
+  --wg-text: #e8e8e8;
+  --wg-text-secondary: #D4D4D8;
+  --wg-text-muted: #A1A1AA;
+  --wg-border: rgba(255, 255, 255, 0.14);
+  --wg-border-light: rgba(255, 255, 255, 0.08);
+
+  /* Badges - dark variants */
+  --badge-digital-bg: rgba(3, 105, 161, 0.22);
+  --badge-digital-text: #7dd3fc;
+  --badge-digital-border: rgba(125, 211, 252, 0.35);
+
+  --badge-onsite-bg: rgba(180, 83, 9, 0.22);
+  --badge-onsite-text: #fcd34d;
+  --badge-onsite-border: rgba(252, 211, 77, 0.35);
+
+  --badge-delivery-bg: rgba(21, 128, 61, 0.22);
+  --badge-delivery-text: #86efac;
+  --badge-delivery-border: rgba(134, 239, 172, 0.35);
+
+  --badge-appointment-bg: rgba(124, 58, 237, 0.22);
+  --badge-appointment-text: #c4b5fd;
+  --badge-appointment-border: rgba(196, 181, 253, 0.35);
+
+  color-scheme: dark;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -27,7 +27,7 @@ export const setAccessToken = (token) => {
 
 // Backend answers HTTP 401 both for a bad/expired token and for a missing
 // role (code 1007 "You do not have that permission"); tell them apart by code.
-const FORBIDDEN_CODES = [1007];
+export const FORBIDDEN_CODES = [1007];
 
 // Catalog provider endpoints answer 1007 until the account is a VERIFIED provider
 // and has signed in again (the PROVIDER role and providerId live in the token).
@@ -60,10 +60,26 @@ export class ApiError extends Error {
   }
 }
 
-async function request(method, url, { params, data } = {}) {
-  const query = params ? `?${new URLSearchParams(params)}` : '';
-  const headers = { 'Content-Type': 'application/json' };
+const AUTH_GUARD_PATHS = [
+  '/identity/users/myInfo',
+  '/identity/providers',
+  '/identity/provider-verifications',
+];
+
+export function isAuthGuarded(url) {
+  return AUTH_GUARD_PATHS.some((path) => url.startsWith(path));
+}
+
+async function request(method, url, { params, data, headers: extraHeaders } = {}) {
   const token = getAccessToken();
+
+  // Guard: Avoid firing unauthenticated requests to protected identity endpoints
+  if (!token && isAuthGuarded(url)) {
+    return null;
+  }
+
+  const query = params ? `?${new URLSearchParams(params)}` : '';
+  const headers = { 'Content-Type': 'application/json', ...extraHeaders };
   if (token) headers.Authorization = `Bearer ${token}`;
 
   let res;
@@ -80,7 +96,13 @@ async function request(method, url, { params, data } = {}) {
   const body = await res.json().catch(() => null);
   if (!res.ok) {
     const error = new ApiError(res.status, body, contentType);
-    if (error.status === 401 && token) setAccessToken(null);
+    if (error.status === 401) {
+      if (token) setAccessToken(null);
+      // Suppress unhandled 401 rejection only for GET background/guest reads to guarded identity endpoints
+      if (method.toUpperCase() === 'GET' && isAuthGuarded(url)) {
+        return null;
+      }
+    }
     throw error;
   }
   return body;
@@ -90,6 +112,7 @@ const axiosClient = {
   get: (url, config = {}) => request('GET', url, config),
   post: (url, data, config = {}) => request('POST', url, { ...config, data }),
   put: (url, data, config = {}) => request('PUT', url, { ...config, data }),
+  patch: (url, data, config = {}) => request('PATCH', url, { ...config, data }),
   delete: (url, config = {}) => request('DELETE', url, config),
 };
 

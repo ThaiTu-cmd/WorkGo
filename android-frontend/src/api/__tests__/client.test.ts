@@ -1,5 +1,5 @@
 import { configureClient, http } from '../client';
-import { ApiError, UNREACHABLE_MESSAGE } from '../errors';
+import { ApiError, unreachableMessage } from '../errors';
 
 const fetchMock = jest.fn();
 global.fetch = fetchMock as unknown as typeof fetch;
@@ -91,14 +91,14 @@ test('network failure → ApiError status 0 with UNREACHABLE_MESSAGE', async () 
   fetchMock.mockRejectedValueOnce(new TypeError('Network request failed'));
   const err = await caught(http.get('/x'));
   expect(err.status).toBe(0);
-  expect(err.message).toBe(UNREACHABLE_MESSAGE);
+  expect(err.message).toBe(unreachableMessage());
 });
 
 test('502 without JSON body → UNREACHABLE_MESSAGE', async () => {
   respond(502, undefined);
   const err = await caught(http.get('/x'));
   expect(err.status).toBe(502);
-  expect(err.message).toBe(UNREACHABLE_MESSAGE);
+  expect(err.message).toBe(unreachableMessage());
 });
 
 test('400 with body { code: 2022, message } → ApiError code 2022', async () => {
@@ -112,4 +112,22 @@ test('400 with body { code: 2022, message } → ApiError code 2022', async () =>
 test('2xx without a body resolves to null', async () => {
   respond(200, undefined);
   await expect(http.delete('/identity/addresses/1')).resolves.toBeNull();
+});
+
+test('post merges extra headers (e.g. Idempotency-Key) with the defaults', async () => {
+  token = 't1';
+  respond(200, {});
+  await http.post('/payment/payments', { a: 1 }, { headers: { 'Idempotency-Key': 'k1' } });
+  const [, init] = fetchMock.mock.calls[0];
+  expect(init.headers['Idempotency-Key']).toBe('k1');
+  expect(init.headers.Authorization).toBe('Bearer t1');
+  expect(init.headers['Content-Type']).toBe('application/json');
+});
+
+test('patch sends method PATCH with the JSON body', async () => {
+  respond(200, {});
+  await http.patch('/x', { a: 1 });
+  const [, init] = fetchMock.mock.calls[0];
+  expect(init.method).toBe('PATCH');
+  expect(init.body).toBe('{"a":1}');
 });

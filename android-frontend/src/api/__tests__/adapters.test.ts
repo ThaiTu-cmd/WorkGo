@@ -107,3 +107,12 @@ test('toServiceDetail uses the cheapest package as base price and cover image fi
   expect(detail.mediaList.map((m) => m.id)).toEqual(['m2', 'm1']);
   expect(detail.avgRating).toBeNull();
 });
+
+test('toServiceCard carries the category slug for icons', () => {
+  const card = toServiceCard(
+    { serviceId: 's1', providerId: 'p1', categoryId: 'c1', title: 'X', executionType: 'DIGITAL' },
+    { category: { categoryId: 'c1', name: 'Lập trình & IT', slug: 'lap-trinh-it' } }
+  );
+  expect(card.categorySlug).toBe('lap-trinh-it');
+  expect(toServiceCard({ serviceId: 's2', providerId: 'p1', categoryId: 'c9', title: 'Y', executionType: 'DIGITAL' }).categorySlug).toBeNull();
+});

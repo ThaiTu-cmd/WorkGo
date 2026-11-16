@@ -17,7 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "catalog-service", url = "${app.services.catalog}")
+@FeignClient(name = "catalog-service", url = "${app.services.catalog}",
+        configuration = InternalFeignConfiguration.class)
 public interface CatalogClient {
 
     @GetMapping("/internal/services/{serviceId}")

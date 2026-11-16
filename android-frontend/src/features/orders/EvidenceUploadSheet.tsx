@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import * as React from 'react';
-import { Modal, StyleSheet, Text, View } from 'react-native';
+import { Modal, Text, View } from 'react-native';
 
 import { errorMessage, evidenceErrorMessage } from '@/api/errors';
 import { EVIDENCE_PHASES, evidenceApi } from '@/api/evidenceApi';
@@ -9,21 +9,25 @@ import { qk } from '@/api/queryKeys';
 import type { EvidencePhase } from '@/api/types';
 import { pickImage, type PickedImage } from '@/lib/image';
 import { useSingleFlight } from '@/lib/useSingleFlight';
-import { Button, Chip, colors, font, radius, spacing } from '@/ui';
+import { Button, Chip, font, makeStyles, radius, spacing } from '@/ui';
 
 import { buildEvidenceBody, getLocationOrNull } from './evidence';
+import { useT } from '@/i18n';
 
 export function EvidenceUploadButton({ orderId }: { orderId: string }) {
+  const t = useT();
   const [open, setOpen] = React.useState(false);
   return (
     <>
-      <Button title="Thêm bằng chứng" onPress={() => setOpen(true)} />
+      <Button title={t('evidenceUploadSheet.them_bang_chung')} onPress={() => setOpen(true)} />
       {open ? <EvidenceUploadSheet orderId={orderId} onClose={() => setOpen(false)} /> : null}
     </>
   );
 }
 
 function EvidenceUploadSheet({ orderId, onClose }: { orderId: string; onClose: () => void }) {
+  const t = useT();
+  const styles = useStyles();
   const queryClient = useQueryClient();
   const once = useSingleFlight();
   const [phase, setPhase] = React.useState<EvidencePhase>('BEFORE');
@@ -32,7 +36,7 @@ function EvidenceUploadSheet({ orderId, onClose }: { orderId: string; onClose: (
 
   const upload = useMutation({
     mutationFn: async () => {
-      if (!image) throw new Error('Vui lòng chụp hoặc chọn một ảnh.');
+      if (!image) throw new Error(t('evidenceUploadSheet.vui_long_chup_hoac_chon'));
       const location = await getLocationOrNull();
       return evidenceApi.createEvidence(orderId, buildEvidenceBody(phase, image, location));
     },
@@ -57,8 +61,8 @@ function EvidenceUploadSheet({ orderId, onClose }: { orderId: string; onClose: (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
-          <Text style={styles.title}>Gửi bằng chứng công việc</Text>
-          <Text style={styles.label}>Giai đoạn</Text>
+          <Text style={styles.title}>{t('evidenceUploadSheet.gui_bang_chung_cong_viec')}</Text>
+          <Text style={styles.label}>{t('evidenceUploadSheet.giai_doan')}</Text>
           <View style={styles.row}>
             {EVIDENCE_PHASES.map((p) => (
               <Chip key={p.value} label={p.label} selected={phase === p.value} onPress={() => setPhase(p.value)} />
@@ -66,30 +70,30 @@ function EvidenceUploadSheet({ orderId, onClose }: { orderId: string; onClose: (
           </View>
           {image ? <Image source={{ uri: image.dataUrl }} style={styles.preview} contentFit="cover" /> : null}
           <View style={styles.row}>
-            <Button title="Chụp ảnh" variant="secondary" style={styles.flex} onPress={() => void choose('camera')} />
-            <Button title="Chọn ảnh" variant="secondary" style={styles.flex} onPress={() => void choose('library')} />
+            <Button title={t('evidenceUploadSheet.chup_anh')} variant="secondary" style={styles.flex} onPress={() => void choose('camera')} />
+            <Button title={t('evidenceUploadSheet.chon_anh')} variant="secondary" style={styles.flex} onPress={() => void choose('library')} />
           </View>
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <Button
-            title="Gửi"
+            title={t('evidenceUploadSheet.gui')}
             loading={upload.isPending}
             disabled={!image}
             onPress={() => void once(() => upload.mutateAsync().catch(() => undefined))}
           />
-          <Button title="Đóng" variant="secondary" onPress={onClose} />
+          <Button title={t('evidenceUploadSheet.dong')} variant="secondary" onPress={onClose} />
         </View>
       </View>
     </Modal>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.35)' },
-  sheet: { backgroundColor: colors.white, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: spacing.xl, gap: spacing.md },
+  sheet: { backgroundColor: colors.card, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: spacing.xl, gap: spacing.md },
   title: { fontSize: font.title, fontWeight: '700', color: colors.text },
   label: { fontSize: font.small, fontWeight: '600', color: colors.text },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   flex: { flex: 1 },
   preview: { width: '100%', height: 200, borderRadius: radius.md, backgroundColor: colors.border },
   error: { fontSize: font.body, color: colors.danger },
-});
+}));

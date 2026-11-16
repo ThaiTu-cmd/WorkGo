@@ -1,0 +1,135 @@
+.card {
+  padding: 24px;
+  background-color: var(--wg-surface);
+  border: 1px solid var(--wg-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.title {
+  margin-bottom: 16px;
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: var(--wg-text);
+}
+
+.sub {
+  margin: -8px 0 16px;
+  font-size: 0.88rem;
+  color: var(--wg-text-secondary);
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 18px 0 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--wg-text);
+}
+
+.muted {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.86rem;
+  color: var(--wg-text-muted);
+}
+
+.spinner {
+  color: var(--wg-primary);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.day + .day {
+  margin-top: 12px;
+}
+
+.dayLabel {
+  margin-bottom: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--wg-text-secondary);
+  text-transform: capitalize;
+}
+
+.slotGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.slot,
+.address {
+  border: 1.5px solid var(--wg-border);
+  border-radius: var(--radius-md);
+  background-color: var(--wg-surface);
+  color: var(--wg-text);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.slot {
+  padding: 8px 12px;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.slot:hover,
+.address:hover {
+  border-color: #b7e4cc;
+}
+
+.slot:focus-visible,
+.address:focus-visible {
+  outline: 2px solid var(--wg-primary-active);
+  outline-offset: 2px;
+}
+
+.selected,
+.selected:hover {
+  border-color: var(--wg-primary);
+  background-color: var(--wg-primary-light);
+  box-shadow: 0 0 0 3px var(--wg-primary-glow);
+}
+
+.addressList {
+  display: grid;
+  gap: 8px;
+}
+
+.address {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 0.86rem;
+}
+
+.address span {
+  color: var(--wg-text-secondary);
+}
+
+.address small {
+  color: var(--wg-text-muted);
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--wg-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}

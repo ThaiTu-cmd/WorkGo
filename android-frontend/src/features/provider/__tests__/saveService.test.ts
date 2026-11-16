@@ -69,11 +69,10 @@ test('retry after a media failure resumes without re-creating the service or pac
   expect(api.setServiceStatus).toHaveBeenCalledTimes(1);
 });
 
-test('edit: keeps the stored slug, re-sends the current status, updates existing packages, adds new ones, keeps the cover', async () => {
+test('edit: keeps the stored slug, leaves the status alone, updates existing packages, adds new ones, keeps the cover', async () => {
   await saveService({
     serviceId: 's1',
     currentSlug: 'sua-may-lanh-ab12',
-    currentStatus: 'PAUSED',
     info: { ...info, title: 'Sửa máy lạnh tận nơi' },
     packages: [
       { id: 'pk1', name: 'Cơ bản', price: 250000 },
@@ -85,8 +84,10 @@ test('edit: keeps the stored slug, re-sends the current status, updates existing
 
   expect(api.updateService).toHaveBeenCalledWith(
     's1',
-    expect.objectContaining({ status: 'PAUSED', basePrice: 250000, slug: 'sua-may-lanh-ab12' })
+    expect.objectContaining({ basePrice: 250000, slug: 'sua-may-lanh-ab12' })
   );
+  // PUT skips null/missing fields now, so the stored status (e.g. PAUSED) stays.
+  expect(api.updateService.mock.calls[0][1]).not.toHaveProperty('status');
   expect(api.updatePackage).toHaveBeenCalledWith('pk1', expect.objectContaining({ price: 250000 }));
   expect(api.createPackage).toHaveBeenCalledWith('s1', expect.objectContaining({ name: 'Mới' }));
   expect(api.createMedia).toHaveBeenCalledWith('s1', { url: 'data:c', mediaType: 'IMAGE', cover: false });

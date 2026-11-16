@@ -1,4 +1,13 @@
-import { ApiError, errorMessage, evidenceErrorMessage, NOT_PROVIDER_MESSAGE, UNREACHABLE_MESSAGE } from '../errors';
+import {
+  ApiError,
+  catalogErrorMessage,
+  errorMessage,
+  evidenceErrorMessage,
+  isNotProvider,
+  notProviderMessage,
+  paymentErrorMessage,
+  unreachableMessage,
+} from '../errors';
 
 test('evidenceErrorMessage maps 2023', () => {
   expect(evidenceErrorMessage(new ApiError(400, { code: 2023 }))).toBe('Vui lòng chụp hoặc chọn một ảnh.');
@@ -19,11 +28,37 @@ test('evidenceErrorMessage falls back to the server message, then a generic one'
 });
 
 test('errorMessage uses ApiError message and a generic fallback', () => {
-  expect(errorMessage(new ApiError(0, null))).toBe(UNREACHABLE_MESSAGE);
+  expect(errorMessage(new ApiError(0, null))).toBe(unreachableMessage());
   expect(errorMessage(new ApiError(400, { message: 'Bad' }))).toBe('Bad');
   expect(errorMessage(undefined)).toBe('Đã có lỗi xảy ra. Vui lòng thử lại.');
 });
 
 test('NOT_PROVIDER_MESSAGE matches the web copy', () => {
-  expect(NOT_PROVIDER_MESSAGE).toContain('Tài khoản chưa có quyền Chuyên gia.');
+  expect(notProviderMessage()).toContain('Tài khoản chưa có quyền Chuyên gia.');
+});
+
+test('paymentErrorMessage maps payment-service codes, which overlap order-service 3xxx', () => {
+  expect(paymentErrorMessage(new ApiError(409, { code: 3003 }))).toBe('Đơn này đã được thanh toán.');
+  expect(paymentErrorMessage(new ApiError(400, { code: 3012 }))).toBe(
+    'Số tiền nằm ngoài hạn mức của cổng thanh toán này. Hãy chọn cổng khác.'
+  );
+});
+
+test('paymentErrorMessage falls back to the server message, then a generic one', () => {
+  expect(paymentErrorMessage(new ApiError(400, { code: 9999, message: 'Boom' }))).toBe('Boom');
+  expect(paymentErrorMessage(null)).toBe('Không thực hiện được thanh toán. Vui lòng thử lại.');
+});
+
+test('catalogErrorMessage maps the new catalog codes', () => {
+  expect(catalogErrorMessage(new ApiError(403, { code: 1025 }))).toBe('Bạn không phải chủ dịch vụ này.');
+  expect(catalogErrorMessage(new ApiError(409, { code: 1017 }))).toBe('Giờ kết thúc phải sau giờ bắt đầu.');
+  expect(catalogErrorMessage(new ApiError(400, { code: 1028 }))).toBe('Ngày trong tuần không hợp lệ.');
+  expect(catalogErrorMessage(null)).toBe('Không lưu được thay đổi. Vui lòng thử lại.');
+});
+
+test('isNotProvider is true for 1007 / code-less 403, false for 1025', () => {
+  expect(isNotProvider(new ApiError(401, { code: 1007 }))).toBe(true); // ApiError turns 401+1007 into 403
+  expect(isNotProvider(new ApiError(403, {}))).toBe(true);
+  expect(isNotProvider(new ApiError(403, { code: 1025 }))).toBe(false);
+  expect(isNotProvider(new ApiError(404, {}))).toBe(false);
 });

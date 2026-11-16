@@ -17,6 +17,8 @@ public interface AvailableRuleRepository extends JpaRepository<AvailableRule, UU
 
     Page<AvailableRule> findAllByService_ServiceId(UUID serviceId, Pageable pageable);
 
+    List<AvailableRule> findAllByService_ServiceId(UUID serviceId);
+
     List<AvailableRule> findAllByStatus(RuleStatus status);
 
 }

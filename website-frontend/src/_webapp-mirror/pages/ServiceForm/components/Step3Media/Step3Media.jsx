@@ -1,20 +1,46 @@
-import React from 'react';
-import { Sparkles, Plus, Image as ImageIcon } from 'lucide-react';
+import { useTranslations } from "next-intl";
+import React, { useState } from 'react';
+import { Sparkles, Plus, X } from 'lucide-react';
+import { isHttpUrl } from '../../formValidation';
+import { initialAvatar, placeholderCover } from '../../../../api/adapters';
+import { useMyDisplayName } from '../../../../hooks/useMyDisplayName';
 import styles from './Step3Media.module.css';
+export default function Step3Media({
+  formData,
+  onChange,
+  errors = {}
+}) {
+  const tr = useTranslations("misc");
+  // The preview shows the signed-in provider, not a sample person.
+  const providerName = useMyDisplayName() || tr("m86");
+  const gallery = formData.gallery || [];
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [galleryError, setGalleryError] = useState('');
 
-export default function Step3Media({ formData, onChange, errors = {} }) {
-  const coverUrl = formData.coverImage || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80';
+  // catalog rejects a second media with the same URL on one service (MEDIA_EXISTED).
+  const addImage = () => {
+    const url = newImageUrl.trim();
+    if (!isHttpUrl(url)) {
+      setGalleryError(tr("m1096"));
+      return;
+    }
+    if (url === formData.coverImage?.trim() || gallery.some(g => g.url === url)) {
+      setGalleryError(tr("m1097"));
+      return;
+    }
+    onChange('gallery', [...gallery, {
+      url
+    }]);
+    setNewImageUrl('');
+  };
+  const removeImage = idx => onChange('gallery', gallery.filter((_, i) => i !== idx));
+  const coverUrl = formData.coverImage || placeholderCover(formData.title);
   const basePrice = formData.packages?.basic?.price || 2500000;
-
   const formattedPrice = new Intl.NumberFormat('vi-VN').format(basePrice) + ' ₫';
-
-  return (
-    <div className={styles.card}>
+  return <div className={styles.card}>
       <div className={styles.cardHeader}>
-        <h2 className={styles.heading}>Thư viện Hình ảnh & Xuất bản Dịch vụ</h2>
-        <p className={styles.desc}>
-          Ảnh bìa chất lượng cao tạo ấn tượng ban đầu quyết định khách hàng có bấm vào xem dịch vụ của bạn hay không.
-        </p>
+        <h2 className={styles.heading}>{tr("m1104")}</h2>
+        <p className={styles.desc}>{tr("m1105")}</p>
       </div>
 
       <div className={styles.layoutGrid}>
@@ -22,60 +48,70 @@ export default function Step3Media({ formData, onChange, errors = {} }) {
         <div>
           {/* Cover Image URL */}
           <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="coverUrlInput">
-              URL Ảnh bìa chính (Cover Image) <span className={styles.required}>*</span>
+            <label className={styles.label} htmlFor="coverUrlInput">{tr("m1106")}<span className={styles.required}>*</span>
             </label>
-            <input
-              type="url"
-              id="coverUrlInput"
-              className={styles.input}
-              placeholder="https://images.unsplash.com/photo-..."
-              value={formData.coverImage || ''}
-              onChange={(e) => onChange('coverImage', e.target.value)}
-            />
-            {errors.coverImage && <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.375rem' }}>{errors.coverImage}</p>}
+            <input type="url" id="coverUrlInput" className={styles.input} placeholder="https://images.unsplash.com/photo-..." value={formData.coverImage || ''} onChange={e => onChange('coverImage', e.target.value)} />
+            {errors.coverImage && <p style={{
+            color: '#ef4444',
+            fontSize: '0.75rem',
+            marginTop: '0.375rem'
+          }}>{errors.coverImage}</p>}
 
             <div className={styles.coverPreviewBox}>
-              <img src={coverUrl} alt="Xem trước ảnh bìa" className={styles.coverImg} />
-              <span className={styles.coverBadge}>Ảnh bìa chính (16:9)</span>
+              <img src={coverUrl} alt={tr("m1098")} className={styles.coverImg} />
+              <span className={styles.coverBadge}>{tr("m1107")}</span>
             </div>
           </div>
 
           {/* Gallery Thumbnails */}
           <div className={styles.formGroup}>
-            <label className={styles.label}>Bộ sưu tập dự án thực tế (Gallery)</label>
-            <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem' }}>
-              Bổ sung hình ảnh sản phẩm đã hoàn thành để nâng cao độ tin cậy.
-            </p>
-            <div className={styles.galleryGrid}>
-              {(formData.mediaUrls || [
-                'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&auto=format&fit=crop&q=80',
-                'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=400&auto=format&fit=crop&q=80',
-              ]).map((url, idx) => (
-                <div key={idx} className={styles.gallerySlot}>
-                  <img src={url} alt={`Gallery ${idx + 1}`} />
-                </div>
-              ))}
-              <div className={styles.gallerySlot} title="Thêm ảnh minh họa">
-                <Plus size={20} />
-                <span>+ Thêm ảnh</span>
-              </div>
+            <label className={styles.label}>{tr("m1108")}</label>
+            <p style={{
+            fontSize: '0.75rem',
+            color: '#64748b',
+            marginBottom: '0.5rem'
+          }}>{tr("m1109")}</p>
+            {gallery.length > 0 && <div className={styles.galleryGrid}>
+                {gallery.map((item, idx) => <div key={item.id || item.url} className={styles.gallerySlot}>
+                    <img src={item.url} alt={tr("m1099", {
+                p0: idx + 1
+              })} />
+                    <button type="button" className={styles.galleryRemove} onClick={() => removeImage(idx)} aria-label={tr("m1100", {
+                p0: idx + 1
+              })}>
+                      <X size={14} aria-hidden="true" />
+                    </button>
+                  </div>)}
+              </div>}
+            <div className={styles.galleryAddRow}>
+              <input type="url" className={styles.input} placeholder={tr("m1101")} aria-label={tr("m1102")} value={newImageUrl} onChange={e => {
+              setNewImageUrl(e.target.value);
+              setGalleryError('');
+            }} onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addImage();
+              }
+            }} />
+              <button type="button" className={styles.galleryAddBtn} onClick={addImage}>
+                <Plus size={16} aria-hidden="true" />{tr("m1110")}</button>
             </div>
+            {galleryError && <p style={{
+            color: '#ef4444',
+            fontSize: '0.75rem',
+            marginTop: '0.375rem'
+          }}>{galleryError}</p>}
           </div>
 
           {/* Video URL */}
           <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="videoUrlInput">
-              Liên kết Video demo / Giới thiệu (Tùy chọn)
-            </label>
-            <input
-              type="url"
-              id="videoUrlInput"
-              className={styles.input}
-              placeholder="https://youtube.com/watch?v=..."
-              value={formData.videoUrl || ''}
-              onChange={(e) => onChange('videoUrl', e.target.value)}
-            />
+            <label className={styles.label} htmlFor="videoUrlInput">{tr("m1111")}</label>
+            <input type="url" id="videoUrlInput" className={styles.input} placeholder="https://youtube.com/watch?v=..." value={formData.videoUrl || ''} onChange={e => onChange('videoUrl', e.target.value)} />
+            {errors.videoUrl && <p style={{
+            color: '#ef4444',
+            fontSize: '0.75rem',
+            marginTop: '0.375rem'
+          }}>{errors.videoUrl}</p>}
           </div>
         </div>
 
@@ -84,29 +120,26 @@ export default function Step3Media({ formData, onChange, errors = {} }) {
           <div className={styles.livePreviewBox}>
             <div className={styles.previewHeader}>
               <span className={styles.liveBadge}>
-                <Sparkles size={12} />
-                Xem trước Card Marketplace
-              </span>
-              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Hiển thị thời gian thực</span>
+                <Sparkles size={12} />{tr("m1112")}</span>
+              <span style={{
+              fontSize: '0.75rem',
+              color: '#64748b'
+            }}>{tr("m1113")}</span>
             </div>
 
             <div className={styles.mockCard}>
               <img src={coverUrl} alt="Thumbnail" className={styles.mockCardImg} />
               <div className={styles.mockCardBody}>
                 <div className={styles.mockProvider}>
-                  <img
-                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-                    alt="Avatar"
-                    className={styles.mockAvatar}
-                  />
-                  <span className={styles.mockPname}>Trần Minh Quang (Top Rated)</span>
+                  <img src={initialAvatar(providerName)} alt="" className={styles.mockAvatar} />
+                  <span className={styles.mockPname}>{providerName}</span>
                 </div>
                 <h4 className={styles.mockTitle}>
-                  {formData.title || 'Tôi sẽ thiết kế website doanh nghiệp chuẩn SEO & Responsive bằng React'}
+                  {formData.title || tr("m1763")}
                 </h4>
-                <div className={styles.mockRating}>★ 5.0 (0 đánh giá) • Mới ra mắt</div>
+                <div className={styles.mockRating}>{tr("m1762")}</div>
                 <div className={styles.mockFooter}>
-                  <span className={styles.mockPriceLabel}>Khởi điểm từ</span>
+                  <span className={styles.mockPriceLabel}>{tr("m1116")}</span>
                   <span className={styles.mockPriceVal}>{formattedPrice}</span>
                 </div>
               </div>
@@ -114,7 +147,5 @@ export default function Step3Media({ formData, onChange, errors = {} }) {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 }
-

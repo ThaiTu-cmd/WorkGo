@@ -1,5 +1,5 @@
 .footer {
-  background-color: #ffffff;
+  background-color: var(--wg-surface);
   border-top: 1px solid var(--wg-border);
   padding: 64px 0 28px 0;
   color: var(--wg-text);

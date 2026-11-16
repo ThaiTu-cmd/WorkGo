@@ -1,4 +1,4 @@
-import axiosClient from './axiosClient.js';
+import axiosClient, { FORBIDDEN_CODES } from './axiosClient.js';
 
 // catalog-service via gateway: /api/v1/catalog/** (requires a Bearer token).
 export const catalogApi = {
@@ -12,8 +12,7 @@ export const catalogApi = {
 
   getService: (serviceId) => axiosClient.get(`/catalog/services/${serviceId}`),
 
-  // PUBLISHED services. The current endpoint only matches when categoryId,
-  // executionType, minPrice and maxPrice are ALL present (see useServiceList).
+  // PUBLISHED services; every filter is optional.
   listServices: ({ categoryId, executionType, minPrice, maxPrice, page = 0, size = 50 } = {}) => {
     const params = { page, size };
     if (categoryId) params.categoryId = categoryId;
@@ -34,22 +33,9 @@ export const catalogApi = {
 
   deleteService: (serviceId) => axiosClient.delete(`/catalog/services/${serviceId}`),
 
-  // status: 'DRAFT' | 'PUBLISHED' | 'PAUSED' | 'ARCHIVED'. The update mapper
-  // writes nulls too, so re-send the whole record with the new status.
-  setServiceStatus: async (serviceId, status) => {
-    const current = (await axiosClient.get(`/catalog/services/${serviceId}`))?.result;
-    if (!current) throw new Error('Không tìm thấy dịch vụ');
-    return axiosClient.put(`/catalog/services/${serviceId}`, {
-      categoryId: current.categoryId,
-      executionType: current.executionType,
-      title: current.title,
-      slug: current.slug,
-      description: current.description,
-      currency: current.currency,
-      basePrice: current.basePrice,
-      status,
-    });
-  },
+  // status: 'DRAFT' | 'PUBLISHED' | 'PAUSED' | 'ARCHIVED'.
+  setServiceStatus: (serviceId, status) =>
+    axiosClient.patch(`/catalog/services/${serviceId}/status`, { status }),
 
   // Packages
   createPackage: (serviceId, body) => axiosClient.post(`/catalog/packages/services/${serviceId}`, body),
@@ -75,5 +61,25 @@ export const catalogApi = {
   updateMedia: (serviceMediaId, body) => axiosClient.put(`/catalog/medias/${serviceMediaId}`, body),
   deleteMedia: (serviceMediaId) => axiosClient.delete(`/catalog/medias/${serviceMediaId}`),
 };
+
+// catalog-service codes for rules, slots, service status and ownership.
+const CATALOG_MESSAGES = {
+  1017: 'Giờ kết thúc phải sau giờ bắt đầu.',
+  1021: 'Khung giờ này không còn trống. Vui lòng chọn khung giờ khác.',
+  1022: 'Khung giờ này đã qua.',
+  1024: 'Khung giờ vừa có người đặt. Vui lòng chọn lại.',
+  1025: 'Bạn không phải chủ dịch vụ này.',
+  1026: 'Trạng thái dịch vụ không hợp lệ.',
+  1027: 'Thời lượng mỗi lượt phải lớn hơn 0.',
+  1028: 'Ngày trong tuần không hợp lệ.',
+};
+
+export const catalogErrorMessage = (err) =>
+  (err?.code !== undefined && CATALOG_MESSAGES[err.code]) || err?.message || 'Không lưu được thay đổi. Vui lòng thử lại.';
+
+// 403 also means "not the owner of this service" (1025); only a missing
+// role (1007, or no code) means the account is not a provider yet.
+export const isNotProvider = (err) =>
+  err?.status === 403 && (err.code === undefined || FORBIDDEN_CODES.includes(err.code));
 
 export default catalogApi;

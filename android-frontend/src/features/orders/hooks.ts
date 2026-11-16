@@ -1,12 +1,13 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { pageItems } from '@/api/adapters';
+import { ApiError } from '@/api/errors';
 import { evidenceApi } from '@/api/evidenceApi';
 import { orderApi } from '@/api/orderApi';
 import { qk } from '@/api/queryKeys';
-import type { EvidenceDto, OrderDto, OrderRole, PageResponse } from '@/api/types';
+import type { CancellationBody, CancellationDto, EvidenceDto, OrderDto, OrderRole, PageResponse } from '@/api/types';
 
-import { historyItems } from './orderStatus';
+import { historyItems, pickActiveOrder } from './orderStatus';
 
 const PAGE_SIZE = 10;
 
@@ -24,11 +25,21 @@ export function useOrders(role: OrderRole, enabled: boolean) {
   });
 }
 
+// Child key of qk.orders('CLIENT') (an infinite query with another shape), so
+// invalidating the client's orders after checkout refreshes it too.
+export function useActiveOrder(enabled: boolean) {
+  return useQuery({
+    queryKey: [...qk.orders('CLIENT'), 'active'],
+    enabled,
+    queryFn: async () => pickActiveOrder(pageItems<OrderDto>(await orderApi.getMyOrders('CLIENT', 0, PAGE_SIZE))),
+  });
+}
+
 export function useOrderDetail(orderId: string, enabled: boolean) {
   const order = useQuery({
     queryKey: qk.order(orderId),
     enabled,
-    queryFn: async () => (await orderApi.getOrder(orderId)).result,
+    queryFn: async () => (await orderApi.getOrder(orderId)).result.order,
   });
   const history = useQuery({
     queryKey: qk.orderHistory(orderId),
@@ -40,7 +51,55 @@ export function useOrderDetail(orderId: string, enabled: boolean) {
     enabled,
     queryFn: async () => (await orderApi.getExecution(orderId)).result,
   });
-  return { order, history, execution };
+  const cancellation = useQuery({
+    queryKey: qk.orderCancellation(orderId),
+    enabled,
+    queryFn: () => fetchCancellation(orderId),
+  });
+  return { order, history, execution, cancellation };
+}
+
+export async function fetchCancellation(orderId: string): Promise<CancellationDto | null> {
+  try {
+    return (await orderApi.getCancellation(orderId)).result;
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) return null;
+    throw err;
+  }
+}
+
+// A cancellation changes the order, both order lists and, for an onsite order,
+// which slots are free.
+function useRefreshCancelledOrder({ orderId, serviceId }: OrderDto) {
+  const queryClient = useQueryClient();
+  return () =>
+    Promise.all(
+      [
+        qk.order(orderId),
+        qk.orderHistory(orderId),
+        qk.orderExecution(orderId),
+        qk.orderCancellation(orderId),
+        qk.orders('CLIENT'),
+        qk.orders('PROVIDER'),
+        qk.slots(serviceId),
+      ].map((queryKey) => queryClient.invalidateQueries({ queryKey }))
+    );
+}
+
+export function useCancelOrder(order: OrderDto) {
+  const onSuccess = useRefreshCancelledOrder(order);
+  return useMutation({
+    mutationFn: (body: CancellationBody) => orderApi.cancelOrder(order.orderId, body),
+    onSuccess,
+  });
+}
+
+export function useRespondCancellation(order: OrderDto) {
+  const onSuccess = useRefreshCancelledOrder(order);
+  return useMutation({
+    mutationFn: (accept: boolean) => orderApi.respondCancellation(order.orderId, { accept }),
+    onSuccess,
+  });
 }
 
 export function useEvidence(orderId: string, enabled: boolean) {

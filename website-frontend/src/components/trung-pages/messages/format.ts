@@ -26,7 +26,7 @@ export const initialOf = (name: string) => {
   return (parts[parts.length - 1]?.[0] ?? "?").toUpperCase();
 };
 
-const AVATAR_COLORS = ["#1dbf73", "#0ea5e9", "#8b5cf6", "#f97316", "#e11d48", "#0d9488"];
+const AVATAR_COLORS = ["#1677FF", "#0ea5e9", "#8b5cf6", "#f97316", "#e11d48", "#0d9488"];
 export const avatarColor = (seed: string) => {
   let h = 0;
   for (const ch of seed) h = (h * 31 + ch.charCodeAt(0)) >>> 0;

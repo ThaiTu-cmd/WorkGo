@@ -1,31 +1,39 @@
+import { useTranslations } from "next-intl";
 import React from "react";
 import SearchBar from "../../common/SearchBar/SearchBar";
 import { ShieldCheck, Award, Zap } from "lucide-react";
 import styles from "./HeroBanner.module.css";
-
-export default function HeroBanner({ onSearch }) {
-  const trendingTags = [
-    { label: "Thiết kế Logo", query: "Thiết kế Logo" },
-    { label: "Lập trình Website", query: "Lập trình Website" },
-    { label: "Sửa điện nước", query: "Sửa điện nước" },
-    { label: "Dọn dẹp nhà", query: "Dọn dẹp nhà" },
-    { label: "Giao hàng hỏa tốc", query: "Giao hàng hỏa tốc" },
-    { label: "Figma UI/UX", query: "Figma UI/UX" },
-  ];
-
-  return (
-    <section className={styles.heroSection}>
+export default function HeroBanner({
+  onSearch
+}) {
+  const tr = useTranslations("misc");
+  const trendingTags = [{
+    label: tr("m114"),
+    query: tr("m114")
+  }, {
+    label: tr("m115"),
+    query: tr("m115")
+  }, {
+    label: tr("m116"),
+    query: tr("m116")
+  }, {
+    label: tr("m117"),
+    query: tr("m117")
+  }, {
+    label: tr("m118"),
+    query: tr("m118")
+  }, {
+    label: "Figma UI/UX",
+    query: "Figma UI/UX"
+  }];
+  return <section className={styles.heroSection}>
       <div className={`container ${styles.heroContainer}`}>
         <div className={styles.heroContent}>
           {/* Main Headline */}
-          <h1 className={styles.headline}>
-            Tìm chuyên gia & dịch vụ cho mọi nhu cầu
-          </h1>
+          <h1 className={styles.headline}>{tr("m119")}</h1>
 
           {/* Subtitle */}
-          <p className={styles.subtitle}>
-            Dịch vụ online, tại nhà và giao nhận — thanh toán ký quỹ an toàn.
-          </p>
+          <p className={styles.subtitle}>{tr("m120")}</p>
 
           {/* Central Search Component */}
           <div className={styles.searchWrapper}>
@@ -34,21 +42,14 @@ export default function HeroBanner({ onSearch }) {
 
           {/* Popular Trending Tags */}
           <div className={styles.trendingWrap}>
-            <span className={styles.trendingLabel}>Phổ biến:</span>
+            <span className={styles.trendingLabel}>{tr("m121")}</span>
             <div className={styles.tagList}>
-              {trendingTags.map((tag, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  className={styles.tagBtn}
-                  onClick={() =>
-                    onSearch &&
-                    onSearch({ keyword: tag.query, executionType: "ALL" })
-                  }
-                >
+              {trendingTags.map((tag, idx) => <button key={idx} type="button" className={styles.tagBtn} onClick={() => onSearch && onSearch({
+              keyword: tag.query,
+              executionType: "ALL"
+            })}>
                   {tag.label}
-                </button>
-              ))}
+                </button>)}
             </div>
           </div>
         </div>
@@ -58,28 +59,27 @@ export default function HeroBanner({ onSearch }) {
           <div className={styles.trustItem}>
             <ShieldCheck size={22} className={styles.trustIcon} />
             <div className={styles.trustText}>
-              <strong>Ký quỹ Escrow</strong>
-              <span>Hài lòng mới giải ngân</span>
+              <strong>{tr("m122")}</strong>
+              <span>{tr("m123")}</span>
             </div>
           </div>
 
           <div className={styles.trustItem}>
             <Award size={22} className={styles.trustIcon} />
             <div className={styles.trustText}>
-              <strong>Chuyên gia đã duyệt</strong>
-              <span>Hồ sơ xác minh</span>
+              <strong>{tr("m124")}</strong>
+              <span>{tr("m125")}</span>
             </div>
           </div>
 
           <div className={styles.trustItem}>
             <Zap size={22} className={styles.trustIcon} />
             <div className={styles.trustText}>
-              <strong>Phản hồi nhanh</strong>
-              <span>Trong 15 phút</span>
+              <strong>{tr("m126")}</strong>
+              <span>{tr("m127")}</span>
             </div>
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 }

@@ -20,7 +20,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.UUID;
 
 @Service
@@ -34,6 +36,7 @@ public class AvailableRuleService {
     TokenUtils tokenUtils;
     BookingSlotService bookingSlotService;
 
+    @Transactional
     public AvailableRuleResponse createAvailableRule(
             UUID serviceId, AvailableRuleCreationRequest request){
 
@@ -93,6 +96,7 @@ public class AvailableRuleService {
         return availableRuleMapper.toAvailableRuleResponse(rule);
     }
 
+    @Transactional
     public AvailableRuleResponse updateRule(UUID id, AvailableRuleUpdateRequest request){
         AvailableRule rule = availableRuleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RULE_NOT_EXISTED));
@@ -110,6 +114,7 @@ public class AvailableRuleService {
         return availableRuleMapper.toAvailableRuleResponse(savedRule);
     }
 
+    @Transactional
     public void deleteRule(UUID id){
         AvailableRule rule = availableRuleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RULE_NOT_EXISTED));
@@ -126,8 +131,10 @@ public class AvailableRuleService {
 
     private void validateRule(AvailableRule rule){
 
+        // A rule covers at most one day: 08:00–24:00 is fine, 08:00 to 08:00 two days later is not.
         if(rule.getStartTime() == null || rule.getEndTime() == null
-                || !rule.getEndTime().isAfter(rule.getStartTime())){
+                || !rule.getEndTime().isAfter(rule.getStartTime())
+                || Duration.between(rule.getStartTime(), rule.getEndTime()).compareTo(Duration.ofDays(1)) > 0){
             throw new AppException(ErrorCode.INVALID_START_END_TIME);
         }
 

@@ -45,17 +45,41 @@ export function readAuthUser(): AuthUser | null {
   }
 }
 
-/** Persist the mock session. Returns false when storage is blocked/quota-full. */
+/** Persist the mock session with 2-phase transactional write and rollback. Returns false when storage is blocked/quota-full. */
 export function saveAuth(user: AuthUser): boolean {
-  let ok = true;
+  if (typeof window === "undefined") return false;
+
+  let prevToken: string | null = null;
+  let prevUser: string | null = null;
   try {
-    window.localStorage.setItem(KEYS.authToken, `mock-token-${Date.now()}`);
-    window.localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+    prevToken = window.localStorage.getItem(KEYS.authToken);
+    prevUser = window.localStorage.getItem(AUTH_USER_KEY);
   } catch {
-    ok = false;
+    return false; // Storage bị khóa/chặn
   }
+
+  const newToken = `mock-token-${Date.now()}`;
+  const newUser = JSON.stringify(user);
+
+  try {
+    window.localStorage.setItem(KEYS.authToken, newToken);
+    window.localStorage.setItem(AUTH_USER_KEY, newUser);
+  } catch {
+    // Rollback hoàn nguyên trạng thái ban đầu nếu ghi thất bại
+    try {
+      if (prevToken !== null) window.localStorage.setItem(KEYS.authToken, prevToken);
+      else window.localStorage.removeItem(KEYS.authToken);
+
+      if (prevUser !== null) window.localStorage.setItem(AUTH_USER_KEY, prevUser);
+      else window.localStorage.removeItem(AUTH_USER_KEY);
+    } catch {
+      // Bỏ qua lỗi trong quá trình rollback
+    }
+    return false; // KHÔNG phát tán notifyAuthChanged()
+  }
+
   notifyAuthChanged();
-  return ok;
+  return true;
 }
 
 export function clearAuth(): void {

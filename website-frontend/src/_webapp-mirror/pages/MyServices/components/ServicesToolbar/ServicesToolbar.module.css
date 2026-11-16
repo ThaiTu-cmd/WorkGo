@@ -1,5 +1,5 @@
 .toolbarContainer {
-  background: #ffffff;
+  background: var(--wg-surface);
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 16px 20px;
@@ -53,8 +53,8 @@
 }
 
 .tabBtn:hover {
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: var(--wg-surface);
+  color: var(--wg-text);
 }
 
 .tabActive {
@@ -68,7 +68,7 @@
   font-size: 0.72rem;
   padding: 2px 7px;
   border-radius: 10px;
-  background-color: #f1f5f9;
+  background-color: var(--wg-surface);
   color: #64748b;
   font-weight: 700;
 }
@@ -107,7 +107,7 @@
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   font-size: 0.88rem;
-  color: #0f172a;
+  color: var(--wg-text);
   outline: none;
   transition: all 0.2s ease;
 }
@@ -137,8 +137,8 @@
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   font-size: 0.88rem;
-  color: #334155;
-  background-color: #ffffff;
+  color: var(--wg-text-secondary);
+  background-color: var(--wg-surface);
   outline: none;
   cursor: pointer;
   transition: all 0.2s ease;

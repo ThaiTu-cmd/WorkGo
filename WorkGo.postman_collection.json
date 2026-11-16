@@ -2779,23 +2779,25 @@
                   {
                     "key": "Content-Type",
                     "value": "application/json"
+                  },
+                  {
+                    "key": "X-Internal-Key",
+                    "value": "{{internalKey}}"
                   }
                 ],
                 "url": {
-                  "raw": "{{gatewayUrl}}/api/v1/catalog/slots/{{slotId}}/hold",
+                  "raw": "{{catalogServiceUrl}}/internal/slots/{{slotId}}/hold",
                   "host": [
-                    "{{gatewayUrl}}"
+                    "{{catalogServiceUrl}}"
                   ],
                   "path": [
-                    "api",
-                    "v1",
-                    "catalog",
+                    "internal",
                     "slots",
                     "{{slotId}}",
                     "hold"
                   ]
                 },
-                "description": "🔐 Cần token. Body cần `orderId` của đơn ONSITE.",
+                "description": "🔒 Nội bộ (order-service gọi): gọi thẳng catalog-service, không qua gateway, với header `X-Internal-Key`. Body cần `orderId` của đơn ONSITE.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"orderId\": \"{{orderId}}\"\n}",
@@ -2804,6 +2806,9 @@
                       "language": "json"
                     }
                   }
+                },
+                "auth": {
+                  "type": "noauth"
                 }
               },
               "response": [],
@@ -2827,23 +2832,25 @@
                   {
                     "key": "Content-Type",
                     "value": "application/json"
+                  },
+                  {
+                    "key": "X-Internal-Key",
+                    "value": "{{internalKey}}"
                   }
                 ],
                 "url": {
-                  "raw": "{{gatewayUrl}}/api/v1/catalog/slots/{{slotId}}/confirm",
+                  "raw": "{{catalogServiceUrl}}/internal/slots/{{slotId}}/confirm",
                   "host": [
-                    "{{gatewayUrl}}"
+                    "{{catalogServiceUrl}}"
                   ],
                   "path": [
-                    "api",
-                    "v1",
-                    "catalog",
+                    "internal",
                     "slots",
                     "{{slotId}}",
                     "confirm"
                   ]
                 },
-                "description": "🔐 Cần token.",
+                "description": "🔒 Nội bộ (order-service gọi): gọi thẳng catalog-service, không qua gateway, với header `X-Internal-Key`. Body cần `orderId` của đơn ONSITE.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"orderId\": \"{{orderId}}\"\n}",
@@ -2852,6 +2859,9 @@
                       "language": "json"
                     }
                   }
+                },
+                "auth": {
+                  "type": "noauth"
                 }
               },
               "response": [],
@@ -2875,23 +2885,25 @@
                   {
                     "key": "Content-Type",
                     "value": "application/json"
+                  },
+                  {
+                    "key": "X-Internal-Key",
+                    "value": "{{internalKey}}"
                   }
                 ],
                 "url": {
-                  "raw": "{{gatewayUrl}}/api/v1/catalog/slots/{{slotId}}/release",
+                  "raw": "{{catalogServiceUrl}}/internal/slots/{{slotId}}/release",
                   "host": [
-                    "{{gatewayUrl}}"
+                    "{{catalogServiceUrl}}"
                   ],
                   "path": [
-                    "api",
-                    "v1",
-                    "catalog",
+                    "internal",
                     "slots",
                     "{{slotId}}",
                     "release"
                   ]
                 },
-                "description": "🔐 Cần token.",
+                "description": "🔒 Nội bộ (order-service gọi): gọi thẳng catalog-service, không qua gateway, với header `X-Internal-Key`. Body cần `orderId` của đơn ONSITE.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"orderId\": \"{{orderId}}\"\n}",
@@ -2900,6 +2912,9 @@
                       "language": "json"
                     }
                   }
+                },
+                "auth": {
+                  "type": "noauth"
                 }
               },
               "response": [],
@@ -3630,6 +3645,12 @@
       "value": "",
       "type": "string",
       "description": "UUID đơn hàng — tự lưu sau khi tạo đơn."
+    },
+    {
+      "key": "catalogServiceUrl",
+      "value": "http://localhost:8082/catalog",
+      "type": "string",
+      "description": "Gọi thẳng catalog-service (request internal), không qua gateway."
     },
     {
       "key": "paymentServiceUrl",

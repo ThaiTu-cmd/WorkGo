@@ -1,6 +1,7 @@
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { Alert } from 'react-native';
+import { translate } from '@/i18n';
 
 // There is no upload service: images travel as JPEG data URLs inside the
 // JSON body (work evidence fileUrl, service media url), like the web app.
@@ -17,7 +18,7 @@ export function dataUrlBytes(dataUrl: string): number {
 }
 
 export function assertImageSize(dataUrl: string): void {
-  if (dataUrlBytes(dataUrl) > MAX_IMAGE_BYTES) throw new Error('Ảnh quá lớn (tối đa 1MB). Hãy chọn ảnh khác.');
+  if (dataUrlBytes(dataUrl) > MAX_IMAGE_BYTES) throw new Error(translate('image.anh_qua_lon_toi_da'));
 }
 
 export async function compressToDataUrl(uri: string, width: number, height: number): Promise<string> {
@@ -39,8 +40,8 @@ export async function pickImage(source: 'camera' | 'library'): Promise<PickedIma
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) {
     Alert.alert(
-      source === 'camera' ? 'Chưa có quyền camera' : 'Chưa có quyền truy cập ảnh',
-      'Hãy cấp quyền cho WorkGo trong Cài đặt của điện thoại rồi thử lại.'
+      source === 'camera' ? translate('image.chua_co_quyen_camera') : translate('image.chua_co_quyen_truy_cap'),
+      translate('image.hay_cap_quyen_cho_workgo')
     );
     return null;
   }

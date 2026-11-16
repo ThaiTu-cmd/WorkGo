@@ -1,37 +1,34 @@
 import { pageItems, toServiceCard, type ServiceCard } from '@/api/adapters';
 import { catalogApi } from '@/api/catalogApi';
 import { providerApi } from '@/api/providerApi';
-import type { CategoryDto, ExecutionType, ProviderProfileDto, ServiceDto } from '@/api/types';
+import type { CategoryDto, ProviderProfileDto, ServiceDto } from '@/api/types';
 
-const EXECUTION_TYPES: ExecutionType[] = ['DIGITAL', 'ONSITE'];
-const PRICE_FLOOR = 0;
-const PRICE_CEILING = 1_000_000_000_000;
+const PAGE_SIZE = 100;
 
 // Root categories plus their direct children.
 export function flattenCategories(roots: CategoryDto[]): CategoryDto[] {
   return roots.flatMap((root) => [root, ...(root.children ?? []).map((child) => ({ ...child, parent: root.categoryId }))]);
 }
 
-// Every PUBLISHED service as ServiceCard items. GET /catalog/services only
-// matches when all four filters are sent, so this asks once per
-// (category × execution type) with a wide price range and merges by id.
+// Every PUBLISHED service, page by page (GET /catalog/services with no filters).
+// Merged by id in case a service moves between pages while reading.
+async function listPublished(): Promise<ServiceDto[]> {
+  const byId = new Map<string, ServiceDto>();
+  for (let page = 0; ; page++) {
+    const res = await catalogApi.listServices({ page, size: PAGE_SIZE });
+    pageItems<ServiceDto>(res).forEach((s) => byId.set(s.serviceId, s));
+    const totalPages = res?.result?.totalPages;
+    if (totalPages === undefined || page + 1 >= totalPages) break;
+  }
+  return [...byId.values()];
+}
+
+// Every PUBLISHED service as ServiceCard items.
 // Provider names need a token; guests get the default name.
 export async function listAllServices(): Promise<ServiceCard[]> {
   const categories = flattenCategories(pageItems<CategoryDto>(await catalogApi.getRootCategories()));
   const categoryById = new Map(categories.map((c) => [c.categoryId, c]));
-
-  const pages = await Promise.all(
-    categories.flatMap((c) =>
-      EXECUTION_TYPES.map((executionType) =>
-        catalogApi
-          .listServices({ categoryId: c.categoryId, executionType, minPrice: PRICE_FLOOR, maxPrice: PRICE_CEILING })
-          .catch(() => null)
-      )
-    )
-  );
-  const byId = new Map<string, ServiceDto>();
-  pages.forEach((p) => pageItems<ServiceDto>(p).forEach((s) => byId.set(s.serviceId, s)));
-  const services = [...byId.values()];
+  const services = await listPublished();
 
   const providerIds = [...new Set(services.map((s) => s.providerId).filter(Boolean))];
   const profiles = await Promise.all(

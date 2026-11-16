@@ -44,6 +44,12 @@ public enum ErrorCode {
     ESCROW_FROZEN(3103, "Escrow is frozen by a dispute", HttpStatus.CONFLICT),
     ESCROW_DISPUTE_ID_REQUIRED(3104, "Dispute id is required", HttpStatus.BAD_REQUEST),
 
+    ESCROW_COMMAND_CONFLICT(3105, "Escrow command identity was reused with different payload", HttpStatus.CONFLICT),
+    ESCROW_DISPUTE_CONFLICT(3106, "Escrow belongs to another dispute", HttpStatus.CONFLICT),
+    TRUST_SERVICE_UNAVAILABLE(3107, "Trust dispute status is unavailable", HttpStatus.SERVICE_UNAVAILABLE),
+
+    ESCROW_CONCURRENT_COMMAND(3108, "Escrow changed concurrently; reconcile before retry", HttpStatus.CONFLICT),
+
     //===============REFUND===================
     REFUND_PERCENT_NOT_SUPPORTED(3201, "Only 100 percent refund is supported", HttpStatus.BAD_REQUEST),
 

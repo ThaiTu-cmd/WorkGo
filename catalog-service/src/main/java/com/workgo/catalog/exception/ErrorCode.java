@@ -34,6 +34,7 @@ public enum ErrorCode {
     NOT_SERVICE_OWNER(1025, "You are not the owner of this service", HttpStatus.FORBIDDEN),
     INVALID_SERVICE_STATUS(1026, "The service status is invalid", HttpStatus.BAD_REQUEST),
     RATING_STATS_INVALID(1029, "Average rating must be between 0 and 5 and review count must not be negative", HttpStatus.BAD_REQUEST),
+    RATING_SNAPSHOT_CONFLICT(1030, "Rating version already has a different snapshot", HttpStatus.CONFLICT),
 
     //===============PACKAGE==============================
     PACKAGE_EXISTED(1013, "This package name already exists in this service !", HttpStatus.BAD_REQUEST),

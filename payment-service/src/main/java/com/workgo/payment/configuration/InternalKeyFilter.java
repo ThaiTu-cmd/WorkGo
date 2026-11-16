@@ -35,7 +35,7 @@ public class InternalKeyFilter extends OncePerRequestFilter {
 
         String key = request.getHeader("X-Internal-Key");
 
-        if (key == null || !MessageDigest.isEqual(
+        if (internalKey == null || internalKey.isBlank() || key == null || key.isBlank() || !MessageDigest.isEqual(
                 key.getBytes(StandardCharsets.UTF_8),
                 internalKey.getBytes(StandardCharsets.UTF_8))) {
 

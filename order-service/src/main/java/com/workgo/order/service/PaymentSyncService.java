@@ -32,6 +32,7 @@ public class PaymentSyncService {
 
     OrderRepository orderRepository;
     PaymentClient paymentClient;
+    TrustDisputeGuard trustDisputeGuard;
 
     //goi tu afterCommit + PaymentSyncJob nen can transaction rieng
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -45,6 +46,8 @@ public class PaymentSyncService {
                 || order.getPaymentStatus() != PaymentStatus.SUCCEEDED) {
             return;
         }
+
+        if (!trustDisputeGuard.permitsPaymentSync(orderId)) return;
 
         try {
             paymentClient.release(EscrowReleaseRequest.builder()
@@ -75,6 +78,8 @@ public class PaymentSyncService {
         }
 
         EscrowResponse escrow;
+
+        if (!trustDisputeGuard.permitsPaymentSync(orderId)) return;
 
         try {
             escrow = paymentClient.refund(EscrowRefundRequest.builder()

@@ -14,6 +14,18 @@ public enum ErrorCode {
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorize Exception", HttpStatus.INTERNAL_SERVER_ERROR),
     SUCCESS(1000, "Success", HttpStatus.ACCEPTED),
 
+    //===============AUDIT====================
+    INVALID_EXPORT_RANGE(1050, "Export needs from and to, from before to, at most 92 days", HttpStatus.BAD_REQUEST),
+
+    //===============FILE====================
+    FILE_REQUIRED(1051, "File is required", HttpStatus.BAD_REQUEST),
+    FILE_EMPTY(1052, "File is empty", HttpStatus.BAD_REQUEST),
+    FILE_TOO_LARGE(1053, "File is too large", HttpStatus.PAYLOAD_TOO_LARGE),
+    FILE_TYPE_NOT_ALLOWED(1054, "File type is not allowed", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
+    FILE_STORAGE_ERROR(1055, "Cannot store file", HttpStatus.INTERNAL_SERVER_ERROR),
+    MEDIA_URL_INVALID(1056, "Media url must be https and uploaded media url cannot be changed", HttpStatus.BAD_REQUEST),
+    MEDIA_LIMIT(1057, "A service can have at most 20 media", HttpStatus.CONFLICT),
+
     //===============USER====================
     USER_EXISTED(1001, "User existed", HttpStatus.BAD_REQUEST),
     PASSWORD_INVALID(1002,"Password must be at least 8 characters", HttpStatus.BAD_REQUEST),
@@ -21,7 +33,7 @@ public enum ErrorCode {
     INVALID_KEY(1004, "Invalid message key", HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(1005, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     USER_NOT_EXISTED(1006, "User dose not exist", HttpStatus.NOT_FOUND),
-    UNAUTHORIZED(1007, "You do not have that permission", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED(1007, "You do not have that permission", HttpStatus.FORBIDDEN),
 
     //===============CATEGORY===================
     CATEGORY_EXISTED(1008, "Category is already existed ", HttpStatus.BAD_REQUEST),

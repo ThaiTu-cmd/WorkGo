@@ -10,9 +10,12 @@ import com.workgo.identity.dto.response.ProviderVerificationResponse;
 import com.workgo.identity.entity.ProviderProfile;
 import com.workgo.identity.entity.ProviderVerification;
 import com.workgo.identity.entity.User;
+import com.workgo.identity.enumeration.AdminActionType;
 import com.workgo.identity.enumeration.VerificationStatus;
 import com.workgo.identity.repository.ProviderProfileRepository;
 import com.workgo.identity.repository.ProviderVerificationRepository;
+import com.workgo.identity.service.admin.AdminAction;
+import com.workgo.identity.service.admin.AdminAuditService;
 import com.workgo.identity.util.AttributeUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +24,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -35,6 +41,7 @@ public class ProviderVerificationService {
     ProviderProfileRepository providerProfileRepository;
     ProviderVerificationMapper providerVerificationMapper;
     AttributeUtil attributeUtil;
+    AdminAuditService adminAuditService;
 
     public ProviderVerificationResponse createVerification(ProviderVerificationCreationRequest request) {
         User user = attributeUtil.getCurrentUser();
@@ -91,11 +98,13 @@ public class ProviderVerificationService {
         ProviderVerification verification = providerVerificationRepository.findById(verificationId)
                 .orElseThrow(() -> new AppException(ErrorCode.PROVIDER_VERIFICATION_NOT_EXISTED));
 
+        if (!isSuperAdmin()) assertOwner(verification);
+
         return providerVerificationMapper.toProviderVerificationResponse(verification);
     }
 
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public PageResponse<ProviderVerificationResponse> getVerificationsByStatus(
             VerificationStatus status, int page, int size) {
 
@@ -115,7 +124,8 @@ public class ProviderVerificationService {
                 .build();
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ProviderVerificationResponse reviewVerification(
             UUID verificationId, ProviderVerificationReviewRequest request) {
 
@@ -123,6 +133,7 @@ public class ProviderVerificationService {
                 .orElseThrow(() -> new AppException(ErrorCode.PROVIDER_VERIFICATION_NOT_EXISTED));
 
         User admin = attributeUtil.getCurrentUser();
+        VerificationStatus beforeStatus = verification.getVerificationStatus();
 
         verification.setVerificationStatus(
                 verification.getVerificationStatus().transitionTo(request.getVerificationStatus())
@@ -140,17 +151,43 @@ public class ProviderVerificationService {
 //            providerProfileRepository.save(profile);
 //        }
 
-        return providerVerificationMapper.toProviderVerificationResponse(
-                providerVerificationRepository.save(verification));
+        ProviderVerification savedVerification = providerVerificationRepository.save(verification);
+
+        adminAuditService.record(AdminAction.builder()
+                .action(AdminActionType.PROVIDER_VERIFICATION_REVIEWED)
+                .targetType("PROVIDER_VERIFICATION")
+                .targetId(verificationId)
+                .beforeState(Map.of("verificationStatus", beforeStatus))
+                .afterState(Map.of("verificationStatus", savedVerification.getVerificationStatus()))
+                .build());
+
+        return providerVerificationMapper.toProviderVerificationResponse(savedVerification);
     }
 
     public void deleteVerification(UUID verificationId) {
         ProviderVerification verification = providerVerificationRepository.findById(verificationId)
                 .orElseThrow(() -> new AppException(ErrorCode.PROVIDER_VERIFICATION_NOT_EXISTED));
 
+        assertOwner(verification);
+
         verification.setIsDeleted(attributeUtil.createDeletedMark());
         verification.setUpdatedAt(Instant.now());
 
         providerVerificationRepository.save(verification);
+    }
+
+    //=====================================
+
+    private void assertOwner(ProviderVerification verification) {
+
+        if (!verification.getProviderProfile().getUser().getUserId().equals(attributeUtil.getCurrentUser().getUserId())) {
+            throw new AppException(ErrorCode.PROVIDER_VERIFICATION_NOT_EXISTED);
+        }
+    }
+
+    private boolean isSuperAdmin() {
+
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_SUPER_ADMIN".equals(authority.getAuthority()));
     }
 }

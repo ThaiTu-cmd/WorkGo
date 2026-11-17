@@ -7,9 +7,11 @@ import com.workgo.order.dto.response.WorkEvidenceResponse;
 import com.workgo.order.entity.Execution;
 import com.workgo.order.entity.OnsiteExecution;
 import com.workgo.order.entity.Order;
+import com.workgo.order.entity.StoredFile;
 import com.workgo.order.entity.WorkEvidence;
 import com.workgo.order.enumeration.EvidencePhase;
 import com.workgo.order.enumeration.ExecutionType;
+import com.workgo.order.enumeration.FileContext;
 import com.workgo.order.enumeration.OnsiteExecutionStatus;
 import com.workgo.order.enumeration.OrderStatus;
 import com.workgo.order.exception.AppException;
@@ -43,6 +45,7 @@ public class WorkEvidenceService {
     ExecutionRepository executionRepository;
     OnsiteExecutionRepository onsiteExecutionRepository;
     TokenUtils tokenUtils;
+    OrderFileService orderFileService;
 
     public WorkEvidenceResponse createEvidence(UUID orderId, WorkEvidenceCreationRequest request) {
 
@@ -62,9 +65,11 @@ public class WorkEvidenceService {
             throw new AppException(ErrorCode.ORDER_EVIDENCE_PHASE_REQUIRED);
         }
 
-        if (request.getFileUrl() == null || request.getFileUrl().isBlank()) {
+        if (request.getFileId() == null) {
             throw new AppException(ErrorCode.ORDER_EVIDENCE_FILE_REQUIRED);
         }
+
+        StoredFile storedFile = orderFileService.loadOwnFile(orderId, request.getFileId(), FileContext.WORK_EVIDENCE);
 
         Execution execution = executionRepository.findByOrder_OrderId(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_EXECUTION_NOT_FOUND));
@@ -80,7 +85,7 @@ public class WorkEvidenceService {
         WorkEvidence evidence = WorkEvidence.builder()
                 .phase(request.getPhase())
                 .uploadedBy(tokenUtils.getCurrentProviderId())
-                .fileUrl(request.getFileUrl())
+                .storedFileId(storedFile.getStoredFileId())
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())
                 .capturedAt(request.getCapturedAt() == null ? Instant.now() : request.getCapturedAt())

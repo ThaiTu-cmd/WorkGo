@@ -96,7 +96,7 @@ public class ServiceController {
 
 
     @PatchMapping("/{serviceId}/status")
-    @PreAuthorize("hasAnyRole('PROVIDER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('PROVIDER')")
     ApiResponse<ServiceResponse> updateServiceStatus(
             @PathVariable UUID serviceId,
             @RequestBody ServiceStatusUpdateRequest request

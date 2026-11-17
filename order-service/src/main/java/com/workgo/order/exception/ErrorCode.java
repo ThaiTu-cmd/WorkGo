@@ -21,7 +21,7 @@ public enum ErrorCode {
     INVALID_KEY(1004, "Invalid message key", HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(1005, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     USER_NOT_EXISTED(1006, "User dose not exist", HttpStatus.NOT_FOUND),
-    UNAUTHORIZED(1007, "You do not have that permission", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED(1007, "You do not have that permission", HttpStatus.FORBIDDEN),
     FORBIDDEN(1008, "You do not have permission to perform this action", HttpStatus.FORBIDDEN),
 
     //===============ORDER====================
@@ -80,7 +80,26 @@ public enum ErrorCode {
     ORDER_PAYMENT_ID_REQUIRED(3021, "Payment id is required", HttpStatus.BAD_REQUEST),
     PROPOSAL_ORDER_INVALID_REQUEST(3022, "Invalid proposal order request or idempotency key", HttpStatus.BAD_REQUEST),
     PROPOSAL_ORDER_CONFLICT(3023, "Proposal source or order payload does not match", HttpStatus.CONFLICT),
-    JOB_SERVICE_UNAVAILABLE(3024, "Job service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+    JOB_SERVICE_UNAVAILABLE(3024, "Job service is unavailable", HttpStatus.SERVICE_UNAVAILABLE),
+
+    //===========FILE============
+    ORDER_FILE_REQUIRED(3025, "File is required", HttpStatus.BAD_REQUEST),
+    ORDER_FILE_EMPTY(3026, "File is empty", HttpStatus.BAD_REQUEST),
+    ORDER_FILE_TOO_LARGE(3027, "File is too large", HttpStatus.PAYLOAD_TOO_LARGE),
+    ORDER_FILE_TYPE_NOT_ALLOWED(3028, "File type is not allowed", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
+    ORDER_FILE_NOT_FOUND(3029, "File not found", HttpStatus.NOT_FOUND),
+    ORDER_FILE_LINK_INVALID(3030, "Download link is invalid or expired", HttpStatus.FORBIDDEN),
+    ORDER_FILE_CONTEXT_INVALID(3031, "File context is invalid", HttpStatus.BAD_REQUEST),
+    ORDER_FILE_STORAGE_ERROR(3032, "Cannot store file", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    //===========AGREEMENT============
+    ORDER_AMENDMENT_INVALID(3033, "Amendment needs a reason and a real change of scope, whole VND price or duration", HttpStatus.BAD_REQUEST),
+    ORDER_AMENDMENT_NOT_ALLOWED(3034, "This order can no longer be amended", HttpStatus.CONFLICT),
+    ORDER_AMENDMENT_PENDING_EXISTS(3035, "This order already has a pending amendment", HttpStatus.CONFLICT),
+    ORDER_AMENDMENT_NOT_FOUND(3036, "Amendment not found", HttpStatus.NOT_FOUND),
+    ORDER_AMENDMENT_NOT_PENDING(3037, "Amendment is not pending", HttpStatus.CONFLICT),
+    ORDER_AMENDMENT_SELF_RESPOND(3038, "You cannot respond to your own amendment", HttpStatus.FORBIDDEN),
+    ORDER_AMENDMENT_STALE(3039, "The agreement changed after this amendment was proposed", HttpStatus.CONFLICT);
 
     private int code;
     private String message;

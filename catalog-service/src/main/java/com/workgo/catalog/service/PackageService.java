@@ -85,7 +85,7 @@ public class PackageService {
         return packageMapper.toPackageResponse(pkg);
     }
 
-    @PreAuthorize("hasAnyRole('PROVIDER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('PROVIDER')")
     public PackageResponse updatePackage(UUID packageId, PackageUpdateRequest request) {
         Package pkg = packageRepository.findById(packageId)
                 .orElseThrow(() -> new AppException(ErrorCode.PACKAGE_NOT_EXISTED));

@@ -59,6 +59,14 @@ public class User {
     String avatarUrl;
 
     @Builder.Default
+    @Column(name = "authorization_version", nullable = false)
+    Long authorizationVersion = 0L;
+
+    @Version
+    @Column(name = "version")
+    Long version;
+
+    @Builder.Default
     @Column(name = "created_at")
     Instant createdAt = Instant.now();
 

@@ -21,7 +21,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "services", uniqueConstraints = {
-        @UniqueConstraint(name = "slug-isDeleted", columnNames = {"slug", "is_deleted"})
+        @UniqueConstraint(name = "uk_service_slug_is_deleted", columnNames = {"slug", "is_deleted"})
 })
 @SQLRestriction("is_deleted = 0")
 public class Service {

@@ -17,7 +17,7 @@ public enum ErrorCode {
     //===============USER====================
     INVALID_KEY(1004, "Invalid message key", HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(1005, "Unauthenticated", HttpStatus.UNAUTHORIZED),
-    UNAUTHORIZED(1007, "You do not have that permission", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED(1007, "You do not have that permission", HttpStatus.FORBIDDEN),
     FORBIDDEN(1008, "You do not have permission to perform this action", HttpStatus.FORBIDDEN),
 
     //===============ORDER====================
@@ -55,7 +55,12 @@ public enum ErrorCode {
 
     //===============GATEWAY==================
     GATEWAY_UNAVAILABLE(3301, "Payment gateway is unavailable, please try again", HttpStatus.SERVICE_UNAVAILABLE),
-    GATEWAY_INVALID_SIGNATURE(3302, "Invalid gateway signature", HttpStatus.BAD_REQUEST);
+    GATEWAY_INVALID_SIGNATURE(3302, "Invalid gateway signature", HttpStatus.BAD_REQUEST),
+
+    //===============WALLET===================
+    WALLET_POSTING_INVALID(3401, "Wallet posting is invalid", HttpStatus.BAD_REQUEST),
+    WALLET_INSUFFICIENT_FUNDS(3402, "Wallet balance is not enough", HttpStatus.CONFLICT),
+    WALLET_IDEMPOTENCY_CONFLICT(3403, "Idempotency key was already used for a different posting", HttpStatus.CONFLICT);
 
     private int code;
     private String message;

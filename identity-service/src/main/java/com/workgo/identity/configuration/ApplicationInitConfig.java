@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +23,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
-import java.util.HashSet;
 
 @Configuration
 @RequiredArgsConstructor
@@ -33,10 +33,16 @@ public class ApplicationInitConfig {
     PasswordEncoder passwordEncoder;
 
     @NonFinal
-    String ADMIN_USER_NAME = "admin";
+    @Value("${app.bootstrap.enabled:false}")
+    boolean bootstrapEnabled;
 
     @NonFinal
-    String ADMIN_PASSWORD = "admin";
+    @Value("${app.bootstrap.user-name:}")
+    String bootstrapUserName;
+
+    @NonFinal
+    @Value("${app.bootstrap.password:}")
+    String bootstrapPassword;
 
     @Bean
 //    @ConditionalOnProperty(
@@ -53,70 +59,48 @@ public class ApplicationInitConfig {
             initRole(roleRepository, RoleName.ADMIN);
             initRole(roleRepository, RoleName.CLIENT);
             initRole(roleRepository, RoleName.PROVIDER);
+            initRole(roleRepository, RoleName.SUPER_ADMIN);
 
-            if(userRepository.findByUserName(ADMIN_USER_NAME) == null){
-
-                String hashedPassword = passwordEncoder.encode(ADMIN_PASSWORD);
-
-                User user = User.builder()
-                        .firstName("")
-                        .lastName("admin")
-                        .userName(ADMIN_USER_NAME)
-                        .password(hashedPassword)
-                        .status(UserStatus.ACTIVE)
-                        .build();
-
-                userRepository.save(user);
-
-                Role role = roleRepository.findById(RoleName.ADMIN)
-                        .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
-
-                Role role1 = roleRepository.findById(RoleName.CLIENT)
-                        .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
-
-                Role role2 = roleRepository.findById(RoleName.PROVIDER)
-                        .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
-
-
-                UserRole userRole = UserRole.builder()
-                        .grantedAt(Instant.now())
-                        .userNameHost("System")
-                        .user(user)
-                        .role(role)
-                        .build();
-
-                UserRole userRole1 = UserRole.builder()
-                        .grantedAt(Instant.now())
-                        .userNameHost("System")
-                        .user(user)
-                        .role(role1)
-                        .build();
-
-                UserRole userRole2 = UserRole.builder()
-                        .grantedAt(Instant.now())
-                        .userNameHost("System")
-                        .user(user)
-                        .role(role2)
-                        .build();
-
-                HashSet<UserRole> userRoles = new HashSet<>();
-                userRoles.add(userRole);
-                userRoles.add(userRole1);
-                userRoles.add(userRole2);
-
-
-                userRoleRepository.save(userRole);
-
-                user.setUserRoles(userRoles);
-                userRepository.save(user);
-
-                log.info("ADMIN info : " + user);
-
-            }
-
-
+            bootstrapSuperAdmin(userRepository, roleRepository, userRoleRepository);
         };
 
+    }
+
+    private void bootstrapSuperAdmin(UserRepository userRepository,
+                                RoleRepository roleRepository,
+                                UserRoleRepository userRoleRepository){
+        if(!bootstrapEnabled) return;
+
+        if(bootstrapUserName.isBlank() || bootstrapPassword.length() < 8){
+            log.warn("Bootstrap super admin skipped: user name or password is missing");
+            return;
+        }
+
+        if(userRoleRepository.existsByRole_RoleName(RoleName.SUPER_ADMIN)
+                || userRepository.existsAnyStatusByUserName(bootstrapUserName)){
+            log.info("Bootstrap super admin skipped: super admin account already exists");
+            return;
+        }
+
+        User user = userRepository.save(User.builder()
+                .firstName("")
+                .lastName(bootstrapUserName)
+                .userName(bootstrapUserName)
+                .password(passwordEncoder.encode(bootstrapPassword))
+                .status(UserStatus.ACTIVE)
+                .build());
+
+        Role role = roleRepository.findById(RoleName.SUPER_ADMIN)
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+
+        userRoleRepository.save(UserRole.builder()
+                .grantedAt(Instant.now())
+                .userNameHost("System")
+                .user(user)
+                .role(role)
+                .build());
+
+        log.info("Bootstrap super admin created: {}", bootstrapUserName);
     }
 
     private void initRole(RoleRepository roleRepository, RoleName roleName){

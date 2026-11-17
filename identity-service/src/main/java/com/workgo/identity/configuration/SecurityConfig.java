@@ -60,6 +60,7 @@ public class SecurityConfig {
             request.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                     .requestMatchers(HttpMethod.GET, "/providers/myProfile").authenticated()
                     .requestMatchers(HttpMethod.GET, "/providers", "/providers/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/provider-verifications/documents/*/content").permitAll()
                     .anyRequest().authenticated();
         });
 

@@ -440,6 +440,13 @@ public class OrderService {
 
         tokenUtils.assertParticipant(order);
 
+        return toOrderDetail(order);
+    }
+
+    public OrderDetailResponse toOrderDetail(Order order){
+
+        UUID orderId = order.getOrderId();
+
         List<OrderItemResponse> items = orderItemRepository
                 .findByOrder_OrderIdOrderBySortOrderAsc(orderId)
                 .stream()
@@ -464,6 +471,11 @@ public class OrderService {
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
         tokenUtils.assertParticipant(order);
+
+        return historyOf(orderId, page, size);
+    }
+
+    public PageResponse<OrderStatusHistoryResponse> historyOf(UUID orderId, int page, int size){
 
         Sort sort = Sort.by("createdAt").descending();
 

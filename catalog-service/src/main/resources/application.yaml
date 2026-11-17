@@ -6,6 +6,10 @@ server:
 spring:
   application:
     name: catalog-service
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 51MB
   datasource:
     url: jdbc:postgresql://${CATALOG_DB_HOST:localhost}:${CATALOG_DB_PORT:5434}/${CATALOG_DB:catalog_db}
     username: ${DB_USERNAME:postgres}
@@ -29,6 +33,8 @@ jwt:
 
 app:
   internal-key: ${INTERNAL_API_KEY:}
+  storage:
+    local-dir: ${CATALOG_STORAGE_DIR:${user.home}/.workgo/catalog-files}
   service:
     identity:
-      url: ${APP_SERVICE_IDENTITY_URL}
+      url: ${APP_SERVICE_IDENTITY_URL:${IDENTITY_SERVICE_URL:http://localhost:8081/identity}}

@@ -11,6 +11,8 @@ import java.util.UUID;
 @Repository
 public interface ServiceMediaRepository extends JpaRepository<ServiceMedia, UUID> {
 
+    long countByService_ServiceId(UUID serviceId);
+
     Page<ServiceMedia> findAllByService_ServiceId(UUID serviceId, Pageable pageable);
 
     boolean existsByService_ServiceIdAndUrl(UUID serviceId, String url);

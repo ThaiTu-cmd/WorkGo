@@ -47,6 +47,8 @@ public class DigitalFlowService {
     RevisionRequestMapper revisionRequestMapper;
     ExecutionMapper executionMapper;
     TokenUtils tokenUtils;
+    OrderFileService orderFileService;
+    OrderAgreementService orderAgreementService;
 
     @Transactional
     public void submitRequirements(UUID orderId, RequirementSubmissionRequest request) {
@@ -72,12 +74,9 @@ public class DigitalFlowService {
 
         Instant now = Instant.now();
 
-        if (snapshot.getProposalSnapshot() != null) {
-            digital.setDeadlineAt(now.plus(Duration.ofDays(snapshot.getProposalSnapshot().estimatedDays())));
-        } else if (snapshot.getPackageSnapshot() != null
-                && snapshot.getPackageSnapshot().getDeliveryDay() != null) {
-            digital.setDeadlineAt(now.plus(Duration.ofDays(
-                    snapshot.getPackageSnapshot().getDeliveryDay())));
+        Integer durationDays = orderAgreementService.currentVersion(order).getDurationDays();
+        if (durationDays != null) {
+            digital.setDeadlineAt(now.plus(Duration.ofDays(durationDays)));
         }
 
 
@@ -135,13 +134,14 @@ public class DigitalFlowService {
                 .build();
 
         List<DeliveryFile> files = request.getFiles().stream()
-                .map(file -> DeliveryFile.builder()
+                .map(file -> orderFileService.loadOwnFile(orderId, file.getFileId(), FileContext.DELIVERY))
+                .map(storedFile -> DeliveryFile.builder()
                         .deliveryPackage(deliveryPackage)
-                        .fileUrl(file.getFileUrl())
-                        .fileName(file.getFileName())
-                        .mimeType(file.getMimeType())
-                        .sizeBytes(file.getSizeBytes())
-                        .fileHash(file.getFileHash())
+                        .storedFileId(storedFile.getStoredFileId())
+                        .fileName(storedFile.getOriginalName())
+                        .mimeType(storedFile.getMimeType())
+                        .sizeBytes(storedFile.getSizeBytes())
+                        .fileHash(storedFile.getSha256())
                         .build())
                 .toList();
 

@@ -35,4 +35,6 @@ public class UserResponse {
     Instant createdAt;
 
     Set<RoleResponse> roles;
+
+    Long version;
 }

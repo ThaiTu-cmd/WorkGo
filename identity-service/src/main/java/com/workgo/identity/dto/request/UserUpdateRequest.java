@@ -1,6 +1,5 @@
 package com.workgo.identity.dto.request;
 
-import com.workgo.identity.enumeration.UserStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -15,10 +14,6 @@ public class UserUpdateRequest {
     String firstName;
 
     String lastName;
-
-    String userName;
-
-    String password;
 
     String email;
 

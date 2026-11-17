@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { BadgeCheck, FileCheck2, Hourglass, Users, type LucideIcon } from "lucide-react";
-import { adminApi } from "@/components/webapp-bridge/backend";
+import { adminApi, useAuthToken } from "@/components/webapp-bridge/backend";
+import { canAccessAdminPath } from "@/components/admin/adminPolicy";
 import { adminHref } from "@/components/admin/adminNav";
 import { Notice, PageHeader, errorMessage } from "@/components/admin/ui";
 import styles from "@/components/admin/admin.module.css";
@@ -47,17 +48,19 @@ const STATS: Stat[] = [
 ];
 
 export default function AdminDashboardPage() {
+  const token = useAuthToken();
+  const stats = useMemo(() => STATS.filter(item => canAccessAdminPath(token, item.path)), [token]);
   const { locale = "vi" } = useParams<{ locale: string }>() ?? {};
   const [values, setValues] = useState<Record<string, number | null>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
-    Promise.allSettled(STATS.map((s) => s.load())).then((results) => {
+    Promise.allSettled(stats.map((s) => s.load())).then((results) => {
       if (!alive) return;
       const next: Record<string, number | null> = {};
       results.forEach((r, i) => {
-        next[STATS[i].key] = r.status === "fulfilled" ? (r.value?.result?.totalElements ?? 0) : null;
+        next[stats[i].key] = r.status === "fulfilled" ? (r.value?.result?.totalElements ?? 0) : null;
       });
       setValues(next);
       const failed = results.find((r): r is PromiseRejectedResult => r.status === "rejected");
@@ -66,14 +69,14 @@ export default function AdminDashboardPage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [stats]);
 
   return (
     <>
       <PageHeader title="Tổng quan" sub="Tình hình hệ thống WorkGo." />
       {error && <Notice tone="error">Một số số liệu không tải được: {error}</Notice>}
       <div className={styles.stats}>
-        {STATS.map((s) => {
+        {stats.map((s) => {
           const v = values[s.key];
           return (
             <Link key={s.key} href={adminHref(locale, s.path)} className={`${styles.card} ${styles.stat}`}>

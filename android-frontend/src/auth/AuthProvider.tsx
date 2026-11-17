@@ -4,6 +4,7 @@ import { AppState } from 'react-native';
 
 import { authApi } from '@/api/authApi';
 import { configureClient } from '@/api/client';
+import { ApiError } from '@/api/errors';
 
 import { decodeToken, isExpired, needsRefresh, type JwtClaims } from './jwt';
 import { clearToken, readToken, writeToken } from './tokenStore';
@@ -26,43 +27,52 @@ export function AuthProvider({ children, queryClient }: { children: React.ReactN
   const [token, setToken] = React.useState<string | null>(null);
   // The API client reads the token synchronously on every request.
   const tokenRef = React.useRef<string | null>(null);
+  const generation = React.useRef(0);
+  const storageWork = React.useRef<Promise<void>>(Promise.resolve());
 
-  const adopt = React.useCallback(async (next: string) => {
-    await writeToken(next);
+  const adopt = React.useCallback(async (next: string, version: number) => {
+    storageWork.current = storageWork.current.catch(() => {}).then(async () => {
+      if (generation.current === version) await writeToken(next);
+    });
+    await storageWork.current;
+    if (generation.current !== version) return false;
     tokenRef.current = next;
     setToken(next);
     setStatus('signedIn');
+    return true;
   }, []);
 
   const dropSession = React.useCallback(() => {
+    generation.current++;
     tokenRef.current = null;
     setToken(null);
     setStatus('guest');
     // Cached orders/addresses/profile belong to the user who just left.
     queryClient?.clear();
-    void clearToken();
+    storageWork.current = storageWork.current.catch(() => {}).then(() => clearToken());
   }, [queryClient]);
 
   // /auth/refresh invalidates the token it receives, so a second concurrent
   // call would send a dead token: share the one in flight.
-  const refreshing = React.useRef<Promise<boolean> | null>(null);
+  const refreshing = React.useRef<{ version: number; promise: Promise<boolean> } | null>(null);
   const refresh = React.useCallback((): Promise<boolean> => {
-    if (refreshing.current) return refreshing.current;
+    const version = generation.current;
+    if (refreshing.current?.version === version) return refreshing.current.promise;
     const current = tokenRef.current;
     if (!current) return Promise.resolve(false);
-    refreshing.current = (async () => {
+    const promise = (async () => {
       try {
-        await adopt(await authApi.refresh(current));
-        return true;
-      } catch {
-        // keep the current token until it actually expires
+        return await adopt(await authApi.refresh(current), version);
+      } catch (error) {
+        if (generation.current === version && error instanceof ApiError && error.status === 401) dropSession();
         return false;
       } finally {
-        refreshing.current = null;
+        if (refreshing.current?.version === version) refreshing.current = null;
       }
     })();
-    return refreshing.current;
-  }, [adopt]);
+    refreshing.current = { version, promise };
+    return promise;
+  }, [adopt, dropSession]);
 
   const refreshIfDue = React.useCallback(() => {
     const claims = decodeToken(tokenRef.current);
@@ -72,6 +82,7 @@ export function AuthProvider({ children, queryClient }: { children: React.ReactN
   React.useEffect(() => {
     configureClient({
       getToken: () => tokenRef.current,
+      getSessionVersion: () => generation.current,
       // A 401 for a token a refresh already replaced says nothing about the session.
       onUnauthorized: (sentToken) => {
         if (sentToken === tokenRef.current) dropSession();
@@ -81,13 +92,19 @@ export function AuthProvider({ children, queryClient }: { children: React.ReactN
 
   React.useEffect(() => {
     let cancelled = false;
+    const version = generation.current;
     (async () => {
       const stored = await readToken();
-      if (cancelled) return;
+      if (cancelled || generation.current !== version) return;
       const claims = decodeToken(stored);
       if (!stored || !claims || isExpired(claims, Date.now())) {
-        if (stored) await clearToken();
-        if (!cancelled) setStatus('guest');
+        if (stored) {
+          storageWork.current = storageWork.current.catch(() => {}).then(async () => {
+            if (generation.current === version) await clearToken();
+          });
+          await storageWork.current;
+        }
+        if (!cancelled && generation.current === version) setStatus('guest');
         return;
       }
       tokenRef.current = stored;
@@ -112,9 +129,11 @@ export function AuthProvider({ children, queryClient }: { children: React.ReactN
 
   const signIn = React.useCallback(
     async (userName: string, password: string) => {
-      await adopt(await authApi.login(userName, password));
+      dropSession();
+      const version = generation.current;
+      await adopt(await authApi.login(userName, password), version);
     },
-    [adopt]
+    [adopt, dropSession]
   );
 
   const signOut = React.useCallback(async () => {

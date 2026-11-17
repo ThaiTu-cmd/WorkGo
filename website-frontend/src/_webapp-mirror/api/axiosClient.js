@@ -13,7 +13,8 @@ export const getAccessToken = () => {
   }
 };
 
-export const setAccessToken = (token) => {
+let sessionVersion = 0;
+const writeAccessToken = (token) => {
   try {
     if (token) localStorage.setItem(TOKEN_KEY, token);
     else localStorage.removeItem(TOKEN_KEY);
@@ -24,6 +25,19 @@ export const setAccessToken = (token) => {
     window.dispatchEvent(new Event('workgo-auth-changed'));
   }
 };
+
+export const setAccessToken = (token) => {
+  if (getAccessToken() !== (token || null)) sessionVersion++;
+  writeAccessToken(token);
+};
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === TOKEN_KEY || event.key === null) sessionVersion++;
+  });
+}
+
+const sessionChanged = () => new ApiError(401, { code: 'SESSION_CHANGED', message: 'Phiên đăng nhập đã thay đổi. Vui lòng tải lại dữ liệu.' });
 
 // Backend answers HTTP 401 both for a bad/expired token and for a missing
 // role (code 1007 "You do not have that permission"); tell them apart by code.
@@ -70,11 +84,13 @@ export function isAuthGuarded(url) {
   return AUTH_GUARD_PATHS.some((path) => url.startsWith(path));
 }
 
-let refreshPromise = null;
+let refreshFlight = null;
 
-async function tryRefreshToken(oldToken) {
-  if (!refreshPromise) {
-    refreshPromise = (async () => {
+async function tryRefreshToken(oldToken, version) {
+  if (!refreshFlight || refreshFlight.version !== version) {
+    const flight = { version, promise: null };
+    refreshFlight = flight;
+    flight.promise = (async () => {
       try {
         const res = await fetch(`${BASE_URL}/identity/auth/refresh`, {
           method: 'POST',
@@ -87,11 +103,11 @@ async function tryRefreshToken(oldToken) {
       } catch {
         return null;
       } finally {
-        refreshPromise = null;
+        if (refreshFlight === flight) refreshFlight = null;
       }
     })();
   }
-  return refreshPromise;
+  return refreshFlight.promise;
 }
 
 const isAuthEndpoint = (url) =>
@@ -101,6 +117,7 @@ const isAuthEndpoint = (url) =>
 
 async function request(method, url, { params, data, headers: extraHeaders } = {}, isRetry = false) {
   const token = getAccessToken();
+  const version = sessionVersion;
 
   // Guard: Avoid firing unauthenticated requests to protected identity endpoints
   if (!token && isAuthGuarded(url)) {
@@ -123,13 +140,15 @@ async function request(method, url, { params, data, headers: extraHeaders } = {}
   }
   const contentType = res.headers.get('content-type') || '';
   const body = await res.json().catch(() => null);
+  if (version !== sessionVersion) throw sessionChanged();
   if (!res.ok) {
     const error = new ApiError(res.status, body, contentType);
     if (error.status === 401) {
       if (token && !isRetry && !isAuthEndpoint(url)) {
-        const newToken = await tryRefreshToken(token);
+        const newToken = getAccessToken() !== token ? getAccessToken() : await tryRefreshToken(token, version);
+        if (version !== sessionVersion) throw sessionChanged();
         if (newToken) {
-          setAccessToken(newToken);
+          writeAccessToken(newToken);
           return request(method, url, { params, data, headers: extraHeaders }, true);
         }
       }

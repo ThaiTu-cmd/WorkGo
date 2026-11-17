@@ -58,6 +58,18 @@ test('no stored token → guest', async () => {
   expect(api.claims).toBeNull();
 });
 
+test('a delayed stored token cannot overwrite an account signed in during startup', async () => {
+  let resolve!: (token: string) => void;
+  jest.spyOn(SecureStore, 'getItemAsync').mockImplementationOnce(() => new Promise(r => { resolve = r; }));
+  const b = tokenExpiringIn(24 * HOUR, { sub: 'b' });
+  mocked.login.mockResolvedValue(b);
+  await render(<AuthProvider><Probe /></AuthProvider>);
+  await act(async () => { await api.signIn('b', 'pw'); });
+  await act(async () => { resolve(tokenExpiringIn(24 * HOUR, { sub: 'old-a' })); });
+  expect(api.claims?.sub).toBe('b');
+  expect(await readToken()).toBe(b);
+});
+
 test('expired stored token → guest and cleared', async () => {
   await writeToken(tokenExpiringIn(-HOUR));
   await renderAuth();
@@ -104,7 +116,7 @@ test('AppState active with plenty of time left → no refresh', async () => {
   expect(mocked.refresh).not.toHaveBeenCalled();
 });
 
-test('refresh failure keeps old token', async () => {
+test('refresh rejected by server clears the revoked session', async () => {
   const old = tokenExpiringIn(HOUR);
   mocked.refresh.mockRejectedValue(new ApiError(401, { code: 1006 }));
   await writeToken(old);
@@ -115,8 +127,37 @@ test('refresh failure keeps old token', async () => {
     ok = await api.refresh();
   });
   expect(ok).toBe(false);
-  expect(api.status).toBe('signedIn');
-  expect(await readToken()).toBe(old);
+  expect(api.status).toBe('guest');
+  expect(await readToken()).toBeNull();
+});
+
+test('refresh arriving after logout cannot restore the old session', async () => {
+  await writeToken(tokenExpiringIn(10 * HOUR));
+  await renderAuth();
+  let resolve!: (token: string) => void;
+  mocked.refresh.mockReturnValue(new Promise(r => { resolve = r; }));
+  let pending!: Promise<boolean>;
+  await act(async () => { pending = api.refresh(); await api.signOut(); });
+  await act(async () => { resolve(tokenExpiringIn(24 * HOUR)); await pending; });
+  expect(api.status).toBe('guest');
+  expect(await readToken()).toBeNull();
+});
+
+test('switching account clears private queries and discards an old refresh', async () => {
+  await writeToken(tokenExpiringIn(10 * HOUR, { sub: 'a' }));
+  const queryClient = new QueryClient();
+  await renderAuth(queryClient);
+  queryClient.setQueryData(['private'], 'account-a');
+  let resolve!: (token: string) => void;
+  mocked.refresh.mockReturnValue(new Promise(r => { resolve = r; }));
+  let pending!: Promise<boolean>;
+  const b = tokenExpiringIn(24 * HOUR, { sub: 'b' });
+  mocked.login.mockResolvedValue(b);
+  await act(async () => { pending = api.refresh(); await api.signIn('b', 'pw'); });
+  await act(async () => { resolve(tokenExpiringIn(24 * HOUR, { sub: 'a' })); await pending; });
+  expect(api.claims?.sub).toBe('b');
+  expect(await readToken()).toBe(b);
+  expect(queryClient.getQueryData(['private'])).toBeUndefined();
 });
 
 test('signIn stores the token returned by login', async () => {

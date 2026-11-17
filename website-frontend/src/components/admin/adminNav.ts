@@ -41,8 +41,24 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     ],
   },
   {
+    title: "Kiểm duyệt",
+    items: [
+      { path: "jobs", label: "Job", icon: FileCheck2, badge: "soon" },
+      { path: "reviews", label: "Review", icon: FileCheck2, badge: "soon" },
+      { path: "reports", label: "Report", icon: FileCheck2, badge: "soon" },
+      { path: "disputes", label: "Dispute", icon: FileCheck2, badge: "soon" },
+    ],
+  },
+  {
     title: "Tài chính",
-    items: [{ path: "escrow", label: "Ký quỹ", icon: Vault, badge: "soon" }],
+    items: [
+      { path: "escrow", label: "Ký quỹ", icon: Vault, badge: "soon" },
+      { path: "fees", label: "Phí", icon: Vault, badge: "soon" },
+      { path: "sanctions", label: "Chế tài", icon: Users, badge: "soon" },
+      { path: "monitoring", label: "Giám sát", icon: LayoutDashboard, badge: "soon" },
+      { path: "audit", label: "Audit", icon: FileCheck2, badge: "soon" },
+      { path: "reconciliation", label: "Đối soát", icon: Vault, badge: "soon" },
+    ],
   },
 ];
 

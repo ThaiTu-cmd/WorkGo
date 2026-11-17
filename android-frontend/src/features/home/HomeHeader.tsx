@@ -45,6 +45,8 @@ export function HomeHeader({ name }: { name: string | null }) {
             <Text style={styles.signInText}>{t('homeHeader.dang_nhap')}</Text>
           </Pressable>
         )}
+        {name && <Pressable accessibilityRole="button" accessibilityLabel={t('notifications.title')} onPress={() => router.push('/notifications')} style={{ minWidth: 44, minHeight: 44, justifyContent: 'center' }}><Ionicons name="notifications-outline" size={24} color={colors.white} /></Pressable>}
+        {name && <Pressable accessibilityRole="button" accessibilityLabel={t('chat.tin_nhan')} onPress={() => router.push('/inbox')} style={{ minWidth: 44, minHeight: 44, justifyContent: 'center' }}><Ionicons name="chatbubbles-outline" size={24} color={colors.white} /></Pressable>}
       </View>
 
       <Pressable

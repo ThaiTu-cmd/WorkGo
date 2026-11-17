@@ -21,7 +21,7 @@ import OrderDashboardPage from "@/_webapp-mirror/pages/OrderDashboard/OrderDashb
 import OrderPaymentPage from "@/_webapp-mirror/pages/OrderPayment/OrderPaymentPage";
 import BookingSlotsPage from "@/_webapp-mirror/pages/BackendParity/BookingSlotsPage";
 import VerificationCenterPage from "@/_webapp-mirror/pages/BackendParity/VerificationCenterPage";
-import AdminConsolePage from "@/_webapp-mirror/pages/BackendParity/AdminConsolePage";
+import { useRouter } from "next/navigation";
 import RegisterPage from "../trung-pages/auth/RegisterPage";
 import LoginPage from "../trung-pages/auth/LoginPage";
 import ProfileSettingsPage from "../trung-pages/profile/ProfileSettingsPage";
@@ -44,7 +44,9 @@ import NotFoundPage from "../trung-pages/NotFoundPage";
 import MessagesPage from "../trung-pages/messages/MessagesPage";
 import type { ChatTarget } from "../trung-pages/messages/types";
 import { getAccessToken, NOT_PROVIDER_MESSAGE } from "@/_webapp-mirror/api/axiosClient";
-import { hasRole } from "@/_webapp-mirror/utils/jwt";
+import { useAuthToken } from "@/_webapp-mirror/hooks/useAuthToken";
+import { selectOrderId } from "@/_webapp-mirror/utils/orderNavigation";
+import { decodeToken, hasRole } from "@/_webapp-mirror/utils/jwt";
 import { Info } from "lucide-react";
 import ScrollEnhancements from "../common/ScrollEnhancements";
 import styles from "./webapp-shell.module.css";
@@ -235,7 +237,19 @@ function scrollToTopInstant() {
 // which carries the Turbopack-impure `main` selector). Data import resolves
 // through turbopack.resolveAlias to engine-backed shims; without the alias
 // it falls back to the mirror's own web-app mocks.
+function AdminRedirect() {
+  const router = useRouter();
+  useEffect(() => { router.replace(`/${window.location.pathname.startsWith('/en') ? 'en' : 'vi'}/admin`); }, [router]);
+  return null;
+}
+
 export default function WebAppShell({ initialPage }: { initialPage?: string } = {}) {
+  const sessionToken = useAuthToken();
+  const claims = decodeToken(sessionToken);
+  return <SessionShell key={claims?.userId || claims?.sub || sessionToken || "guest"} initialPage={initialPage} />;
+}
+
+function SessionShell({ initialPage }: { initialPage?: string }) {
   const [currentPage, setCurrentPage] = useState<TrungPageKey>(() => {
     if (typeof window !== "undefined") return parseUrlParams(window.location.search).page;
     if (initialPage && KNOWN_PAGE_KEYS.has(initialPage)) return initialPage as TrungPageKey;
@@ -376,7 +390,7 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
       if (parsedParams.serviceId) setSelectedServiceId(parsedParams.serviceId);
       if (parsedParams.jobId) setSelectedJobId(parsedParams.jobId);
       if (parsedParams.providerId) setSelectedProviderId(parsedParams.providerId);
-      if (parsedParams.orderId) setSelectedOrderId(parsedParams.orderId);
+      setSelectedOrderId(previous => selectOrderId(targetPage, parsedParams, previous));
       if (targetPage === "order-payment") {
         setSelectedOrderId(parsedParams.orderId || "");
         setSelectedPaymentId(parsedParams.paymentId || "");
@@ -416,7 +430,7 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
       if (parsedParams.serviceId) setSelectedServiceId(parsedParams.serviceId);
       if (parsedParams.jobId) setSelectedJobId(parsedParams.jobId);
       if (parsedParams.providerId) setSelectedProviderId(parsedParams.providerId);
-      if (parsedParams.orderId) setSelectedOrderId(parsedParams.orderId);
+      setSelectedOrderId(previous => selectOrderId(targetPage, parsedParams, previous));
       if (targetPage === "order-payment") {
         setSelectedOrderId(parsedParams.orderId || "");
         setSelectedPaymentId(parsedParams.paymentId || "");
@@ -506,7 +520,7 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
     if (page === "provider-profile" && params.providerId) setSelectedProviderId(params.providerId);
     if (page === "submit-proposal" && params.jobId) setSelectedJobId(params.jobId);
     if (page === "proposal-review" && params.jobId) setSelectedJobId(params.jobId);
-    if (page === "review-form" && params.orderId) setSelectedOrderId(params.orderId);
+    setSelectedOrderId(previous => selectOrderId(page, params, previous));
     if (page === "order-payment") {
       setSelectedOrderId(params.orderId || "");
       setSelectedPaymentId(params.paymentId || "");
@@ -741,6 +755,8 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
       {currentPage === "orders" && (
         /* Client / Provider order dashboard */
         <OrderDashboardPage
+          key={selectedOrderId || "list"}
+          initialOrderId={selectedOrderId}
           onGoHome={() => handleNavigate("home")}
           onShowToast={showToast}
           onOpenChat={(chat: ChatTarget) => handleNavigate("messages", { chat })}
@@ -800,10 +816,7 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
       )}
 
       {currentPage === "admin-console" && (
-        <AdminConsolePage
-          onNavigate={(page: string) => handleNavigate(page as TrungPageKey)}
-          onShowToast={showToast}
-        />
+        <AdminRedirect />
       )}
 
       {/* Trung pages sit under the fixed header; this wrapper reserves its height. */}

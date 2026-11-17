@@ -127,6 +127,40 @@ test('2xx without a body resolves to null', async () => {
   await expect(http.delete('/identity/addresses/1')).resolves.toBeNull();
 });
 
+test('private responses from a signed-out session cannot fill the next account cache', async () => {
+  token = 'a';
+  let resolve!: (value: unknown) => void;
+  fetchMock.mockReturnValueOnce(new Promise(r => { resolve = r; }));
+  const result = caught(http.get('/order/orders'));
+  token = 'b';
+  resolve({ ok: true, status: 200, json: async () => ({ result: ['private-a'] }) });
+  expect((await result).status).toBe(401);
+  expect(onUnauthorized).not.toHaveBeenCalled();
+});
+
+test('a same-account token refresh preserves a committed Order response', async () => {
+  token = 'old-token';
+  configureClient({ getToken: () => token, getSessionVersion: () => 7, onUnauthorized });
+  let resolve!: (value: unknown) => void;
+  fetchMock.mockReturnValueOnce(new Promise(r => { resolve = r; }));
+  const order = http.post('/order/orders', { serviceId: 's1' });
+  token = 'refreshed-token';
+  resolve({ ok: true, status: 200, json: async () => ({ result: { orderId: 'committed-order' } }) });
+  await expect(order).resolves.toEqual({ result: { orderId: 'committed-order' } });
+});
+
+test('a caller signal does not disable request timeout', async () => {
+  let received: AbortSignal | undefined;
+  fetchMock.mockImplementationOnce((_url, init) => {
+    received = init.signal;
+    return new Promise((_resolve, reject) => received!.addEventListener('abort', () => reject(new Error('aborted'))));
+  });
+  const result = caught(http.get('/timeout', { signal: new AbortController().signal, timeoutMs: 10 }));
+  await new Promise(resolve => setTimeout(resolve, 30));
+  expect(received?.aborted).toBe(true);
+  expect(await result).toBeInstanceOf(ApiError);
+});
+
 test('post merges extra headers (e.g. Idempotency-Key) with the defaults', async () => {
   token = 't1';
   respond(200, {});

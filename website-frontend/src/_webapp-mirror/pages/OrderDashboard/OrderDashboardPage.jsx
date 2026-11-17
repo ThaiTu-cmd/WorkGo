@@ -12,7 +12,8 @@ import { CheckinCode, CheckinDialog, DeliveryDialog, RequirementsDialog, Revisio
 import flowStyles from './components/OrderFlow.module.css';
 import { useOrderExecution } from '../../hooks/useOrderExecution';
 import OrderCancelPage from '../OrderCancel/OrderCancelPage';
-import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
+import { getAccessToken, NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
+import { decodeToken } from '../../utils/jwt';
 import { orderApi, orderErrorMessage } from '../../api/orderApi';
 import { ORDER_PAYMENT_TIMEOUT_MINUTES } from '../../api/paymentApi';
 import styles from './OrderDashboardPage.module.css';
@@ -323,6 +324,7 @@ function OrderLiveDetails({
     </>;
 }
 export default function OrderDashboardPage({
+  initialOrderId = '',
   onGoHome,
   onShowToast,
   onOpenChat,
@@ -333,7 +335,8 @@ export default function OrderDashboardPage({
   const [page, setPage] = useState(0);
   const [tab, setTab] = useState('ACTIVE');
   const [query, setQuery] = useState('');
-  const [expandedId, setExpandedId] = useState(null);
+  const [expandedId, setExpandedId] = useState(initialOrderId || null);
+  const [target, setTarget] = useState({ status: 'loading', order: null });
   const [cancelTargetId, setCancelTargetId] = useState(null);
   // Open flow dialog { type, order } and the order whose server call is running.
   const [dialog, setDialog] = useState(null);
@@ -341,12 +344,25 @@ export default function OrderDashboardPage({
   // Bumped after every flow action so the expanded details refetch.
   const [detailsVersion, setDetailsVersion] = useState(0);
   const {
-    status,
-    isLive,
-    orders,
+    status: listStatus,
+    orders: listOrders,
     pageInfo,
     reload
   } = useMyOrders(role, page);
+  useEffect(() => {
+    if (!initialOrderId) return;
+    let cancelled = false;
+    orderApi.getWorkspaceOrder(initialOrderId).then(order => {
+      if (cancelled) return;
+      setTarget({ status: 'api', order });
+      const claims = decodeToken(getAccessToken());
+      setRole(order.providerId === claims?.providerId ? 'PROVIDER' : 'CLIENT');
+    }).catch(() => { if (!cancelled) setTarget({ status: 'error', order: null }); });
+    return () => { cancelled = true; };
+  }, [initialOrderId, detailsVersion]);
+  const status = initialOrderId ? target.status : listStatus;
+  const isLive = status === 'api';
+  const orders = initialOrderId ? (target.order ? [target.order] : []) : listOrders;
   const cancelTarget = cancelTargetId ? orders.find(o => o.orderId === cancelTargetId) : null;
   const toast = msg => onShowToast && onShowToast(msg);
   const amountOf = o => role === 'CLIENT' ? o.totalAmount : o.providerNetAmount;
@@ -377,11 +393,11 @@ export default function OrderDashboardPage({
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return orders.filter(o => {
-      const okStatus = tab === 'ACTIVE' ? ACTIVE_STATUSES.includes(o.orderStatus) : o.orderStatus === tab;
+      const okStatus = initialOrderId || (tab === 'ACTIVE' ? ACTIVE_STATUSES.includes(o.orderStatus) : o.orderStatus === tab);
       const okQuery = !q || o.orderNumber?.toLowerCase().includes(q) || orderLabel(o).toLowerCase().includes(q) || o.title?.toLowerCase().includes(q) || o.counterpartName?.toLowerCase().includes(q);
       return okStatus && okQuery;
     });
-  }, [orders, tab, query]);
+  }, [orders, tab, query, initialOrderId]);
   const switchRole = next => {
     if (next === role) return;
     setRole(next);

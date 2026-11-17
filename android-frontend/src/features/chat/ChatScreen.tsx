@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as React from 'react';
 import {
   ActivityIndicator,
@@ -18,11 +18,17 @@ import { qk } from '@/api/queryKeys';
 import type { ContextType, ConversationDto, MessageDto, ParticipantDto } from '@/api/types';
 import { useAuth } from '@/auth/AuthProvider';
 import { formatDateTime } from '@/lib/format';
-import { font, makeStyles, radius, spacing, useColors } from '@/ui';
+import { Button, ErrorState, font, makeStyles, radius, spacing, useColors } from '@/ui';
+import { LoginRequired } from '@/auth/LoginRequired';
 import { useT } from '@/i18n';
 
 function randomId(): string {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  // MessageSendReq requires UUID syntax. This key is for deduplication, not authentication.
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, ch => {
+    const value = Math.floor(Math.random() * 16);
+    return (ch === 'x' ? value : (value & 3) | 8).toString(16);
+  });
 }
 
 export type ChatScreenProps = {
@@ -33,11 +39,16 @@ export type ChatScreenProps = {
   contextId?: string;
 };
 
-export function ChatScreen({
+export function ChatScreen(props: ChatScreenProps) {
+  const { claims } = useAuth();
+  if (!claims?.userId) return <LoginRequired />;
+  return <ChatSession key={`${claims.userId}:${props.conversationId ?? props.participantId}:${props.contextId}`} {...props} />;
+}
+
+function ChatSession({
   conversationId: initialConversationId,
   participantId,
   participantName,
-  contextType = 'ORDER',
   contextId,
 }: ChatScreenProps) {
   const t = useT();
@@ -49,6 +60,10 @@ export function ChatScreen({
 
   const [activeConvId, setActiveConvId] = React.useState<string | undefined>(initialConversationId);
   const [inputText, setInputText] = React.useState<string>('');
+  const [openError, setOpenError] = React.useState(false);
+  const [openAttempt, setOpenAttempt] = React.useState(0);
+  const outgoing = React.useRef<{ content: string; clientMessageId: string } | null>(null);
+  const readMessages = React.useRef(new Set<string>());
 
   // If conversationId wasn't passed directly, find or create it
   React.useEffect(() => {
@@ -61,8 +76,7 @@ export function ChatScreen({
         const conversations = pageItems<ConversationDto>(listRes);
         const found = conversations.find(
           (c: ConversationDto) =>
-            c.contextType === contextType &&
-            (contextId ? c.contextId === contextId : true) &&
+            c.contextType === 'GENERAL' &&
             c.participants?.some((p: ParticipantDto) => p.userId === participantId)
         );
         if (cancelled) return;
@@ -71,44 +85,44 @@ export function ChatScreen({
         } else {
           const created = await communicationApi.createConversation({
             participantId,
-            contextType,
-            contextId: contextId ?? null,
+            contextType: 'GENERAL',
+            contextId: null,
           });
           if (!cancelled && created?.result?.id) {
             setActiveConvId(created.result.id);
           }
         }
       } catch {
-        // Fallback or retry on demand
+        if (!cancelled) setOpenError(true);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [activeConvId, participantId, contextType, contextId]);
+  }, [activeConvId, participantId, openAttempt]);
 
-  const messagesQuery = useQuery({
-    queryKey: qk.messages(activeConvId ?? 'pending'),
+  const messagesQuery = useInfiniteQuery({
+    queryKey: [...qk.messages(activeConvId ?? 'pending'), currentUserId],
     enabled: !!activeConvId,
-    refetchInterval: process.env.NODE_ENV === 'test' ? false : 4000,
-    queryFn: async () => {
-      if (!activeConvId) return [];
-      const res = await communicationApi.getMessages(activeConvId, 0, 50);
-      return pageItems<MessageDto>(res).reverse();
+    refetchInterval: 4000,
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => communicationApi.getMessages(activeConvId!, pageParam, 50),
+    getNextPageParam: (last, pages) => {
+      const total = last?.result?.totalPages;
+      return total !== undefined ? (pages.length < total ? pages.length : undefined) : (pageItems(last).length === 50 ? pages.length : undefined);
     },
   });
 
   const sendMutation = useMutation({
     mutationFn: async (content: string) => {
       if (!activeConvId) throw new Error(t('chat.khong_the_gui_tin_nhan'));
-      return communicationApi.sendMessage(activeConvId, {
-        content,
-        clientMessageId: randomId(),
-      });
+      if (outgoing.current?.content !== content) outgoing.current = { content, clientMessageId: randomId() };
+      return communicationApi.sendMessage(activeConvId, outgoing.current);
     },
     onSuccess: () => {
       setInputText('');
+      outgoing.current = null;
       void queryClient.invalidateQueries({ queryKey: qk.messages(activeConvId!) });
     },
   });
@@ -119,13 +133,30 @@ export function ChatScreen({
     sendMutation.mutate(text);
   };
 
-  const messages = messagesQuery.data ?? [];
+  const messages = React.useMemo(() => {
+    const byId = new Map<string, MessageDto>();
+    for (const page of messagesQuery.data?.pages ?? []) for (const item of pageItems<MessageDto>(page)) byId.set(item.id, item);
+    return [...byId.values()].sort((a, b) => a.sentAt.localeCompare(b.sentAt));
+  }, [messagesQuery.data]);
+  React.useEffect(() => {
+    for (const message of messages) {
+      if (message.senderId === currentUserId || message.readAt || readMessages.current.has(message.id)) continue;
+      readMessages.current.add(message.id);
+      void communicationApi.markMessageRead(message.id).then(() => {
+        void queryClient.invalidateQueries({ queryKey: qk.conversations() });
+      }).catch(() => { readMessages.current.delete(message.id); });
+    }
+  }, [messages, messagesQuery.dataUpdatedAt, currentUserId, queryClient]);
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       style={styles.container}>
+      {openError && <ErrorState message={t('chat.khong_the_gui_tin_nhan')} onRetry={() => { setOpenError(false); setOpenAttempt(v => v + 1); }} />}
+      {messagesQuery.isError && <ErrorState message={t('states.khong_tai_duoc_du_lieu')} onRetry={() => void messagesQuery.refetch()} />}
+      {sendMutation.isError && <Text accessibilityRole="alert">{t('chat.khong_the_gui_tin_nhan')}</Text>}
+      {messagesQuery.hasNextPage && <Button title={t('chat.older')} disabled={messagesQuery.isFetchingNextPage} onPress={() => void messagesQuery.fetchNextPage()} />}
       {participantName ? (
         <View style={styles.headerBar}>
           <Text style={styles.headerTitle}>{participantName}</Text>
@@ -173,11 +204,12 @@ export function ChatScreen({
           placeholder={t('chat.nhap_tin_nhan')}
           placeholderTextColor={colors.muted}
           multiline
+          maxLength={5000}
         />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('chat.gui')}
-          disabled={!inputText.trim() || sendMutation.isPending}
+          disabled={!activeConvId || !inputText.trim() || sendMutation.isPending}
           onPress={handleSend}
           style={({ pressed }) => [
             styles.sendButton,

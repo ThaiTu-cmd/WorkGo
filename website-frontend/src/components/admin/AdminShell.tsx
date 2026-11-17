@@ -4,7 +4,8 @@ import { useState, useSyncExternalStore, type FormEvent, type ReactNode } from "
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { Home, Loader2, LogOut, Menu, ShieldCheck, ShieldX, X } from "lucide-react";
-import { authApi, decodeToken, hasRole, useAuthToken } from "@/components/webapp-bridge/backend";
+import { authApi, decodeToken, useAuthToken } from "@/components/webapp-bridge/backend";
+import { canAccessAdminPath } from "./adminPolicy";
 import { ADMIN_NAV, adminHref } from "./adminNav";
 import { cx, errorMessage } from "./ui";
 import styles from "./admin.module.css";
@@ -30,7 +31,8 @@ export default function AdminShell({ children }: { children: ReactNode }) {
     );
   }
   if (!token) return <AdminLogin locale={locale} />;
-  if (!hasRole(token, "ADMIN")) return <Forbidden locale={locale} />;
+  const section = pathname.replace(`/${locale}/admin`, "").replace(/^\//, "");
+  if (!canAccessAdminPath(token, section)) return <Forbidden locale={locale} />;
 
   const userName = decodeToken(token)?.sub as string | undefined;
   const home = adminHref(locale, "");
@@ -47,7 +49,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav className={styles.nav}>
-          {ADMIN_NAV.map((group) => (
+          {ADMIN_NAV.map((group) => ({ ...group, items: group.items.filter(item => canAccessAdminPath(token, item.path)) })).filter(group => group.items.length).map((group) => (
             <div key={group.title}>
               <p className={styles.navGroupTitle}>{group.title}</p>
               {group.items.map((item) => {
@@ -103,7 +105,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
           </button>
           WorkGo Admin
         </div>
-        <main className={styles.content}>{children}</main>
+        <main key={token} className={styles.content}>{children}</main>
       </div>
     </div>
   );

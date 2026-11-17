@@ -12,8 +12,8 @@ export default function AdminEscrowPage() {
         </div>
         <h2 className={styles.dialogTitle}>Sắp ra mắt</h2>
         <p>
-          Backend chưa có API ký quỹ (payment-service mới chỉ có khung). Khi có API, trang này sẽ hiển thị các khoản
-          đang giữ, giải ngân cho provider và hoàn tiền cho khách hàng.
+          Payment đã có dữ liệu ký quỹ theo Order dành cho các bên tham gia. Màn giám sát quản trị đang chờ API đọc
+          có phân quyền riêng; hiện chưa hỗ trợ xem toàn bộ ký quỹ hoặc thực hiện giải ngân từ trang này.
         </p>
       </div>
     </>

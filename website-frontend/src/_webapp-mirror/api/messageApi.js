@@ -301,6 +301,9 @@ function connect() {
     onConnect: () => {
       if (client !== stomp) return; // replaced after a sign-out/switch
       topics.clear();
+      client.subscribe('/user/queue/notifications', () => {
+        if (client === stomp) window.dispatchEvent(new Event('workgo-notification'));
+      });
       state.conversations.forEach((c) => subscribeTopic(c.id));
       // Catch up on what arrived while the socket was down.
       fetchConversations().catch(() => {});

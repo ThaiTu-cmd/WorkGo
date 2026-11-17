@@ -94,7 +94,7 @@ export default function MessagesPage({
   const openContext = () => {
     const ctx = active?.context;
     if (!ctx) return;
-    if (ctx.type === "order") onNavigate("orders");else if (ctx.id) onNavigate("detail", {
+    if (ctx.type === "order" && ctx.id) onNavigate("orders", { orderId: ctx.id });else if (ctx.id) onNavigate("detail", {
       serviceId: ctx.id
     });
   };

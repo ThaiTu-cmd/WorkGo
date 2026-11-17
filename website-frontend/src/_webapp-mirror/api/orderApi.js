@@ -18,6 +18,12 @@ export const orderApi = {
   // OrderDetailResponse { order, items: OrderItemResponse[], snapshot, execution }.
   // snapshot.requirementValues holds what the client sent for a DIGITAL order.
   getOrder: (orderId) => axiosClient.get(`/order/orders/${orderId}`),
+  getWorkspaceOrder: async (orderId) => {
+    const res = await orderApi.getOrder(orderId);
+    const order = res?.result?.order;
+    if (!order || order.orderId !== orderId) throw new Error('Không tìm thấy đơn hàng.');
+    return order;
+  },
 
   getOrderHistory: (orderId, page = 0, size = 10) =>
     axiosClient.get(`/order/orders/${orderId}/history`, { params: { page, size } }),

@@ -1,4 +1,6 @@
 {
+  "adminPending": { "jobs": "Kiểm duyệt Job", "reviews": "Kiểm duyệt Review", "reports": "Xử lý Report", "disputes": "Hồ sơ Dispute", "fees": "Chính sách phí", "sanctions": "Chế tài", "monitoring": "Giám sát", "audit": "Lịch sử quản trị", "reconciliation": "Đối soát", "unavailable": "Chưa phát hành: chức năng này đang chờ API có phân quyền và audit. Chưa có thao tác thay đổi dữ liệu." },
+  "notifications": { "title": "Thông báo", "readAll": "Đã đọc hết", "error": "Không tải hoặc cập nhật được thông báo.", "retry": "Thử lại", "loading": "Đang tải", "empty": "Không có thông báo mới" },
   "common": {
     "appName": "WorkGo",
     "save": "Lưu thay đổi",

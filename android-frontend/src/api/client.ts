@@ -6,6 +6,7 @@ type Params = Record<string, string | number | boolean | undefined | null>;
 
 type ClientHooks = {
   getToken: () => string | null;
+  getSessionVersion?: () => number;
   // Receives the token the failed request carried, which may already have
   // been replaced by a refresh.
   onUnauthorized: (sentToken: string) => void;
@@ -37,9 +38,13 @@ async function request<T>(
 ): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...extra };
   const token = hooks.getToken();
+  const session = hooks.getSessionVersion?.() ?? token;
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const controller = new AbortController();
+  const abort = () => controller.abort();
+  if (callerSignal?.aborted) controller.abort();
+  else callerSignal?.addEventListener('abort', abort);
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   let res: Response;
@@ -48,15 +53,17 @@ async function request<T>(
       method,
       headers,
       body: data !== undefined ? JSON.stringify(data) : undefined,
-      signal: callerSignal ?? controller.signal,
+      signal: controller.signal,
     });
   } catch {
     throw new ApiError(0, null);
   } finally {
     clearTimeout(timeoutId);
+    callerSignal?.removeEventListener('abort', abort);
   }
 
   const body = await res.json().catch(() => null);
+  if (session !== (hooks.getSessionVersion?.() ?? hooks.getToken())) throw new ApiError(401, { message: 'Session changed' });
   if (!res.ok) {
     const error = new ApiError(res.status, body);
     if (error.status === 401 && token) hooks.onUnauthorized(token);

@@ -1,4 +1,6 @@
 {
+  "adminPending": { "jobs": "Job moderation", "reviews": "Review moderation", "reports": "Reports", "disputes": "Dispute cases", "fees": "Fee policies", "sanctions": "Sanctions", "monitoring": "Monitoring", "audit": "Admin history", "reconciliation": "Reconciliation", "unavailable": "Not released: this feature is waiting for an API with authorization and auditing. No data changes are available yet." },
+  "notifications": { "title": "Notifications", "readAll": "Mark all as read", "error": "Unable to load or update notifications.", "retry": "Retry", "loading": "Loading", "empty": "No new notifications" },
   "common": {
     "appName": "WorkGo",
     "save": "Save changes",

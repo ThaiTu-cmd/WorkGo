@@ -53,6 +53,8 @@ export default function RootLayout() {
               <Stack.Screen name="provider/services/[id]/edit" options={{ title: t('stack.sua_dich_vu') }} />
               <Stack.Screen name="provider/services/[id]/availability" options={{ title: t('stack.lich_trong') }} />
               <Stack.Screen name="chat/[id]" options={{ title: t('chat.tro_chuyen') }} />
+              <Stack.Screen name="notifications" options={{ title: t('notifications.title') }} />
+              <Stack.Screen name="inbox" options={{ title: t('chat.tin_nhan') }} />
             </Stack>
           </ThemeProvider>
         </AuthProvider>

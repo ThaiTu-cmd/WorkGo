@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-//VNPay API v2.1.0: tao link thanh toan + verify IPN / return
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
@@ -69,7 +68,6 @@ public class VnPayGatewayClient implements PaymentGatewayClient {
         params.put("vnp_ReturnUrl", properties.getReturnUrl());
         params.put("vnp_IpAddr", clientIp == null ? "127.0.0.1" : clientIp);
         params.put("vnp_CreateDate", VNPAY_DATE.format(payment.getCreatedAt()));
-        //D12: QR het han cung luc voi payment
         params.put("vnp_ExpireDate", VNPAY_DATE.format(payment.getExpiresAt()));
         params.put("vnp_BankCode", resolveBankCode(payment));
 
@@ -80,7 +78,6 @@ public class VnPayGatewayClient implements PaymentGatewayClient {
                 .build();
     }
 
-    //IPN va return url cung 1 cach verify
     @Override
     public GatewayCallbackResult verifyCallback(Map<String, String> params) {
 
@@ -139,7 +136,6 @@ public class VnPayGatewayClient implements PaymentGatewayClient {
         return HmacUtils.hmacSha512(properties.getHashSecret(), data);
     }
 
-    //null -> client tu chon phuong thuc tren trang vnpay
     private String resolveBankCode(Payment payment) {
 
         if (payment.getPaymentMethod() == null) {

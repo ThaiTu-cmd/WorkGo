@@ -140,12 +140,13 @@ public class UserService {
         return userMapper.toUserResponse(user);
     }
 
+    //viec 08 doi sang SUPER_ADMIN
+    @PreAuthorize("denyAll()")
     public UserResponse updateUser(UUID userId, UserUpdateRequest request){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         userMapper.updateUser(user, request);
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         return userMapper.toUserResponse(userRepository.save(user));
     }
@@ -166,6 +167,7 @@ public class UserService {
         return userMapper.toUserResponse(userRepository.save(user));
     }
 
+    @PreAuthorize("denyAll()")
     public void deleteUser(UUID userId){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));

@@ -15,7 +15,6 @@ public interface PaymentGatewayClient {
 
     GatewayCreateResult createPayment(Payment payment, String clientIp);
 
-    //sai chu ky -> GATEWAY_INVALID_SIGNATURE
     GatewayCallbackResult verifyCallback(Map<String, String> params);
 
     GatewayRefundResult refund(Payment payment, Refund refund);

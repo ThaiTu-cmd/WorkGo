@@ -4,7 +4,6 @@ package com.workgo.payment.dto.gateway;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-//body POST {endpoint}/create cua MoMo v2
 @Getter
 @Setter
 @Builder

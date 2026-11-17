@@ -20,7 +20,6 @@ public class InternalOrderController {
 
     OrderService orderService;
 
-    //review/dispute lay thong tin don
     @GetMapping("/{orderId}")
     InternalOrderTrustSnapshot getTrustSnapshot(
             @PathVariable UUID orderId) {

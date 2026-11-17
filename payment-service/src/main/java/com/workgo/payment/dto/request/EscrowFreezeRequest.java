@@ -5,7 +5,6 @@ import lombok.experimental.FieldDefaults;
 
 import java.util.UUID;
 
-//dung chung cho freeze va unfreeze
 @Getter
 @Setter
 @Builder

@@ -22,7 +22,6 @@ public class CancellationController {
 
     CancellationService cancellationService;
 
-    //client hoac provider yeu cau huy don
     @PostMapping("/{orderId}/cancel")
     ApiResponse<CancellationRequestResponse> cancel(
             @PathVariable UUID orderId,
@@ -35,7 +34,6 @@ public class CancellationController {
                 .build();
     }
 
-    //ben con lai dong y hoac tu choi huy don
     @PostMapping("/{orderId}/cancel/respond")
     ApiResponse<CancellationRequestResponse> respond(
             @PathVariable UUID orderId,

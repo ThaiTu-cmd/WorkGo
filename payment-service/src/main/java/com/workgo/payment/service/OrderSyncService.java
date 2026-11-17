@@ -41,7 +41,6 @@ public class OrderSyncService {
     @Value("${payment.sync.max-retry}")
     int maxRetry;
 
-    //bao order da thanh toan
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void sync(UUID paymentId) {
 

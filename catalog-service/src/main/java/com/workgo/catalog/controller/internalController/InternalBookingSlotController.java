@@ -22,7 +22,6 @@ public class InternalBookingSlotController {
 
     BookingSlotService bookingSlotService;
 
-    //order-service giu slot khi tao don
     @PostMapping("/{slotId}/hold")
     public BookingSlotResponse holdSlot(
             @PathVariable UUID slotId,
@@ -33,7 +32,6 @@ public class InternalBookingSlotController {
 
     }
 
-    //order-service xac nhan slot khi da thanh toan
     @PostMapping("/{slotId}/confirm")
     public BookingSlotResponse confirmSlot(
             @PathVariable UUID slotId,
@@ -44,7 +42,6 @@ public class InternalBookingSlotController {
 
     }
 
-    //order-service nha slot khi tao don loi hoac huy don
     @PostMapping("/{slotId}/release")
     public BookingSlotResponse releaseSlot(
             @PathVariable UUID slotId,

@@ -32,7 +32,6 @@ public class InternalServiceController {
         return serviceService.getService(serviceId);
     }
 
-    //review-service cap nhat rating cua service
     @PutMapping("/{serviceId}/rating-stats")
     ServiceResponse updateRatingStats(
             @PathVariable UUID serviceId,

@@ -22,7 +22,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.Map;
 import java.util.UUID;
 
-//IPN + return url cua vnpay / momo, chi IPN moi cap nhat DB
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
@@ -41,27 +40,22 @@ public class GatewayCallbackService {
     public VnPayIpnResponse handleVnPayIpn(Map<String, String> params) {
 
         try {
-            //1. check chu ky truoc tien
             GatewayCallbackResult result = gatewayClients.get(PaymentGateway.VNPAY).verifyCallback(params);
 
-            //2. tim payment theo vnp_TxnRef
             Payment payment = paymentRepository.findByPaymentCode(result.getPaymentCode()).orElse(null);
 
             if (payment == null) {
                 return vnPayResponse("01", "Order not found");
             }
 
-            //3. so tien
             if (result.getAmount().compareTo(payment.getAmount()) != 0) {
                 return vnPayResponse("04", "Invalid amount");
             }
 
-            //4. da xu ly roi
             if (isProcessed(payment)) {
                 return vnPayResponse("02", "Order already confirmed");
             }
 
-            //5. cap nhat payment, hold escrow, bao order
             paymentCallbackService.handle(result);
 
             return vnPayResponse("00", "Confirm Success");
@@ -97,7 +91,6 @@ public class GatewayCallbackService {
                 return HttpStatus.BAD_REQUEST;
             }
 
-            //momo goi lai -> van tra 204
             if (!isProcessed(payment)) {
                 paymentCallbackService.handle(result);
             }

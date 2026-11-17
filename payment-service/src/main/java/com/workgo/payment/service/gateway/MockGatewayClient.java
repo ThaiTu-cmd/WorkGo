@@ -44,7 +44,6 @@ public class MockGatewayClient implements PaymentGatewayClient {
         throw new AppException(ErrorCode.PAYMENT_GATEWAY_NOT_SUPPORTED);
     }
 
-    //mock luon hoan tien thanh cong
     @Override
     public GatewayRefundResult refund(Payment payment, Refund refund) {
         return GatewayRefundResult.builder()

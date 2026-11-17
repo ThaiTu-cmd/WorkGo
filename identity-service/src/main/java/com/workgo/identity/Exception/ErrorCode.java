@@ -21,7 +21,7 @@ public enum ErrorCode {
     INVALID_KEY(1004, "Invalid message key", HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(1005, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     USER_NOT_EXISTED(1006, "User dose not exist", HttpStatus.NOT_FOUND),
-    UNAUTHORIZED(1007, "You do not have that permission", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED(1007, "You do not have that permission", HttpStatus.FORBIDDEN),
     DISPLAYNAME_INVALID(1008, "DisplayName must be at least 5 characters", HttpStatus.BAD_REQUEST),
     USERNAME_EXISTED(1009, "UserName has already existed !", HttpStatus.BAD_REQUEST),
     PASSWORD_NOT_BLANK(1010, "Password must not be blank", HttpStatus.BAD_REQUEST),

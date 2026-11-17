@@ -20,7 +20,6 @@ public class InternalProviderProfileService {
                 .orElseThrow(() -> new AppException(ErrorCode.PROVIDER_PROFILE_NOT_EXISTED));
     }
 
-    //review-service cap nhat diem trung binh cua provider
     @Transactional
     public InternalProviderProfileResponse updateRatingStats(UUID providerId, RatingStatsRequest request) {
         if (request == null || request.getRatingAvg() == null || request.getRatingCount() == null

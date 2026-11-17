@@ -230,17 +230,14 @@ public class OrderService {
         return toConfirmationResponse(order, executionStatus);
     }
 
-    //lay so tien + han thanh toan cua order
     @Transactional(readOnly = true)
     public OrderPaymentInfoResponse getPaymentInfo(UUID orderId) {
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
-        //qua han nay PaymentTimeoutJob se huy don
         Instant payableUntil = order.getCreatedAt().plus(Duration.ofMinutes(paymentTimeoutMinutes));
 
-        //neu la onsite chi duoc thanh toan khi slot con duoc giu
         if (order.getExecutionType() == ExecutionType.ONSITE) {
             Instant slotHoldExpiresAt = executionRepository.findByOrder_OrderId(orderId)
                     .flatMap(execution -> onsiteExecutionRepository
@@ -269,7 +266,6 @@ public class OrderService {
                 .build();
     }
 
-    //review/dispute lay thong tin don de kiem tra quyen
     @Transactional(readOnly = true)
     public InternalOrderTrustSnapshot getTrustSnapshot(UUID orderId) {
 
@@ -487,7 +483,6 @@ public class OrderService {
 
     }
 
-    //tong tien PACKAGE + ADDON phai bang subtotal
     private void assertItemsTotalMatchesSubtotal(List<OrderItem> items, BigDecimal subtotal) {
 
         BigDecimal itemsTotal = items.stream()

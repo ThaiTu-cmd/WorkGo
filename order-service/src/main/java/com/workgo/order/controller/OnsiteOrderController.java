@@ -21,7 +21,6 @@ public class OnsiteOrderController {
 
     OnsiteFlowService onsiteFlowService;
 
-    //client xem ma checkin sau khi thanh toan
     @GetMapping("/{orderId}/checkin-code")
     ApiResponse<CheckinCodeResponse> getCheckinCode(@PathVariable UUID orderId) {
 

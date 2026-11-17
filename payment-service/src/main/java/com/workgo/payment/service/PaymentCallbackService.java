@@ -35,7 +35,6 @@ public class PaymentCallbackService {
     RefundService refundService;
     PaymentMapper paymentMapper;
 
-    //ket qua thanh toan tu gateway IPN
     @Transactional
     public PaymentResponse handle(GatewayCallbackResult result) {
 

@@ -6,6 +6,7 @@ import { AppState, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from '@/auth/AuthProvider';
+import { CommunicationProvider } from '@/features/chat/CommunicationProvider';
 import { loadPreferences } from '@/settings/preferences';
 import { OfflineBanner } from '@/ui';
 import { navigationTheme } from '@/ui/navigationTheme';
@@ -32,6 +33,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider queryClient={queryClient}>
+          <CommunicationProvider>
           <ThemeProvider value={navigationTheme(scheme)}>
             <StatusBar style={isDark ? 'light' : 'dark'} />
             <OfflineBanner />
@@ -57,6 +59,7 @@ export default function RootLayout() {
               <Stack.Screen name="inbox" options={{ title: t('chat.tin_nhan') }} />
             </Stack>
           </ThemeProvider>
+          </CommunicationProvider>
         </AuthProvider>
       </QueryClientProvider>
     </SafeAreaProvider>

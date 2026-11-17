@@ -8,6 +8,8 @@ import { useAuth } from '@/auth/AuthProvider';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { Button, Card, ErrorState, Screen, SkeletonList } from '@/ui';
 import { useT } from '@/i18n';
+import { useMemo } from 'react';
+import { useConversationEvents } from './CommunicationProvider';
 
 export function InboxScreen() {
   const { claims } = useAuth();
@@ -22,6 +24,8 @@ function Conversations({ userId }: { userId: string }) {
     getNextPageParam: (last, pages) => pages.length < (last?.result?.totalPages ?? 1) ? pages.length : undefined,
   });
   const items = list.data?.pages.flatMap(page => pageItems<ConversationDto>(page)) ?? [];
+  const watched = useMemo(() => list.data?.pages.flatMap(page => pageItems<ConversationDto>(page).map(item => item.id)) ?? [], [list.data]);
+  useConversationEvents(watched);
   return <Screen edges={['bottom']} onRefresh={() => void list.refetch()} refreshing={list.isRefetching}>
     {list.isPending && <SkeletonList />}
     {list.isError && <ErrorState message={t('states.khong_tai_duoc_du_lieu')} onRetry={() => void list.refetch()} />}

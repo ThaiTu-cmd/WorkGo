@@ -21,6 +21,7 @@ import { formatDateTime } from '@/lib/format';
 import { Button, ErrorState, font, makeStyles, radius, spacing, useColors } from '@/ui';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { useT } from '@/i18n';
+import { useConversationEvents } from './CommunicationProvider';
 
 function randomId(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
@@ -59,6 +60,8 @@ function ChatSession({
   const currentUserId = claims?.userId;
 
   const [activeConvId, setActiveConvId] = React.useState<string | undefined>(initialConversationId);
+  const watched = React.useMemo(() => activeConvId ? [activeConvId] : [], [activeConvId]);
+  useConversationEvents(watched);
   const [inputText, setInputText] = React.useState<string>('');
   const [openError, setOpenError] = React.useState(false);
   const [openAttempt, setOpenAttempt] = React.useState(0);

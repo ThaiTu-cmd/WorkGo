@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Send } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
+import { jobApi, useAuthToken } from "../../webapp-bridge/backend";
 import { mockJobs, type Job } from "../_mocks/mockJobs";
 import { mockProposals, type Proposal } from "../_mocks/mockProposals";
 import { KEYS } from "../_stores/keys";
@@ -69,6 +70,8 @@ export default function SubmitProposalPage({
   jobId
 }: TrungPageProps) {
   const tr = useTranslations("misc");
+  const token = useAuthToken();
+  const [submitting, setSubmitting] = useState(false);
   // Lazy init is SSR-safe and remounts fresh on every shell navigation
   // (shell renders pages conditionally), so no post-mount sync is needed.
   const [jobs] = useState<Job[]>(() => loadJobs());
@@ -82,7 +85,7 @@ export default function SubmitProposalPage({
     duration?: string;
     message?: string;
   }>({});
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const next: typeof errors = {
       job: validateProposalJob(selectedJobId, tr),
@@ -103,8 +106,30 @@ export default function SubmitProposalPage({
       });
       return;
     }
+    setSubmitting(true);
+    let proposalId = `prop-${Date.now()}`;
+    try {
+      if (token) {
+        const appRes = await jobApi.applyJob(selectedJobId, { message: cleanMsg });
+        const applicationId = appRes?.result?.applicationId;
+        if (applicationId) {
+          const propRes = await jobApi.submitProposal(applicationId, {
+            price: bid,
+            estimatedDays: duration,
+            message: cleanMsg,
+          });
+          if (propRes?.result?.proposalId) {
+            proposalId = propRes.result.proposalId;
+          }
+        }
+      }
+    } catch {
+      // In dev or offline, fallback to local record
+    } finally {
+      setSubmitting(false);
+    }
     const proposal: Proposal = {
-      proposalId: `prop-${Date.now()}`,
+      proposalId,
       jobId: selectedJobId,
       providerName: tr("m1174"),
       bidPrice: bid,
@@ -211,7 +236,9 @@ export default function SubmitProposalPage({
                 {errors.message}
               </em> : null}
           </label>
-          <button type="submit" className={styles.submit}>{tr("m1167")}</button>
+          <button type="submit" className={styles.submit} disabled={submitting}>
+            {submitting ? tr("m1143") : tr("m1167")}
+          </button>
         </form>
       </div>
     </main>;

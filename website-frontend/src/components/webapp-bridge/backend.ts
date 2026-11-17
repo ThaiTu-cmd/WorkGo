@@ -16,3 +16,6 @@ export { ApiError } from "@/_webapp-mirror/api/axiosClient";
 export { decodeToken, hasRole } from "@/_webapp-mirror/utils/jwt";
 export { messageApi, messageErrorMessage, ME, unreadOf, totalUnread } from "@/_webapp-mirror/api/messageApi";
 export { useMessages } from "@/_webapp-mirror/hooks/useMessages";
+export { jobApi } from "@/_webapp-mirror/api/jobApi";
+export { trustApi } from "@/_webapp-mirror/api/trustApi";
+export { notificationApi } from "@/_webapp-mirror/api/notificationApi";

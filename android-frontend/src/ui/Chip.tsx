@@ -9,6 +9,7 @@ export function Chip({ label, selected = false, onPress }: { label: string; sele
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected }}
+      hitSlop={8}
       onPress={onPress}
       style={[styles.chip, { borderColor: c.border, backgroundColor: selected ? c.primary : c.card }, selected && styles.selected]}>
       <Text style={[styles.text, { color: selected ? c.white : c.text }, selected && styles.textSelected]}>{label}</Text>
@@ -22,6 +23,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: radius.pill,
     borderWidth: 1,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   selected: {},
   text: { fontSize: font.small + 1 },

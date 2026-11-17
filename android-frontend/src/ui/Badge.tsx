@@ -9,9 +9,9 @@ export function Badge({ label, tone = 'neutral' }: { label: string; tone?: Tone 
   const TONES: Record<Tone, { bg: string; fg: string }> = {
     neutral: { bg: c.bg, fg: c.muted },
     info: { bg: c.primaryLight, fg: c.primary },
-    success: { bg: '#dcfce7', fg: c.success },
-    warning: { bg: '#fef3c7', fg: c.warning },
-    danger: { bg: '#fee2e2', fg: c.danger },
+    success: { bg: c.successBg, fg: c.success },
+    warning: { bg: c.warningBg, fg: c.warning },
+    danger: { bg: c.dangerBg, fg: c.danger },
   };
   const t = TONES[tone];
   return (

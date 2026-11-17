@@ -14,7 +14,8 @@ export const orderApi = {
   getExecution: (orderId: string) => http.get<ApiResponse<ExecutionDto>>(`/order/orders/${orderId}/execution`),
 
   // Pricing is computed server-side. ONSITE requires bookingSlotId + address.
-  createOrder: (body: OrderCreationRequest) => http.post<ApiResponse<OrderDto>>('/order/orders', body),
+  createOrder: (body: OrderCreationRequest, idempotencyKey?: string) =>
+    http.post<ApiResponse<OrderDto>>('/order/orders', body, idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : {}),
 
   // 404 until someone asks to cancel. Answers AUTO_APPROVED for an unpaid
   // order, PENDING for a paid one until the other side responds.

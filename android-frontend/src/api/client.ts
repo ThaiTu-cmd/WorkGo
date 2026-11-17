@@ -26,12 +26,21 @@ function queryString(params?: Params): string {
   return `?${new URLSearchParams(pairs.map(([k, v]) => [k, String(v)]))}`;
 }
 
-type RequestOpts = { params?: Params; headers?: Record<string, string> };
+export type RequestOpts = { params?: Params; headers?: Record<string, string>; timeoutMs?: number; signal?: AbortSignal };
 
-async function request<T>(method: string, path: string, { params, data, headers: extra }: RequestOpts & { data?: unknown } = {}): Promise<T> {
+const DEFAULT_TIMEOUT_MS = 15_000;
+
+async function request<T>(
+  method: string,
+  path: string,
+  { params, data, headers: extra, timeoutMs = DEFAULT_TIMEOUT_MS, signal: callerSignal }: RequestOpts & { data?: unknown } = {}
+): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...extra };
   const token = hooks.getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   let res: Response;
   try {
@@ -39,9 +48,12 @@ async function request<T>(method: string, path: string, { params, data, headers:
       method,
       headers,
       body: data !== undefined ? JSON.stringify(data) : undefined,
+      signal: callerSignal ?? controller.signal,
     });
   } catch {
     throw new ApiError(0, null);
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   const body = await res.json().catch(() => null);
@@ -54,9 +66,9 @@ async function request<T>(method: string, path: string, { params, data, headers:
 }
 
 export const http = {
-  get: <T>(path: string, opts: { params?: Params } = {}) => request<T>('GET', path, opts),
+  get: <T>(path: string, opts: RequestOpts = {}) => request<T>('GET', path, opts),
   post: <T>(path: string, data?: unknown, opts: RequestOpts = {}) => request<T>('POST', path, { ...opts, data }),
-  put: <T>(path: string, data?: unknown, opts: { params?: Params } = {}) => request<T>('PUT', path, { ...opts, data }),
+  put: <T>(path: string, data?: unknown, opts: RequestOpts = {}) => request<T>('PUT', path, { ...opts, data }),
   patch: <T>(path: string, data?: unknown, opts: RequestOpts = {}) => request<T>('PATCH', path, { ...opts, data }),
-  delete: <T>(path: string, opts: { params?: Params } = {}) => request<T>('DELETE', path, opts),
+  delete: <T>(path: string, opts: RequestOpts = {}) => request<T>('DELETE', path, opts),
 };

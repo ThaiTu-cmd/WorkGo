@@ -34,28 +34,33 @@ export default function WalletPage({
       <h1 className={styles.title}>
         <Wallet size={24} className={styles.titleIcon} aria-hidden="true" />{tr("m1293")}</h1>
       <div style={{
-      padding: "10px 14px",
-      backgroundColor: "#fef3c7",
-      border: "1px solid #fde68a",
+      padding: "12px 16px",
+      backgroundColor: "var(--warning-bg, #fef3c7)",
+      border: "1px solid var(--border-default, #fde68a)",
       borderRadius: "8px",
-      color: "#92400e",
+      color: "var(--text-primary, #92400e)",
       fontSize: "0.85rem",
       marginBottom: "16px",
-      fontWeight: 500
-    }}>{tr("m1294")}</div>
+      fontWeight: 500,
+      lineHeight: 1.5
+    }}>
+      <strong>{tr("m1294")}</strong>: Hệ thống WorkGo áp dụng thanh toán ký quỹ (Escrow) trực tiếp theo từng đơn hàng. Tiền được bảo vệ an toàn tại cổng thanh toán và chỉ giải ngân cho chuyên gia khi đơn hoàn tất. Tính năng ví cá nhân độc lập hiện đang trong lộ trình phát triển.
+    </div>
       <p className={styles.sub}>{tr("m1295")}</p>
       <div className={styles.walletGrid}>
         <div className={styles.summaryCol}>
           <section className={styles.balance} aria-label={tr("m1290")}>
             <span className={styles.balanceLabel}>{tr("m1296")}</span>
-            <strong className={styles.balanceValue}>{wallet.held.toLocaleString("vi-VN")} ₫</strong>
+            <strong className={styles.balanceValue}>0 ₫</strong>
+            <small style={{ fontSize: "0.75rem", color: "var(--text-muted, #888)", marginTop: "4px" }}>Quản lý trực tiếp theo từng đơn hàng</small>
           </section>
           <section className={styles.balance} aria-label={tr("m1291")}>
             <span className={styles.balanceLabel}>{tr("m1297")}</span>
-            <strong className={styles.balanceValue}>{wallet.released.toLocaleString("vi-VN")} ₫</strong>
+            <strong className={styles.balanceValue}>0 ₫</strong>
+            <small style={{ fontSize: "0.75rem", color: "var(--text-muted, #888)", marginTop: "4px" }}>Giải phóng tự động khi hoàn thành</small>
           </section>
           <div className={styles.actions}>
-            <button type="button" className={styles.primary} onClick={() => onNavigate("payment-gateway")}>{tr("m53")}</button>
+            <button type="button" className={styles.primary} onClick={() => onNavigate("orders")}>Xem ký quỹ đơn hàng</button>
             <button type="button" className={styles.ghost} onClick={() => onNavigate("payout-settings")}>{tr("m1283")}</button>
           </div>
         </div>

@@ -1,5 +1,14 @@
 import axiosClient from './axiosClient.js';
 
+const newIdempotencyKey = () => {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  } catch {
+    // insecure context: fall through
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+};
+
 // order-service endpoints via gateway (/api/v1/order/**).
 export const orderApi = {
   // roleName: 'CLIENT' | 'PROVIDER' — which side of the order the caller is on.
@@ -20,7 +29,10 @@ export const orderApi = {
 
   // body: { serviceId, packageId, addonIds } — pricing is computed server-side.
   // ONSITE also needs { bookingSlotId, address }; order-service holds the slot itself.
-  createOrder: (body) => axiosClient.post('/order/orders', body),
+  createOrder: (body, idempotencyKey = newIdempotencyKey()) =>
+    axiosClient.post('/order/orders', body, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    }),
 
   // Payment goes through payment-service (see paymentApi.js); once it succeeds,
   // payment-service confirms the order here (PENDING_PAYMENT → CONFIRMED).

@@ -94,6 +94,19 @@ test('network failure → ApiError status 0 with UNREACHABLE_MESSAGE', async () 
   expect(err.message).toBe(unreachableMessage());
 });
 
+test('request timeout triggers abort and ApiError status 0', async () => {
+  fetchMock.mockImplementationOnce((_url, init) => {
+    return new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => {
+        reject(new Error('The operation was aborted'));
+      });
+    });
+  });
+  const err = await caught(http.get('/timeout', { timeoutMs: 20 }));
+  expect(err.status).toBe(0);
+  expect(err.message).toBe(unreachableMessage());
+});
+
 test('502 without JSON body → UNREACHABLE_MESSAGE', async () => {
   respond(502, undefined);
   const err = await caught(http.get('/x'));

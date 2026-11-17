@@ -5,25 +5,13 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { CreditCard } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
-import { KEYS } from "../_stores/keys";
-import { mockWallet, type WalletState } from "../_mocks/mockWallet";
 import styles from "./PaymentGatewayPage.module.css";
 export type TrungPageProps = {
   onNavigate: (page: TrungPageKey, params?: CatalogFilterParams) => void;
   onShowToast: (message: string) => void;
 };
 type Tab = "STRIPE" | "VNPAY" | "MOMO";
-function loadWallet(): WalletState {
-  try {
-    const raw = window.localStorage.getItem(KEYS.wallet);
-    if (!raw) return mockWallet;
-    const p = JSON.parse(raw) as Partial<WalletState>;
-    if (typeof p.held !== "number" || typeof p.released !== "number" || !Array.isArray(p.history)) return mockWallet;
-    return p as WalletState;
-  } catch {
-    return mockWallet;
-  }
-}
+
 export default function PaymentGatewayPage({
   onNavigate,
   onShowToast
@@ -51,45 +39,27 @@ export default function PaymentGatewayPage({
       return;
     }
     setError("");
-    try {
-      const w = loadWallet();
-      window.localStorage.setItem(KEYS.wallet, JSON.stringify({
-        held: w.held,
-        released: w.released + amount,
-        history: [{
-          id: `w-${Date.now()}`,
-          type: "TOPUP",
-          amount,
-          label: tr("m1268", {
-            p0: tab
-          }),
-          at: new Date().toISOString().slice(0, 10)
-        }, ...w.history]
-      } satisfies WalletState));
-    } catch {
-      onShowToast(tr("m1175"));
-      return;
-    }
-    onShowToast(tr("m1269", {
-      p0: amount.toLocaleString("vi-VN"),
-      p1: tab
-    }));
-    onNavigate("wallet");
+    // Backend API absent: Display proper unsupported state rather than fake success
+    onShowToast("Hệ thống WorkGo chỉ hỗ trợ thanh toán Escrow theo từng đơn hàng. Nạp tiền ví trả trước độc lập hiện chưa khả dụng.");
+    onNavigate("orders");
   };
   return <main className={styles.wrap}>
       <div className={styles.card}>
         <h1 className={styles.title}>
           <CreditCard size={24} className={styles.titleIcon} aria-hidden="true" />{tr("m1272")}</h1>
         <div style={{
-        padding: "10px 14px",
-        backgroundColor: "#fef3c7",
-        border: "1px solid #fde68a",
+        padding: "12px 16px",
+        backgroundColor: "var(--warning-bg, #fef3c7)",
+        border: "1px solid var(--border-default, #fde68a)",
         borderRadius: "8px",
-        color: "#92400e",
+        color: "var(--text-primary, #92400e)",
         fontSize: "0.85rem",
         marginBottom: "16px",
-        fontWeight: 500
-      }}>{tr("m1273")}</div>
+        fontWeight: 500,
+        lineHeight: 1.5
+      }}>
+        <strong>{tr("m1273")}</strong>: Cổng thanh toán WorkGo tích hợp VNPay, MoMo và Mock Gateway cho các đơn dịch vụ cụ thể. Tính năng nạp ví cá nhân độc lập hiện chưa được backend hỗ trợ.
+      </div>
         <p className={styles.sub}>{tr("m1274")}</p>
         <div className={styles.tabs} role="tablist" aria-label={tr("m488")}>
           {(["STRIPE", "VNPAY", "MOMO"] as const).map(t => <button key={t} type="button" role="tab" aria-selected={tab === t} className={t === tab ? `${styles.tab} ${styles.tabActive}` : styles.tab} onClick={() => setTab(t)}>

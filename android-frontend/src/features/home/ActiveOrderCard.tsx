@@ -44,7 +44,7 @@ const useStyles = makeStyles((colors) => ({
     borderColor: colors.border,
     backgroundColor: colors.card,
   },
-  icon: { width: 40, height: 40, borderRadius: radius.md, backgroundColor: '#FAEEDA', alignItems: 'center', justifyContent: 'center' },
+  icon: { width: 40, height: 40, borderRadius: radius.md, backgroundColor: colors.warningBg, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, gap: 2 },
   caption: { fontSize: font.small, color: colors.muted },
   title: { fontSize: font.body, fontWeight: '700', color: colors.text },

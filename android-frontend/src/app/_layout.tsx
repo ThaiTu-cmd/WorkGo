@@ -52,6 +52,7 @@ export default function RootLayout() {
               <Stack.Screen name="provider/services/new" options={{ title: t('stack.tao_dich_vu') }} />
               <Stack.Screen name="provider/services/[id]/edit" options={{ title: t('stack.sua_dich_vu') }} />
               <Stack.Screen name="provider/services/[id]/availability" options={{ title: t('stack.lich_trong') }} />
+              <Stack.Screen name="chat/[id]" options={{ title: t('chat.tro_chuyen') }} />
             </Stack>
           </ThemeProvider>
         </AuthProvider>

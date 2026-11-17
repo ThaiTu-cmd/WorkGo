@@ -13,8 +13,9 @@ export const catalogApi = {
   getService: (serviceId) => axiosClient.get(`/catalog/services/${serviceId}`),
 
   // PUBLISHED services; every filter is optional.
-  listServices: ({ categoryId, executionType, minPrice, maxPrice, page = 0, size = 50 } = {}) => {
+  listServices: ({ keyword, categoryId, executionType, minPrice, maxPrice, page = 0, size = 50 } = {}) => {
     const params = { page, size };
+    if (keyword) params.keyword = keyword;
     if (categoryId) params.categoryId = categoryId;
     if (executionType) params.executionType = executionType;
     if (minPrice !== undefined && minPrice !== null) params.minPrice = minPrice;

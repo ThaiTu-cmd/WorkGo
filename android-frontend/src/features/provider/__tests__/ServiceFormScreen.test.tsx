@@ -16,7 +16,11 @@ jest.mock('@/features/catalog/hooks', () => ({
   useServiceDetail: jest.fn(),
   useCategories: () => ({ data: { roots: [{ categoryId: 'c1', name: 'Sửa chữa' }], all: [{ categoryId: 'c1', name: 'Sửa chữa' }] } }),
 }));
-jest.mock('../hooks', () => ({ ...jest.requireActual('../hooks'), useSaveService: jest.fn() }));
+jest.mock('../hooks', () => ({
+  ...jest.requireActual('../hooks'),
+  useSaveService: jest.fn(),
+  useMyProviderProfile: () => ({ data: { verificationStatus: 'VERIFIED' }, isPending: false }),
+}));
 
 beforeEach(() => {
   (useServiceDetail as jest.Mock).mockReturnValue({

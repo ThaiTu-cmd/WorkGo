@@ -21,6 +21,7 @@ import { authApi } from '../../../api/authApi';
 import AccountMenu, { accountGroupsFor, openAccountItem } from './AccountMenu';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
+import NotificationBell from '@/components/common/NotificationBell';
 
 export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) {
   const t = useTranslations('header');
@@ -165,7 +166,10 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
           <LanguageSwitcher variant="pill" className={styles.headerLangSwitcher} />
           <ThemeToggle className={styles.headerThemeToggle} />
           {isLoggedIn ? (
-            <AccountMenu onNavigate={onNavigate} activePage={activePage} />
+            <>
+              <NotificationBell />
+              <AccountMenu onNavigate={onNavigate} activePage={activePage} />
+            </>
           ) : (
             <>
               <button
@@ -206,6 +210,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
             <div className={styles.mobileDrawerControls}>
               <LanguageSwitcher variant="pill" />
               <ThemeToggle showLabel />
+              {isLoggedIn && <NotificationBell />}
             </div>
             {[
               { key: 'catalog', icon: LayoutGrid, label: t('mobileCatalog') },

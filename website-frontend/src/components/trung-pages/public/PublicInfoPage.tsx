@@ -132,7 +132,7 @@ export default function PublicInfoPage({
     });
     setContactErrors({});
     setContactSuccessTicket(null);
-  }, [pageKey, content]);
+  }, [pageKey, content, tr]);
 
   // Sync applied careers safely from localStorage in effect (avoid SSR mismatch)
   useEffect(() => {

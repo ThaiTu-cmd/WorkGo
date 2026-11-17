@@ -251,3 +251,101 @@ export type EscrowDto = {
   releasedAt?: string | null;
   refundedAt?: string | null;
 };
+
+// ---- trust-service ----
+export type ReviewDirection = 'CLIENT_TO_PROVIDER' | 'PROVIDER_TO_CLIENT';
+
+export type ReviewDto = {
+  reviewId: string;
+  orderId: string;
+  serviceId?: string | null;
+  reviewerId: string;
+  revieweeId: string;
+  direction?: ReviewDirection | null;
+  rating: number;
+  comment?: string | null;
+  isPublished?: boolean;
+  moderationStatus?: string | null;
+  publishedAt?: string | null;
+  createdAt?: string;
+};
+
+export type RatingSummaryDto = {
+  targetId?: string;
+  ratingAvg: number;
+  ratingCount: number;
+  reviews?: PageResponse<ReviewDto>;
+};
+
+export type OrderReviewStatusDto = {
+  orderId: string;
+  myDirection?: ReviewDirection | null;
+  myReviewSubmitted: boolean;
+  otherPartyReviewed?: boolean;
+  isPublished?: boolean;
+  reviewWindowExpiresAt?: string | null;
+  myReview?: ReviewDto | null;
+  otherPartyReview?: ReviewDto | null;
+};
+
+export type ReviewSubmitReq = {
+  orderId: string;
+  rating: number;
+  comment?: string;
+};
+
+// ---- communication-service ----
+export type ConversationType = 'DIRECT_MESSAGE' | 'ORDER_DISCUSSION' | 'SERVICE_INQUIRY' | 'SUPPORT';
+export type ContextType = 'GENERAL' | 'ORDER' | 'SERVICE' | 'DISPUTE';
+export type MessageType = 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM';
+
+export type ParticipantDto = {
+  userId: string;
+  joinedAt?: string;
+  lastReadMessageId?: string | null;
+  role?: string | null;
+};
+
+export type ConversationDto = {
+  id: string;
+  conversationType?: string;
+  contextType?: string;
+  contextId?: string | null;
+  participants?: ParticipantDto[];
+  lastMessageAt?: string | null;
+  lastMessagePreview?: string | null;
+  unreadCount?: number;
+  createdAt?: string;
+};
+
+export type MessageAttachment = {
+  fileUrl: string;
+  fileName?: string;
+  sizeBytes?: number;
+};
+
+export type MessageDto = {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  messageType?: MessageType;
+  clientMessageId?: string;
+  sentAt: string;
+  readAt?: string | null;
+  attachments?: MessageAttachment[];
+};
+
+export type ConversationCreateReq = {
+  participantId: string;
+  conversationType?: string;
+  contextType: ContextType;
+  contextId?: string | null;
+};
+
+export type MessageSendReq = {
+  content: string;
+  messageType?: MessageType;
+  attachments?: MessageAttachment[];
+  clientMessageId: string;
+};

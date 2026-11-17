@@ -2,13 +2,13 @@
 
 // Prototype Mode
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ClipboardCheck } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
+import { jobApi, useAuthToken } from "../../webapp-bridge/backend";
 import { mockJobs, type Job } from "../_mocks/mockJobs";
 import { mockProposals, type Proposal } from "../_mocks/mockProposals";
 import { KEYS } from "../_stores/keys";
-import { mockWallet, type WalletState } from "../_mocks/mockWallet";
 import styles from "./ProposalReviewPage.module.css";
 export type TrungPageProps = {
   onNavigate: (page: TrungPageKey, params?: CatalogFilterParams) => void;
@@ -37,24 +37,13 @@ function loadProposals(): Proposal[] {
     return mockProposals;
   }
 }
-function loadWallet(): WalletState {
-  if (typeof window === "undefined") return mockWallet;
-  try {
-    const raw = window.localStorage.getItem(KEYS.wallet);
-    if (!raw) return mockWallet;
-    const p = JSON.parse(raw) as Partial<WalletState>;
-    if (typeof p.held !== "number" || typeof p.released !== "number" || !Array.isArray(p.history)) return mockWallet;
-    return p as WalletState;
-  } catch {
-    return mockWallet;
-  }
-}
 export default function ProposalReviewPage({
   onNavigate,
   onShowToast,
   jobId
 }: TrungPageProps) {
   const tr = useTranslations("misc");
+  const token = useAuthToken();
   // Lazy init is SSR-safe and remounts fresh on every shell navigation
   // (shell renders pages conditionally), so no post-mount sync is needed.
   const [jobs] = useState<Job[]>(() => loadJobs());
@@ -68,14 +57,57 @@ export default function ProposalReviewPage({
       onShowToast(tr("m1175"));
     }
   };
+
+  useEffect(() => {
+    if (!token || !selectedJobId) return undefined;
+    let cancelled = false;
+    jobApi.getJobProposals(selectedJobId).then((res: { result?: { data?: unknown[] } }) => {
+      if (cancelled || !res?.result?.data) return;
+      const apiProps = res.result.data as Array<{
+        proposalId: string;
+        jobId: string;
+        price?: number;
+        estimatedDays?: number;
+        message?: string;
+        status?: string;
+        createdAt?: string;
+      }>;
+      if (apiProps.length > 0) {
+        setProposals(apiProps.map(p => ({
+          proposalId: p.proposalId,
+          jobId: p.jobId,
+          providerName: tr("m1174"),
+          bidPrice: Number(p.price || 0),
+          durationDays: Number(p.estimatedDays || 1),
+          message: p.message || "",
+          status: (p.status as "PENDING" | "ACCEPTED" | "REJECTED") || "PENDING",
+          createdAt: p.createdAt ? p.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
+        })));
+      }
+    }).catch(() => {
+      /* fallback to local store */
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, selectedJobId, tr]);
+
   const list = useMemo(() => {
     const rows = selectedJobId ? proposals.filter(p => p.jobId === selectedJobId) : proposals;
     return [...rows].sort((a, b) => a.bidPrice - b.bidPrice);
   }, [proposals, selectedJobId]);
   const hasAccepted = useMemo(() => selectedJobId ? proposals.some(p => p.jobId === selectedJobId && p.status === "ACCEPTED") : false, [proposals, selectedJobId]);
-  const accept = (id: string) => {
+  const accept = async (id: string) => {
     const target = proposals.find(p => p.proposalId === id);
     if (!target) return;
+    if (token) {
+      try {
+        await jobApi.acceptProposal(id);
+      } catch {
+        /* proceed with local sync */
+      }
+    }
+    // auto REJECTED other pending proposals on the same job
     const next = proposals.map(p => {
       if (p.jobId !== target.jobId) return p;
       if (p.proposalId === id) return {
@@ -88,25 +120,6 @@ export default function ProposalReviewPage({
       } : p;
     });
     persist(next);
-    try {
-      const w = loadWallet();
-      window.localStorage.setItem(KEYS.wallet, JSON.stringify({
-        held: w.held + target.bidPrice,
-        released: w.released,
-        history: [{
-          id: `w-${target.proposalId}-${w.history.length}`,
-          type: "HOLD",
-          amount: target.bidPrice,
-          label: tr("m1188", {
-            p0: target.jobId
-          }),
-          at: new Date().toISOString().slice(0, 10)
-        }, ...w.history]
-      } satisfies WalletState));
-    } catch {
-      onShowToast(tr("m1175"));
-      return;
-    }
     onShowToast(tr("m1189"));
   };
   const reject = (id: string) => {

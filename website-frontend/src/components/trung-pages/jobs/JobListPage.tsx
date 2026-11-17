@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { BriefcaseBusiness } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
+import { jobApi } from "../../webapp-bridge/backend";
 import { JOB_TYPES, mockJobs, type Job, type JobType } from "../_mocks/mockJobs";
 import { KEYS } from "../_stores/keys";
 import styles from "./JobListPage.module.css";
@@ -31,16 +32,59 @@ export default function JobListPage({
   onNavigate
 }: TrungPageProps) {
   const tr = useTranslations("misc");
-  const [jobs] = useState<Job[]>(() => loadJobs());
+  const [jobs, setJobs] = useState<Job[]>(() => loadJobs());
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [typeFilter, setTypeFilter] = useState<JobType | "ALL">("ALL");
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 300);
-    return () => clearTimeout(t);
-  }, []);
+    let cancelled = false;
+    jobApi.searchJobs({
+      keyword: debounced || undefined,
+      executionType: typeFilter !== "ALL" ? typeFilter : undefined,
+      page: 0,
+      size: 50
+    }).then((res: { result?: { data?: unknown[] } }) => {
+      if (cancelled || !res?.result?.data) return;
+      const apiList = res.result.data as Array<{
+        jobId: string;
+        title: string;
+        description?: string;
+        budgetMin?: number;
+        budgetMax?: number;
+        executionType?: string;
+        applicationCount?: number;
+        createdAt?: string;
+      }>;
+      if (apiList.length > 0) {
+        const mapped: Job[] = apiList.map(j => ({
+          jobId: j.jobId,
+          title: j.title,
+          description: j.description || "",
+          budget: Number(j.budgetMin ?? j.budgetMax ?? 100000),
+          type: (j.executionType as JobType) || "DIGITAL",
+          clientName: tr("m1174"),
+          bidsCount: Number(j.applicationCount ?? 0),
+          createdAt: j.createdAt ? j.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
+        }));
+        setJobs(mapped);
+      }
+    }).catch(() => {
+      /* fallback to local storage / mock */
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+    const t = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [debounced, typeFilter, tr]);
   useEffect(() => {
     const t = setTimeout(() => {
       setDebounced(query.trim().toLowerCase());

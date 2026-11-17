@@ -65,7 +65,7 @@ test('on success goes to the payment screen, which starts the chosen option (MOC
   await waitFor(() =>
     expect(mockReplace).toHaveBeenCalledWith({ pathname: '/payment/[orderId]', params: { orderId: 'o9', option: 'mock', start: '1' } })
   );
-  expect(orderApi.createOrder).toHaveBeenCalledWith({ serviceId: 's1', packageId: 'pk1', addonIds: [] });
+  expect(orderApi.createOrder).toHaveBeenCalledWith({ serviceId: 's1', packageId: 'pk1', addonIds: [] }, expect.any(String));
 });
 
 test('the payment option picked at checkout is passed on', async () => {

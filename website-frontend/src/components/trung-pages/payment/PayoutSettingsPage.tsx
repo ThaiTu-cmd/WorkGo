@@ -95,6 +95,19 @@ export default function PayoutSettingsPage({
       <div className={styles.card}>
         <h1 className={styles.title}>
           <Landmark size={24} className={styles.titleIcon} aria-hidden="true" />{tr("m1283")}</h1>
+        <div style={{
+          padding: "12px 16px",
+          backgroundColor: "var(--warning-bg, #fef3c7)",
+          border: "1px solid var(--border-default, #fde68a)",
+          borderRadius: "8px",
+          color: "var(--text-primary, #92400e)",
+          fontSize: "0.85rem",
+          marginBottom: "16px",
+          fontWeight: 500,
+          lineHeight: 1.5
+        }}>
+          Lưu ý: Hệ thống WorkGo giải ngân thu nhập định kỳ thông qua đối soát quản trị viên. Tính năng giải ngân tự động qua API liên ngân hàng đang trong lộ trình tích hợp.
+        </div>
         <p className={styles.sub}>{tr("m1284")}</p>
         {savedMask ? <p className={styles.saved}>{tr("m1565")}{savedMask}</p> : null}
         <form onSubmit={submit} noValidate className={styles.form}>

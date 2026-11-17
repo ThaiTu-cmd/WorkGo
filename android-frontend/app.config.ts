@@ -15,7 +15,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     package: 'com.workgo.app',
     versionCode: 1,
     adaptiveIcon: {
-      backgroundColor: '#1dbf73',
+      backgroundColor: '#1677FF',
       foregroundImage: './assets/images/android-icon-foreground.png',
       backgroundImage: './assets/images/android-icon-background.png',
       monochromeImage: './assets/images/android-icon-monochrome.png',
@@ -32,7 +32,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-splash-screen',
       {
-        backgroundColor: '#1dbf73',
+        backgroundColor: '#1677FF',
         image: './assets/images/splash-icon.png',
         imageWidth: 120,
       },

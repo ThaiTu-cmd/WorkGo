@@ -24,4 +24,10 @@ export const qk = {
   addresses: () => ['addresses'] as const,
   me: () => ['me'] as const,
   providerMe: () => ['provider-me'] as const,
+  serviceReviews: (serviceId: string) => ['reviews', 'service', serviceId] as const,
+  orderReviewStatus: (orderId: string) => ['reviews', 'order', orderId] as const,
+  myReviews: (direction?: string) => ['reviews', 'mine', direction ?? 'all'] as const,
+  conversations: () => ['conversations'] as const,
+  conversation: (id: string) => ['conversation', id] as const,
+  messages: (conversationId: string) => ['messages', conversationId] as const,
 };

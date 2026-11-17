@@ -12,6 +12,7 @@ import { Avatar, Badge, Button, Card, ErrorState, font, makeStyles, Screen, Skel
 import { useServiceDetail } from './hooks';
 import { PackagePicker } from './PackagePicker';
 import { EXECUTION_LABEL } from './ServiceCardView';
+import { ServiceReviewsSection } from '@/features/reviews/ServiceReviewsSection';
 import { useT } from '@/i18n';
 
 const WIDTH = Dimensions.get('window').width;
@@ -80,6 +81,22 @@ export function ServiceDetailScreen() {
               <Text style={styles.providerName}>{service.provider.name}</Text>
               {service.provider.isVerified ? <Text style={styles.verified}>{t('serviceDetailScreen.da_xac_minh')}</Text> : null}
             </View>
+            <Button
+              title={t('chat.nhan_tin')}
+              variant="secondary"
+              style={styles.chatButton}
+              onPress={() =>
+                router.push({
+                  pathname: '/chat/[id]',
+                  params: {
+                    participantId: service.provider.providerId ?? service.providerId,
+                    participantName: service.provider.name,
+                    contextType: 'SERVICE',
+                    contextId: service.serviceId,
+                  },
+                })
+              }
+            />
           </View>
           {service.provider.bio ? <Text style={styles.text}>{service.provider.bio}</Text> : null}
         </Card>
@@ -110,6 +127,8 @@ export function ServiceDetailScreen() {
           </>
         ) : null}
 
+        <ServiceReviewsSection serviceId={service.serviceId} />
+
         <Button title={t('serviceDetailScreen.dat_dich_vu')} onPress={order} disabled={!service.packages.length} />
       </View>
     </Screen>
@@ -129,5 +148,6 @@ const useStyles = makeStyles((colors) => ({
   text: { fontSize: font.body, color: colors.text, lineHeight: 22 },
   providerName: { fontSize: font.body, fontWeight: '700', color: colors.text },
   verified: { fontSize: font.small, color: colors.primaryDark },
+  chatButton: { minHeight: 38, paddingHorizontal: spacing.md },
   addon: { flexDirection: 'row', justifyContent: 'space-between' },
 }));

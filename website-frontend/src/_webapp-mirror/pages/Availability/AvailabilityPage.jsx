@@ -88,26 +88,39 @@ export default function AvailabilityPage({
             <Info size={16} /> <span>{tr(NOTICES[status])}</span>
           </div>}
 
-        <div className={styles.summaryRow}>
-          <span>
-            <strong>{rules.length}</strong> khung giờ
-          </span>
-          <span>
-            <strong>{activeHours}</strong>{tr("m181")}</span>
-          <span className={isLive ? styles.liveDot : styles.mockDot}>{isLive ? tr("m170") : tr("m171")}</span>
-          {(busy || status === 'loading') && <Loader2 size={16} className={styles.spin} aria-label={tr("m172")} />}
-        </div>
-
-        <div className={styles.layout}>
-          <div className={styles.gridCard}>
-            <WeekGrid rules={rules} selectedRuleId={editing.id} onSelectRule={r => setEditing(r)} onAddAt={(day, hour) => setEditing(emptyRule(day, hour))} />
+        {status === 'forbidden' || status === 'needs-login' ? (
+          <div style={{ padding: '3rem 1.5rem', textAlign: 'center', background: 'var(--wg-surface, #fff)', borderRadius: '12px', border: '1px solid var(--border-default, #eee)', marginTop: '1rem' }}>
+            <p style={{ fontSize: '1.05rem', color: 'var(--text-secondary, #666)', marginBottom: '1.5rem' }}>
+              {tr(NOTICES[status])}
+            </p>
+            <button type="button" className={styles.backBtn} onClick={onGoBack} style={{ margin: '0 auto', display: 'inline-flex' }}>
+              <ArrowLeft size={16} /> {tr("m176")}
+            </button>
           </div>
+        ) : (
+          <>
+            <div className={styles.summaryRow}>
+              <span>
+                <strong>{rules.length}</strong> khung giờ
+              </span>
+              <span>
+                <strong>{activeHours}</strong>{tr("m181")}</span>
+              <span className={isLive ? styles.liveDot : styles.mockDot}>{isLive ? tr("m170") : tr("m171")}</span>
+              {(busy || status === 'loading') && <Loader2 size={16} className={styles.spin} aria-label={tr("m172")} />}
+            </div>
 
-          <aside className={styles.sidePanels}>
-            <RuleForm rule={editing} rules={rules} saving={saving} onCancel={() => setEditing(emptyRule(editing.dayOfWeek))} onSave={rule => run(() => saveRule(rule), rule.id ? tr("m173") : tr("m174"))} onDelete={id => run(() => deleteRule(id), tr("m175"))} />
-            <SlotList slots={slots} />
-          </aside>
-        </div>
+            <div className={styles.layout}>
+              <div className={styles.gridCard}>
+                <WeekGrid rules={rules} selectedRuleId={editing.id} onSelectRule={r => setEditing(r)} onAddAt={(day, hour) => setEditing(emptyRule(day, hour))} />
+              </div>
+
+              <aside className={styles.sidePanels}>
+                <RuleForm rule={editing} rules={rules} saving={saving} onCancel={() => setEditing(emptyRule(editing.dayOfWeek))} onSave={rule => run(() => saveRule(rule), rule.id ? tr("m173") : tr("m174"))} onDelete={id => run(() => deleteRule(id), tr("m175"))} />
+                <SlotList slots={slots} />
+              </aside>
+            </div>
+          </>
+        )}
       </div>
     </div>;
 }

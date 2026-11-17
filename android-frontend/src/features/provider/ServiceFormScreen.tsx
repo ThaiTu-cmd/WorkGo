@@ -11,7 +11,8 @@ import { pickImage } from '@/lib/image';
 import { useSingleFlight } from '@/lib/useSingleFlight';
 import { Button, Chip, ErrorState, font, makeStyles, radius, Screen, SkeletonList, spacing, TextField } from '@/ui';
 
-import { newSaveProgress, useSaveService, type SaveProgress } from './hooks';
+import { newSaveProgress, useMyProviderProfile, useSaveService, type SaveProgress } from './hooks';
+import { NotProviderNotice } from './NotProviderNotice';
 import {
   MAX_SERVICE_IMAGES,
   packagesSchema,
@@ -40,7 +41,26 @@ export function ServiceFormScreen() {
   const signedIn = useRequireAuth();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const existing = useServiceDetail(id);
+  const profile = useMyProviderProfile(signedIn && !id);
+
   if (!signedIn) return <LoginRequired edges={['bottom']} />;
+
+  if (!id && profile.isPending) {
+    return (
+      <Screen edges={['bottom']}>
+        <SkeletonList count={3} height={80} />
+      </Screen>
+    );
+  }
+
+  if (!id && (!profile.data || profile.data.verificationStatus !== 'VERIFIED')) {
+    return (
+      <Screen edges={['bottom']}>
+        <NotProviderNotice onRefreshed={() => void profile.refetch()} />
+      </Screen>
+    );
+  }
+
   if (id && existing.isPending) {
     return (
       <Screen edges={['bottom']}>

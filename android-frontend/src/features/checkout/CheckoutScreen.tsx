@@ -15,7 +15,7 @@ import { useRequireAuth } from '@/auth/useRequireAuth';
 import { useServiceDetail } from '@/features/catalog/hooks';
 import { PackagePicker } from '@/features/catalog/PackagePicker';
 import { upcomingAvailableSlots } from '@/features/orders/orderStatus';
-import { findPaymentOption, MOCK_PAYMENT_ENABLED } from '@/features/payment/payment';
+import { findPaymentOption, MOCK_PAYMENT_ENABLED, newIdempotencyKey } from '@/features/payment/payment';
 import { PaymentOptionPicker } from '@/features/payment/PaymentOptionPicker';
 import { formatDateTime, formatVnd } from '@/lib/format';
 import { useSingleFlight } from '@/lib/useSingleFlight';
@@ -55,7 +55,7 @@ export function CheckoutScreen() {
   });
 
   const create = useMutation({
-    mutationFn: (body: OrderCreationRequest) => orderApi.createOrder(body),
+    mutationFn: (body: OrderCreationRequest) => orderApi.createOrder(body, newIdempotencyKey()),
     onSuccess: (res) => {
       void queryClient.invalidateQueries({ queryKey: qk.orders('CLIENT') });
       void queryClient.invalidateQueries({ queryKey: qk.slots(params.serviceId) });

@@ -1,8 +1,7 @@
-import { useColorScheme } from 'react-native';
 import { RefreshControl, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
-import { spacing } from './theme';
+import { spacing, useColors } from './theme';
 
 type Props = {
   children: React.ReactNode;
@@ -14,11 +13,9 @@ type Props = {
 };
 
 export function Screen({ children, scroll = true, refreshing = false, onRefresh, edges = ['top'], contentStyle }: Props) {
-  const scheme = useColorScheme();
-  const isDark = scheme === 'dark';
-  const bg = isDark ? '#121212' : '#f9fafb';
+  const c = useColors();
   return (
-    <SafeAreaView edges={edges} style={[styles.safe, { backgroundColor: bg }]}>
+    <SafeAreaView edges={edges} style={[styles.safe, { backgroundColor: c.bg }]}>
       {scroll ? (
         <ScrollView
           contentContainerStyle={[styles.content, contentStyle]}

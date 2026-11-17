@@ -33,7 +33,7 @@ export function HomeHeader({ name }: { name: string | null }) {
         {name ? (
           <Pressable accessibilityRole="button" accessibilityLabel={t('homeHeader.tai_khoan')} onPress={() => router.push('/account')}>
             <View style={styles.avatarRing}>
-              <Avatar name={name} size={38} />
+              <Avatar name={name} size={40} />
             </View>
           </Pressable>
         ) : (
@@ -72,8 +72,8 @@ const useStyles = makeStyles((colors) => ({
   flex: { flex: 1 },
   hello: { color: colors.white, fontSize: font.small + 1, opacity: 0.9 },
   name: { color: colors.white, fontSize: font.title + 2, fontWeight: '700' },
-  avatarRing: { borderWidth: 2, borderColor: colors.white, borderRadius: 24 },
-  signIn: { backgroundColor: colors.white, borderRadius: radius.pill, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
+  avatarRing: { borderWidth: 2, borderColor: colors.white, borderRadius: 24, minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center' },
+  signIn: { backgroundColor: colors.white, borderRadius: radius.pill, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, minHeight: 44, justifyContent: 'center' },
   signInText: { color: colors.primaryDark, fontWeight: '700', fontSize: font.small + 1 },
   search: {
     flexDirection: 'row',

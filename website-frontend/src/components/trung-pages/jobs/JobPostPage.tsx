@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { FilePlus2 } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
+import { jobApi, catalogApi, useAuthToken } from "../../webapp-bridge/backend";
 import { JOB_TYPES, mockJobs, type Job, type JobType } from "../_mocks/mockJobs";
 import { KEYS } from "../_stores/keys";
 import styles from "./JobPostPage.module.css";
@@ -50,6 +51,8 @@ export default function JobPostPage({
   onShowToast
 }: TrungPageProps) {
   const tr = useTranslations("misc");
+  const token = useAuthToken();
+  const [submitting, setSubmitting] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [budgetRaw, setBudgetRaw] = useState("");
@@ -58,8 +61,9 @@ export default function JobPostPage({
     title?: string;
     description?: string;
     budget?: string;
+    form?: string;
   }>({});
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const next: typeof errors = {
       title: validateJobTitle(title, tr),
@@ -71,8 +75,42 @@ export default function JobPostPage({
     const cleanTitle = sanitizeText(title);
     const cleanDesc = sanitizeText(description);
     const budget = Number(String(budgetRaw).replace(/[^\d]/g, ""));
+    let jobId = `job-${Date.now()}`;
+    setSubmitting(true);
+    try {
+      if (token) {
+        // Fetch root category if available for API contract requirement
+        let categoryId = "00000000-0000-0000-0000-000000000001";
+        try {
+          const catRes = await catalogApi.getRootCategories();
+          const categories = catRes?.result || catRes;
+          if (Array.isArray(categories) && categories[0]?.categoryId) {
+            categoryId = categories[0].categoryId;
+          }
+        } catch {
+          // ignore
+        }
+        const created = await jobApi.createJob({
+          title: cleanTitle,
+          description: cleanDesc,
+          categoryId,
+          budgetMin: budget,
+          budgetMax: budget,
+          currency: "VND",
+          executionType: type,
+        });
+        if (created?.result?.jobId) {
+          jobId = created.result.jobId;
+        }
+      }
+    } catch {
+      // In dev or offline, fallback to local record
+    } finally {
+      setSubmitting(false);
+    }
+
     const job: Job = {
-      jobId: `job-${Date.now()}`,
+      jobId,
       title: cleanTitle,
       description: cleanDesc,
       budget,
@@ -166,7 +204,9 @@ export default function JobPostPage({
               </select>
             </label>
           </div>
-          <button type="submit" className={styles.submit}>{tr("m57")}</button>
+          <button type="submit" className={styles.submit} disabled={submitting}>
+            {submitting ? tr("m1143") : tr("m57")}
+          </button>
         </form>
       </div>
     </main>;

@@ -62,7 +62,7 @@ const useStyles = makeStyles((colors) => ({
     gap: spacing.xs,
     paddingVertical: spacing.md,
     borderRadius: radius.lg,
-    backgroundColor: '#E1F5EE',
+    backgroundColor: colors.primaryLight,
   },
   label: { fontSize: font.small, fontWeight: '600', color: colors.primaryDark },
 }));

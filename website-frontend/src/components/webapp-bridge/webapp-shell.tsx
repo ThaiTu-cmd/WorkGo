@@ -43,7 +43,8 @@ import { PUBLIC_INFO_PAGE_KEYS } from "../trung-pages/public/publicInfoContent.j
 import NotFoundPage from "../trung-pages/NotFoundPage";
 import MessagesPage from "../trung-pages/messages/MessagesPage";
 import type { ChatTarget } from "../trung-pages/messages/types";
-import { getAccessToken } from "@/_webapp-mirror/api/axiosClient";
+import { getAccessToken, NOT_PROVIDER_MESSAGE } from "@/_webapp-mirror/api/axiosClient";
+import { hasRole } from "@/_webapp-mirror/utils/jwt";
 import { Info } from "lucide-react";
 import ScrollEnhancements from "../common/ScrollEnhancements";
 import styles from "./webapp-shell.module.css";
@@ -353,6 +354,11 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
         setCurrentPage("home");
         return;
       }
+      if ((targetPage === "service-form" || targetPage === "availability") && (!getAccessToken() || !hasRole(getAccessToken(), "PROVIDER"))) {
+        showToast(NOT_PROVIDER_MESSAGE);
+        setCurrentPage("provider-onboarding");
+        return;
+      }
       if (targetPage === "detail" && !parsedParams.serviceId) {
         showToast("Vui lòng chọn dịch vụ để xem chi tiết.");
         setCurrentPage("catalog");
@@ -465,6 +471,18 @@ export default function WebAppShell({ initialPage }: { initialPage?: string } = 
     if (page === "finance" && !getAccessToken()) {
       showToast("Vui lòng đăng nhập để dùng Tài chính.");
       setAuthModal("login");
+      return;
+    }
+    // Gating for provider-only management pages
+    if ((page === "service-form" || page === "availability") && (!getAccessToken() || !hasRole(getAccessToken(), "PROVIDER"))) {
+      showToast(NOT_PROVIDER_MESSAGE);
+      if (!getAccessToken()) {
+        setAuthModal("login");
+      } else {
+        setPreviousPage(currentPage);
+        setCurrentPage("provider-onboarding");
+        window.history.pushState(null, "", buildTargetUrl("provider-onboarding"));
+      }
       return;
     }
     // Visiting the guest landing is an explicit choice -> one-shot override

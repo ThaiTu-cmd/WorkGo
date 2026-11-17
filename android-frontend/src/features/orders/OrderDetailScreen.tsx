@@ -13,6 +13,7 @@ import { CancellationCard } from './CancellationCard';
 import { EvidenceGrid } from './EvidenceGrid';
 import { useOrderDetail } from './hooks';
 import { ONSITE_STATUS_LABEL, ORDER_STATUS_LABEL, ORDER_STATUS_TONE } from './orderStatus';
+import { OrderReviewCard } from '@/features/reviews/OrderReviewCard';
 import { useT } from '@/i18n';
 
 const money = (v: unknown) => formatVnd(Number(v ?? 0));
@@ -70,10 +71,36 @@ export function OrderDetailScreen({
         </View>
         <Text style={styles.title}>{o.title}</Text>
         {awaitingPayment ? <Text style={styles.muted}>{t('orderDetailScreen.don_dang_cho_thanh_toan')}</Text> : null}
-        {awaitingPayment && role === 'CLIENT' ? (
-          <Button title={t('orderDetailScreen.thanh_toan')} onPress={() => router.push({ pathname: '/payment/[orderId]', params: { orderId: o.orderId } })} />
-        ) : null}
+        <View style={styles.actionRow}>
+          {awaitingPayment && role === 'CLIENT' ? (
+            <Button
+              title={t('orderDetailScreen.thanh_toan')}
+              style={styles.flexBtn}
+              onPress={() => router.push({ pathname: '/payment/[orderId]', params: { orderId: o.orderId } })}
+            />
+          ) : null}
+          <Button
+            title={t('chat.nhan_tin')}
+            variant={awaitingPayment && role === 'CLIENT' ? 'secondary' : 'primary'}
+            style={awaitingPayment && role === 'CLIENT' ? styles.flexBtn : undefined}
+            onPress={() =>
+              router.push({
+                pathname: '/chat/[id]',
+                params: {
+                  contextType: 'ORDER',
+                  contextId: o.orderId,
+                  participantId: (role === 'CLIENT' ? o.providerId : o.clientId) ?? undefined,
+                  participantName: o.title,
+                },
+              })
+            }
+          />
+        </View>
       </Card>
+
+      {o.orderStatus === 'COMPLETED' ? (
+        <OrderReviewCard orderId={o.orderId} serviceId={o.serviceId} />
+      ) : null}
 
       <CancellationCard order={o} role={role} cancellation={cancellation} />
 
@@ -132,4 +159,6 @@ const useStyles = makeStyles((colors) => ({
   text: { fontSize: font.body, color: colors.text },
   strong: { fontWeight: '700', color: colors.primaryDark },
   muted: { fontSize: font.small + 1, color: colors.muted, flexShrink: 1 },
+  actionRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
+  flexBtn: { flex: 1 },
 }));

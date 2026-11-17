@@ -18,6 +18,9 @@ import { paymentApi, paymentErrorMessage, startPayment, PAYMENT_OPTIONS } from "
 import axiosClient from "../src/_webapp-mirror/api/axiosClient.js";
 import { evidenceApi } from "../src/_webapp-mirror/api/evidenceApi.js";
 import { verificationApi } from "../src/_webapp-mirror/api/verificationApi.js";
+import { jobApi } from "../src/_webapp-mirror/api/jobApi.js";
+import { trustApi } from "../src/_webapp-mirror/api/trustApi.js";
+import { notificationApi } from "../src/_webapp-mirror/api/notificationApi.js";
 
 test("API Parity: catalogApi exports all Category, Service, Package, AddOn, and Media endpoints", () => {
   // Categories
@@ -199,6 +202,9 @@ test("API Parity: backend.ts bridge re-exports all API modules cleanly", () => {
   assert.match(content, /export\s*\{\s*orderApi/);
   assert.match(content, /export\s*\{\s*evidenceApi/);
   assert.match(content, /export\s*\{\s*verificationApi\s*\}\s*from/);
+  assert.match(content, /export\s*\{\s*jobApi\s*\}\s*from/);
+  assert.match(content, /export\s*\{\s*trustApi\s*\}\s*from/);
+  assert.match(content, /export\s*\{\s*notificationApi\s*\}\s*from/);
 });
 
 test("API Parity: orderApi no longer confirms payments itself", () => {
@@ -301,4 +307,60 @@ test("API Parity: getSlots sends from/to only when given", async () => {
     ["/catalog/slots/services/s1", { page: 0, size: 100, from: "A", to: "B" }],
     ["/catalog/slots/services/s1", { page: 0, size: 50 }],
   ]);
+});
+
+test("API Parity: jobApi exports all search, create, update, application, and proposal operations", () => {
+  assert.equal(typeof jobApi.searchJobs, "function");
+  assert.equal(typeof jobApi.getMyJobs, "function");
+  assert.equal(typeof jobApi.getJob, "function");
+  assert.equal(typeof jobApi.createJob, "function");
+  assert.equal(typeof jobApi.updateJob, "function");
+  assert.equal(typeof jobApi.applyJob, "function");
+  assert.equal(typeof jobApi.getJobApplications, "function");
+  assert.equal(typeof jobApi.getMyApplications, "function");
+  assert.equal(typeof jobApi.submitProposal, "function");
+  assert.equal(typeof jobApi.getJobProposals, "function");
+  assert.equal(typeof jobApi.acceptProposal, "function");
+  assert.equal(typeof jobApi.rejectProposal, "function");
+  assert.equal(typeof jobApi.orderSync, "function");
+  assert.equal(typeof jobApi.retryOrder, "function");
+});
+
+test("API Parity: trustApi exports all review, dispute, and report operations", () => {
+  assert.equal(typeof trustApi.submitReview, "function");
+  assert.equal(typeof trustApi.getProviderReviews, "function");
+  assert.equal(typeof trustApi.getServiceReviews, "function");
+  assert.equal(typeof trustApi.getClientReviews, "function");
+  assert.equal(typeof trustApi.getOrderReviewStatus, "function");
+  assert.equal(typeof trustApi.getMyReviews, "function");
+  assert.equal(typeof trustApi.createDispute, "function");
+  assert.equal(typeof trustApi.cancelDispute, "function");
+  assert.equal(typeof trustApi.getDispute, "function");
+  assert.equal(typeof trustApi.getOrderDisputes, "function");
+  assert.equal(typeof trustApi.getMyDisputes, "function");
+  assert.equal(typeof trustApi.submitReport, "function");
+});
+
+test("API Parity: notificationApi exports all notification operations", () => {
+  assert.equal(typeof notificationApi.listNotifications, "function");
+  assert.equal(typeof notificationApi.markRead, "function");
+  assert.equal(typeof notificationApi.readAll, "function");
+});
+
+test("API Parity: createOrder sends Idempotency-Key header", async () => {
+  const headersList = [];
+  const original = axiosClient.post;
+  axiosClient.post = async (_url, _body, config) => {
+    headersList.push(config?.headers?.["Idempotency-Key"]);
+    return { result: { orderId: "o1" } };
+  };
+  try {
+    await orderApi.createOrder({ serviceId: "s1", packageId: "p1" });
+    await orderApi.createOrder({ serviceId: "s1", packageId: "p1" });
+  } finally {
+    axiosClient.post = original;
+  }
+  assert.equal(headersList.length, 2);
+  assert.ok(headersList[0] && headersList[1]);
+  assert.notEqual(headersList[0], headersList[1], "each order creation must get a distinct Idempotency-Key");
 });

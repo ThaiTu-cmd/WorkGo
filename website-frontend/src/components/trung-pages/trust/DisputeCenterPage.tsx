@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { ShieldAlert } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
+import { trustApi, useAuthToken } from "../../webapp-bridge/backend";
 import { mockDisputes, type Dispute, type DisputeKind, type DisputeStatus } from "../_mocks/mockDisputes";
 import { KEYS } from "../_stores/keys";
 import { useLocalList } from "../_stores/useLocalList";
@@ -23,7 +24,9 @@ export default function DisputeCenterPage({
   onShowToast
 }: TrungPageProps) {
   const tr = useTranslations("misc");
-  const quotaToast = useCallback(() => onShowToast(tr("m1175")), [onShowToast]);
+  const token = useAuthToken();
+  const [submitting, setSubmitting] = useState(false);
+  const quotaToast = useCallback(() => onShowToast(tr("m1175")), [onShowToast, tr]);
   const seed = mockDisputes.map(d => ({
     ...d,
     id: d.ticketId
@@ -51,7 +54,44 @@ export default function DisputeCenterPage({
       /* bỏ qua */
     }
   }, []);
-  const submit = (e: React.FormEvent) => {
+
+  useEffect(() => {
+    if (!token) return undefined;
+    let cancelled = false;
+    trustApi.getMyDisputes({ size: 50 }).then((res: { result?: { data?: unknown[] } }) => {
+      if (cancelled || !res?.result?.data) return;
+      const apiDisputes = res.result.data as Array<{
+        disputeId?: string;
+        orderId?: string;
+        reason?: string;
+        description?: string;
+        status?: string;
+        createdAt?: string;
+      }>;
+      for (const d of apiDisputes) {
+        if (!d.disputeId) continue;
+        const exists = items.some(it => it.ticketId === d.disputeId || it.id === d.disputeId);
+        if (!exists) {
+          add({
+            id: d.disputeId,
+            ticketId: d.disputeId,
+            kind: "DISPUTE",
+            orderId: d.orderId || "",
+            reason: d.reason || "",
+            status: (d.status as DisputeStatus) || "OPEN",
+            createdAt: d.createdAt ? d.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
+          });
+        }
+      }
+    }).catch(() => {
+      /* fallback to local store */
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, add, items]);
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanOrder = sanitizeText(orderId);
     const cleanReason = sanitizeText(reason);
@@ -74,7 +114,23 @@ export default function DisputeCenterPage({
       }
     }
     setError("");
-    const ticketId = `TCK-${Date.now().toString().slice(-6)}`;
+    setSubmitting(true);
+    let ticketId = `TCK-${Date.now().toString().slice(-6)}`;
+    try {
+      if (token) {
+        const res = await trustApi.createDispute({
+          orderId: cleanOrder,
+          reason: cleanReason,
+          description: cleanReason,
+          evidenceUrl: cleanEvidence || undefined,
+        });
+        if (res?.result?.disputeId) ticketId = res.result.disputeId;
+      }
+    } catch {
+      // In dev or when live service is unreachable, proceed with local record
+    } finally {
+      setSubmitting(false);
+    }
     add({
       id: ticketId,
       ticketId,
@@ -129,7 +185,7 @@ export default function DisputeCenterPage({
           <input value={evidenceUrl} onChange={e => setEvidenceUrl(e.target.value)} placeholder="https://..." inputMode="url" />
         </label>
         {error ? <em className={styles.error}>{error}</em> : null}
-        <button type="submit" className={styles.submit}>{tr("m1419")}</button>
+        <button type="submit" className={styles.submit} disabled={submitting}>{tr("m1419")}</button>
       </form>
 
       <div className={styles.filterRow} role="group" aria-label={tr("m1405")}>

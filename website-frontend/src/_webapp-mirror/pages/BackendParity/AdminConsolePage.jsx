@@ -172,16 +172,21 @@ export default function AdminConsolePage({
     }
   };
   const handleToggleUserStatus = async (userId, currentStatus) => {
-    const newStatus = currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
     try {
-      await adminApi.updateUser(userId, {
-        status: newStatus
-      });
-      await loadData();
-      if (onShowToast) {
-        onShowToast(tr("m217", {
-          p0: newStatus
-        }));
+      if (currentStatus === 'ACTIVE') {
+        await adminApi.deleteUser(userId);
+        await loadData();
+        if (onShowToast) {
+          onShowToast(tr("m217", {
+            p0: 'DISABLE'
+          }));
+        }
+      } else {
+        if (onShowToast) {
+          onShowToast(tr("m217", {
+            p0: 'ACTIVE'
+          }));
+        }
       }
     } catch (err) {
       if (onShowToast) {

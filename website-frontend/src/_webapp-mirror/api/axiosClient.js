@@ -70,7 +70,36 @@ export function isAuthGuarded(url) {
   return AUTH_GUARD_PATHS.some((path) => url.startsWith(path));
 }
 
-async function request(method, url, { params, data, headers: extraHeaders } = {}) {
+let refreshPromise = null;
+
+async function tryRefreshToken(oldToken) {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/identity/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: oldToken }),
+        });
+        if (!res.ok) return null;
+        const body = await res.json().catch(() => null);
+        return body?.result?.token || null;
+      } catch {
+        return null;
+      } finally {
+        refreshPromise = null;
+      }
+    })();
+  }
+  return refreshPromise;
+}
+
+const isAuthEndpoint = (url) =>
+  url.startsWith('/identity/auth/token') ||
+  url.startsWith('/identity/auth/refresh') ||
+  url.startsWith('/identity/users/registration');
+
+async function request(method, url, { params, data, headers: extraHeaders } = {}, isRetry = false) {
   const token = getAccessToken();
 
   // Guard: Avoid firing unauthenticated requests to protected identity endpoints
@@ -97,6 +126,13 @@ async function request(method, url, { params, data, headers: extraHeaders } = {}
   if (!res.ok) {
     const error = new ApiError(res.status, body, contentType);
     if (error.status === 401) {
+      if (token && !isRetry && !isAuthEndpoint(url)) {
+        const newToken = await tryRefreshToken(token);
+        if (newToken) {
+          setAccessToken(newToken);
+          return request(method, url, { params, data, headers: extraHeaders }, true);
+        }
+      }
       if (token) setAccessToken(null);
       // Suppress unhandled 401 rejection only for GET background/guest reads to guarded identity endpoints
       if (method.toUpperCase() === 'GET' && isAuthGuarded(url)) {

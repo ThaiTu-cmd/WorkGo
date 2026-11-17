@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import { Star, Heart, Clock, CheckCircle } from "lucide-react";
 import styles from "./ServiceCard.module.css";
 export default function ServiceCard({
-  service
+  service,
+  onSelectService
 }) {
   const tr = useTranslations("misc");
   const [isFavorited, setIsFavorited] = useState(false);
@@ -105,7 +106,10 @@ export default function ServiceCard({
 
         {/* Service Title */}
         <h3 className={styles.serviceTitle} title={service.title}>
-          {service.title}
+          {onSelectService ? <button type="button" className={styles.titleButton} onClick={event => {
+            event.stopPropagation();
+            onSelectService(service);
+          }}>{service.title}</button> : service.title}
         </h3>
 
         {/* Rating and Reviews */}

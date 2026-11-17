@@ -272,3 +272,8 @@
   color: var(--wg-text);
   font-family: var(--font-heading);
 }
+.titleButton {
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}

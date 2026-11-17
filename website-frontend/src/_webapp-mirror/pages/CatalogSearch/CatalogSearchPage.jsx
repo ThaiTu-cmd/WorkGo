@@ -302,7 +302,7 @@ export default function CatalogSearchPage({
               </div> : paginatedServices.length > 0 ? <>
                 <div className={styles.servicesGrid}>
                   {paginatedServices.map(service => <div key={service.serviceId} className={styles.cardItem} onClick={() => onSelectService && onSelectService(service)}>
-                      <ServiceCard service={service} />
+                      <ServiceCard service={service} onSelectService={onSelectService} />
                     </div>)}
                 </div>
 
@@ -336,7 +336,7 @@ export default function CatalogSearchPage({
 
       {/* Mobile Drawer Filter Modal */}
       {mobileFilterOpen && <div className={styles.mobileBackdrop} onClick={() => setMobileFilterOpen(false)}>
-          <div className={styles.mobileDrawer} ref={filterDrawerRef} onClick={e => e.stopPropagation()}>
+          <div className={styles.mobileDrawer} ref={filterDrawerRef} role="dialog" aria-modal="true" aria-label={tr("m402")} onClick={e => e.stopPropagation()}>
             <div className={styles.drawerHeader}>
               <h3 className={styles.drawerTitle}>{tr("m402")}</h3>
               <button type="button" className={styles.closeDrawerBtn} onClick={() => setMobileFilterOpen(false)} aria-label={tr("m398")}>

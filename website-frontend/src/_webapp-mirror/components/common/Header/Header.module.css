@@ -340,6 +340,14 @@
   }
 }
 
+@media (max-width: 600px) {
+  .headerLangSwitcher,
+  .signInBtn,
+  .joinBtn {
+    display: none;
+  }
+}
+
 @media (min-width: 900px) {
   .menuToggle,
   .mobileDrawer {

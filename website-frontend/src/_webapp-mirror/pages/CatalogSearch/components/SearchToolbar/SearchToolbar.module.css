@@ -53,6 +53,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .pageTitle {
@@ -218,4 +219,26 @@
 .titleIcon {
   flex-shrink: 0;
   color: var(--wg-primary);
+}
+
+@media (max-width: 600px) {
+  .rightControls {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .mobileFilterBtn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .sortWrapper {
+    min-width: 0;
+    flex: 1;
+  }
+  .sortSelect {
+    min-width: 0;
+    flex: 1;
+  }
+  .sortLabel {
+    flex-shrink: 0;
+  }
 }

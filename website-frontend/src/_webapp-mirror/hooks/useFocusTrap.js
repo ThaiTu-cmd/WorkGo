@@ -24,6 +24,7 @@ export function useFocusTrap(containerRef, active) {
     if (!active) return undefined;
     const container = containerRef.current;
     if (!container) return undefined;
+    const opener = document.activeElement;
     const onKeyDown = (e) => {
       if (e.key !== 'Tab') return;
       const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(isVisible);
@@ -40,6 +41,9 @@ export function useFocusTrap(containerRef, active) {
     };
     // E6: only Tab is handled here; Escape lives with each overlay's own listener.
     container.addEventListener('keydown', onKeyDown);
-    return () => container.removeEventListener('keydown', onKeyDown);
+    return () => {
+      container.removeEventListener('keydown', onKeyDown);
+      if (opener?.isConnected && typeof opener.focus === 'function') opener.focus({ preventScroll: true });
+    };
   }, [containerRef, active]);
 }

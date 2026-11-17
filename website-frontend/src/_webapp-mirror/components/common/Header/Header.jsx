@@ -197,6 +197,7 @@ export default function Header({ onOpenAuth, onNavigate, activePage = 'home' }) 
             className={styles.menuToggle}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle navigation menu"
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
           </button>

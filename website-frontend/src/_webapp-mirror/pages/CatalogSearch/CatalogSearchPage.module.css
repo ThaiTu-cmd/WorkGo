@@ -22,7 +22,7 @@
 
 @media (max-width: 900px) {
   .mainLayout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -41,6 +41,7 @@
    rail; content capped so cards don't balloon on ultra-wide monitors. */
 .servicesColumn {
   width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   padding-left: 48px;
@@ -62,19 +63,19 @@
 
 .servicesGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px;
 }
 
 @media (max-width: 1200px) {
   .servicesGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 600px) {
   .servicesGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

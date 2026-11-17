@@ -93,7 +93,7 @@ export default function PopularServices({
           </p>}
         <div className={styles.servicesGrid}>
           {filteredServices.map((service, idx) => <div key={service.serviceId} className={`${styles.cardCol} reveal reveal-delay-${idx % 4 + 1}`} onClick={() => onSelectService && onSelectService(service)}>
-              <ServiceCard service={service} />
+              <ServiceCard service={service} onSelectService={onSelectService} />
             </div>)}
         </div>
       </div>

@@ -111,7 +111,7 @@ public class UserService {
         return userMapper.toUserResponse(user);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public PageResponse<UserResponse> getUsers(int page, int size){
 
         Sort sort = Sort.by("createdAt").descending();
@@ -131,24 +131,13 @@ public class UserService {
                 .build();
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public UserResponse getUser(UUID userId){
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         return userMapper.toUserResponse(user);
-    }
-
-    //viec 08 doi sang SUPER_ADMIN
-    @PreAuthorize("denyAll()")
-    public UserResponse updateUser(UUID userId, UserUpdateRequest request){
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        userMapper.updateUser(user, request);
-
-        return userMapper.toUserResponse(userRepository.save(user));
     }
 
     public UserResponse updateMyInfo(UserUpdateRequest request) {
@@ -165,15 +154,5 @@ public class UserService {
         if (request.getAvatarUrl() != null) user.setAvatarUrl(request.getAvatarUrl());
 
         return userMapper.toUserResponse(userRepository.save(user));
-    }
-
-    @PreAuthorize("denyAll()")
-    public void deleteUser(UUID userId){
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        user.setStatus(UserStatus.DISABLE);
-
-        userRepository.save(user);
     }
 }

@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
@@ -41,7 +42,7 @@ public class CustomJwtDecoder implements JwtDecoder {
                 .build());
 
         if(!response.isValid()){
-            throw new JwtException("Token Invalid !");
+            throw new BadJwtException("Token Invalid !");
         }
 
         if(Objects.isNull(nimbusJwtDecoder)){

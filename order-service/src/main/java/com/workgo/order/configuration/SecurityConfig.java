@@ -54,7 +54,8 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request ->{
-            request.anyRequest().authenticated();
+            request.requestMatchers(HttpMethod.GET, "/orders/files/*/content").permitAll()
+                    .anyRequest().authenticated();
         });
 
         httpSecurity.oauth2ResourceServer(oAuth2 -> oAuth2.jwt(JwtConfigurer -> JwtConfigurer

@@ -1,0 +1,8 @@
+package com.workgo.identity.service.storage;
+
+public interface FileStorage {
+
+    void put(String key, byte[] content);
+
+    byte[] get(String key);
+}

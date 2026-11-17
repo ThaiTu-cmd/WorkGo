@@ -6,6 +6,10 @@ server:
 spring:
   application:
     name: order-service
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 51MB
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   datasource:
@@ -45,6 +49,9 @@ logging:
 
 app:
   internal-key: ${INTERNAL_API_KEY:}
+  storage:
+    local-dir: ${ORDER_STORAGE_DIR:${user.home}/.workgo/order-files}
+    signing-key: ${ORDER_FILE_SIGNING_KEY:}
   clients:
     connect-timeout-millis: ${ORDER_CLIENT_CONNECT_TIMEOUT_MS:2000}
     read-timeout-millis: ${ORDER_CLIENT_READ_TIMEOUT_MS:5000}

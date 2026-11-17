@@ -25,6 +25,8 @@ public class WorkEvidenceResponse {
 
     String fileUrl;
 
+    UUID storedFileId;
+
     Double latitude;
 
     Double longitude;

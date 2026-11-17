@@ -13,7 +13,6 @@ public class FeignInternalConfig {
         return template -> template.header("X-Internal-Key", internalKey);
     }
 
-    //chuyen tiep requestId sang service kia de noi log 2 ben
     @Bean
     RequestInterceptor requestIdInterceptor() {
         return template -> {

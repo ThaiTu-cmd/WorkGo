@@ -42,7 +42,6 @@ public class OnsiteExecution {
     @Column(name = "checkin_code_hash")
     String checkinCodeHash;
 
-    //client xem lai ma checkin
     @Column(name = "checkin_code_encrypted")
     String checkinCodeEncrypted;
 

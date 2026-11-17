@@ -11,12 +11,10 @@ public class HmacUtils {
     private HmacUtils() {
     }
 
-    //vnpay ky bang HmacSHA512, tra hex chu thuong
     public static String hmacSha512(String key, String data) {
         return hmac("HmacSHA512", key, data);
     }
 
-    //momo ky bang HmacSHA256
     public static String hmacSha256(String key, String data) {
         return hmac("HmacSHA256", key, data);
     }

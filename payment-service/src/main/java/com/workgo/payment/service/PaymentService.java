@@ -92,10 +92,8 @@ public class PaymentService {
             throw new AppException(ErrorCode.PAYMENT_GATEWAY_NOT_SUPPORTED);
         }
 
-        //lay so tien can thanh toan tu order
         OrderPaymentInfoResponse order = loadOrderInfo(request.getOrderId());
 
-        //chi chu don moi duoc thanh toan
         if (!payerId.equals(order.getClientId())) {
             throw new AppException(ErrorCode.ORDER_NOT_FOUND);
         }
@@ -111,7 +109,6 @@ public class PaymentService {
         Instant now = Instant.now();
         Instant expiresAt = resolveExpiresAt(order, now);
 
-        //order dang co payment cho thanh toan
         Optional<Payment> waiting = paymentRepository
                 .findFirstByOrderIdAndStatusInOrderByCreatedAtDesc(order.getOrderId(), WAITING_STATUSES);
 
@@ -125,7 +122,6 @@ public class PaymentService {
                 return paymentMapper.toResponse(old);
             }
 
-            //doi gateway hoac da qua han -> dong payment cu
             closeWaitingPayment(old, now);
         }
 
@@ -174,7 +170,6 @@ public class PaymentService {
             log.warn("Create payment {} for order {} failed at gateway {}: {}",
                     payment.getPaymentCode(), payment.getOrderId(), payment.getGateway(), e.getMessage());
 
-            //loi nghiep vu cua gateway (vd so tien ngoai gioi han) -> tra dung ma loi
             if (e instanceof AppException appException) {
                 throw appException;
             }
@@ -231,7 +226,6 @@ public class PaymentService {
         boolean onsite = order.getExecutionType() == ExecutionType.ONSITE;
         Instant payableUntil = order.getPayableUntil();
 
-        //digital chua co han -> +15'
         if (!onsite && payableUntil == null) {
             return expiresAt;
         }

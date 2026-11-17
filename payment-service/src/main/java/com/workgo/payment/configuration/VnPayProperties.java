@@ -7,7 +7,6 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-//doc nhom payment.vnpay trong application.yaml
 @Getter
 @Setter
 @Component

@@ -75,12 +75,10 @@ public class OrderStatusService {
             orderCompletedOutboxRepository.save(OrderCompletedOutbox.from(order));
         }
 
-        //3 cho COMPLETED (digital accept, onsite accept, auto complete) deu di qua day
         if (toStatus == OrderStatus.COMPLETED && order.getPaymentStatus() == PaymentStatus.SUCCEEDED) {
             releaseEscrowAfterCommit(order.getOrderId());
         }
 
-        //huy don da thanh toan -> hoan tien cho client
         if (toStatus == OrderStatus.CANCELLED && order.getPaymentStatus() == PaymentStatus.SUCCEEDED) {
             refundEscrowAfterCommit(order.getOrderId());
         }
@@ -101,7 +99,6 @@ public class OrderStatusService {
         });
     }
 
-    //commit CANCELLED xong moi bao payment hoan tien
     private void refundEscrowAfterCommit(UUID orderId) {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override

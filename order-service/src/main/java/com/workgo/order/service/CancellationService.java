@@ -44,7 +44,6 @@ public class CancellationService {
     CatalogClient catalogClient;
     TokenUtils tokenUtils;
 
-    //client hoac provider gui yeu cau huy don
     @Transactional
     public CancellationRequestResponse cancel(UUID orderId, CancellationCreationRequest request) {
 
@@ -63,7 +62,6 @@ public class CancellationService {
             throw new AppException(ErrorCode.ORDER_CANCEL_REASON_REQUIRED);
         }
 
-        //moi order chi co 1 yeu cau huy
         if (cancellationRequestRepository.existsByOrder_OrderId(orderId)) {
             throw new AppException(ErrorCode.ORDER_CANCELLATION_EXISTED);
         }
@@ -87,7 +85,6 @@ public class CancellationService {
 
             cancelOrder(order, actorId, roleName);
         } else {
-            //da thanh toan -> cho ben con lai phan hoi
             cancellation.setStatus(CancellationStatus.PENDING);
             cancellationRequestRepository.save(cancellation);
         }
@@ -95,7 +92,6 @@ public class CancellationService {
         return cancellationRequestMapper.toResponse(cancellation);
     }
 
-    //ben con lai dong y hoac tu choi yeu cau huy
     @Transactional
     public CancellationRequestResponse respond(UUID orderId, CancellationRespondRequest request) {
 
@@ -156,12 +152,10 @@ public class CancellationService {
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_CANCELLATION_NOT_FOUND));
     }
 
-    //he thong tu huy don
     public void cancelBySystem(Order order) {
         cancelOrder(order, null, RoleName.SYSTEM);
     }
 
-    //qua han ma chua thanh toan -> he thong huy + nha slot (PaymentTimeoutJob)
     @Transactional
     public void cancelUnpaid(UUID orderId) {
 
@@ -180,7 +174,6 @@ public class CancellationService {
 
     //=====================================
 
-    //dong execution + chuyen order sang CANCELLED
     private void cancelOrder(Order order, UUID actorId, RoleName roleName) {
 
         Execution execution = executionRepository.findByOrder_OrderId(order.getOrderId())
@@ -205,7 +198,6 @@ public class CancellationService {
         orderStatusService.transition(order, OrderStatus.CANCELLED, actorId, roleName);
     }
 
-    //huy don thanh cong moi nha slot ben catalog
     private void releaseSlotAfterCommit(UUID slotId, UUID orderId) {
 
         if (slotId == null) {
@@ -226,7 +218,6 @@ public class CancellationService {
         });
     }
 
-    //nguoi goi la client hay provider cua don
     private RoleName resolveRole(Order order) {
 
         if (tokenUtils.getCurrentUserId().equals(order.getClientId())) {

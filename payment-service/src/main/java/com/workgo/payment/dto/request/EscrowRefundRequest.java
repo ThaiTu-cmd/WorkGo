@@ -16,7 +16,6 @@ public class EscrowRefundRequest {
 
     UUID orderId;
 
-    //phase nay chi ho tro 100
     Integer refundPercent;
 
     RefundReason reasonCode;

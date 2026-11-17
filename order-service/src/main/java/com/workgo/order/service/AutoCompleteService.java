@@ -70,7 +70,6 @@ public class AutoCompleteService {
                             digitalExecutionRepository.save(digital);
                         });
 
-                //ban giao moi nhat coi nhu da duoc nghiem thu
                 deliveryPackageRepository
                         .findFirstByExecution_ExecutionIdOrderByVersionNoDesc(execution.getExecutionId())
                         .filter(deliveryPackage -> deliveryPackage.getStatus() == DeliveryPackageStatus.SUBMITTED)

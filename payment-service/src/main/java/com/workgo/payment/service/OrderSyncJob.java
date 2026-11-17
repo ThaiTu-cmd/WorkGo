@@ -29,7 +29,6 @@ public class OrderSyncJob {
     @Value("${payment.sync.max-retry}")
     int maxRetry;
 
-    //goi lai order cho cac payment da thanh toan ma chua bao duoc
     @Scheduled(fixedDelay = 60_000)
     public void run() {
 

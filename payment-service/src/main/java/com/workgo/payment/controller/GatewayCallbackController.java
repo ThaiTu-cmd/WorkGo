@@ -28,7 +28,6 @@ public class GatewayCallbackController {
         return gatewayCallbackService.handleVnPayIpn(params);
     }
 
-    //trinh duyet cua client duoc vnpay redirect ve -> chuyen tiep sang FE
     @GetMapping("/vnpay/return")
     ResponseEntity<Void> vnpayReturn(@RequestParam Map<String, String> params) {
         return redirect(gatewayCallbackService.buildReturnRedirect(PaymentGateway.VNPAY, params));

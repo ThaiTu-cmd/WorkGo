@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-//order-service goi (X-Internal-Key)
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
@@ -24,25 +23,21 @@ public class InternalEscrowController {
     EscrowService escrowService;
     RefundService refundService;
 
-    //order COMPLETED -> tra tien cho provider
     @PostMapping("/release")
     EscrowAccountResponse release(@RequestBody EscrowReleaseRequest request) {
         return escrowService.release(request);
     }
 
-    //order huy don da thanh toan -> hoan tien cho client
     @PostMapping("/refund")
     EscrowAccountResponse refund(@RequestBody EscrowRefundRequest request) {
         return refundService.refundOrder(request);
     }
 
-    //dispute mo tranh chap -> khoa tien
     @PostMapping("/freeze")
     EscrowAccountResponse freeze(@RequestBody EscrowFreezeRequest request) {
         return escrowService.freeze(request);
     }
 
-    //nguoi mo rut tranh chap khi chua phan xu -> mo khoa
     @PostMapping("/unfreeze")
     EscrowAccountResponse unfreeze(@RequestBody EscrowFreezeRequest request) {
         return escrowService.unfreeze(request);

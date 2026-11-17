@@ -63,7 +63,6 @@ public class ExecutionService {
         return getExecutionOfOrder(order);
     }
 
-    //dung chung cho getExecution va order detail
     public ExecutionResponse getExecutionOfOrder(Order order){
 
         Execution execution = executionRepository.findByOrder_OrderId(order.getOrderId())

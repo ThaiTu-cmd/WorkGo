@@ -17,7 +17,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
-//doi soat voi payment: don COMPLETED chua release / don CANCELLED chua refund (payment tat / loi mang)
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)

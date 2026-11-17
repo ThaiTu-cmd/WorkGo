@@ -90,7 +90,6 @@ public class ServiceService {
         return serviceMapper.toServiceResponse(service);
     }
 
-    //review-service ghi de diem trung binh cua service
     @Transactional
     public ServiceResponse updateRatingStats(UUID serviceId, ServiceRatingStatsRequest request) {
         if (request == null || request.getAvgRating() == null || request.getReviewCount() == null

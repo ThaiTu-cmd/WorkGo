@@ -5,7 +5,6 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 
-//ket qua IPN da verify, chung cho moi gateway
 @Getter
 @Setter
 @Builder

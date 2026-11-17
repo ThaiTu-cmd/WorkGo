@@ -11,7 +11,6 @@ import lombok.experimental.FieldDefaults;
 import java.time.Instant;
 import java.util.UUID;
 
-//review/dispute goi de kiem tra ai duoc danh gia, mo tranh chap
 @Getter
 @Setter
 @Builder

@@ -25,7 +25,6 @@ import java.security.MessageDigest;
 import java.util.Map;
 import java.util.TreeMap;
 
-//MoMo API v2 (captureWallet): tao link + QR, verify IPN / redirect
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
@@ -56,7 +55,6 @@ public class MoMoGatewayClient implements PaymentGatewayClient {
             throw new AppException(ErrorCode.PAYMENT_AMOUNT_OUT_OF_RANGE);
         }
 
-        //requestId = orderId = paymentCode, khong trung
         String code = payment.getPaymentCode();
         String orderInfo = "Thanh toan " + code;
 
@@ -96,7 +94,6 @@ public class MoMoGatewayClient implements PaymentGatewayClient {
                 .build();
     }
 
-    //IPN (body json) va redirect (query) cung danh sach field ky
     @Override
     public GatewayCallbackResult verifyCallback(Map<String, String> params) {
 

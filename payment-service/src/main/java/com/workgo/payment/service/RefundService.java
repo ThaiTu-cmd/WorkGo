@@ -46,7 +46,6 @@ public class RefundService {
     EscrowMapper escrowMapper;
     Map<PaymentGateway, PaymentGatewayClient> gatewayClients;
 
-    //order huy don da thanh toan -> hoan 100% cho client
     @Transactional
     public EscrowAccountResponse refundOrder(EscrowRefundRequest request) {
 
@@ -60,7 +59,6 @@ public class RefundService {
 
         EscrowAccount escrow = escrowLocks.lock(request.getOrderId());
 
-        //order goi lai -> tra ket qua cu
         if (escrow.getStatus() == EscrowStatus.REFUNDED) {
             return escrowMapper.toResponse(escrow);
         }
@@ -73,7 +71,6 @@ public class RefundService {
         return escrowMapper.toResponse(escrow);
     }
 
-    //hoan toan bo payment, escrow = null khi payment trung chua duoc hold
     @Transactional(propagation = Propagation.MANDATORY)
     public Refund refund(Payment payment, EscrowAccount escrow, RefundReason reason, TriggeredBy initiatedBy) {
 
@@ -91,7 +88,6 @@ public class RefundService {
             escrow = escrowLocks.lock(escrow.getOrderId());
         }
 
-        //moi payment chi refund 1 lan
         Optional<Refund> existing = refundRepository.findByPayment_PaymentId(payment.getPaymentId());
 
         if (existing.isPresent()) {
@@ -124,7 +120,6 @@ public class RefundService {
         refund.setUpdatedAt(now);
 
         if (!result.isSuccess()) {
-            //giu nguyen escrow, admin xu ly
             log.error("Refund payment {} failed: {}", payment.getPaymentCode(), result.getFailureMessage());
             refund.setStatus(RefundStatus.FAILED);
             refund.setFailureMessage(result.getFailureMessage());

@@ -54,13 +54,11 @@ public class OnsiteExecutionHandler implements ExecutionHandler{
     @Override
     public Execution create(Order order, OrderCreationRequest request, PackageResponse packageResponse) {
 
-        //giu slot ben catalog
         BookingSlotResponse slot = holdSlot(request.getBookingSlotId(), order.getOrderId());
 
         //tao don loi o buoc sau -> rollback
         releaseSlotOnRollback(slot.getBookingSlotId(), order.getOrderId());
 
-        //slot phai thuoc dung service cua don
         if (!order.getServiceId().equals(slot.getService())) {
             throw new AppException(ErrorCode.ORDER_SLOT_NOT_MATCH_SERVICE);
         }
@@ -96,7 +94,6 @@ public class OnsiteExecutionHandler implements ExecutionHandler{
             if (e.status() == HttpStatus.NOT_FOUND.value()) {
                 throw new AppException(ErrorCode.ORDER_SLOT_NOT_FOUND);
             }
-            //slot da co nguoi giu hoac da qua gio
             if (e.status() == HttpStatus.CONFLICT.value()) {
                 throw new AppException(ErrorCode.ORDER_SLOT_NOT_AVAILABLE);
             }

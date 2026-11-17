@@ -27,7 +27,6 @@ import java.util.UUID;
 @Slf4j
 public class PaymentSyncService {
 
-    //D10: phase nay chi hoan 100%
     static int FULL_REFUND_PERCENT = 100;
 
     OrderRepository orderRepository;
@@ -40,7 +39,6 @@ public class PaymentSyncService {
 
         Order order = orderRepository.findById(orderId).orElse(null);
 
-        //da release roi hoac don chua COMPLETED
         if (order == null
                 || order.getOrderStatus() != OrderStatus.COMPLETED
                 || order.getPaymentStatus() != PaymentStatus.SUCCEEDED) {
@@ -64,13 +62,11 @@ public class PaymentSyncService {
         orderRepository.save(order);
     }
 
-    //huy don da thanh toan -> bao payment hoan tien cho client
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void refund(UUID orderId) {
 
         Order order = orderRepository.findById(orderId).orElse(null);
 
-        //da refund roi hoac don chua CANCELLED
         if (order == null
                 || order.getOrderStatus() != OrderStatus.CANCELLED
                 || order.getPaymentStatus() != PaymentStatus.SUCCEEDED) {

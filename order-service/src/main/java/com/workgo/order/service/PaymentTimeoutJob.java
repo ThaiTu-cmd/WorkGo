@@ -18,7 +18,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
-//huy don PENDING_PAYMENT qua han, tien ve tre thi payment tu refund
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)

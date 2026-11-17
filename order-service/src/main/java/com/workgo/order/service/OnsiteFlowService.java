@@ -172,7 +172,6 @@ public class OnsiteFlowService {
         return executionMapper.toOnsiteExecutionResponse(onsite);
     }
 
-    //client lay ma checkin de dua cho provider khi toi noi
     public CheckinCodeResponse getCheckinCode(UUID orderId) {
 
         Order order = loadOrder(orderId);
@@ -185,7 +184,6 @@ public class OnsiteFlowService {
 
         OnsiteExecution onsite = loadOnsite(loadExecution(orderId).getExecutionId());
 
-        //da checkin roi thi ma het tac dung
         if (onsite.getStatus() != OnsiteExecutionStatus.SCHEDULED
                 || onsite.getCheckinCodeEncrypted() == null) {
             throw new AppException(ErrorCode.ORDER_CHECKIN_CODE_NOT_FOUND);

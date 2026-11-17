@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
-//chi service noi bo co dung X-Internal-Key moi goi duoc /internal/**
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class InternalKeyFilter extends OncePerRequestFilter {

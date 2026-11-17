@@ -11,7 +11,6 @@ import java.time.Instant;
 @Service
 public class PaymentStatusService {
 
-    //chuyen trang thai payment, noi goi tu save
     public void transition(Payment payment, PaymentStatus toStatus) {
 
         if (!payment.getStatus().canTransitionTo(toStatus)) {

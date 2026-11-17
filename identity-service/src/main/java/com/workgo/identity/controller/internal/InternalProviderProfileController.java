@@ -23,7 +23,6 @@ public class InternalProviderProfileController {
         return providerProfileService.getProviderProfile(providerId);
     }
 
-    //review-service cap nhat rating cua provider
     @PutMapping("/{providerId}/rating-stats")
     InternalProviderProfileResponse updateRatingStats(@PathVariable UUID providerId,
                                                       @RequestBody RatingStatsRequest request) {

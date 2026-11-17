@@ -45,7 +45,6 @@ public class EscrowService {
     EscrowMapper escrowMapper;
     TokenUtils tokenUtils;
 
-    //giu tien sau khi thanh toan thanh cong
     @Transactional(propagation = Propagation.MANDATORY)
     public Optional<EscrowAccount> hold(Payment payment) {
 
@@ -78,7 +77,6 @@ public class EscrowService {
         return Optional.of(escrow);
     }
 
-    //order COMPLETED -> tru phi nen tang, phan con lai tra provider
     @Transactional
     public EscrowAccountResponse release(EscrowReleaseRequest request) {
 
@@ -121,7 +119,6 @@ public class EscrowService {
         return escrowMapper.toResponse(escrowAccountRepository.save(escrow));
     }
 
-    //tra lai toan bo tien dang giu cho client, RefundService goi sau khi gateway hoan tien xong
     @Transactional(propagation = Propagation.MANDATORY)
     public void refund(EscrowAccount escrow, Refund refund) {
 
@@ -201,7 +198,6 @@ public class EscrowService {
         return escrowMapper.toResponse(escrowAccountRepository.save(escrow));
     }
 
-    //client hoac provider cua order xem tien dang giu
     @Transactional(readOnly = true)
     public EscrowAccountResponse getEscrowOfOrder(UUID orderId) {
 
@@ -215,7 +211,6 @@ public class EscrowService {
 
     //=====================================
 
-    //them vao list de response tra ve du txn vua ghi
     private void addTransaction(EscrowAccount escrow, EscrowTxnType type, BigDecimal amount,
                                 BigDecimal balanceAfter, TriggeredBy triggeredBy, String reasonCode) {
 

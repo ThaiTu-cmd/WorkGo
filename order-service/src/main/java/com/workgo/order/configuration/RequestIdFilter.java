@@ -13,7 +13,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.UUID;
 
-//correlation id: moi request 1 requestId (nhan tu X-Request-Id hoac tu sinh), in ra moi dong log
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class RequestIdFilter extends OncePerRequestFilter {

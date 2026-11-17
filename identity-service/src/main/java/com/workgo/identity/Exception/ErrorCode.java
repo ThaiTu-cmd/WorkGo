@@ -41,6 +41,8 @@ public enum ErrorCode {
     PROVIDER_PROFILE_EXISTED(1023, "Provider profile already existed", HttpStatus.BAD_REQUEST),
     PROVIDER_PROFILE_NOT_EXISTED(1024, "Provider profile does not exist", HttpStatus.NOT_FOUND),
     USER_ALREADY_PROVIDER(1025, "This user is already a provider", HttpStatus.BAD_REQUEST),
+    RATING_STATS_INVALID(1030, "Rating average must be between 0 and 5 and rating count must not be negative", HttpStatus.BAD_REQUEST),
+    RATING_SNAPSHOT_CONFLICT(1031, "Rating version already has a different snapshot", HttpStatus.CONFLICT),
 
 
     //=================PROVIDER VERIFICATION============

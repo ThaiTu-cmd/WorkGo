@@ -33,6 +33,10 @@ spring:
             connect-timeout: ${ORDER_CLIENT_CONNECT_TIMEOUT_MS:2000}
             read-timeout: ${ORDER_CLIENT_READ_TIMEOUT_MS:5000}
             follow-redirects: false
+          orderTrustClient:
+            connect-timeout: ${ORDER_CLIENT_CONNECT_TIMEOUT_MS:2000}
+            read-timeout: ${ORDER_CLIENT_READ_TIMEOUT_MS:5000}
+            follow-redirects: false
 
 logging:
   pattern:
@@ -49,8 +53,13 @@ app:
     identity: ${IDENTITY_SERVICE_URL:http://localhost:8081/identity}
     payment: ${PAYMENT_SERVICE_URL:http://localhost:8084/payment}
     job: ${JOB_SERVICE_URL:http://localhost:8085/job}
+    trust: ${TRUST_SERVICE_URL:http://localhost:8087/trust}
 
 order:
+  trust-outbox:
+    max-attempts: ${ORDER_TRUST_OUTBOX_MAX_ATTEMPTS:8}
+    lease-seconds: ${ORDER_TRUST_OUTBOX_LEASE_SECONDS:60}
+    poll-millis: ${ORDER_TRUST_OUTBOX_POLL_MS:5000}
   platform-fee-rate: 0.10
   #don PENDING_PAYMENT qua han nay thi he thong tu huy (khop thoi gian giu slot ben catalog)
   payment-timeout-minutes: 30

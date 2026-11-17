@@ -57,12 +57,16 @@ public class Service {
     ServiceStatus status = ServiceStatus.DRAFT;
 
     @Builder.Default
-    @Column(name = "avg_rating")
+    @Column(name = "avg_rating", updatable = false)
     double avgRating = 0.0;
 
     @Builder.Default
-    @Column(name = "review_count")
+    @Column(name = "review_count", updatable = false)
     long reviewCount = 0;
+
+    @Builder.Default
+    @Column(name = "rating_aggregate_version", nullable = false, updatable = false)
+    long ratingAggregateVersion = 0;
 
     @Builder.Default
     @Column(name = "order_count")

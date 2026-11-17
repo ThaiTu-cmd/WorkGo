@@ -64,6 +64,9 @@ public class EscrowAccount {
     @Column(name = "auto_release_at")
     Instant autoReleaseAt;
 
+    @Column(name = "active_dispute_id")
+    UUID activeDisputeId;
+
     @Version
     @Column(name = "version")
     Long version;

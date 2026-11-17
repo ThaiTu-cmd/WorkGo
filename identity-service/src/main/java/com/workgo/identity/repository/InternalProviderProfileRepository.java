@@ -34,4 +34,24 @@ public class InternalProviderProfileRepository {
                 rs.getObject("user_id", UUID.class), rs.getString("user_status")), providerId)
                 .stream().findFirst();
     }
+
+    public record RatingSnapshot(double average, long count, long version) {}
+
+    /** Must be called inside the same transaction as the update and response read. */
+    public Optional<RatingSnapshot> lockRatingSnapshot(UUID providerId) {
+        return jdbcTemplate.query("""
+                SELECT rating_avg, rating_count, rating_aggregate_version
+                  FROM provider_profiles
+                 WHERE provider_profile_id = ? AND is_deleted = 0 FOR UPDATE
+                """, (rs, row) -> new RatingSnapshot(rs.getDouble(1), rs.getLong(2), rs.getLong(3)), providerId)
+                .stream().findFirst();
+    }
+
+    public int updateRatingStats(UUID providerId, double ratingAvg, long ratingCount, long aggregateVersion) {
+        return jdbcTemplate.update("""
+                UPDATE provider_profiles
+                   SET rating_avg = ?, rating_count = ?, rating_aggregate_version = ?
+                 WHERE provider_profile_id = ? AND is_deleted = 0 AND rating_aggregate_version < ?
+                """, ratingAvg, ratingCount, aggregateVersion, providerId, aggregateVersion);
+    }
 }

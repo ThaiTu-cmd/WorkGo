@@ -3,6 +3,7 @@ package com.workgo.catalog.controller.internalController;
 import com.workgo.catalog.dto.ApiResponse;
 import com.workgo.catalog.dto.PageResponse;
 import com.workgo.catalog.dto.request.ServiceCreationRequest;
+import com.workgo.catalog.dto.request.ServiceRatingStatsRequest;
 import com.workgo.catalog.dto.request.ServiceUpdateRequest;
 import com.workgo.catalog.dto.response.ServiceCreationResponse;
 import com.workgo.catalog.dto.response.ServiceResponse;
@@ -29,6 +30,15 @@ public class InternalServiceController {
             @PathVariable UUID serviceId
     ) {
         return serviceService.getService(serviceId);
+    }
+
+    //review-service cap nhat rating cua service
+    @PutMapping("/{serviceId}/rating-stats")
+    ServiceResponse updateRatingStats(
+            @PathVariable UUID serviceId,
+            @RequestBody ServiceRatingStatsRequest request
+    ) {
+        return serviceService.updateRatingStats(serviceId, request);
     }
 
 }

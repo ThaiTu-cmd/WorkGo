@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +41,8 @@ public class RefundService {
     RefundRepository refundRepository;
     EscrowAccountRepository escrowAccountRepository;
     EscrowService escrowService;
+    EscrowLockService escrowLocks;
+    TrustDisputeGuard disputeGuard;
     EscrowMapper escrowMapper;
     Map<PaymentGateway, PaymentGatewayClient> gatewayClients;
 
@@ -55,8 +58,7 @@ public class RefundService {
             throw new AppException(ErrorCode.REFUND_PERCENT_NOT_SUPPORTED);
         }
 
-        EscrowAccount escrow = escrowAccountRepository.findByOrderId(request.getOrderId())
-                .orElseThrow(() -> new AppException(ErrorCode.ESCROW_NOT_FOUND));
+        EscrowAccount escrow = escrowLocks.lock(request.getOrderId());
 
         //order goi lai -> tra ket qua cu
         if (escrow.getStatus() == EscrowStatus.REFUNDED) {
@@ -66,7 +68,7 @@ public class RefundService {
         RefundReason reason = request.getReasonCode() == null
                 ? RefundReason.ORDER_CANCELLED : request.getReasonCode();
 
-        refund(escrow.getPayment(), escrow, reason, TriggeredBy.ORDER);
+        refundWithDispute(escrow.getPayment(), escrow, reason, TriggeredBy.ORDER, request.getDisputeId());
 
         return escrowMapper.toResponse(escrow);
     }
@@ -74,6 +76,20 @@ public class RefundService {
     //hoan toan bo payment, escrow = null khi payment trung chua duoc hold
     @Transactional(propagation = Propagation.MANDATORY)
     public Refund refund(Payment payment, EscrowAccount escrow, RefundReason reason, TriggeredBy initiatedBy) {
+
+        return refundWithDispute(payment, escrow, reason, initiatedBy, null);
+    }
+
+    private Refund refundWithDispute(Payment payment, EscrowAccount escrow, RefundReason reason,
+                                     TriggeredBy initiatedBy, UUID disputeId) {
+        // A null argument is valid only for a payment which genuinely has no held escrow.
+        if (escrow == null) {
+            escrow = escrowAccountRepository.findByPayment_PaymentId(payment.getPaymentId()).orElse(null);
+        }
+        // Lock BEFORE receipt lookup or external gateway: all financial paths share this boundary.
+        if (escrow != null) {
+            escrow = escrowLocks.lock(escrow.getOrderId());
+        }
 
         //moi payment chi refund 1 lan
         Optional<Refund> existing = refundRepository.findByPayment_PaymentId(payment.getPaymentId());
@@ -85,6 +101,10 @@ public class RefundService {
         //check truoc khi goi gateway, tranh tra tien roi moi bao loi
         if (escrow != null && !escrow.getStatus().canTransitionTo(EscrowStatus.REFUNDED)) {
             throw new AppException(ErrorCode.ESCROW_INVALID_STATUS);
+        }
+
+        if (escrow != null) {
+            disputeGuard.assertMayTransfer(escrow, disputeId);
         }
 
         Refund refund = refundRepository.save(Refund.builder()

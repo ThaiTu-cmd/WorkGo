@@ -1,8 +1,11 @@
 package com.workgo.payment.service;
 
+import com.workgo.payment.dto.request.EscrowFreezeRequest;
 import com.workgo.payment.dto.request.EscrowReleaseRequest;
 import com.workgo.payment.dto.response.EscrowAccountResponse;
 import com.workgo.payment.entity.EscrowAccount;
+import com.workgo.payment.entity.EscrowCommandReceipt;
+import com.workgo.payment.reppository.EscrowCommandReceiptRepository;
 import com.workgo.payment.entity.EscrowTransaction;
 import com.workgo.payment.entity.Payment;
 import com.workgo.payment.entity.Refund;
@@ -36,6 +39,9 @@ public class EscrowService {
 
     EscrowAccountRepository escrowAccountRepository;
     EscrowTransactionRepository escrowTransactionRepository;
+    EscrowCommandReceiptRepository commandReceipts;
+    EscrowLockService escrowLocks;
+    TrustDisputeGuard disputeGuard;
     EscrowMapper escrowMapper;
     TokenUtils tokenUtils;
 
@@ -80,13 +86,14 @@ public class EscrowService {
             throw new AppException(ErrorCode.PAYMENT_ORDER_ID_REQUIRED);
         }
 
-        EscrowAccount escrow = escrowAccountRepository.findByOrderId(request.getOrderId())
-                .orElseThrow(() -> new AppException(ErrorCode.ESCROW_NOT_FOUND));
+        EscrowAccount escrow = escrowLocks.lock(request.getOrderId());
 
         //order goi lai -> tra ket qua cu, khong ghi txn moi
         if (escrow.getStatus() == EscrowStatus.RELEASED) {
             return escrowMapper.toResponse(escrow);
         }
+
+        disputeGuard.assertMayTransfer(escrow, request.getDisputeId());
 
         if (!escrow.getStatus().canTransitionTo(EscrowStatus.RELEASED)) {
             throw new AppException(ErrorCode.ESCROW_INVALID_STATUS);
@@ -137,6 +144,63 @@ public class EscrowService {
         log.info("Escrow refunded {} for order {}, reason {}", refund.getAmount(), escrow.getOrderId(), refund.getReasonCode());
     }
 
+    @Transactional
+    public EscrowAccountResponse freeze(EscrowFreezeRequest request) {
+        return applyDisputeCommand(request, EscrowTxnType.FREEZE);
+    }
+
+    @Transactional
+    public EscrowAccountResponse unfreeze(EscrowFreezeRequest request) {
+        return applyDisputeCommand(request, EscrowTxnType.UNFREEZE);
+    }
+
+    private EscrowAccountResponse applyDisputeCommand(EscrowFreezeRequest request, EscrowTxnType operation) {
+        EscrowAccount escrow = loadEscrowForDispute(request);
+        String reason = loadReasonCode(request, operation == EscrowTxnType.FREEZE
+                ? "DISPUTE_OPENED" : "DISPUTE_WITHDRAWN");
+        Optional<EscrowCommandReceipt> previous = commandReceipts.findByOrderIdAndDisputeIdAndOperation(
+                request.getOrderId(), request.getDisputeId(), operation);
+        if (previous.isPresent()) {
+            if (!previous.get().getReasonCode().equals(reason)) {
+                throw new AppException(ErrorCode.ESCROW_COMMAND_CONFLICT);
+            }
+            // A replay acknowledges the committed command and returns CURRENT state.
+            return escrowMapper.toResponse(escrow);
+        }
+        if (operation == EscrowTxnType.FREEZE) {
+            boolean withdrawn = commandReceipts.findByOrderIdAndDisputeIdAndOperation(
+                    request.getOrderId(), request.getDisputeId(), EscrowTxnType.UNFREEZE).isPresent();
+            if (!withdrawn) {
+                if (escrow.getStatus() != EscrowStatus.HOLDING) {
+                    throw new AppException(escrow.getStatus() == EscrowStatus.FROZEN
+                            ? ErrorCode.ESCROW_DISPUTE_CONFLICT : ErrorCode.ESCROW_INVALID_STATUS);
+                }
+                escrow.setActiveDisputeId(request.getDisputeId());
+                escrow.setStatus(EscrowStatus.FROZEN);
+                addTransaction(escrow, operation, escrow.getHeldAmount(), escrow.getHeldAmount(),
+                        TriggeredBy.SYSTEM, reason, request.getDisputeId());
+            }
+        } else {
+            if (escrow.getStatus() == EscrowStatus.FROZEN) {
+                if (request.getDisputeId().equals(escrow.getActiveDisputeId())) {
+                    escrow.setStatus(EscrowStatus.HOLDING);
+                    escrow.setActiveDisputeId(null);
+                    addTransaction(escrow, operation, escrow.getHeldAmount(), escrow.getHeldAmount(),
+                            TriggeredBy.SYSTEM, reason, request.getDisputeId());
+                }
+                // A withdrawal for another lifecycle persists its tombstone but never unlocks this owner.
+                // Response remains FROZEN: ACK is not a claim that the current escrow was unfrozen.
+            } else if (escrow.getStatus() != EscrowStatus.HOLDING) {
+                throw new AppException(ErrorCode.ESCROW_INVALID_STATUS);
+            }
+            // HOLDING still persists a tombstone: withdrawal may arrive before freeze.
+        }
+        commandReceipts.save(EscrowCommandReceipt.builder().orderId(request.getOrderId())
+                .disputeId(request.getDisputeId()).operation(operation).reasonCode(reason).build());
+        escrow.setUpdatedAt(Instant.now());
+        return escrowMapper.toResponse(escrowAccountRepository.save(escrow));
+    }
+
     //client hoac provider cua order xem tien dang giu
     @Transactional(readOnly = true)
     public EscrowAccountResponse getEscrowOfOrder(UUID orderId) {
@@ -155,14 +219,40 @@ public class EscrowService {
     private void addTransaction(EscrowAccount escrow, EscrowTxnType type, BigDecimal amount,
                                 BigDecimal balanceAfter, TriggeredBy triggeredBy, String reasonCode) {
 
+        addTransaction(escrow, type, amount, balanceAfter, triggeredBy, reasonCode, null);
+    }
+
+    //sagaId luu disputeId de truy vet freeze/unfreeze
+    private void addTransaction(EscrowAccount escrow, EscrowTxnType type, BigDecimal amount,
+                                BigDecimal balanceAfter, TriggeredBy triggeredBy, String reasonCode, UUID sagaId) {
+
         escrow.getTransactions().add(escrowTransactionRepository.save(EscrowTransaction.builder()
                 .txnType(type)
                 .amount(amount)
                 .balanceAfter(balanceAfter)
                 .triggeredBy(triggeredBy)
                 .reasonCode(reasonCode)
+                .sagaId(sagaId)
                 .escrowAccount(escrow)
                 .build()));
+    }
+
+    private EscrowAccount loadEscrowForDispute(EscrowFreezeRequest request) {
+
+        if (request.getOrderId() == null) {
+            throw new AppException(ErrorCode.PAYMENT_ORDER_ID_REQUIRED);
+        }
+
+        if (request.getDisputeId() == null) {
+            throw new AppException(ErrorCode.ESCROW_DISPUTE_ID_REQUIRED);
+        }
+
+        return escrowLocks.lock(request.getOrderId());
+    }
+
+    private String loadReasonCode(EscrowFreezeRequest request, String defaultReason) {
+        return request.getReasonCode() == null || request.getReasonCode().isBlank()
+                ? defaultReason : request.getReasonCode();
     }
 
     //nguoi ngoai -> bao not found de khong lo escrow cua nguoi khac

@@ -1,10 +1,13 @@
 package com.workgo.identity.controller.internal;
 
+import com.workgo.identity.dto.request.RatingStatsRequest;
 import com.workgo.identity.dto.response.InternalProviderProfileResponse;
 import com.workgo.identity.service.InternalProviderProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
@@ -18,5 +21,12 @@ public class InternalProviderProfileController {
     @GetMapping("/{providerId}")
     InternalProviderProfileResponse getProviderProfile(@PathVariable UUID providerId) {
         return providerProfileService.getProviderProfile(providerId);
+    }
+
+    //review-service cap nhat rating cua provider
+    @PutMapping("/{providerId}/rating-stats")
+    InternalProviderProfileResponse updateRatingStats(@PathVariable UUID providerId,
+                                                      @RequestBody RatingStatsRequest request) {
+        return providerProfileService.updateRatingStats(providerId, request);
     }
 }

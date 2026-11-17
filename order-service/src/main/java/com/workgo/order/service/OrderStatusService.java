@@ -2,6 +2,7 @@ package com.workgo.order.service;
 
 import com.workgo.order.entity.Order;
 import com.workgo.order.entity.OrderStatusHistory;
+import com.workgo.order.entity.OrderCompletedOutbox;
 import com.workgo.order.enumeration.OrderStatus;
 import com.workgo.order.enumeration.PaymentStatus;
 import com.workgo.order.enumeration.RoleName;
@@ -9,6 +10,7 @@ import com.workgo.order.exception.AppException;
 import com.workgo.order.exception.ErrorCode;
 import com.workgo.order.reppository.OrderRepository;
 import com.workgo.order.reppository.OrderStatusHistoryRepository;
+import com.workgo.order.reppository.OrderCompletedOutboxRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -32,6 +34,7 @@ public class OrderStatusService {
     OrderStatusHistoryRepository orderStatusHistoryRepository;
     OrderRepository orderRepository;
     PaymentSyncService paymentSyncService;
+    OrderCompletedOutboxRepository orderCompletedOutboxRepository;
 
     @Transactional(propagation = Propagation.MANDATORY )
     public void recordCreated(Order order, UUID clientId){
@@ -39,6 +42,7 @@ public class OrderStatusService {
     }
 
     //chuyen trang thai cua order
+    @Transactional(propagation = Propagation.MANDATORY)
     public void transition(Order order, OrderStatus toStatus, UUID actorId, RoleName roleName){
 
         OrderStatus fromStatus = order.getOrderStatus();
@@ -66,6 +70,10 @@ public class OrderStatusService {
         orderRepository.save(order);
 
         saveHistory(order, fromStatus, toStatus, actorId, roleName);
+
+        if (toStatus == OrderStatus.COMPLETED) {
+            orderCompletedOutboxRepository.save(OrderCompletedOutbox.from(order));
+        }
 
         //3 cho COMPLETED (digital accept, onsite accept, auto complete) deu di qua day
         if (toStatus == OrderStatus.COMPLETED && order.getPaymentStatus() == PaymentStatus.SUCCEEDED) {

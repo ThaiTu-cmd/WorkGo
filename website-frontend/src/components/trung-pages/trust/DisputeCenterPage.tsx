@@ -1,43 +1,34 @@
 "use client";
-// Trung Tâm Khiếu Nại Demo
 
+// Trung Tâm Khiếu Nại Demo
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ShieldAlert } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { trustApi, useAuthToken } from "../../webapp-bridge/backend";
-import { mockDisputes, type Dispute, type DisputeKind, type DisputeStatus } from "../_mocks/mockDisputes";
-import { KEYS } from "../_stores/keys";
-import { useLocalList } from "../_stores/useLocalList";
+import { type Dispute, type DisputeKind, type DisputeStatus } from "../_mocks/mockDisputes";
 import styles from "./DisputeCenterPage.module.css";
+
 export type TrungPageProps = {
   onNavigate: (page: TrungPageKey, params?: CatalogFilterParams) => void;
   onShowToast: (message: string) => void;
 };
+
 function stripHtml(s: unknown): string {
   return String(s ?? "").replace(/<[^>]*>/g, "");
 }
+
 function sanitizeText(s: unknown): string {
   return stripHtml(s).replace(/\s+/g, " ").trim();
 }
+
 export default function DisputeCenterPage({
   onShowToast
 }: TrungPageProps) {
   const tr = useTranslations("misc");
   const token = useAuthToken();
   const [submitting, setSubmitting] = useState(false);
-  const quotaToast = useCallback(() => onShowToast(tr("m1175")), [onShowToast, tr]);
-  const seed = mockDisputes.map(d => ({
-    ...d,
-    id: d.ticketId
-  }));
-  const {
-    items,
-    add,
-    update
-  } = useLocalList<Dispute & {
-    id: string;
-  }>(KEYS.disputes, seed, quotaToast);
+  const [items, setItems] = useState<(Dispute & { id: string })[]>([]);
   const [filter, setFilter] = useState<"ALL" | DisputeStatus>("ALL");
   const [kind, setKind] = useState<DisputeKind>("REPORT");
   const [orderId, setOrderId] = useState("");
@@ -45,57 +36,58 @@ export default function DisputeCenterPage({
   const [evidenceUrl, setEvidenceUrl] = useState("");
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
-  useEffect(() => {
-    try {
-      if (window.localStorage.getItem(KEYS.disputes) == null) {
-        window.localStorage.setItem(KEYS.disputes, JSON.stringify(mockDisputes));
-      }
-    } catch {
-      /* bỏ qua */
-    }
-  }, []);
 
   useEffect(() => {
     if (!token) return undefined;
     let cancelled = false;
-    trustApi.getMyDisputes({ size: 50 }).then((res: { result?: { data?: unknown[] } }) => {
-      if (cancelled || !res?.result?.data) return;
-      const apiDisputes = res.result.data as Array<{
-        disputeId?: string;
-        orderId?: string;
-        reason?: string;
-        description?: string;
-        status?: string;
-        createdAt?: string;
-      }>;
-      for (const d of apiDisputes) {
-        if (!d.disputeId) continue;
-        const exists = items.some(it => it.ticketId === d.disputeId || it.id === d.disputeId);
-        if (!exists) {
-          add({
-            id: d.disputeId,
-            ticketId: d.disputeId,
-            kind: "DISPUTE",
-            orderId: d.orderId || "",
-            reason: d.reason || "",
-            status: (d.status as DisputeStatus) || "OPEN",
-            createdAt: d.createdAt ? d.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
-          });
+
+    trustApi
+      .getMyDisputes({ size: 50 })
+      .then((res: { result?: { data?: unknown[] } }) => {
+        if (cancelled) return;
+        const apiDisputes = (res?.result?.data || (Array.isArray(res?.result) ? res.result : [])) as Array<{
+          disputeId?: string;
+          orderId?: string;
+          reason?: string;
+          description?: string;
+          status?: string;
+          createdAt?: string;
+        }>;
+        if (Array.isArray(apiDisputes)) {
+          setItems(
+            apiDisputes
+              .filter(d => Boolean(d.disputeId))
+              .map(d => ({
+                id: d.disputeId!,
+                ticketId: d.disputeId!,
+                kind: "DISPUTE",
+                orderId: d.orderId || "",
+                reason: d.reason || d.description || "",
+                status: (d.status as DisputeStatus) || "OPEN",
+                createdAt: d.createdAt ? d.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
+              }))
+          );
         }
-      }
-    }).catch(() => {
-      /* fallback to local store */
-    });
+      })
+      .catch(() => {
+        if (!cancelled) setItems([]);
+      });
+
     return () => {
       cancelled = true;
     };
-  }, [token, add, items]);
+  }, [token]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanOrder = sanitizeText(orderId);
     const cleanReason = sanitizeText(reason);
     const cleanEvidence = sanitizeText(evidenceUrl);
+
+    if (!token) {
+      setError("Vui lòng đăng nhập để gửi khiếu nại.");
+      return;
+    }
     if (cleanOrder.length < 2) {
       setError(tr("m1400"));
       return;
@@ -115,51 +107,50 @@ export default function DisputeCenterPage({
     }
     setError("");
     setSubmitting(true);
-    let ticketId = `TCK-${Date.now().toString().slice(-6)}`;
+
     try {
-      if (token) {
-        const res = await trustApi.createDispute({
+      const res = await trustApi.createDispute({
+        orderId: cleanOrder,
+        reason: cleanReason,
+        description: cleanReason,
+        evidenceUrl: cleanEvidence || undefined,
+      });
+
+      const newId = res?.result?.disputeId || `DISP-${Date.now()}`;
+      setItems(prev => [
+        {
+          id: newId,
+          ticketId: newId,
+          kind,
           orderId: cleanOrder,
           reason: cleanReason,
-          description: cleanReason,
           evidenceUrl: cleanEvidence || undefined,
-        });
-        if (res?.result?.disputeId) ticketId = res.result.disputeId;
-      }
-    } catch {
-      // In dev or when live service is unreachable, proceed with local record
+          status: "OPEN",
+          createdAt: new Date().toISOString().slice(0, 10),
+        },
+        ...prev,
+      ]);
+      setOrderId("");
+      setReason("");
+      setEvidenceUrl("");
+      onShowToast(tr("m1403"));
+    } catch (err: unknown) {
+      const msg = (err as Error)?.message || tr("m1140");
+      setError(msg);
+      onShowToast(msg);
     } finally {
       setSubmitting(false);
     }
-    add({
-      id: ticketId,
-      ticketId,
-      kind,
-      orderId: cleanOrder,
-      reason: cleanReason,
-      evidenceUrl: cleanEvidence || undefined,
-      status: "OPEN",
-      createdAt: new Date().toISOString().slice(0, 10)
-    });
-    setOrderId("");
-    setReason("");
-    setEvidenceUrl("");
-    onShowToast(tr("m1403"));
   };
-  const visible = items.filter(t => filter === "ALL" ? true : t.status === filter);
-  return <main className={styles.wrap}>
+
+  const visible = items.filter(t => (filter === "ALL" ? true : t.status === filter));
+
+  return (
+    <main className={styles.wrap}>
       <h1 className={styles.title}>
-        <ShieldAlert size={24} className={styles.titleIcon} aria-hidden="true" />{tr("m1410")}</h1>
-      <div style={{
-      padding: "10px 14px",
-      backgroundColor: "#fef3c7",
-      border: "1px solid #fde68a",
-      borderRadius: "8px",
-      color: "#92400e",
-      fontSize: "0.85rem",
-      marginBottom: "16px",
-      fontWeight: 500
-    }}>{tr("m1411")}</div>
+        <ShieldAlert size={24} className={styles.titleIcon} aria-hidden="true" />
+        {tr("m1410")}
+      </h1>
       <p className={styles.sub}>{tr("m1412")}</p>
 
       <form onSubmit={submit} noValidate className={styles.form}>
@@ -167,8 +158,8 @@ export default function DisputeCenterPage({
           <label className={styles.field}>
             <span>{tr("m1413")}</span>
             <select value={kind} onChange={e => setKind(e.target.value as DisputeKind)}>
-              <option value="REPORT">{tr("m1414")}</option>
-              <option value="DISPUTE">{tr("m1415")}</option>
+              <option value="REPORT">{tr("m1408")}</option>
+              <option value="DISPUTE">{tr("m59")}</option>
             </select>
           </label>
           <label className={styles.field}>
@@ -178,25 +169,54 @@ export default function DisputeCenterPage({
         </div>
         <label className={styles.field}>
           <span>{tr("m1417")}</span>
-          <textarea value={reason} onChange={e => setReason(e.target.value)} rows={4} placeholder={tr("m1404")} />
+          <textarea
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+            rows={4}
+            placeholder={tr("m1404")}
+          />
         </label>
         <label className={styles.field}>
           <span>{tr("m1418")}</span>
-          <input value={evidenceUrl} onChange={e => setEvidenceUrl(e.target.value)} placeholder="https://..." inputMode="url" />
+          <input
+            value={evidenceUrl}
+            onChange={e => setEvidenceUrl(e.target.value)}
+            placeholder="https://..."
+            inputMode="url"
+          />
         </label>
         {error ? <em className={styles.error}>{error}</em> : null}
-        <button type="submit" className={styles.submit} disabled={submitting}>{tr("m1419")}</button>
+        <button type="submit" className={styles.submit} disabled={submitting}>
+          {tr("m1419")}
+        </button>
       </form>
 
       <div className={styles.filterRow} role="group" aria-label={tr("m1405")}>
-        {(["ALL", "OPEN", "RESOLVED"] as const).map(s => <button key={s} type="button" className={s === filter ? `${styles.chip} ${styles.chipActive}` : styles.chip} aria-pressed={s === filter} onClick={() => setFilter(s)}>
+        {(["ALL", "OPEN", "RESOLVED"] as const).map(s => (
+          <button
+            key={s}
+            type="button"
+            className={s === filter ? `${styles.chip} ${styles.chipActive}` : styles.chip}
+            aria-pressed={s === filter}
+            onClick={() => setFilter(s)}
+          >
             {s === "ALL" ? tr("m142") : s === "OPEN" ? tr("m1406") : tr("m1407")}
-          </button>)}
+          </button>
+        ))}
       </div>
 
-      {visible.length === 0 ? <p className={styles.empty}>{tr("m1421")}</p> : <ul className={styles.list}>
-          {visible.map(t => <li key={t.ticketId} className={styles.item}>
-              <button type="button" className={styles.itemHead} aria-expanded={expanded === t.ticketId} onClick={() => setExpanded(expanded === t.ticketId ? null : t.ticketId)}>
+      {visible.length === 0 ? (
+        <p className={styles.empty}>{tr("m1421")}</p>
+      ) : (
+        <ul className={styles.list}>
+          {visible.map(t => (
+            <li key={t.ticketId} className={styles.item}>
+              <button
+                type="button"
+                className={styles.itemHead}
+                aria-expanded={expanded === t.ticketId}
+                onClick={() => setExpanded(expanded === t.ticketId ? null : t.ticketId)}
+              >
                 <span className={styles.ticketId}>{t.ticketId}</span>
                 <span className={styles.kind}>{t.kind === "REPORT" ? tr("m1408") : tr("m59")}</span>
                 <span className={styles.order}>{t.orderId}</span>
@@ -204,19 +224,22 @@ export default function DisputeCenterPage({
                   {t.status === "OPEN" ? tr("m1406") : tr("m1407")}
                 </span>
               </button>
-              {expanded === t.ticketId ? <div className={styles.detail}>
+              {expanded === t.ticketId ? (
+                <div className={styles.detail}>
                   <p className={styles.reason}>{t.reason}</p>
-                  {t.evidenceUrl ? <p className={styles.evidence}>{tr("m1424")}<span>{t.evidenceUrl}</span>
-                    </p> : null}
+                  {t.evidenceUrl ? (
+                    <p className={styles.evidence}>
+                      {tr("m1424")}
+                      <span>{t.evidenceUrl}</span>
+                    </p>
+                  ) : null}
                   <p className={styles.date}>{t.createdAt}</p>
-                  {t.status === "OPEN" ? <button type="button" className={styles.ghost} onClick={() => {
-            update(t.id, {
-              status: "RESOLVED"
-            });
-            onShowToast(tr("m1409"));
-          }}>{tr("m1425")}</button> : null}
-                </div> : null}
-            </li>)}
-        </ul>}
-    </main>;
+                </div>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
+    </main>
+  );
 }

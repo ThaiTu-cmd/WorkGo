@@ -6,39 +6,54 @@ import { useState } from "react";
 import { FilePlus2 } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { jobApi, catalogApi, useAuthToken } from "../../webapp-bridge/backend";
-import { JOB_TYPES, mockJobs, type Job, type JobType } from "../_mocks/mockJobs";
-import { KEYS } from "../_stores/keys";
+import { JOB_TYPES, type JobType } from "../_mocks/mockJobs";
 import styles from "./JobPostPage.module.css";
+
 export type TrungPageProps = {
   onNavigate: (page: TrungPageKey, params?: CatalogFilterParams) => void;
   onShowToast: (message: string) => void;
 };
+
 export const TITLE_MIN = 15;
 export const TITLE_MAX = 100;
 export const DESC_MIN = 20;
 export const PRICE_MIN = 50000;
 export const PRICE_MAX = 100000000;
+
 export function stripHtml(s: unknown): string {
   return String(s ?? "").replace(/<[^>]*>/g, "");
 }
+
 export function sanitizeText(s: unknown): string {
   return stripHtml(s).replace(/\s+/g, " ").trim();
 }
+
 export function slugify(s: string): string {
-  return sanitizeText(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").slice(0, 80);
+  return sanitizeText(s)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .slice(0, 80);
 }
+
 // Validators return a message from the "misc" dictionary, so they take the page's translator.
 type Tr = (key: string, values?: Record<string, string | number>) => string;
+
 export function validateJobTitle(raw: string, tr: Tr): string | undefined {
   const clean = sanitizeText(raw);
   if (clean.length < TITLE_MIN) return tr("m1667", { p0: TITLE_MIN, p1: TITLE_MAX });
   if (clean.length > TITLE_MAX) return tr("m1668", { p0: clean.length, p1: TITLE_MAX });
   return undefined;
 }
+
 export function validateJobDescription(raw: string, tr: Tr): string | undefined {
   const clean = sanitizeText(raw);
   return clean.length < DESC_MIN ? tr("m1669", { p0: DESC_MIN }) : undefined;
 }
+
 export function validateJobBudget(raw: string, tr: Tr): string | undefined {
   const budget = Number(String(raw).replace(/[^\d]/g, ""));
   if (!Number.isFinite(budget) || budget <= 0) return tr("m1670");
@@ -46,6 +61,7 @@ export function validateJobBudget(raw: string, tr: Tr): string | undefined {
   if (budget > PRICE_MAX) return tr("m1672", { p0: PRICE_MAX.toLocaleString("vi-VN") });
   return undefined;
 }
+
 export default function JobPostPage({
   onNavigate,
   onShowToast
@@ -63,6 +79,7 @@ export default function JobPostPage({
     budget?: string;
     form?: string;
   }>({});
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const next: typeof errors = {
@@ -72,142 +89,170 @@ export default function JobPostPage({
     };
     setErrors(next);
     if (next.title ?? next.description ?? next.budget) return;
+
+    if (!token) {
+      onShowToast("Vui lòng đăng nhập để đăng tin việc làm.");
+      return;
+    }
+
     const cleanTitle = sanitizeText(title);
     const cleanDesc = sanitizeText(description);
     const budget = Number(String(budgetRaw).replace(/[^\d]/g, ""));
-    let jobId = `job-${Date.now()}`;
     setSubmitting(true);
+
     try {
-      if (token) {
-        // Fetch root category if available for API contract requirement
-        let categoryId = "00000000-0000-0000-0000-000000000001";
-        try {
-          const catRes = await catalogApi.getRootCategories();
-          const categories = catRes?.result || catRes;
-          if (Array.isArray(categories) && categories[0]?.categoryId) {
-            categoryId = categories[0].categoryId;
-          }
-        } catch {
-          // ignore
+      let categoryId = "00000000-0000-0000-0000-000000000001";
+      try {
+        const catRes = await catalogApi.getRootCategories();
+        const categories = catRes?.result || catRes;
+        if (Array.isArray(categories) && categories[0]?.categoryId) {
+          categoryId = categories[0].categoryId;
         }
-        const created = await jobApi.createJob({
-          title: cleanTitle,
-          description: cleanDesc,
-          categoryId,
-          budgetMin: budget,
-          budgetMax: budget,
-          currency: "VND",
-          executionType: type,
-        });
-        if (created?.result?.jobId) {
-          jobId = created.result.jobId;
-        }
+      } catch {
+        // Fallback default category
       }
-    } catch {
-      // In dev or offline, fallback to local record
+
+      await jobApi.createJob({
+        title: cleanTitle,
+        description: cleanDesc,
+        categoryId,
+        budgetMin: budget,
+        budgetMax: budget,
+        currency: "VND",
+        executionType: type,
+      });
+
+      onShowToast(tr("m1176"));
+      onNavigate("job-list");
+    } catch (err: unknown) {
+      const msg = (err as Error)?.message || tr("m1140");
+      onShowToast(msg);
+      setErrors(prev => ({ ...prev, form: msg }));
     } finally {
       setSubmitting(false);
     }
-
-    const job: Job = {
-      jobId,
-      title: cleanTitle,
-      description: cleanDesc,
-      budget,
-      type,
-      clientName: tr("m1174"),
-      createdAt: new Date().toISOString().slice(0, 10)
-    };
-    void slugify(cleanTitle);
-    try {
-      const raw = window.localStorage.getItem(KEYS.jobs);
-      const list = raw ? JSON.parse(raw) as Job[] : mockJobs;
-      window.localStorage.setItem(KEYS.jobs, JSON.stringify([job, ...(Array.isArray(list) ? list : mockJobs)]));
-    } catch {
-      onShowToast(tr("m1175"));
-      return;
-    }
-    onShowToast(tr("m1176"));
-    onNavigate("job-list");
   };
-  return <main className={styles.wrap}>
+
+  return (
+    <main className={styles.wrap}>
       <div className={styles.card}>
         <h1 className={styles.title}>
-          <FilePlus2 size={24} className={styles.titleIcon} aria-hidden="true" />{tr("m1182")}</h1>
-        <div style={{
-        padding: "10px 14px",
-        backgroundColor: "#fef3c7",
-        border: "1px solid #fde68a",
-        borderRadius: "8px",
-        color: "#92400e",
-        fontSize: "0.85rem",
-        marginBottom: "16px",
-        fontWeight: 500
-      }}>{tr("m1164")}</div>
+          <FilePlus2 size={24} className={styles.titleIcon} aria-hidden="true" />
+          {tr("m1182")}
+        </h1>
         <p className={styles.sub}>{tr("m1183")}</p>
         <form onSubmit={submit} noValidate className={styles.form}>
           <label className={styles.field}>
             <span>{tr("m1184")}</span>
-            <input type="text" autoFocus value={title} onChange={e => {
-            setTitle(e.target.value);
-            if (errors.title) setErrors(prev => ({
-              ...prev,
-              title: validateJobTitle(e.target.value, tr)
-            }));
-          }} onBlur={() => setErrors(prev => ({
-            ...prev,
-            title: validateJobTitle(title, tr)
-          }))} placeholder={tr("m1177")} aria-invalid={errors.title ? true : undefined} aria-describedby={errors.title ? "jobpost-title-error" : undefined} />
-            {errors.title ? <em id="jobpost-title-error" className={styles.error}>
+            <input
+              type="text"
+              autoFocus
+              value={title}
+              onChange={e => {
+                setTitle(e.target.value);
+                if (errors.title)
+                  setErrors(prev => ({
+                    ...prev,
+                    title: validateJobTitle(e.target.value, tr)
+                  }));
+              }}
+              onBlur={() =>
+                setErrors(prev => ({
+                  ...prev,
+                  title: validateJobTitle(title, tr)
+                }))
+              }
+              placeholder={tr("m1177")}
+              aria-invalid={errors.title ? true : undefined}
+              aria-describedby={errors.title ? "jobpost-title-error" : undefined}
+            />
+            {errors.title ? (
+              <em id="jobpost-title-error" className={styles.error}>
                 {errors.title}
-              </em> : null}
+              </em>
+            ) : null}
           </label>
           <label className={styles.field}>
             <span>{tr("m1185")}</span>
-            <textarea value={description} onChange={e => {
-            setDescription(e.target.value);
-            if (errors.description) setErrors(prev => ({
-              ...prev,
-              description: validateJobDescription(e.target.value, tr)
-            }));
-          }} onBlur={() => setErrors(prev => ({
-            ...prev,
-            description: validateJobDescription(description, tr)
-          }))} placeholder={tr("m1178")} rows={5} aria-invalid={errors.description ? true : undefined} aria-describedby={errors.description ? "jobpost-description-error" : undefined} />
-            {errors.description ? <em id="jobpost-description-error" className={styles.error}>
+            <textarea
+              value={description}
+              onChange={e => {
+                setDescription(e.target.value);
+                if (errors.description)
+                  setErrors(prev => ({
+                    ...prev,
+                    description: validateJobDescription(e.target.value, tr)
+                  }));
+              }}
+              onBlur={() =>
+                setErrors(prev => ({
+                  ...prev,
+                  description: validateJobDescription(description, tr)
+                }))
+              }
+              placeholder={tr("m1178")}
+              rows={5}
+              aria-invalid={errors.description ? true : undefined}
+              aria-describedby={errors.description ? "jobpost-description-error" : undefined}
+            />
+            {errors.description ? (
+              <em id="jobpost-description-error" className={styles.error}>
                 {errors.description}
-              </em> : null}
+              </em>
+            ) : null}
           </label>
           <div className={styles.row}>
             <label className={styles.field}>
               <span>{tr("m1186")}</span>
-              <input type="text" value={budgetRaw} onChange={e => {
-              setBudgetRaw(e.target.value);
-              if (errors.budget) setErrors(prev => ({
-                ...prev,
-                budget: validateJobBudget(e.target.value, tr)
-              }));
-            }} onBlur={() => setErrors(prev => ({
-              ...prev,
-              budget: validateJobBudget(budgetRaw, tr)
-            }))} placeholder="2500000" inputMode="numeric" aria-invalid={errors.budget ? true : undefined} aria-describedby={errors.budget ? "jobpost-budget-error" : undefined} />
-              {errors.budget ? <em id="jobpost-budget-error" className={styles.error}>
+              <input
+                type="text"
+                value={budgetRaw}
+                onChange={e => {
+                  setBudgetRaw(e.target.value);
+                  if (errors.budget)
+                    setErrors(prev => ({
+                      ...prev,
+                      budget: validateJobBudget(e.target.value, tr)
+                    }));
+                }}
+                onBlur={() =>
+                  setErrors(prev => ({
+                    ...prev,
+                    budget: validateJobBudget(budgetRaw, tr)
+                  }))
+                }
+                placeholder="2500000"
+                inputMode="numeric"
+                aria-invalid={errors.budget ? true : undefined}
+                aria-describedby={errors.budget ? "jobpost-budget-error" : undefined}
+              />
+              {errors.budget ? (
+                <em id="jobpost-budget-error" className={styles.error}>
                   {errors.budget}
-                </em> : null}
+                </em>
+              ) : null}
             </label>
             <label className={styles.field}>
               <span>{tr("m1187")}</span>
               <select value={type} onChange={e => setType(e.target.value as JobType)}>
-                {JOB_TYPES.map(t => <option key={t} value={t}>
+                {JOB_TYPES.map(t => (
+                  <option key={t} value={t}>
                     {t}
-                  </option>)}
+                  </option>
+                ))}
               </select>
             </label>
           </div>
+          {errors.form ? (
+            <p className={styles.error} style={{ marginTop: "8px" }}>
+              {errors.form}
+            </p>
+          ) : null}
           <button type="submit" className={styles.submit} disabled={submitting}>
             {submitting ? tr("m1143") : tr("m57")}
           </button>
         </form>
       </div>
-    </main>;
+    </main>
+  );
 }

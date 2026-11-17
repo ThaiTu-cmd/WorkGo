@@ -3,67 +3,68 @@
 // Prototype Mode
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
-import { ClipboardCheck } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { jobApi, useAuthToken } from "../../webapp-bridge/backend";
-import { mockJobs, type Job } from "../_mocks/mockJobs";
-import { mockProposals, type Proposal } from "../_mocks/mockProposals";
-import { KEYS } from "../_stores/keys";
+import { type Job } from "../_mocks/mockJobs";
+import { type Proposal } from "../_mocks/mockProposals";
 import styles from "./ProposalReviewPage.module.css";
+
 export type TrungPageProps = {
   onNavigate: (page: TrungPageKey, params?: CatalogFilterParams) => void;
   onShowToast: (message: string) => void;
   jobId?: string;
 };
-function loadJobs(): Job[] {
-  if (typeof window === "undefined") return mockJobs;
-  try {
-    const raw = window.localStorage.getItem(KEYS.jobs);
-    if (!raw) return mockJobs;
-    const p = JSON.parse(raw) as unknown;
-    return Array.isArray(p) ? p as Job[] : mockJobs;
-  } catch {
-    return mockJobs;
-  }
-}
-function loadProposals(): Proposal[] {
-  if (typeof window === "undefined") return mockProposals;
-  try {
-    const raw = window.localStorage.getItem(KEYS.proposals);
-    if (!raw) return mockProposals;
-    const p = JSON.parse(raw) as unknown;
-    return Array.isArray(p) ? p as Proposal[] : mockProposals;
-  } catch {
-    return mockProposals;
-  }
-}
+
 export default function ProposalReviewPage({
-  onNavigate,
   onShowToast,
   jobId
 }: TrungPageProps) {
   const tr = useTranslations("misc");
   const token = useAuthToken();
-  // Lazy init is SSR-safe and remounts fresh on every shell navigation
-  // (shell renders pages conditionally), so no post-mount sync is needed.
-  const [jobs] = useState<Job[]>(() => loadJobs());
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJobId, setSelectedJobId] = useState(jobId ?? "");
-  const [proposals, setProposals] = useState<Proposal[]>(() => loadProposals());
-  const persist = (next: Proposal[]) => {
-    setProposals(next);
-    try {
-      window.localStorage.setItem(KEYS.proposals, JSON.stringify(next));
-    } catch {
-      onShowToast(tr("m1175"));
-    }
-  };
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!token || !selectedJobId) return undefined;
     let cancelled = false;
+    jobApi.searchJobs({ page: 0, size: 50 }).then((res: { result?: { data?: unknown[] } }) => {
+      if (cancelled) return;
+      const apiList = (res?.result?.data || (Array.isArray(res?.result) ? res.result : [])) as Array<{
+        jobId: string;
+        title: string;
+      }>;
+      if (Array.isArray(apiList)) {
+        setJobs(apiList.map(j => ({
+          jobId: j.jobId,
+          title: j.title,
+          description: "",
+          budget: 0,
+          type: "DIGITAL",
+          clientName: "",
+          bidsCount: 0,
+          createdAt: ""
+        })));
+        if (!selectedJobId && apiList.length > 0) {
+          setSelectedJobId(apiList[0].jobId);
+        }
+      }
+    }).catch(() => {
+      // Backend not running
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedJobId]);
+
+  useEffect(() => {
+    if (!selectedJobId) return undefined;
+    let cancelled = false;
+
     jobApi.getJobProposals(selectedJobId).then((res: { result?: { data?: unknown[] } }) => {
-      if (cancelled || !res?.result?.data) return;
-      const apiProps = res.result.data as Array<{
+      if (cancelled) return;
+      const apiProps = (res?.result?.data || (Array.isArray(res?.result) ? res.result : [])) as Array<{
         proposalId: string;
         jobId: string;
         price?: number;
@@ -72,7 +73,7 @@ export default function ProposalReviewPage({
         status?: string;
         createdAt?: string;
       }>;
-      if (apiProps.length > 0) {
+      if (Array.isArray(apiProps)) {
         setProposals(apiProps.map(p => ({
           proposalId: p.proposalId,
           jobId: p.jobId,
@@ -83,10 +84,15 @@ export default function ProposalReviewPage({
           status: (p.status as "PENDING" | "ACCEPTED" | "REJECTED") || "PENDING",
           createdAt: p.createdAt ? p.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
         })));
+      } else {
+        setProposals([]);
       }
     }).catch(() => {
-      /* fallback to local store */
+      if (!cancelled) setProposals([]);
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
     });
+
     return () => {
       cancelled = true;
     };
@@ -96,79 +102,123 @@ export default function ProposalReviewPage({
     const rows = selectedJobId ? proposals.filter(p => p.jobId === selectedJobId) : proposals;
     return [...rows].sort((a, b) => a.bidPrice - b.bidPrice);
   }, [proposals, selectedJobId]);
-  const hasAccepted = useMemo(() => selectedJobId ? proposals.some(p => p.jobId === selectedJobId && p.status === "ACCEPTED") : false, [proposals, selectedJobId]);
+
+  const hasAccepted = useMemo(
+    () => (selectedJobId ? proposals.some(p => p.jobId === selectedJobId && p.status === "ACCEPTED") : false),
+    [proposals, selectedJobId]
+  );
+
   const accept = async (id: string) => {
-    const target = proposals.find(p => p.proposalId === id);
-    if (!target) return;
-    if (token) {
-      try {
-        await jobApi.acceptProposal(id);
-      } catch {
-        /* proceed with local sync */
-      }
+    if (!token) {
+      onShowToast("Vui lòng đăng nhập để thao tác");
+      return;
     }
-    // auto REJECTED other pending proposals on the same job
-    const next = proposals.map(p => {
-      if (p.jobId !== target.jobId) return p;
-      if (p.proposalId === id) return {
-        ...p,
-        status: "ACCEPTED" as const
-      };
-      return p.status === "PENDING" ? {
-        ...p,
-        status: "REJECTED" as const
-      } : p;
-    });
-    persist(next);
-    onShowToast(tr("m1189"));
+    try {
+      await jobApi.acceptProposal(id);
+      setProposals(prev =>
+        prev.map(p => (p.proposalId === id ? { ...p, status: "ACCEPTED" } : p.jobId === selectedJobId ? { ...p, status: "REJECTED" } : p))
+      );
+      onShowToast(tr("m1227"));
+    } catch (err: unknown) {
+      onShowToast((err as Error)?.message || tr("m1140"));
+    }
   };
-  const reject = (id: string) => {
-    if (!window.confirm(tr("m1190"))) return;
-    persist(proposals.map(p => p.proposalId === id ? {
-      ...p,
-      status: "REJECTED" as const
-    } : p));
-    onShowToast(tr("m1191"));
+
+  const reject = async (id: string) => {
+    if (!token) {
+      onShowToast("Vui lòng đăng nhập để thao tác");
+      return;
+    }
+    try {
+      await jobApi.rejectProposal(id);
+      setProposals(prev =>
+        prev.map(p => (p.proposalId === id ? { ...p, status: "REJECTED" } : p))
+      );
+      onShowToast(tr("m1228"));
+    } catch (err: unknown) {
+      onShowToast((err as Error)?.message || tr("m1140"));
+    }
   };
-  return <main className={styles.wrap}>
-      <h1 className={styles.title}>
-        <ClipboardCheck size={24} className={styles.titleIcon} aria-hidden="true" />{tr("m58")}</h1>
-      <div style={{
-      padding: "10px 14px",
-      backgroundColor: "#fef3c7",
-      border: "1px solid #fde68a",
-      borderRadius: "8px",
-      color: "#92400e",
-      fontSize: "0.85rem",
-      marginBottom: "16px",
-      fontWeight: 500
-    }}>{tr("m1196")}</div>
-      <p className={styles.sub}>{tr("m1197")}</p>
-      <label className={styles.field}>
-        <span>{tr("m1198")}</span>
-        <select value={selectedJobId} onChange={e => setSelectedJobId(e.target.value)}>
-          <option value="">{tr("m1199")}</option>
-          {jobs.map(j => <option key={j.jobId} value={j.jobId}>
-              {j.title}
-            </option>)}
+
+  return (
+    <main className={styles.wrap}>
+      <div className={styles.head}>
+        <div>
+          <h1 className={styles.title}>{tr("m1224")}</h1>
+          <p className={styles.sub}>{tr("m1234")}</p>
+        </div>
+        <select
+          value={selectedJobId}
+          onChange={e => setSelectedJobId(e.target.value)}
+          aria-label={tr("m1232")}
+          className={styles.jobSelect}
+        >
+          {jobs.length === 0 ? (
+            <option value="">{tr("m1217")}</option>
+          ) : (
+            jobs.map(j => (
+              <option key={j.jobId} value={j.jobId}>
+                {j.title}
+              </option>
+            ))
+          )}
         </select>
-      </label>
-      {selectedJobId === "" ? <p className={styles.hint}>{tr("m1200")}</p> : null}
-      {list.length === 0 ? <p className={styles.empty}>{tr("m1559")}{" "}
-          <button type="button" className={styles.link} onClick={() => onNavigate("job-list")}>{tr("m1202")}</button>
-        </p> : <ul className={styles.list}>
-          {list.map(p => <li key={p.proposalId} className={styles.item}>
-              <p className={styles.provider}>{p.providerName}</p>
-              <p className={styles.bid}>{p.bidPrice.toLocaleString("vi-VN")} ₫ • {p.durationDays}{tr("m1465")}</p>
+      </div>
+
+      {loading ? (
+        <p className={styles.empty}>{tr("m1161")}</p>
+      ) : list.length === 0 ? (
+        <p className={styles.empty}>{tr("m1235")}</p>
+      ) : (
+        <ul className={styles.list}>
+          {list.map(p => (
+            <li key={p.proposalId} className={styles.card}>
+              <div className={styles.row}>
+                <div>
+                  <strong className={styles.provider}>{p.providerName}</strong>
+                  <span className={styles.time}>{p.createdAt}</span>
+                </div>
+                <span className={`${styles.badge} ${styles[p.status.toLowerCase()]}`}>
+                  {p.status === "PENDING"
+                    ? tr("m1237")
+                    : p.status === "ACCEPTED"
+                    ? tr("m1238")
+                    : tr("m1239")}
+                </span>
+              </div>
               <p className={styles.msg}>{p.message}</p>
-              <p className={styles.status} data-status={p.status}>
-                {p.status === "PENDING" ? tr("m222") : p.status === "ACCEPTED" ? tr("m1192") : tr("m1193")}
-              </p>
-              {p.status === "PENDING" ? <div className={styles.actions}>
-                  <button type="button" className={styles.primary} disabled={hasAccepted} onClick={() => accept(p.proposalId)} title={hasAccepted ? tr("m1194") : undefined}>{tr("m1205")}</button>
-                  <button type="button" className={styles.ghost} onClick={() => reject(p.proposalId)}>{tr("m631")}</button>
-                </div> : null}
-            </li>)}
-        </ul>}
-    </main>;
+              <div className={styles.meta}>
+                <span className={styles.price}>
+                  {p.bidPrice.toLocaleString("vi-VN")} ₫
+                </span>
+                <span className={styles.duration}>
+                  {tr("m1236", { p0: p.durationDays })}
+                </span>
+              </div>
+              {p.status === "PENDING" && !hasAccepted ? (
+                <div className={styles.actions}>
+                  <button
+                    type="button"
+                    className={styles.accept}
+                    onClick={() => accept(p.proposalId)}
+                  >
+                    <CheckCircle2 size={16} aria-hidden="true" />
+                    {tr("m1240")}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.reject}
+                    onClick={() => reject(p.proposalId)}
+                  >
+                    <XCircle size={16} aria-hidden="true" />
+                    {tr("m1241")}
+                  </button>
+                </div>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
+    </main>
+  );
 }

@@ -5,51 +5,61 @@ import { useState } from "react";
 import { Landmark } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { KEYS } from "../_stores/keys";
-import { mockPayout, type SavedPayout } from "../_mocks/mockPayout";
+import { type SavedPayout } from "../_mocks/mockPayout";
 import styles from "./PayoutSettingsPage.module.css";
+
 export type TrungPageProps = {
   onNavigate: (page: TrungPageKey, params?: CatalogFilterParams) => void;
   onShowToast: (message: string) => void;
 };
+
 function stripHtml(s: unknown): string {
   return String(s ?? "").replace(/<[^>]*>/g, "");
 }
+
 function sanitizeText(s: unknown): string {
   return stripHtml(s).replace(/\s+/g, " ").trim();
 }
+
 export function maskAccount(n: string): string {
   const digits = n.replace(/\D/g, "");
   if (digits.length <= 4) return digits;
   return `****${digits.slice(-4)}`;
 }
+
 // Validators return a message from the "misc" dictionary, so they take the page's translator.
 type Tr = (key: string, values?: Record<string, string | number>) => string;
+
 export function validatePayoutBank(raw: string, tr: Tr): string | undefined {
   return sanitizeText(raw).length < 2 ? tr("m1676") : undefined;
 }
+
 export function validatePayoutHolder(raw: string, tr: Tr): string | undefined {
   return sanitizeText(raw).length < 2 ? tr("m1677") : undefined;
 }
+
 // Account numbers have 8-19 digits.
 export function validatePayoutAccount(raw: string, tr: Tr): string | undefined {
   const digits = sanitizeText(raw).replace(/\D/g, "");
   return /^\d{8,19}$/.test(digits) ? undefined : tr("m1678");
 }
+
 function loadPayout(): SavedPayout {
-  if (typeof window === "undefined") return mockPayout;
+  if (typeof window === "undefined") return { bankName: "", accountName: "", accountNumber: "" };
   try {
     const raw = window.localStorage.getItem(KEYS.payout);
-    if (!raw) return mockPayout;
+    if (!raw) return { bankName: "", accountName: "", accountNumber: "" };
     const p = JSON.parse(raw) as Partial<SavedPayout>;
     return {
-      bankName: typeof p.bankName === "string" && p.bankName ? p.bankName : mockPayout.bankName,
-      accountName: typeof p.accountName === "string" && p.accountName ? p.accountName : mockPayout.accountName,
-      accountNumber: typeof p.accountNumber === "string" && p.accountNumber ? p.accountNumber : mockPayout.accountNumber
+      bankName: typeof p.bankName === "string" ? p.bankName : "",
+      accountName: typeof p.accountName === "string" ? p.accountName : "",
+      accountNumber: typeof p.accountNumber === "string" ? p.accountNumber : ""
     };
   } catch {
-    return mockPayout;
+    return { bankName: "", accountName: "", accountNumber: "" };
   }
 }
+
 export default function PayoutSettingsPage({
   onShowToast
 }: TrungPageProps) {
@@ -66,6 +76,7 @@ export default function PayoutSettingsPage({
     accountName?: string;
     accountNumber?: string;
   }>({});
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const next: typeof errors = {
@@ -75,15 +86,20 @@ export default function PayoutSettingsPage({
     };
     setErrors(next);
     if (next.bankName ?? next.accountName ?? next.accountNumber) return;
+
     const cleanBank = sanitizeText(bankName);
     const cleanName = sanitizeText(accountName);
     const digits = sanitizeText(accountNumber).replace(/\D/g, "");
+
     try {
-      window.localStorage.setItem(KEYS.payout, JSON.stringify({
-        bankName: cleanBank,
-        accountName: cleanName,
-        accountNumber: digits
-      }));
+      window.localStorage.setItem(
+        KEYS.payout,
+        JSON.stringify({
+          bankName: cleanBank,
+          accountName: cleanName,
+          accountNumber: digits
+        })
+      );
     } catch {
       onShowToast(tr("m1175"));
       return;
@@ -91,76 +107,130 @@ export default function PayoutSettingsPage({
     setSavedMask(maskAccount(digits));
     onShowToast(tr("m1281"));
   };
-  return <main className={styles.wrap}>
+
+  return (
+    <main className={styles.wrap}>
       <div className={styles.card}>
         <h1 className={styles.title}>
-          <Landmark size={24} className={styles.titleIcon} aria-hidden="true" />{tr("m1283")}</h1>
-        <div style={{
-          padding: "12px 16px",
-          backgroundColor: "var(--warning-bg, #fef3c7)",
-          border: "1px solid var(--border-default, #fde68a)",
-          borderRadius: "8px",
-          color: "var(--text-primary, #92400e)",
-          fontSize: "0.85rem",
-          marginBottom: "16px",
-          fontWeight: 500,
-          lineHeight: 1.5
-        }}>
+          <Landmark size={24} className={styles.titleIcon} aria-hidden="true" />
+          {tr("m1283")}
+        </h1>
+        <div
+          style={{
+            padding: "12px 16px",
+            backgroundColor: "var(--warning-bg, #fef3c7)",
+            border: "1px solid var(--border-default, #fde68a)",
+            borderRadius: "8px",
+            color: "var(--text-primary, #92400e)",
+            fontSize: "0.85rem",
+            marginBottom: "16px",
+            fontWeight: 500,
+            lineHeight: 1.5
+          }}
+        >
           Lưu ý: Hệ thống WorkGo giải ngân thu nhập định kỳ thông qua đối soát quản trị viên. Tính năng giải ngân tự động qua API liên ngân hàng đang trong lộ trình tích hợp.
         </div>
         <p className={styles.sub}>{tr("m1284")}</p>
-        {savedMask ? <p className={styles.saved}>{tr("m1565")}{savedMask}</p> : null}
+        {savedMask ? (
+          <p className={styles.saved}>
+            {tr("m1565")}
+            {savedMask}
+          </p>
+        ) : null}
         <form onSubmit={submit} noValidate className={styles.form}>
           <label className={styles.field}>
             <span>{tr("m1286")}</span>
-            <input type="text" autoFocus value={bankName} onChange={e => {
-            setBankName(e.target.value);
-            if (errors.bankName) setErrors(prev => ({
-              ...prev,
-              bankName: validatePayoutBank(e.target.value, tr)
-            }));
-          }} onBlur={() => setErrors(prev => ({
-            ...prev,
-            bankName: validatePayoutBank(bankName, tr)
-          }))} placeholder="Vietcombank" aria-invalid={errors.bankName ? true : undefined} aria-describedby={errors.bankName ? "payout-bank-error" : undefined} />
-            {errors.bankName ? <em id="payout-bank-error" className={styles.error}>
+            <input
+              type="text"
+              autoFocus
+              value={bankName}
+              onChange={e => {
+                setBankName(e.target.value);
+                if (errors.bankName)
+                  setErrors(prev => ({
+                    ...prev,
+                    bankName: validatePayoutBank(e.target.value, tr)
+                  }));
+              }}
+              onBlur={() =>
+                setErrors(prev => ({
+                  ...prev,
+                  bankName: validatePayoutBank(bankName, tr)
+                }))
+              }
+              placeholder="Vietcombank"
+              aria-invalid={errors.bankName ? true : undefined}
+              aria-describedby={errors.bankName ? "payout-bank-error" : undefined}
+            />
+            {errors.bankName ? (
+              <em id="payout-bank-error" className={styles.error}>
                 {errors.bankName}
-              </em> : null}
+              </em>
+            ) : null}
           </label>
           <label className={styles.field}>
             <span>{tr("m1287")}</span>
-            <input type="text" value={accountName} onChange={e => {
-            setAccountName(e.target.value);
-            if (errors.accountName) setErrors(prev => ({
-              ...prev,
-              accountName: validatePayoutHolder(e.target.value, tr)
-            }));
-          }} onBlur={() => setErrors(prev => ({
-            ...prev,
-            accountName: validatePayoutHolder(accountName, tr)
-          }))} placeholder="NGUYEN VAN A" aria-invalid={errors.accountName ? true : undefined} aria-describedby={errors.accountName ? "payout-holder-error" : undefined} />
-            {errors.accountName ? <em id="payout-holder-error" className={styles.error}>
+            <input
+              type="text"
+              value={accountName}
+              onChange={e => {
+                setAccountName(e.target.value);
+                if (errors.accountName)
+                  setErrors(prev => ({
+                    ...prev,
+                    accountName: validatePayoutHolder(e.target.value, tr)
+                  }));
+              }}
+              onBlur={() =>
+                setErrors(prev => ({
+                  ...prev,
+                  accountName: validatePayoutHolder(accountName, tr)
+                }))
+              }
+              placeholder="NGUYEN VAN A"
+              aria-invalid={errors.accountName ? true : undefined}
+              aria-describedby={errors.accountName ? "payout-holder-error" : undefined}
+            />
+            {errors.accountName ? (
+              <em id="payout-holder-error" className={styles.error}>
                 {errors.accountName}
-              </em> : null}
+              </em>
+            ) : null}
           </label>
           <label className={styles.field}>
             <span>{tr("m1288")}</span>
-            <input value={accountNumber} onChange={e => {
-            setAccountNumber(e.target.value);
-            if (errors.accountNumber) setErrors(prev => ({
-              ...prev,
-              accountNumber: validatePayoutAccount(e.target.value, tr)
-            }));
-          }} onBlur={() => setErrors(prev => ({
-            ...prev,
-            accountNumber: validatePayoutAccount(accountNumber, tr)
-          }))} placeholder="0123456789" inputMode="numeric" aria-invalid={errors.accountNumber ? true : undefined} aria-describedby={errors.accountNumber ? "payout-account-error" : undefined} />
-            {errors.accountNumber ? <em id="payout-account-error" className={styles.error}>
+            <input
+              value={accountNumber}
+              onChange={e => {
+                setAccountNumber(e.target.value);
+                if (errors.accountNumber)
+                  setErrors(prev => ({
+                    ...prev,
+                    accountNumber: validatePayoutAccount(e.target.value, tr)
+                  }));
+              }}
+              onBlur={() =>
+                setErrors(prev => ({
+                  ...prev,
+                  accountNumber: validatePayoutAccount(accountNumber, tr)
+                }))
+              }
+              placeholder="0123456789"
+              inputMode="numeric"
+              aria-invalid={errors.accountNumber ? true : undefined}
+              aria-describedby={errors.accountNumber ? "payout-account-error" : undefined}
+            />
+            {errors.accountNumber ? (
+              <em id="payout-account-error" className={styles.error}>
                 {errors.accountNumber}
-              </em> : null}
+              </em>
+            ) : null}
           </label>
-          <button type="submit" className={styles.submit}>{tr("m1289")}</button>
+          <button type="submit" className={styles.submit}>
+            {tr("m1289")}
+          </button>
         </form>
       </div>
-    </main>;
+    </main>
+  );
 }

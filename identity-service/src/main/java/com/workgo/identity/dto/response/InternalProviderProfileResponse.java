@@ -9,5 +9,5 @@ public record InternalProviderProfileResponse(
         UUID providerProfileId, ProviderType providerType, String businessName, String bio,
         VerificationStatus verificationStatus, double ratingAvg, long ratingCount,
         int completedOrderCount, boolean acceptingOrders, Instant joinedAt, UUID userId,
-        String userStatus) {
+        String userStatus, boolean financiallyRestricted) {
 }

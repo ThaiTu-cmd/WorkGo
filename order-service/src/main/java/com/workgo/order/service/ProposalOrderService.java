@@ -25,6 +25,10 @@ public class ProposalOrderService {
         if (!"DIGITAL".equals(request.executionType())) {
             throw new AppException(ErrorCode.ORDER_EXECUTION_TYPE_NOT_SUPPORTED);
         }
+        //Job chua gui phuong thuc thi mac dinh vi, DIGITAL khong nhan phuong thuc khac
+        if (request.paymentMethod() != null && !"WALLET".equals(request.paymentMethod())) {
+            throw new AppException(ErrorCode.ORDER_PAYMENT_METHOD_NOT_ALLOWED);
+        }
         try {
             return creator.create(request);
         } catch (DataIntegrityViolationException collision) {

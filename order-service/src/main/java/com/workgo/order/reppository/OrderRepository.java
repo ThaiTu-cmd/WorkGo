@@ -2,10 +2,13 @@ package com.workgo.order.reppository;
 
 import com.workgo.order.entity.Order;
 import com.workgo.order.enumeration.ExecutionType;
+import com.workgo.order.enumeration.OrderPaymentMethod;
 import com.workgo.order.enumeration.OrderStatus;
 import com.workgo.order.enumeration.PaymentStatus;
 import com.workgo.order.enumeration.SourceType;
+import jakarta.persistence.LockModeType;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
@@ -14,6 +17,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +32,13 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     Page<Order> findAllByClientId(UUID clientId, Pageable pageable);
 
     Page<Order> findAllByProviderId(UUID providerId, Pageable pageable);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT o FROM Order o WHERE o.orderId = :orderId")
+    Optional<Order> findByIdForUpdate(@Param("orderId") UUID orderId);
+
+    long countByProviderIdAndPaymentMethodAndOrderStatusNotIn(
+            UUID providerId, OrderPaymentMethod paymentMethod, Collection<OrderStatus> orderStatuses);
 
     List<Order> findTop50ByOrderStatusAndAutoCompleteAtLessThanEqualOrderByAutoCompleteAtAsc(
             OrderStatus orderStatus, Instant now);

@@ -6,7 +6,9 @@ import com.workgo.payment.dto.response.EscrowAccountResponse;
 import com.workgo.payment.entity.EscrowAccount;
 import com.workgo.payment.entity.Payment;
 import com.workgo.payment.entity.Refund;
+import com.workgo.payment.enumeration.EscrowFundingSource;
 import com.workgo.payment.enumeration.EscrowStatus;
+import com.workgo.payment.enumeration.FeeChargedParty;
 import com.workgo.payment.enumeration.PaymentGateway;
 import com.workgo.payment.enumeration.RefundReason;
 import com.workgo.payment.enumeration.RefundStatus;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
@@ -44,6 +47,7 @@ public class RefundService {
     EscrowLockService escrowLocks;
     TrustDisputeGuard disputeGuard;
     EscrowMapper escrowMapper;
+    FeeAssessmentService feeAssessmentService;
     Map<PaymentGateway, PaymentGatewayClient> gatewayClients;
 
     @Transactional
@@ -66,9 +70,38 @@ public class RefundService {
         RefundReason reason = request.getReasonCode() == null
                 ? RefundReason.ORDER_CANCELLED : request.getReasonCode();
 
+        if (escrow.getFundingSource() == EscrowFundingSource.WALLET) {
+
+            disputeGuard.assertMayTransfer(escrow, request.getDisputeId());
+
+            if (!escrow.getStatus().canTransitionTo(EscrowStatus.REFUNDED)) {
+                throw new AppException(ErrorCode.ESCROW_INVALID_STATUS);
+            }
+
+            refundWalletLocked(escrow, request.getChargedParty(), request.getDecisionId(), TriggeredBy.ORDER, reason.name());
+
+            return escrowMapper.toResponse(escrow);
+        }
+
+        //escrow cong cu khong co so but toan -> khong tinh phi huy
+        if (request.getChargedParty() != null && request.getChargedParty() != FeeChargedParty.NONE) {
+            throw new AppException(ErrorCode.FEE_CHARGE_NOT_SUPPORTED);
+        }
+
         refundWithDispute(escrow.getPayment(), escrow, reason, TriggeredBy.ORDER, request.getDisputeId());
 
         return escrowMapper.toResponse(escrow);
+    }
+
+    //escrow vi da khoa va qua guard: hoan theo ben chiu phi, tra ve so tien client thuc nhan
+    @Transactional(propagation = Propagation.MANDATORY)
+    public long refundWalletLocked(EscrowAccount escrow, FeeChargedParty chargedParty, UUID decisionId,
+                                   TriggeredBy triggeredBy, String reasonCode) {
+
+        long refunded = feeAssessmentService.refundWithCancellationFee(escrow, chargedParty, decisionId);
+        escrowService.markRefunded(escrow, BigDecimal.valueOf(refunded), triggeredBy, reasonCode);
+
+        return refunded;
     }
 
     @Transactional(propagation = Propagation.MANDATORY)

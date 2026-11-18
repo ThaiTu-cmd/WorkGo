@@ -7,5 +7,6 @@ public enum EscrowTxnType {
     REFUND,
     PARTIAL_REFUND,
     FREEZE,
-    UNFREEZE
+    UNFREEZE,
+    ADJUST
 }

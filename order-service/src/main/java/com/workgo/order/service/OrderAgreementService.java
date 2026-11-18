@@ -1,30 +1,39 @@
 package com.workgo.order.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.workgo.order.dto.request.AmendmentCreationRequest;
 import com.workgo.order.dto.request.AmendmentRespondRequest;
+import com.workgo.order.dto.request.EscrowAdjustRequest;
 import com.workgo.order.dto.response.OrderAgreementVersionResponse;
 import com.workgo.order.dto.response.OrderAmendmentResponse;
 import com.workgo.order.dto.snapshot.ExecutionSnapshot;
 import com.workgo.order.dto.snapshot.PackageSnapshot;
+import com.workgo.order.dto.snapshot.PricingSnapshot;
 import com.workgo.order.dto.snapshot.ProposalSnapshot;
 import com.workgo.order.dto.snapshot.ServiceSnapshot;
 import com.workgo.order.entity.*;
 import com.workgo.order.enumeration.AmendmentStatus;
 import com.workgo.order.enumeration.ExecutionType;
+import com.workgo.order.enumeration.OrderPaymentMethod;
 import com.workgo.order.enumeration.OrderStatus;
 import com.workgo.order.enumeration.RoleName;
 import com.workgo.order.exception.AppException;
 import com.workgo.order.exception.ErrorCode;
 import com.workgo.order.mapper.OrderAgreementMapper;
 import com.workgo.order.reppository.*;
+import com.workgo.order.reppository.client.PaymentClient;
 import com.workgo.order.utils.TokenUtils;
+import feign.FeignException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -36,6 +45,8 @@ import java.util.UUID;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class OrderAgreementService {
 
+    static int WALLET_INSUFFICIENT_FUNDS = 3402;
+
     OrderRepository orderRepository;
     OrderSnapshotRepository orderSnapshotRepository;
     OrderAgreementVersionRepository orderAgreementVersionRepository;
@@ -43,7 +54,13 @@ public class OrderAgreementService {
     ExecutionRepository executionRepository;
     DigitalExecutionRepository digitalExecutionRepository;
     OrderAgreementMapper orderAgreementMapper;
+    PaymentClient paymentClient;
+    ObjectMapper objectMapper;
     TokenUtils tokenUtils;
+
+    @NonFinal
+    @Value("${order.platform-fee-rate}")
+    BigDecimal platformFeeRate;
 
     @Transactional
     public List<OrderAgreementVersionResponse> getAgreementVersions(UUID orderId) {
@@ -123,33 +140,45 @@ public class OrderAgreementService {
         amendment.setRespondedAt(now);
         amendment.setResponseNote(request == null ? null : request.getNote());
 
-        //doi gia can giu/hoan tien chenh lech tu vi (phan D) nen chua ap dung
-        if (amendment.getNewPrice() != null) {
+        //doi gia tren don tra bang vi: cho settle giu them / hoan chenh lech roi moi ap dung
+        if (amendment.getNewPrice() != null && order.getPaymentMethod() != OrderPaymentMethod.CASH) {
             amendment.setStatus(AmendmentStatus.AWAITING_PAYMENT.name());
             return orderAgreementMapper.toOrderAmendmentResponse(orderAmendmentRepository.save(amendment));
         }
 
-        boolean providerProposed = RoleName.PROVIDER.name().equals(amendment.getProposedByRole());
+        applyAmendment(order, amendment, current);
 
-        OrderAgreementVersion next = orderAgreementVersionRepository.save(OrderAgreementVersion.builder()
-                .orderId(orderId)
-                .versionNo(current.getVersionNo() + 1)
-                .source("AMENDMENT")
-                .scope(amendment.getNewScope() != null ? amendment.getNewScope() : current.getScope())
-                .acceptanceCriteria(current.getAcceptanceCriteria())
-                .price(current.getPrice())
-                .currency(current.getCurrency())
-                .durationDays(amendment.getNewDurationDays() != null ? amendment.getNewDurationDays() : current.getDurationDays())
-                .scheduleStart(current.getScheduleStart())
-                .scheduleEnd(current.getScheduleEnd())
-                .amendmentId(amendmentId)
-                .providerConfirmedAt(providerProposed ? amendment.getCreatedAt() : now)
-                .clientConfirmedAt(providerProposed ? now : amendment.getCreatedAt())
-                .build());
+        return orderAgreementMapper.toOrderAmendmentResponse(orderAmendmentRepository.save(amendment));
+    }
 
-        if (amendment.getNewDurationDays() != null) moveDigitalDeadline(order, next.getDurationDays());
+    @Transactional
+    public OrderAmendmentResponse settle(UUID orderId, UUID amendmentId) {
 
-        amendment.setStatus(AmendmentStatus.APPLIED.name());
+        Order order = loadOrder(orderId);
+        tokenUtils.assertParticipant(order);
+        assertAmendable(order);
+
+        OrderAmendment amendment = orderAmendmentRepository.findByAmendmentIdAndOrderId(amendmentId, orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_AMENDMENT_NOT_FOUND));
+
+        if (!AmendmentStatus.AWAITING_PAYMENT.name().equals(amendment.getStatus())) {
+            throw new AppException(ErrorCode.ORDER_AMENDMENT_NOT_AWAITING_PAYMENT);
+        }
+
+        OrderAgreementVersion current = currentVersion(order);
+
+        if (!current.getVersionNo().equals(amendment.getBaseVersionNo())) {
+            throw new AppException(ErrorCode.ORDER_AMENDMENT_STALE);
+        }
+
+        //tang gia la tru them vi client -> chi client duoc bam
+        if (amendment.getNewPrice().compareTo(current.getPrice()) > 0 && currentRole(order) != RoleName.CLIENT) {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+
+        //payment idempotent theo amendmentId: loi sau buoc nay thi bam lai khong tru / hoan 2 lan
+        adjustEscrow(order, amendment);
+        applyAmendment(order, amendment, current);
 
         return orderAgreementMapper.toOrderAmendmentResponse(orderAmendmentRepository.save(amendment));
     }
@@ -170,6 +199,81 @@ public class OrderAgreementService {
     }
 
     //=====================================
+
+    private void applyAmendment(Order order, OrderAmendment amendment, OrderAgreementVersion current) {
+
+        boolean providerProposed = RoleName.PROVIDER.name().equals(amendment.getProposedByRole());
+        BigDecimal price = amendment.getNewPrice() != null ? amendment.getNewPrice() : current.getPrice();
+
+        OrderAgreementVersion next = orderAgreementVersionRepository.save(OrderAgreementVersion.builder()
+                .orderId(order.getOrderId())
+                .versionNo(current.getVersionNo() + 1)
+                .source("AMENDMENT")
+                .scope(amendment.getNewScope() != null ? amendment.getNewScope() : current.getScope())
+                .acceptanceCriteria(current.getAcceptanceCriteria())
+                .price(price)
+                .currency(current.getCurrency())
+                .durationDays(amendment.getNewDurationDays() != null ? amendment.getNewDurationDays() : current.getDurationDays())
+                .scheduleStart(current.getScheduleStart())
+                .scheduleEnd(current.getScheduleEnd())
+                .amendmentId(amendment.getAmendmentId())
+                .providerConfirmedAt(providerProposed ? amendment.getCreatedAt() : amendment.getRespondedAt())
+                .clientConfirmedAt(providerProposed ? amendment.getRespondedAt() : amendment.getCreatedAt())
+                .build());
+
+        if (amendment.getNewDurationDays() != null) moveDigitalDeadline(order, next.getDurationDays());
+
+        if (amendment.getNewPrice() != null) {
+            BigDecimal fee = platformFeeOf(order, price);
+            order.setSubtotal(price);
+            order.setTotalAmount(price);
+            order.setPlatformFee(fee);
+            order.setProviderNetAmount(price.subtract(fee));
+            order.setUpdatedAt(Instant.now());
+            orderRepository.save(order);
+        }
+
+        amendment.setStatus(AmendmentStatus.APPLIED.name());
+    }
+
+    private void adjustEscrow(Order order, OrderAmendment amendment) {
+
+        try {
+            paymentClient.adjust(EscrowAdjustRequest.builder()
+                    .orderId(order.getOrderId())
+                    .amendmentId(amendment.getAmendmentId())
+                    .newTotalAmount(amendment.getNewPrice())
+                    .newPlatformFee(platformFeeOf(order, amendment.getNewPrice()))
+                    .build());
+        } catch (FeignException e) {
+            if (e.status() >= 400 && e.status() < 500) {
+                throw new AppException(paymentErrorCode(e) == WALLET_INSUFFICIENT_FUNDS
+                        ? ErrorCode.ORDER_AMENDMENT_INSUFFICIENT_FUNDS
+                        : ErrorCode.ORDER_AMENDMENT_PAYMENT_REJECTED);
+            }
+            throw new AppException(ErrorCode.PAYMENT_SERVICE_UNAVAILABLE);
+        }
+    }
+
+    private int paymentErrorCode(FeignException e) {
+
+        try {
+            return objectMapper.readTree(e.contentUTF8()).path("code").asInt();
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
+    //phi theo ty le da chot trong snapshot luc tao don
+    private BigDecimal platformFeeOf(Order order, BigDecimal price) {
+
+        BigDecimal rate = orderSnapshotRepository.findById(order.getOrderId())
+                .map(OrderSnapshot::getPricingSnapshot)
+                .map(PricingSnapshot::getPlatformFeeRate)
+                .orElse(platformFeeRate);
+
+        return price.multiply(rate).setScale(0, RoundingMode.HALF_UP);
+    }
 
     private OrderAgreementVersion initialFromSnapshot(Order order) {
 
@@ -221,6 +325,10 @@ public class OrderAgreementService {
         BigDecimal newPrice = request.getNewPrice();
         if (newPrice != null && (newPrice.signum() <= 0 || newPrice.stripTrailingZeros().scale() > 0)) {
             throw new AppException(ErrorCode.ORDER_AMENDMENT_INVALID);
+        }
+
+        if (newPrice != null && order.getOrderStatus() == OrderStatus.PENDING_PAYMENT) {
+            throw new AppException(ErrorCode.ORDER_AMENDMENT_PRICE_BEFORE_PAYMENT);
         }
 
         Integer newDays = request.getNewDurationDays();

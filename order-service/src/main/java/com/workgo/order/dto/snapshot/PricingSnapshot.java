@@ -1,9 +1,11 @@
 package com.workgo.order.dto.snapshot;
 
+import com.workgo.order.enumeration.OrderPaymentMethod;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -24,5 +26,15 @@ public class PricingSnapshot {
     BigDecimal platformFeeRate;
 
     String currency;
+
+    OrderPaymentMethod paymentMethod;
+
+    UUID feePolicyVersionId;
+
+    Integer feePolicyVersionNo;
+
+    BigDecimal cancellationFeeRate;
+
+    Long cancellationFeeCap;
 
 }

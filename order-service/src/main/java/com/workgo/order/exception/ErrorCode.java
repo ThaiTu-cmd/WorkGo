@@ -23,6 +23,7 @@ public enum ErrorCode {
     USER_NOT_EXISTED(1006, "User dose not exist", HttpStatus.NOT_FOUND),
     UNAUTHORIZED(1007, "You do not have that permission", HttpStatus.FORBIDDEN),
     FORBIDDEN(1008, "You do not have permission to perform this action", HttpStatus.FORBIDDEN),
+    INVALID_REQUEST_BODY(1009, "Request body is invalid", HttpStatus.BAD_REQUEST),
 
     //===============ORDER====================
     ORDER_NOT_FOUND(2001, "Order not found", HttpStatus.NOT_FOUND),
@@ -30,6 +31,10 @@ public enum ErrorCode {
     ORDER_CANNOT_BUY_OWN_SERVICE(2003, "You cannot order your own service", HttpStatus.BAD_REQUEST),
     ORDER_EXECUTION_TYPE_NOT_SUPPORTED(2004, "Execution type is not supported yet", HttpStatus.BAD_REQUEST),
     ORDER_CANCEL_NOT_ALLOWED(2005, "Order cannot be cancelled at this status", HttpStatus.BAD_REQUEST),
+    ORDER_PAYMENT_METHOD_NOT_ALLOWED(2006, "Payment method is not allowed for this order", HttpStatus.BAD_REQUEST),
+    ORDER_CASH_LIMIT_EXCEEDED(2007, "Cash order amount is over the pilot limit", HttpStatus.BAD_REQUEST),
+    ORDER_CASH_PROVIDER_BUSY(2008, "Provider already has an unfinished cash order", HttpStatus.CONFLICT),
+    ORDER_PROVIDER_FINANCIALLY_RESTRICTED(2009, "Provider cannot take new work until the wallet debt is paid", HttpStatus.CONFLICT),
     SERVICE_ID_REQUIRED(2010, "Service id is required", HttpStatus.BAD_REQUEST),
     PACKAGE_ID_REQUIRED(2011, "Package id is required", HttpStatus.BAD_REQUEST),
     SERVICE_NOT_FOUND(2012, "Service not found", HttpStatus.NOT_FOUND),
@@ -99,7 +104,18 @@ public enum ErrorCode {
     ORDER_AMENDMENT_NOT_FOUND(3036, "Amendment not found", HttpStatus.NOT_FOUND),
     ORDER_AMENDMENT_NOT_PENDING(3037, "Amendment is not pending", HttpStatus.CONFLICT),
     ORDER_AMENDMENT_SELF_RESPOND(3038, "You cannot respond to your own amendment", HttpStatus.FORBIDDEN),
-    ORDER_AMENDMENT_STALE(3039, "The agreement changed after this amendment was proposed", HttpStatus.CONFLICT);
+    ORDER_AMENDMENT_STALE(3039, "The agreement changed after this amendment was proposed", HttpStatus.CONFLICT),
+    ORDER_AMENDMENT_NOT_AWAITING_PAYMENT(3040, "Amendment is not waiting for payment", HttpStatus.CONFLICT),
+    ORDER_AMENDMENT_INSUFFICIENT_FUNDS(3041, "Wallet balance is not enough for the new price, please top up", HttpStatus.CONFLICT),
+    ORDER_AMENDMENT_PAYMENT_REJECTED(3042, "Payment could not settle the price change", HttpStatus.CONFLICT),
+    ORDER_AMENDMENT_PRICE_BEFORE_PAYMENT(3043, "Price can only be amended after the order is paid", HttpStatus.BAD_REQUEST),
+    PAYMENT_SERVICE_UNAVAILABLE(3044, "Payment service is unavailable", HttpStatus.SERVICE_UNAVAILABLE),
+
+    //===========DISPUTE DECISION============
+    ORDER_DECISION_INVALID(3045, "Decision needs decision, dispute, operation, actor and effective time", HttpStatus.BAD_REQUEST),
+    ORDER_DECISION_CONFLICT(3046, "Decision id was reused with a different payload", HttpStatus.CONFLICT),
+    ORDER_DECISION_TERMINAL_CONFLICT(3047, "Order already ended in a way that conflicts with this decision", HttpStatus.CONFLICT),
+    ORDER_DECISION_SETTLEMENT_MISMATCH(3048, "Settlement result does not match this order", HttpStatus.CONFLICT);
 
     private int code;
     private String message;

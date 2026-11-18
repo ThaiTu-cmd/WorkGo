@@ -4,6 +4,7 @@ import com.workgo.order.dto.request.CreateProposalOrderRequest;
 import com.workgo.order.dto.request.OrderCreationRequest;
 import com.workgo.order.dto.response.ProposalOrderResponse;
 import com.workgo.order.dto.response.client.AcceptedProposalResponse;
+import com.workgo.order.dto.response.client.FeePolicyResponse;
 import com.workgo.order.dto.response.client.PackageResponse;
 import com.workgo.order.dto.snapshot.*;
 import com.workgo.order.entity.*;
@@ -15,12 +16,10 @@ import com.workgo.order.reppository.client.JobClient;
 import com.workgo.order.service.handler.DigitalExecutionHandler;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -34,8 +33,8 @@ public class ProposalOrderCreator {
     private final JobClient jobClient;
     private final OrderStatusService statusService;
     private final DigitalExecutionHandler digitalHandler;
-    @Value("${order.platform-fee-rate}")
-    private BigDecimal feeRate;
+    private final OrderFeeService orderFeeService;
+    private final ProviderFinancialEligibility providerFinancialEligibility;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ProposalOrderService.CreationResult create(CreateProposalOrderRequest request) {
@@ -61,7 +60,9 @@ public class ProposalOrderCreator {
                 || !"ACCEPTED".equals(source.applicationStatus()) || !frozen.equals(source.snapshot())) {
             throw new AppException(ErrorCode.PROPOSAL_ORDER_CONFLICT);
         }
-        BigDecimal fee = request.price().multiply(feeRate).setScale(2, RoundingMode.HALF_UP);
+        providerFinancialEligibility.assertMayStartNewWork(request.providerId());
+        FeePolicyResponse feePolicy = orderFeeService.currentPolicy();
+        BigDecimal fee = orderFeeService.successFee(request.price(), feePolicy.getSuccessFeeRate());
         BigDecimal net = request.price().subtract(fee);
         Order order = orders.saveAndFlush(Order.builder()
                 .orderNumber("WG-P-" + UUID.randomUUID())
@@ -70,6 +71,7 @@ public class ProposalOrderCreator {
                 .executionType(ExecutionType.DIGITAL).title(request.jobTitle())
                 .subtotal(request.price()).platformFee(fee).totalAmount(request.price()).providerNetAmount(net)
                 .currency(request.currency()).orderStatus(OrderStatus.PENDING_PAYMENT).paymentStatus(PaymentStatus.PENDING)
+                .paymentMethod(OrderPaymentMethod.WALLET)
                 .placedAt(Instant.now()).build());
         items.save(OrderItem.builder().order(order).referenceId(request.proposalId()).itemType(ItemType.PROPOSAL)
                 .name(request.jobTitle()).quantity(1).unitPrice(request.price()).amount(request.price()).sortOrder(0).build());
@@ -77,8 +79,9 @@ public class ProposalOrderCreator {
         // Reuse the existing DIGITAL lifecycle; no catalog package is purchased here.
         digitalHandler.create(order, new OrderCreationRequest(), PackageResponse.builder().revisionLimit(0).build());
         snapshots.save(OrderSnapshot.builder().order(order).proposalSnapshot(frozen)
-                .pricingSnapshot(PricingSnapshot.builder().subtotal(request.price()).platformFee(fee)
-                        .totalAmount(request.price()).providerNetAmount(net).platformFeeRate(feeRate).currency(request.currency()).build())
+                .pricingSnapshot(orderFeeService.pricing(feePolicy).subtotal(request.price()).platformFee(fee)
+                        .totalAmount(request.price()).providerNetAmount(net).currency(request.currency())
+                        .paymentMethod(OrderPaymentMethod.WALLET).build())
                 .providerSnapshot(ProviderSnapshot.builder().providerId(request.providerId()).build())
                 .addOnSnapshot(List.of())
                 .executionSnapshot(ExecutionSnapshot.builder().executionType(ExecutionType.DIGITAL).autoCompleteHours(72).build())

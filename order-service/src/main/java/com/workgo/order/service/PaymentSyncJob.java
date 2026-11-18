@@ -34,6 +34,7 @@ public class PaymentSyncJob {
 
         retryRelease(before);
         retryRefund(before);
+        retryCashFee(before);
     }
 
     //=====================================
@@ -68,6 +69,23 @@ public class PaymentSyncJob {
                 log.info("Order {} was updated by another request, skip refund", order.getOrderId());
             } catch (Exception e) {
                 log.warn("Refund escrow failed for order {}", order.getOrderId(), e);
+            }
+        }
+    }
+
+    private void retryCashFee(Instant before) {
+
+        List<Order> orders = orderRepository
+                .findTop50ByOrderStatusAndPaymentStatusAndCompletedAtLessThanEqualOrderByCompletedAtAsc(
+                        OrderStatus.COMPLETED, PaymentStatus.CASH_ON_SITE, before);
+
+        for (Order order : orders) {
+            try {
+                paymentSyncService.recordCashFee(order.getOrderId());
+            } catch (ObjectOptimisticLockingFailureException e) {
+                log.info("Order {} was updated by another request, skip cash fee", order.getOrderId());
+            } catch (Exception e) {
+                log.warn("Record cash fee failed for order {}", order.getOrderId(), e);
             }
         }
     }

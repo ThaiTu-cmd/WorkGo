@@ -1,6 +1,7 @@
 package com.workgo.payment.dto.response;
 
 
+import com.workgo.payment.enumeration.EscrowFundingSource;
 import com.workgo.payment.enumeration.EscrowStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -41,6 +42,12 @@ public class EscrowAccountResponse {
     String currency;
 
     EscrowStatus status;
+
+    EscrowFundingSource fundingSource;
+
+    UUID holdTransactionId;
+
+    UUID settleTransactionId;
 
     Instant heldAt;
 

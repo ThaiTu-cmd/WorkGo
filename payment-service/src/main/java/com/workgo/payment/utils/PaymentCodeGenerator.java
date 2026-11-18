@@ -14,10 +14,26 @@ public class PaymentCodeGenerator {
             .ofPattern("yyMMddHHmmss")
             .withZone(ZoneId.of("Asia/Ho_Chi_Minh"));
 
+    public static final String TOP_UP_PREFIX = "TOP";
+
+    public static final String PAYOUT_PREFIX = "OUT";
+
     private final SecureRandom random = new SecureRandom();
 
     public String generate() {
-        return "PAY" + FORMATTER.format(Instant.now())
+        return generate("PAY");
+    }
+
+    public String generateTopUp() {
+        return generate(TOP_UP_PREFIX);
+    }
+
+    public String generatePayout() {
+        return generate(PAYOUT_PREFIX);
+    }
+
+    private String generate(String prefix) {
+        return prefix + FORMATTER.format(Instant.now())
                 + String.format("%06d", random.nextInt(1_000_000));
     }
 

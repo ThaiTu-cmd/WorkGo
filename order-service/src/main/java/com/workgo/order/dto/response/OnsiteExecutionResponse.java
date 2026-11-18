@@ -21,6 +21,8 @@ public class OnsiteExecutionResponse {
     Instant scheduledEnd;
     Instant arrivedAt;
     Instant serviceCompletedAt;
+    Instant clientAcceptedAt;
+    Instant cashReceivedAt;
     OnsiteExecutionStatus status;
     UUID bookingSlotId;
 

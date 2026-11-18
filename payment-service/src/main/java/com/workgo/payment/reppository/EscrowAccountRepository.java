@@ -1,12 +1,16 @@
 package com.workgo.payment.reppository;
 
 import com.workgo.payment.entity.EscrowAccount;
+import com.workgo.payment.enumeration.EscrowFundingSource;
+import com.workgo.payment.enumeration.EscrowStatus;
+import com.workgo.payment.enumeration.OrderSyncStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import jakarta.persistence.LockModeType;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,5 +26,11 @@ public interface EscrowAccountRepository extends JpaRepository<EscrowAccount, UU
     boolean existsByOrderId(UUID orderId);
 
     Optional<EscrowAccount> findByPayment_PaymentId(UUID paymentId);
+
+    List<EscrowAccount> findAllByFundingSourceAndOrderSyncStatusAndOrderSyncRetryCountLessThan(
+            EscrowFundingSource fundingSource, OrderSyncStatus orderSyncStatus, int maxRetry);
+
+    List<EscrowAccount> findAllByFundingSourceAndOrderSyncStatusAndStatusOrderByCreatedAtAsc(
+            EscrowFundingSource fundingSource, OrderSyncStatus orderSyncStatus, EscrowStatus status);
 
 }

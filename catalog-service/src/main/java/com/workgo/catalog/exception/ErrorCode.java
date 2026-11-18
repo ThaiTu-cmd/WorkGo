@@ -47,6 +47,8 @@ public enum ErrorCode {
     INVALID_SERVICE_STATUS(1026, "The service status is invalid", HttpStatus.BAD_REQUEST),
     RATING_STATS_INVALID(1029, "Average rating must be between 0 and 5 and review count must not be negative", HttpStatus.BAD_REQUEST),
     RATING_SNAPSHOT_CONFLICT(1030, "Rating version already has a different snapshot", HttpStatus.CONFLICT),
+    PROVIDER_FINANCIALLY_RESTRICTED(1058, "Provider cannot publish services until the wallet debt is paid", HttpStatus.CONFLICT),
+    FINANCIAL_RESTRICTION_INVALID(1059, "Financial restriction must have a status and a positive version", HttpStatus.BAD_REQUEST),
 
     //===============PACKAGE==============================
     PACKAGE_EXISTED(1013, "This package name already exists in this service !", HttpStatus.BAD_REQUEST),

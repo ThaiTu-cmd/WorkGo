@@ -20,5 +20,5 @@ public record CreateProposalOrderRequest(
         @Max(value = 36500, message = "PROPOSAL_ORDER_INVALID_REQUEST") Integer estimatedDays,
         @NotBlank(message = "PROPOSAL_ORDER_INVALID_REQUEST")
         @Size(max = 255, message = "PROPOSAL_ORDER_INVALID_REQUEST") String jobTitle,
-        String jobDescription, String locationSnapshot, String terms) {
+        String jobDescription, String locationSnapshot, String terms, String paymentMethod) {
 }

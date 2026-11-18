@@ -1,9 +1,12 @@
 package com.workgo.order.controller.internal;
 
+import com.workgo.order.dto.request.ApplyDecisionCommand;
 import com.workgo.order.dto.request.PaymentConfirmedRequest;
+import com.workgo.order.dto.response.AppliedDecisionResult;
 import com.workgo.order.dto.response.InternalOrderTrustSnapshot;
 import com.workgo.order.dto.response.OrderPaymentInfoResponse;
 import com.workgo.order.dto.response.PaymentConfirmationResponse;
+import com.workgo.order.service.DisputeDecisionApplicationService;
 import com.workgo.order.service.OrderService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ import java.util.UUID;
 public class InternalOrderController {
 
     OrderService orderService;
+    DisputeDecisionApplicationService disputeDecisionApplicationService;
 
     @GetMapping("/{orderId}")
     InternalOrderTrustSnapshot getTrustSnapshot(
@@ -30,6 +34,14 @@ public class InternalOrderController {
     OrderPaymentInfoResponse getPaymentInfo(
             @PathVariable UUID orderId) {
         return orderService.getPaymentInfo(orderId);
+    }
+
+    //trust ap phan quyet sau khi payment da chot tien; chi service noi bo co internal key goi duoc
+    @PostMapping("/{orderId}/dispute-decision")
+    AppliedDecisionResult applyDecision(
+            @PathVariable UUID orderId,
+            @RequestBody ApplyDecisionCommand command) {
+        return disputeDecisionApplicationService.apply(orderId, command);
     }
 
     @PostMapping("/{orderId}/payment-confirmed")

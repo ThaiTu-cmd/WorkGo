@@ -48,6 +48,12 @@ public class OnsiteExecution {
     @Column(name = "service_completed_at")
     Instant serviceCompletedAt;
 
+    @Column(name = "client_accepted_at")
+    Instant clientAcceptedAt;
+
+    @Column(name = "cash_received_at")
+    Instant cashReceivedAt;
+
     @Column(name = "slot_hold_expires_at")
     Instant slotHoldExpiresAt;
 

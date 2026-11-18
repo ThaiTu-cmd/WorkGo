@@ -1,5 +1,6 @@
 package com.workgo.identity.controller.internal;
 
+import com.workgo.identity.dto.request.FinancialRestrictionRequest;
 import com.workgo.identity.dto.request.RatingStatsRequest;
 import com.workgo.identity.dto.response.InternalProviderProfileResponse;
 import com.workgo.identity.service.InternalProviderProfileService;
@@ -27,5 +28,11 @@ public class InternalProviderProfileController {
     InternalProviderProfileResponse updateRatingStats(@PathVariable UUID providerId,
                                                       @RequestBody RatingStatsRequest request) {
         return providerProfileService.updateRatingStats(providerId, request);
+    }
+
+    @PutMapping("/by-user/{userId}/financial-restriction")
+    InternalProviderProfileResponse updateFinancialRestriction(@PathVariable UUID userId,
+                                                               @RequestBody FinancialRestrictionRequest request) {
+        return providerProfileService.updateFinancialRestriction(userId, request);
     }
 }

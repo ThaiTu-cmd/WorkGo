@@ -2,6 +2,7 @@ package com.workgo.order.service;
 
 
 import com.workgo.order.entity.Execution;
+import com.workgo.order.entity.OnsiteExecution;
 import com.workgo.order.entity.Order;
 import com.workgo.order.enumeration.*;
 import com.workgo.order.reppository.DeliveryPackageRepository;
@@ -29,12 +30,13 @@ public class AutoCompleteService {
     DigitalExecutionRepository digitalExecutionRepository;
     DeliveryPackageRepository deliveryPackageRepository;
     OrderStatusService orderStatusService;
+    OnsiteFlowService onsiteFlowService;
 
     //moi order chay trong 1 transaction rieng
     @Transactional
     public void complete(UUID orderId) {
 
-        Order order = orderRepository.findById(orderId).orElse(null);
+        Order order = orderRepository.findByIdForUpdate(orderId).orElse(null);
 
         //nap lai order, co the client vua accept xong
         if (order == null || order.getOrderStatus() != OrderStatus.DELIVERED) {
@@ -53,16 +55,28 @@ public class AutoCompleteService {
             return;
         }
 
+        if (order.getExecutionType() == ExecutionType.ONSITE) {
+
+            OnsiteExecution onsite = onsiteExecutionRepository.findByExecution_ExecutionId(execution.getExecutionId())
+                    .orElse(null);
+
+            if (onsite == null) {
+                return;
+            }
+
+            //im lang chi la nghiem thu, cash van cho provider xac nhan da nhan tien
+            onsite.setStatus(OnsiteExecutionStatus.ACCEPT);
+            if (onsite.getClientAcceptedAt() == null) onsite.setClientAcceptedAt(now);
+            onsiteExecutionRepository.save(onsite);
+
+            onsiteFlowService.completeIfSettled(order, execution, onsite, null, RoleName.SYSTEM);
+            return;
+        }
+
         execution.setCompletedAt(now);
         executionRepository.save(execution);
 
         switch (order.getExecutionType()) {
-            case ONSITE -> onsiteExecutionRepository.findByExecution_ExecutionId(execution.getExecutionId())
-                    .ifPresent(onsite -> {
-                        onsite.setStatus(OnsiteExecutionStatus.ACCEPT);
-                        onsiteExecutionRepository.save(onsite);
-                    });
-
             case DIGITAL -> {
                 digitalExecutionRepository.findByExecution_ExecutionId(execution.getExecutionId())
                         .ifPresent(digital -> {

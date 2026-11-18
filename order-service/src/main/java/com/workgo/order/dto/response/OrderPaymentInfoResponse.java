@@ -2,6 +2,7 @@ package com.workgo.order.dto.response;
 
 
 import com.workgo.order.enumeration.ExecutionType;
+import com.workgo.order.enumeration.OrderPaymentMethod;
 import com.workgo.order.enumeration.OrderStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -39,6 +40,10 @@ public class OrderPaymentInfoResponse {
     BigDecimal providerNetAmount;
 
     String currency;
+
+    OrderPaymentMethod paymentMethod;
+
+    UUID feePolicyVersionId;
 
     Instant payableUntil;
 

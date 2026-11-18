@@ -3,11 +3,14 @@ package com.workgo.payment.service;
 import com.workgo.payment.dto.gateway.GatewayCallbackResult;
 import com.workgo.payment.dto.gateway.VnPayIpnResponse;
 import com.workgo.payment.entity.Payment;
+import com.workgo.payment.entity.WalletTopUp;
 import com.workgo.payment.enumeration.PaymentGateway;
 import com.workgo.payment.enumeration.PaymentStatus;
+import com.workgo.payment.enumeration.TopUpStatus;
 import com.workgo.payment.exception.AppException;
 import com.workgo.payment.exception.ErrorCode;
 import com.workgo.payment.reppository.PaymentRepository;
+import com.workgo.payment.reppository.WalletTopUpRepository;
 import com.workgo.payment.service.gateway.PaymentGatewayClient;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 
@@ -31,6 +35,8 @@ public class GatewayCallbackService {
     Map<PaymentGateway, PaymentGatewayClient> gatewayClients;
     PaymentCallbackService paymentCallbackService;
     PaymentRepository paymentRepository;
+    TopUpService topUpService;
+    WalletTopUpRepository walletTopUpRepository;
 
     @NonFinal
     @Value("${app.frontend-result-url}")
@@ -41,6 +47,10 @@ public class GatewayCallbackService {
 
         try {
             GatewayCallbackResult result = gatewayClients.get(PaymentGateway.VNPAY).verifyCallback(params);
+
+            if (topUpService.isTopUpCode(result.getPaymentCode())) {
+                return handleVnPayTopUp(result);
+            }
 
             Payment payment = paymentRepository.findByPaymentCode(result.getPaymentCode()).orElse(null);
 
@@ -78,6 +88,10 @@ public class GatewayCallbackService {
 
         try {
             GatewayCallbackResult result = gatewayClients.get(PaymentGateway.MOMO).verifyCallback(params);
+
+            if (topUpService.isTopUpCode(result.getPaymentCode())) {
+                return handleMoMoTopUp(result);
+            }
 
             Payment payment = paymentRepository.findByPaymentCode(result.getPaymentCode()).orElse(null);
 
@@ -124,6 +138,16 @@ public class GatewayCallbackService {
             result = "invalid";
         }
 
+        if (topUpService.isTopUpCode(paymentCode)) {
+            return UriComponentsBuilder.fromUriString(frontendResultUrl)
+                    .queryParam("topUpId", walletTopUpRepository.findByTopUpCode(paymentCode)
+                            .map(WalletTopUp::getTopUpId)
+                            .orElse(null))
+                    .queryParam("result", result)
+                    .build()
+                    .toUriString();
+        }
+
         UUID paymentId = paymentCode == null ? null : paymentRepository.findByPaymentCode(paymentCode)
                 .map(Payment::getPaymentId)
                 .orElse(null);
@@ -136,6 +160,60 @@ public class GatewayCallbackService {
     }
 
     //=====================================
+
+    private VnPayIpnResponse handleVnPayTopUp(GatewayCallbackResult result) {
+
+        WalletTopUp topUp = walletTopUpRepository.findByTopUpCode(result.getPaymentCode()).orElse(null);
+
+        if (topUp == null) {
+            return vnPayResponse("01", "Order not found");
+        }
+
+        if (!sameSource(topUp, PaymentGateway.VNPAY, result)) {
+            return vnPayResponse("04", "Invalid amount");
+        }
+
+        if (isProcessed(topUp, result)) {
+            return vnPayResponse("02", "Order already confirmed");
+        }
+
+        topUpService.handleCallback(PaymentGateway.VNPAY, result);
+
+        return vnPayResponse("00", "Confirm Success");
+    }
+
+    private HttpStatus handleMoMoTopUp(GatewayCallbackResult result) {
+
+        WalletTopUp topUp = walletTopUpRepository.findByTopUpCode(result.getPaymentCode()).orElse(null);
+
+        if (topUp == null) {
+            log.warn("MoMo IPN top-up {} not found", result.getPaymentCode());
+            return HttpStatus.NOT_FOUND;
+        }
+
+        if (!sameSource(topUp, PaymentGateway.MOMO, result)) {
+            log.warn("MoMo IPN does not match top-up {}", result.getPaymentCode());
+            return HttpStatus.BAD_REQUEST;
+        }
+
+        if (!isProcessed(topUp, result)) {
+            topUpService.handleCallback(PaymentGateway.MOMO, result);
+        }
+
+        return HttpStatus.NO_CONTENT;
+    }
+
+    private boolean sameSource(WalletTopUp topUp, PaymentGateway gateway, GatewayCallbackResult result) {
+        return topUp.getGateway() == gateway
+                && result.getAmount() != null
+                && result.getAmount().compareTo(BigDecimal.valueOf(topUp.getAmount())) == 0;
+    }
+
+    //FAILED ma sau do bao thanh cong van phai xu ly, tien da bi tru that
+    private boolean isProcessed(WalletTopUp topUp, GatewayCallbackResult result) {
+        return topUp.getStatus() == TopUpStatus.SUCCEEDED
+                || (topUp.getStatus() == TopUpStatus.FAILED && !result.isSuccess());
+    }
 
     private boolean isProcessed(Payment payment) {
         return payment.getStatus() == PaymentStatus.SUCCEEDED

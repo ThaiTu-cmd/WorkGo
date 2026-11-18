@@ -1,8 +1,11 @@
 package com.workgo.payment.service;
 
+import com.workgo.payment.entity.EscrowAccount;
 import com.workgo.payment.entity.Payment;
+import com.workgo.payment.enumeration.EscrowFundingSource;
 import com.workgo.payment.enumeration.OrderSyncStatus;
 import com.workgo.payment.enumeration.PaymentStatus;
+import com.workgo.payment.reppository.EscrowAccountRepository;
 import com.workgo.payment.reppository.PaymentRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,8 @@ public class OrderSyncJob {
 
     PaymentRepository paymentRepository;
     OrderSyncService orderSyncService;
+    EscrowAccountRepository escrowAccountRepository;
+    WalletOrderSyncService walletOrderSyncService;
 
     @NonFinal
     @Value("${payment.sync.max-retry}")
@@ -44,6 +49,20 @@ public class OrderSyncJob {
                 log.info("Payment {} was updated by another request, skip sync", payment.getPaymentCode());
             } catch (Exception e) {
                 log.warn("Sync order failed for payment {}", payment.getPaymentCode(), e);
+            }
+        }
+
+        List<EscrowAccount> walletHolds = escrowAccountRepository
+                .findAllByFundingSourceAndOrderSyncStatusAndOrderSyncRetryCountLessThan(
+                        EscrowFundingSource.WALLET, OrderSyncStatus.PENDING, maxRetry);
+
+        for (EscrowAccount escrow : walletHolds) {
+            try {
+                walletOrderSyncService.syncOrder(escrow.getEscrowAccountId());
+            } catch (ObjectOptimisticLockingFailureException e) {
+                log.info("Wallet hold of order {} was updated by another request, skip sync", escrow.getOrderId());
+            } catch (Exception e) {
+                log.warn("Sync order failed for wallet hold of order {}", escrow.getOrderId(), e);
             }
         }
     }

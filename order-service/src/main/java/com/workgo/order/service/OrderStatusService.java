@@ -83,6 +83,44 @@ public class OrderStatusService {
             refundEscrowAfterCommit(order.getOrderId());
         }
 
+        if (toStatus == OrderStatus.COMPLETED && order.getPaymentStatus() == PaymentStatus.CASH_ON_SITE) {
+            recordCashFeeAfterCommit(order.getOrderId());
+        }
+
+    }
+
+    //phan quyet ADMIN: duoc ket thuc tu bat ky trang thai dang lam; tien da chot o payment nen khong goi release / refund cu
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void applyDecision(Order order, OrderStatus toStatus, UUID actorId) {
+
+        OrderStatus fromStatus = order.getOrderStatus();
+
+        if ((toStatus != OrderStatus.COMPLETED && toStatus != OrderStatus.CANCELLED)
+                || fromStatus == OrderStatus.PENDING_PAYMENT
+                || fromStatus == OrderStatus.COMPLETED
+                || fromStatus == OrderStatus.CANCELLED) {
+            throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
+        }
+
+        Instant now = Instant.now();
+
+        if (toStatus == OrderStatus.COMPLETED) order.setCompletedAt(now);
+        else order.setCancelledAt(now);
+
+        order.setAutoCompleteAt(null);
+        order.setOrderStatus(toStatus);
+        orderRepository.save(order);
+
+        saveHistory(order, fromStatus, toStatus, actorId, RoleName.ADMIN);
+
+        if (toStatus == OrderStatus.COMPLETED) {
+            orderCompletedOutboxRepository.save(OrderCompletedOutbox.from(order));
+        }
+
+        //cash: ADMIN ket luan hoan thanh = du dieu kien ghi phi, PaymentSyncJob goi lai neu loi
+        if (toStatus == OrderStatus.COMPLETED && order.getPaymentStatus() == PaymentStatus.CASH_ON_SITE) {
+            recordCashFeeAfterCommit(order.getOrderId());
+        }
     }
 
     //commit COMPLETED xong moi bao payment tra tien cho provider
@@ -94,6 +132,20 @@ public class OrderStatusService {
                     paymentSyncService.release(orderId);
                 } catch (Exception e) {
                     log.warn("Release escrow failed for completed order {}", orderId, e);
+                }
+            }
+        });
+    }
+
+    //cash: commit COMPLETED xong moi bao payment ghi phi, loi thi PaymentSyncJob goi lai
+    private void recordCashFeeAfterCommit(UUID orderId) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    paymentSyncService.recordCashFee(orderId);
+                } catch (Exception e) {
+                    log.warn("Record cash fee failed for completed order {}", orderId, e);
                 }
             }
         });

@@ -2,6 +2,7 @@ package com.workgo.payment.service.gateway;
 
 import com.workgo.payment.configuration.MoMoProperties;
 import com.workgo.payment.dto.gateway.GatewayCallbackResult;
+import com.workgo.payment.dto.gateway.GatewayCharge;
 import com.workgo.payment.dto.gateway.GatewayCreateResult;
 import com.workgo.payment.dto.gateway.GatewayRefundResult;
 import com.workgo.payment.dto.gateway.MoMoCreateRequest;
@@ -45,18 +46,18 @@ public class MoMoGatewayClient implements PaymentGatewayClient {
     }
 
     @Override
-    public GatewayCreateResult createPayment(Payment payment, String clientIp) {
+    public GatewayCreateResult createPayment(GatewayCharge charge, String clientIp) {
 
         assertConfigured();
 
-        long amount = payment.getAmount().setScale(0, RoundingMode.DOWN).longValueExact();
+        long amount = charge.getAmount().setScale(0, RoundingMode.DOWN).longValueExact();
 
         if (amount < MIN_AMOUNT || amount > MAX_AMOUNT) {
             throw new AppException(ErrorCode.PAYMENT_AMOUNT_OUT_OF_RANGE);
         }
 
-        String code = payment.getPaymentCode();
-        String orderInfo = "Thanh toan " + code;
+        String code = charge.getCode();
+        String orderInfo = charge.getDescription();
 
         String rawSignature = "accessKey=" + properties.getAccessKey()
                 + "&amount=" + amount

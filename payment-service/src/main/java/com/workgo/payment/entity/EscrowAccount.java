@@ -1,6 +1,8 @@
 package com.workgo.payment.entity;
 
+import com.workgo.payment.enumeration.EscrowFundingSource;
 import com.workgo.payment.enumeration.EscrowStatus;
+import com.workgo.payment.enumeration.OrderSyncStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -67,6 +69,20 @@ public class EscrowAccount {
     @Column(name = "active_dispute_id")
     UUID activeDisputeId;
 
+    @Builder.Default
+    @Enumerated(value = EnumType.STRING)
+    @Column(name = "funding_source", nullable = false)
+    EscrowFundingSource fundingSource = EscrowFundingSource.GATEWAY;
+
+    @Builder.Default
+    @Enumerated(value = EnumType.STRING)
+    @Column(name = "order_sync_status")
+    OrderSyncStatus orderSyncStatus = OrderSyncStatus.NOT_REQUIRED;
+
+    @Builder.Default
+    @Column(name = "order_sync_retry_count")
+    int orderSyncRetryCount = 0;
+
     @Version
     @Column(name = "version")
     Long version;
@@ -89,9 +105,22 @@ public class EscrowAccount {
     @Column(name = "provider_id", nullable = false)
     UUID providerId;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    //WALLET khong co payment cong
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_id", unique = true)
     Payment payment;
+
+    @Column(name = "provider_user_id")
+    UUID providerUserId;
+
+    @Column(name = "fee_policy_version_id")
+    UUID feePolicyVersionId;
+
+    @Column(name = "hold_transaction_id")
+    UUID holdTransactionId;
+
+    @Column(name = "settle_transaction_id")
+    UUID settleTransactionId;
 
     @Builder.Default
     @OneToMany(mappedBy = "escrowAccount")

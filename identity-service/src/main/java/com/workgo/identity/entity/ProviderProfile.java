@@ -60,6 +60,15 @@ public class ProviderProfile {
     @Column(name = "is_accepting_orders")
     boolean isAcceptingOrders;
 
+    //ban sao tu payment (vi am / no phi), chi payment duoc ghi
+    @Builder.Default
+    @Column(name = "is_financially_restricted", nullable = false, updatable = false)
+    boolean isFinanciallyRestricted = false;
+
+    @Builder.Default
+    @Column(name = "financial_restriction_version", nullable = false, updatable = false)
+    long financialRestrictionVersion = 0;
+
     @Builder.Default
     @Column(name = "joined_at")
     Instant joinedAt = Instant.now();

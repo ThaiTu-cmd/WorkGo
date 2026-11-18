@@ -1,5 +1,6 @@
 package com.workgo.payment.dto.request;
 
+import com.workgo.payment.enumeration.FeeChargedParty;
 import com.workgo.payment.enumeration.RefundReason;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -22,5 +23,9 @@ public class EscrowRefundRequest {
 
     //chi dispute phan xu xong moi duoc refund escrow dang FROZEN
     UUID disputeId;
+
+    FeeChargedParty chargedParty;
+
+    UUID decisionId;
 
 }

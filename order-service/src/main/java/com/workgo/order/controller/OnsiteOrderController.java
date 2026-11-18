@@ -56,6 +56,17 @@ public class OnsiteOrderController {
                 .build();
     }
 
+    //provider xac nhan da nhan du tien mat (chi don CASH)
+    @PostMapping("/{orderId}/cash-received")
+    ApiResponse<OnsiteExecutionResponse> confirmCashReceived(@PathVariable UUID orderId) {
+
+        return ApiResponse.<OnsiteExecutionResponse>builder()
+                .code(ErrorCode.SUCCESS.getCode())
+                .message(ErrorCode.SUCCESS.getMessage())
+                .result(onsiteFlowService.confirmCashReceived(orderId))
+                .build();
+    }
+
     //client duyet complete cua provider
     @PostMapping("/{orderId}/accept")
     ApiResponse<OnsiteExecutionResponse> accept(@PathVariable UUID orderId) {

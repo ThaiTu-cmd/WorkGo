@@ -1,6 +1,7 @@
 package com.workgo.order.dto.request;
 
 
+import com.workgo.order.enumeration.OrderPaymentMethod;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -24,5 +25,7 @@ public class OrderCreationRequest {
     UUID bookingSlotId;
 
     String address;
+
+    OrderPaymentMethod paymentMethod;
 
 }

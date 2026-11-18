@@ -2,6 +2,7 @@ package com.workgo.payment.service.gateway;
 
 import com.workgo.payment.configuration.VnPayProperties;
 import com.workgo.payment.dto.gateway.GatewayCallbackResult;
+import com.workgo.payment.dto.gateway.GatewayCharge;
 import com.workgo.payment.dto.gateway.GatewayCreateResult;
 import com.workgo.payment.dto.gateway.GatewayRefundResult;
 import com.workgo.payment.entity.Payment;
@@ -47,11 +48,11 @@ public class VnPayGatewayClient implements PaymentGatewayClient {
     }
 
     @Override
-    public GatewayCreateResult createPayment(Payment payment, String clientIp) {
+    public GatewayCreateResult createPayment(GatewayCharge charge, String clientIp) {
 
         assertConfigured();
 
-        if (!"VND".equals(payment.getCurrency())) {
+        if (!"VND".equals(charge.getCurrency())) {
             throw new IllegalStateException("VNPay only supports VND");
         }
 
@@ -59,17 +60,17 @@ public class VnPayGatewayClient implements PaymentGatewayClient {
         params.put("vnp_Version", "2.1.0");
         params.put("vnp_Command", "pay");
         params.put("vnp_TmnCode", properties.getTmnCode());
-        params.put("vnp_Amount", payment.getAmount().movePointRight(2).setScale(0, RoundingMode.DOWN).toPlainString());
+        params.put("vnp_Amount", charge.getAmount().movePointRight(2).setScale(0, RoundingMode.DOWN).toPlainString());
         params.put("vnp_CurrCode", "VND");
-        params.put("vnp_TxnRef", payment.getPaymentCode());
-        params.put("vnp_OrderInfo", "Thanh toan " + payment.getPaymentCode());
+        params.put("vnp_TxnRef", charge.getCode());
+        params.put("vnp_OrderInfo", charge.getDescription());
         params.put("vnp_OrderType", "other");
         params.put("vnp_Locale", "vn");
         params.put("vnp_ReturnUrl", properties.getReturnUrl());
         params.put("vnp_IpAddr", clientIp == null ? "127.0.0.1" : clientIp);
-        params.put("vnp_CreateDate", VNPAY_DATE.format(payment.getCreatedAt()));
-        params.put("vnp_ExpireDate", VNPAY_DATE.format(payment.getExpiresAt()));
-        params.put("vnp_BankCode", resolveBankCode(payment));
+        params.put("vnp_CreateDate", VNPAY_DATE.format(charge.getCreatedAt()));
+        params.put("vnp_ExpireDate", VNPAY_DATE.format(charge.getExpiresAt()));
+        params.put("vnp_BankCode", resolveBankCode(charge));
 
         String query = buildQuery(params);
 
@@ -136,13 +137,13 @@ public class VnPayGatewayClient implements PaymentGatewayClient {
         return HmacUtils.hmacSha512(properties.getHashSecret(), data);
     }
 
-    private String resolveBankCode(Payment payment) {
+    private String resolveBankCode(GatewayCharge charge) {
 
-        if (payment.getPaymentMethod() == null) {
+        if (charge.getPaymentMethod() == null) {
             return null;
         }
 
-        return switch (payment.getPaymentMethod()) {
+        return switch (charge.getPaymentMethod()) {
             case QR -> "VNPAYQR";
             case ATM_CARD -> "VNBANK";
             case INTL_CARD -> "INTCARD";

@@ -43,6 +43,7 @@ public enum ErrorCode {
     USER_ALREADY_PROVIDER(1025, "This user is already a provider", HttpStatus.BAD_REQUEST),
     RATING_STATS_INVALID(1030, "Rating average must be between 0 and 5 and rating count must not be negative", HttpStatus.BAD_REQUEST),
     RATING_SNAPSHOT_CONFLICT(1031, "Rating version already has a different snapshot", HttpStatus.CONFLICT),
+    FINANCIAL_RESTRICTION_INVALID(1050, "Financial restriction must have a status and a positive version", HttpStatus.BAD_REQUEST),
 
     //===============ACCOUNT ADMIN====================
     REASON_REQUIRED(1032, "Reason is required and must be at most 500 characters", HttpStatus.BAD_REQUEST),

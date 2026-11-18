@@ -1,14 +1,18 @@
 package com.workgo.order.service;
 
+import com.workgo.order.dto.request.CashFeeRequest;
 import com.workgo.order.dto.request.EscrowRefundRequest;
 import com.workgo.order.dto.request.EscrowReleaseRequest;
 import com.workgo.order.dto.response.client.EscrowResponse;
+import com.workgo.order.dto.snapshot.PricingSnapshot;
 import com.workgo.order.entity.Order;
+import com.workgo.order.entity.OrderSnapshot;
 import com.workgo.order.enumeration.OrderStatus;
 import com.workgo.order.enumeration.PaymentStatus;
 import com.workgo.order.enumeration.client.EscrowStatus;
 import com.workgo.order.enumeration.client.RefundReason;
 import com.workgo.order.reppository.OrderRepository;
+import com.workgo.order.reppository.OrderSnapshotRepository;
 import com.workgo.order.reppository.client.PaymentClient;
 import feign.FeignException;
 import lombok.AccessLevel;
@@ -19,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.RoundingMode;
 import java.util.UUID;
 
 @Service
@@ -30,6 +35,7 @@ public class PaymentSyncService {
     static int FULL_REFUND_PERCENT = 100;
 
     OrderRepository orderRepository;
+    OrderSnapshotRepository orderSnapshotRepository;
     PaymentClient paymentClient;
     TrustDisputeGuard trustDisputeGuard;
 
@@ -97,6 +103,40 @@ public class PaymentSyncService {
 
         order.setPaymentStatus(PaymentStatus.REFUNDED);
         log.info("Escrow of order {} refunded", orderId);
+        orderRepository.save(order);
+    }
+
+    //cash khong co escrow: chi bao payment ghi phi thanh cong vao vi provider (thieu thi am)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordCashFee(UUID orderId) {
+
+        Order order = orderRepository.findById(orderId).orElse(null);
+
+        if (order == null
+                || order.getOrderStatus() != OrderStatus.COMPLETED
+                || order.getPaymentStatus() != PaymentStatus.CASH_ON_SITE) {
+            return;
+        }
+
+        try {
+            paymentClient.recordCashFee(CashFeeRequest.builder()
+                    .orderId(orderId)
+                    .providerId(order.getProviderId())
+                    .orderAmount(order.getTotalAmount().setScale(0, RoundingMode.HALF_UP))
+                    .fee(order.getPlatformFee().setScale(0, RoundingMode.HALF_UP))
+                    .feePolicyVersionId(orderSnapshotRepository.findById(orderId)
+                            .map(OrderSnapshot::getPricingSnapshot)
+                            .map(PricingSnapshot::getFeePolicyVersionId)
+                            .orElse(null))
+                    .build());
+        } catch (FeignException e) {
+            //giu CASH_ON_SITE, PaymentSyncJob goi lai sau
+            log.warn("Record cash fee failed for order {}, status {}", orderId, e.status());
+            return;
+        }
+
+        order.setPaymentStatus(PaymentStatus.CASH_SETTLED);
+        log.info("Cash fee of order {} recorded", orderId);
         orderRepository.save(order);
     }
 

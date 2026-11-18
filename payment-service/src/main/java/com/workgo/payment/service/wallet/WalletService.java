@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
@@ -89,6 +90,23 @@ public class WalletService {
         }
 
         return toResult(walletTransactionRepository.save(transaction), false);
+    }
+
+    @Transactional(readOnly = true)
+    public long balanceOf(WalletAccountRef ref) {
+
+        return walletAccountRepository.findByAccountTypeAndOwnerKey(ref.type().name(), ref.ownerKey())
+                .map(WalletAccount::getBalance)
+                .orElse(0L);
+    }
+
+    //khoa tai khoan truoc khi doc so du de tinh so tien duoc tru, giu khoa toi het transaction
+    @Transactional(propagation = Propagation.MANDATORY)
+    public long lockedBalanceOf(WalletAccountRef ref) {
+
+        return walletAccountRepository.findByIdForUpdate(ensureAccount(ref))
+                .map(WalletAccount::getBalance)
+                .orElseThrow(() -> new AppException(ErrorCode.WALLET_POSTING_INVALID));
     }
 
     //=====================================

@@ -8,6 +8,7 @@ import com.workgo.catalog.dto.request.ServiceUpdateRequest;
 import com.workgo.catalog.dto.response.ServiceCreationResponse;
 import com.workgo.catalog.dto.response.ServiceResponse;
 import com.workgo.catalog.entity.Category;
+import com.workgo.catalog.entity.ProviderFinancialRestriction;
 import com.workgo.catalog.entity.Service;
 import com.workgo.catalog.enumeration.ExecutionType;
 import com.workgo.catalog.enumeration.ServiceStatus;
@@ -20,6 +21,8 @@ import com.workgo.catalog.repository.CategoryRepository;
 import com.workgo.catalog.repository.ServiceRepository;
 import com.workgo.catalog.utils.TokenUtils;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -49,6 +52,7 @@ public class ServiceService {
     TokenUtils tokenUtils;
     AvailableRuleRepository availableRuleRepository;
     BookingSlotService bookingSlotService;
+    ProviderRestrictionService providerRestrictionService;
 
     public ServiceCreationResponse createService(ServiceCreationRequest request) {
 
@@ -148,6 +152,10 @@ public class ServiceService {
 
         tokenUtils.assertServiceOwner(service);
 
+        if (request.getStatus() == ServiceStatus.PUBLISHED && service.getStatus() != ServiceStatus.PUBLISHED) {
+            providerRestrictionService.assertMayPublish(service.getProviderId());
+        }
+
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
@@ -198,6 +206,10 @@ public class ServiceService {
 
         tokenUtils.assertServiceOwner(service);
 
+        if (request.getStatus() == ServiceStatus.PUBLISHED && service.getStatus() != ServiceStatus.PUBLISHED) {
+            providerRestrictionService.assertMayPublish(service.getProviderId());
+        }
+
         service.setStatus(request.getStatus());
 
         if (request.getStatus() == ServiceStatus.PUBLISHED && service.getPublishedAt() == null) {
@@ -247,6 +259,13 @@ public class ServiceService {
             List<Predicate> predicates = new ArrayList<>();
 
             predicates.add(cb.equal(root.get("status"), ServiceStatus.PUBLISHED));
+
+            //provider dang am vi: an khoi tim kiem, tra no xong tu hien lai
+            Subquery<UUID> restrictedProviders = query.subquery(UUID.class);
+            Root<ProviderFinancialRestriction> restriction = restrictedProviders.from(ProviderFinancialRestriction.class);
+            restrictedProviders.select(restriction.get("providerId"))
+                    .where(cb.isTrue(restriction.get("restricted")));
+            predicates.add(cb.not(root.get("providerId").in(restrictedProviders)));
 
             if (keyword != null && !keyword.isBlank()) {
                 String pattern = "%" + keyword.trim().toLowerCase() + "%";

@@ -1,6 +1,7 @@
 package com.workgo.order.entity;
 
 import com.workgo.order.enumeration.ExecutionType;
+import com.workgo.order.enumeration.OrderPaymentMethod;
 import com.workgo.order.enumeration.OrderStatus;
 import com.workgo.order.enumeration.PaymentStatus;
 import com.workgo.order.enumeration.SourceType;
@@ -86,6 +87,11 @@ public class Order {
     @Enumerated(value = EnumType.STRING)
     @Column(name = "payment_status")
     PaymentStatus paymentStatus;
+
+    @Builder.Default
+    @Enumerated(value = EnumType.STRING)
+    @Column(name = "payment_method")
+    OrderPaymentMethod paymentMethod = OrderPaymentMethod.WALLET;
 
     @Column(name = "placed_at")
     Instant placedAt;

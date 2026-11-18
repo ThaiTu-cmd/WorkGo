@@ -5,5 +5,10 @@ public enum PaymentMethod {
     WALLET,
     ATM_CARD,
     INTL_CARD,
-    CASH
+    CASH;
+
+    //WALLET o day la vi cua cong (MoMo...), khong phai vi WorkGo; CASH khong di qua cong
+    public boolean viaGateway(){
+        return this == QR || this == ATM_CARD || this == INTL_CARD;
+    }
 }

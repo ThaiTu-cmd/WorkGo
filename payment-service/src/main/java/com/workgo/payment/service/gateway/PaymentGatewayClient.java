@@ -1,6 +1,7 @@
 package com.workgo.payment.service.gateway;
 
 import com.workgo.payment.dto.gateway.GatewayCallbackResult;
+import com.workgo.payment.dto.gateway.GatewayCharge;
 import com.workgo.payment.dto.gateway.GatewayCreateResult;
 import com.workgo.payment.dto.gateway.GatewayRefundResult;
 import com.workgo.payment.entity.Payment;
@@ -13,7 +14,7 @@ public interface PaymentGatewayClient {
 
     PaymentGateway supports();
 
-    GatewayCreateResult createPayment(Payment payment, String clientIp);
+    GatewayCreateResult createPayment(GatewayCharge charge, String clientIp);
 
     GatewayCallbackResult verifyCallback(Map<String, String> params);
 

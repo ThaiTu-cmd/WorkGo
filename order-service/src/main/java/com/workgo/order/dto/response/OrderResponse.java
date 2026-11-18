@@ -1,6 +1,7 @@
 package com.workgo.order.dto.response;
 
 import com.workgo.order.enumeration.ExecutionType;
+import com.workgo.order.enumeration.OrderPaymentMethod;
 import com.workgo.order.enumeration.OrderStatus;
 import com.workgo.order.enumeration.PaymentStatus;
 import com.workgo.order.enumeration.SourceType;
@@ -36,6 +37,7 @@ public class OrderResponse {
     String currency;
     OrderStatus orderStatus;
     PaymentStatus paymentStatus;
+    OrderPaymentMethod paymentMethod;
     Instant placedAt;
     Instant confirmedAt;
     Instant startedAt;

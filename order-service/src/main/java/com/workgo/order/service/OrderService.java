@@ -13,6 +13,7 @@ import com.workgo.order.dto.response.OrderSnapshotResponse;
 import com.workgo.order.dto.response.OrderStatusHistoryResponse;
 import com.workgo.order.dto.response.PaymentConfirmationResponse;
 import com.workgo.order.dto.response.client.AddOnResponse;
+import com.workgo.order.dto.response.client.FeePolicyResponse;
 import com.workgo.order.dto.response.client.PackageResponse;
 import com.workgo.order.dto.response.client.ProviderProfileResponse;
 import com.workgo.order.dto.response.client.ServiceResponse;
@@ -50,7 +51,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
@@ -80,15 +80,21 @@ public class OrderService {
     PasswordEncoder passwordEncoder;
     TextEncryptor checkinCodeEncryptor;
     CancellationService cancellationService;
+    OrderFeeService orderFeeService;
+    ProviderFinancialEligibility providerFinancialEligibility;
     TokenUtils tokenUtils;
-
-    @NonFinal
-    @Value("${order.platform-fee-rate}")
-    BigDecimal platformFeeRate;
 
     @NonFinal
     @Value("${order.payment-timeout-minutes}")
     long paymentTimeoutMinutes;
+
+    @NonFinal
+    @Value("${order.cash.max-amount:2000000}")
+    BigDecimal cashMaxAmount;
+
+    @NonFinal
+    @Value("${order.cash.max-open-per-provider:1}")
+    long cashMaxOpenPerProvider;
 
     @Transactional
     public OrderResponse createOrder(OrderCreationRequest request){
@@ -117,10 +123,14 @@ public class OrderService {
 
         List<AddOnResponse> addOns = collectAddons(request.getServiceId(), request.getAddonIds());
 
+        OrderPaymentMethod paymentMethod = resolvePaymentMethod(serviceResponse.getExecutionType(), request.getPaymentMethod());
+
         //provider khong duoc mua cua chinh minh
         if (Objects.equals(serviceResponse.getProviderId(), tokenUtils.getCurrentProviderIdOrNull())){
             throw new AppException(ErrorCode.ORDER_CANNOT_BUY_OWN_SERVICE);
         }
+
+        providerFinancialEligibility.assertMayStartNewWork(serviceResponse.getProviderId());
 
         //tinh subtotal
         BigDecimal subtotal = packageResponse.getPrice();
@@ -129,15 +139,22 @@ public class OrderService {
             subtotal = subtotal.add(addOn.getPrice());
         }
 
-        BigDecimal platformFee = subtotal.multiply(platformFeeRate).setScale(2, RoundingMode.HALF_UP);
+        FeePolicyResponse feePolicy = orderFeeService.currentPolicy();
+        BigDecimal platformFee = orderFeeService.successFee(subtotal, feePolicy.getSuccessFeeRate());
         BigDecimal totalAmount = subtotal;                          // client tra dung gia niem yet
+
+        if (paymentMethod == OrderPaymentMethod.CASH) {
+            assertCashAllowed(serviceResponse.getProviderId(), totalAmount);
+        }
         BigDecimal providerNetAmount = subtotal.subtract(platformFee);
 
         //luu order -> lay id
         Order order = orderRepository.save(Order.builder()
                 .orderNumber(generateOrderNumber())
                 .orderStatus(OrderStatus.PENDING_PAYMENT)
-                .paymentStatus(PaymentStatus.PENDING)
+                .paymentStatus(paymentMethod == OrderPaymentMethod.CASH
+                        ? PaymentStatus.CASH_ON_SITE : PaymentStatus.PENDING)
+                .paymentMethod(paymentMethod)
                 .sourceType(SourceType.SERVICE)
                 .sourceId(serviceResponse.getServiceId())
                 .clientId(clientId)
@@ -165,11 +182,21 @@ public class OrderService {
         executionService.createFor(order, request, packageResponse);
 
         saveSnapshot(order, request, serviceResponse, packageResponse, addOns,
-                subtotal, platformFee, totalAmount, providerNetAmount);
+                subtotal, platformFee, totalAmount, providerNetAmount, feePolicy);
 
 
         //ghi lai order status history
         orderStatusService.recordCreated(order, clientId);
+
+        //tien mat tra tai cho, khong qua payment -> chot slot va xac nhan luon
+        if (paymentMethod == OrderPaymentMethod.CASH) {
+
+            if (bookOnsiteSlot(order) == null) {
+                throw new AppException(ErrorCode.ORDER_SLOT_NOT_AVAILABLE);
+            }
+
+            orderStatusService.transition(order, OrderStatus.CONFIRMED, null, RoleName.SYSTEM);
+        }
 
         return orderMapper.toOrderResponse(order);
     }
@@ -199,24 +226,14 @@ public class OrderService {
         //chi on site
         if (order.getExecutionType() == ExecutionType.ONSITE) {
 
-            Execution execution = executionRepository.findByOrder_OrderId(orderId)
-                    .orElseThrow(() -> new AppException(ErrorCode.ORDER_EXECUTION_NOT_FOUND));
+            OnsiteExecution onsite = bookOnsiteSlot(order);
 
-            OnsiteExecution onsite = onsiteExecutionRepository
-                    .findByExecution_ExecutionId(execution.getExecutionId())
-                    .orElseThrow(() -> new AppException(ErrorCode.ORDER_EXECUTION_NOT_FOUND));
-
-            //slot HELD -> BOOKED, slot het han giu -> huy don, payment refund
-            if (!confirmSlot(onsite.getBookingSlotId(), orderId)) {
+            //slot het han giu -> huy don, payment refund
+            if (onsite == null) {
                 log.warn("Slot of order {} expired, cancel order, payment {} will refund", orderId, request.getPaymentId());
                 cancellationService.cancelBySystem(order);
-                return toConfirmationResponse(order, onsite.getStatus());
+                return toConfirmationResponse(order, OnsiteExecutionStatus.CANCELLED);
             }
-
-            String checkinCode = generateCheckinCode();
-            onsite.setCheckinCodeHash(passwordEncoder.encode(checkinCode));
-            onsite.setCheckinCodeEncrypted(checkinCodeEncryptor.encrypt(checkinCode));
-            onsiteExecutionRepository.save(onsite);
 
             executionStatus = onsite.getStatus();
         }
@@ -262,6 +279,11 @@ public class OrderService {
                 .platformFee(order.getPlatformFee())
                 .providerNetAmount(order.getProviderNetAmount())
                 .currency(order.getCurrency())
+                .paymentMethod(order.getPaymentMethod())
+                .feePolicyVersionId(orderSnapshotRepository.findById(orderId)
+                        .map(OrderSnapshot::getPricingSnapshot)
+                        .map(PricingSnapshot::getFeePolicyVersionId)
+                        .orElse(null))
                 .payableUntil(payableUntil)
                 .build();
     }
@@ -287,6 +309,54 @@ public class OrderService {
                 .completedAt(order.getCompletedAt())
                 .cancelledAt(order.getCancelledAt())
                 .build();
+    }
+
+    //khong gui thi mac dinh vi, DIGITAL chon tien mat -> chan
+    private OrderPaymentMethod resolvePaymentMethod(ExecutionType executionType, OrderPaymentMethod requested) {
+
+        OrderPaymentMethod paymentMethod = requested == null ? OrderPaymentMethod.WALLET : requested;
+
+        if (!paymentMethod.allowedFor(executionType)) {
+            throw new AppException(ErrorCode.ORDER_PAYMENT_METHOD_NOT_ALLOWED);
+        }
+
+        return paymentMethod;
+    }
+
+    //D07 pilot: cash toi da 2tr/don, moi provider 1 don cash chua ket thuc (gom ca don cho xac nhan nhan tien)
+    private void assertCashAllowed(UUID providerId, BigDecimal amount) {
+
+        if (amount.compareTo(cashMaxAmount) > 0) {
+            throw new AppException(ErrorCode.ORDER_CASH_LIMIT_EXCEEDED);
+        }
+
+        long openCashOrders = orderRepository.countByProviderIdAndPaymentMethodAndOrderStatusNotIn(
+                providerId, OrderPaymentMethod.CASH, List.of(OrderStatus.COMPLETED, OrderStatus.CANCELLED));
+
+        if (openCashOrders >= cashMaxOpenPerProvider) {
+            throw new AppException(ErrorCode.ORDER_CASH_PROVIDER_BUSY);
+        }
+    }
+
+    //slot HELD -> BOOKED va sinh ma checkin, slot het han giu -> null
+    private OnsiteExecution bookOnsiteSlot(Order order) {
+
+        Execution execution = executionRepository.findByOrder_OrderId(order.getOrderId())
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_EXECUTION_NOT_FOUND));
+
+        OnsiteExecution onsite = onsiteExecutionRepository
+                .findByExecution_ExecutionId(execution.getExecutionId())
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_EXECUTION_NOT_FOUND));
+
+        if (!confirmSlot(onsite.getBookingSlotId(), order.getOrderId())) {
+            return null;
+        }
+
+        String checkinCode = generateCheckinCode();
+        onsite.setCheckinCodeHash(passwordEncoder.encode(checkinCode));
+        onsite.setCheckinCodeEncrypted(checkinCodeEncryptor.encrypt(checkinCode));
+
+        return onsiteExecutionRepository.save(onsite);
     }
 
     //sinh ra ma code checkin
@@ -523,7 +593,8 @@ public class OrderService {
                               BigDecimal subtotal,
                               BigDecimal platformFee,
                               BigDecimal totalAmount,
-                              BigDecimal providerNetAmount) {
+                              BigDecimal providerNetAmount,
+                              FeePolicyResponse feePolicy) {
 
         ProviderProfileResponse provider =
                 identityClient.getProviderProfile(serviceResponse.getProviderId());
@@ -559,13 +630,13 @@ public class OrderService {
                         .revisionLimit(packageResponse.getRevisionLimit())
                         .build())
                 .addOnSnapshot(addOnSnapshots)
-                .pricingSnapshot(PricingSnapshot.builder()
+                .pricingSnapshot(orderFeeService.pricing(feePolicy)
                         .subtotal(subtotal)
                         .platformFee(platformFee)
                         .totalAmount(totalAmount)
                         .providerNetAmount(providerNetAmount)
-                        .platformFeeRate(platformFeeRate)
                         .currency(order.getCurrency())
+                        .paymentMethod(order.getPaymentMethod())
                         .build())
                 .providerSnapshot(ProviderSnapshot.builder()
                         .providerId(serviceResponse.getProviderId())

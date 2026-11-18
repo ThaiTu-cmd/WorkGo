@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -15,5 +16,8 @@ public interface EscrowTransactionRepository extends JpaRepository<EscrowTransac
     List<EscrowTransaction> findByEscrowAccount_EscrowAccountIdOrderByCreatedAtAsc(UUID escrowAccountId);
 
     boolean existsByEscrowAccount_EscrowAccountIdAndTxnType(UUID escrowAccountId, EscrowTxnType txnType);
+
+    Optional<EscrowTransaction> findFirstByEscrowAccount_EscrowAccountIdAndTxnTypeAndSagaId(
+            UUID escrowAccountId, EscrowTxnType txnType, UUID sagaId);
 
 }

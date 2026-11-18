@@ -68,6 +68,19 @@ public class OrderAgreementController {
                 .build();
     }
 
+    //phu luc doi gia: client tra them / hoan chenh lech qua vi roi moi ap dung
+    @PostMapping("/{orderId}/amendments/{amendmentId}/settle")
+    ApiResponse<OrderAmendmentResponse> settle(
+            @PathVariable UUID orderId,
+            @PathVariable UUID amendmentId
+    ) {
+        return ApiResponse.<OrderAmendmentResponse>builder()
+                .code(ErrorCode.SUCCESS.getCode())
+                .message(ErrorCode.SUCCESS.getMessage())
+                .result(orderAgreementService.settle(orderId, amendmentId))
+                .build();
+    }
+
     @PostMapping("/{orderId}/amendments/{amendmentId}/reject")
     ApiResponse<OrderAmendmentResponse> reject(
             @PathVariable UUID orderId,

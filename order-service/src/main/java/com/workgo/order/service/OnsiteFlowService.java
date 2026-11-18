@@ -143,7 +143,7 @@ public class OnsiteFlowService {
     @Transactional
     public OnsiteExecutionResponse accept(UUID orderId) {
 
-        Order order = loadOrder(orderId);
+        Order order = lockOrder(orderId);
         assertIsClient(order);
         assertOnsite(order);
 
@@ -158,18 +158,59 @@ public class OnsiteFlowService {
             throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
         }
 
-        Instant now = Instant.now();
-
         onsite.setStatus(OnsiteExecutionStatus.ACCEPT);
+        onsite.setClientAcceptedAt(Instant.now());
         onsiteExecutionRepository.save(onsite);
 
-        execution.setCompletedAt(now);
-        executionRepository.save(execution);
-
-        orderStatusService.transition(order, OrderStatus.COMPLETED,
-                tokenUtils.getCurrentUserId(), RoleName.CLIENT);
+        completeIfSettled(order, execution, onsite, tokenUtils.getCurrentUserId(), RoleName.CLIENT);
 
         return executionMapper.toOnsiteExecutionResponse(onsite);
+    }
+
+    //provider xac nhan da nhan du tien mat; client tu khai da tra khong du de ghi phi
+    @Transactional
+    public OnsiteExecutionResponse confirmCashReceived(UUID orderId) {
+
+        Order order = lockOrder(orderId);
+        assertIsProvider(order);
+        assertOnsite(order);
+
+        if (order.getPaymentMethod() != OrderPaymentMethod.CASH) {
+            throw new AppException(ErrorCode.ORDER_PAYMENT_METHOD_NOT_ALLOWED);
+        }
+
+        if (order.getOrderStatus() != OrderStatus.IN_PROGRESS && order.getOrderStatus() != OrderStatus.DELIVERED) {
+            throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
+        }
+
+        Execution execution = loadExecution(orderId);
+        OnsiteExecution onsite = loadOnsite(execution.getExecutionId());
+
+        if (onsite.getCashReceivedAt() == null) {
+            onsite.setCashReceivedAt(Instant.now());
+            onsiteExecutionRepository.save(onsite);
+        }
+
+        completeIfSettled(order, execution, onsite, tokenUtils.getCurrentProviderId(), RoleName.PROVIDER);
+
+        return executionMapper.toOnsiteExecutionResponse(onsite);
+    }
+
+    //cash chi hoan tat khi co du nghiem thu + provider nhan tien; vi provider thieu phi khong chan hoan tat
+    public void completeIfSettled(Order order, Execution execution, OnsiteExecution onsite, UUID actorId, RoleName roleName) {
+
+        if (order.getOrderStatus() != OrderStatus.DELIVERED || onsite.getClientAcceptedAt() == null) return;
+
+        if (order.getPaymentMethod() == OrderPaymentMethod.CASH && onsite.getCashReceivedAt() == null) {
+            order.setAutoCompleteAt(null);
+            orderRepository.save(order);
+            return;
+        }
+
+        execution.setCompletedAt(Instant.now());
+        executionRepository.save(execution);
+
+        orderStatusService.transition(order, OrderStatus.COMPLETED, actorId, roleName);
     }
 
     public CheckinCodeResponse getCheckinCode(UUID orderId) {
@@ -194,6 +235,11 @@ public class OnsiteFlowService {
                 .checkinCode(checkinCodeEncryptor.decrypt(onsite.getCheckinCodeEncrypted()))
                 .scheduledStart(onsite.getScheduledStart())
                 .build();
+    }
+
+    private Order lockOrder(UUID orderId) {
+        return orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
     }
 
     private Order loadOrder(UUID orderId) {

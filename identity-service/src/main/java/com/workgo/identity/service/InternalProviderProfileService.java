@@ -2,6 +2,7 @@ package com.workgo.identity.service;
 
 import com.workgo.identity.Exception.AppException;
 import com.workgo.identity.Exception.ErrorCode;
+import com.workgo.identity.dto.request.FinancialRestrictionRequest;
 import com.workgo.identity.dto.request.RatingStatsRequest;
 import com.workgo.identity.dto.response.InternalProviderProfileResponse;
 import com.workgo.identity.repository.InternalProviderProfileRepository;
@@ -42,5 +43,22 @@ public class InternalProviderProfileService {
         }
 
         return getProviderProfile(providerId);
+    }
+
+    //payment day ban sao han che tai chinh; version cu / lap lai thi bo qua
+    @Transactional
+    public InternalProviderProfileResponse updateFinancialRestriction(UUID userId, FinancialRestrictionRequest request) {
+        if (request == null || request.getRestricted() == null
+                || request.getVersion() == null || request.getVersion() <= 0) {
+            throw new AppException(ErrorCode.FINANCIAL_RESTRICTION_INVALID);
+        }
+
+        var current = repository.lockFinancialRestriction(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.PROVIDER_PROFILE_NOT_EXISTED));
+        if (request.getVersion() > current.version()) {
+            repository.updateFinancialRestriction(current.providerId(), request.getRestricted(), request.getVersion());
+        }
+
+        return getProviderProfile(current.providerId());
     }
 }

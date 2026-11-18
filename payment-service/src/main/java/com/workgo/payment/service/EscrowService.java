@@ -1,5 +1,6 @@
 package com.workgo.payment.service;
 
+import com.workgo.payment.dto.request.EscrowAdjustRequest;
 import com.workgo.payment.dto.request.EscrowFreezeRequest;
 import com.workgo.payment.dto.request.EscrowReleaseRequest;
 import com.workgo.payment.dto.response.EscrowAccountResponse;
@@ -9,6 +10,7 @@ import com.workgo.payment.reppository.EscrowCommandReceiptRepository;
 import com.workgo.payment.entity.EscrowTransaction;
 import com.workgo.payment.entity.Payment;
 import com.workgo.payment.entity.Refund;
+import com.workgo.payment.enumeration.EscrowFundingSource;
 import com.workgo.payment.enumeration.EscrowStatus;
 import com.workgo.payment.enumeration.EscrowTxnType;
 import com.workgo.payment.enumeration.TriggeredBy;
@@ -17,6 +19,7 @@ import com.workgo.payment.exception.ErrorCode;
 import com.workgo.payment.mapper.EscrowMapper;
 import com.workgo.payment.reppository.EscrowAccountRepository;
 import com.workgo.payment.reppository.EscrowTransactionRepository;
+import com.workgo.payment.service.wallet.WalletOrderSettlementService;
 import com.workgo.payment.utils.TokenUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +30,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,6 +47,9 @@ public class EscrowService {
     EscrowLockService escrowLocks;
     TrustDisputeGuard disputeGuard;
     EscrowMapper escrowMapper;
+    WalletOrderSettlementService walletOrderSettlementService;
+    FeeAssessmentService feeAssessmentService;
+    FeeReceivableService feeReceivableService;
     TokenUtils tokenUtils;
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -97,15 +104,30 @@ public class EscrowService {
             throw new AppException(ErrorCode.ESCROW_INVALID_STATUS);
         }
 
+        releaseLocked(escrow, TriggeredBy.ORDER, "ORDER_COMPLETED");
+
+        return escrowMapper.toResponse(escrow);
+    }
+
+    //goi khi da khoa escrow va qua guard tranh chap / trang thai
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void releaseLocked(EscrowAccount escrow, TriggeredBy triggeredBy, String reasonCode) {
+
+        if (escrow.getFundingSource() == EscrowFundingSource.WALLET) {
+            escrow.setSettleTransactionId(walletOrderSettlementService.release(escrow));
+            feeAssessmentService.recordSuccessFee(escrow, escrow.getSettleTransactionId());
+            feeReceivableService.settleAfterCredit(escrow.getProviderUserId());
+        }
+
         BigDecimal fee = escrow.getPlatformFeeAmount() == null
                 ? BigDecimal.ZERO : escrow.getPlatformFeeAmount();
         BigDecimal balance = escrow.getHeldAmount().subtract(fee);
 
         if (fee.signum() > 0) {
-            addTransaction(escrow, EscrowTxnType.FEE, fee, balance, TriggeredBy.ORDER, "ORDER_COMPLETED");
+            addTransaction(escrow, EscrowTxnType.FEE, fee, balance, triggeredBy, reasonCode);
         }
 
-        addTransaction(escrow, EscrowTxnType.RELEASE, balance, BigDecimal.ZERO, TriggeredBy.ORDER, "ORDER_COMPLETED");
+        addTransaction(escrow, EscrowTxnType.RELEASE, balance, BigDecimal.ZERO, triggeredBy, reasonCode);
 
         Instant now = Instant.now();
 
@@ -116,29 +138,90 @@ public class EscrowService {
 
         log.info("Escrow released for order {}, fee {}, provider net {}", escrow.getOrderId(), fee, balance);
 
-        return escrowMapper.toResponse(escrowAccountRepository.save(escrow));
+        escrowAccountRepository.save(escrow);
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void refund(EscrowAccount escrow, Refund refund) {
+        markRefunded(escrow, refund.getAmount(), refund.getInitiatedBy(), refund.getReasonCode().name());
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void markRefunded(EscrowAccount escrow, BigDecimal amount, TriggeredBy triggeredBy, String reasonCode) {
 
         if (!escrow.getStatus().canTransitionTo(EscrowStatus.REFUNDED)) {
             throw new AppException(ErrorCode.ESCROW_INVALID_STATUS);
         }
 
-        addTransaction(escrow, EscrowTxnType.REFUND, refund.getAmount(), BigDecimal.ZERO,
-                refund.getInitiatedBy(), refund.getReasonCode().name());
+        addTransaction(escrow, EscrowTxnType.REFUND, amount, BigDecimal.ZERO, triggeredBy, reasonCode);
 
         Instant now = Instant.now();
 
-        escrow.setRefundedAmount(refund.getAmount());
+        escrow.setRefundedAmount(amount);
         escrow.setRefundedAt(now);
         escrow.setStatus(EscrowStatus.REFUNDED);
         escrow.setUpdatedAt(now);
 
         escrowAccountRepository.save(escrow);
 
-        log.info("Escrow refunded {} for order {}, reason {}", refund.getAmount(), escrow.getOrderId(), refund.getReasonCode());
+        log.info("Escrow refunded {} for order {}, reason {}", amount, escrow.getOrderId(), reasonCode);
+    }
+
+    @Transactional
+    public EscrowAccountResponse adjust(EscrowAdjustRequest request) {
+
+        if (request.getOrderId() == null) {
+            throw new AppException(ErrorCode.PAYMENT_ORDER_ID_REQUIRED);
+        }
+
+        long total = toWholeVnd(request.getNewTotalAmount());
+        long fee = request.getNewPlatformFee() == null ? 0
+                : request.getNewPlatformFee().setScale(0, RoundingMode.HALF_UP).longValueExact();
+
+        if (request.getAmendmentId() == null || fee < 0 || fee > total) {
+            throw new AppException(ErrorCode.ESCROW_ADJUST_INVALID);
+        }
+
+        EscrowAccount escrow = escrowLocks.lock(request.getOrderId());
+
+        //order goi lai cung phu luc -> tra ket qua cu, khac so tien la xung dot
+        Optional<EscrowTransaction> applied = escrowTransactionRepository
+                .findFirstByEscrowAccount_EscrowAccountIdAndTxnTypeAndSagaId(
+                        escrow.getEscrowAccountId(), EscrowTxnType.ADJUST, request.getAmendmentId());
+        if (applied.isPresent()) {
+            if (applied.get().getBalanceAfter().compareTo(BigDecimal.valueOf(total)) != 0) {
+                throw new AppException(ErrorCode.ESCROW_COMMAND_CONFLICT);
+            }
+            return escrowMapper.toResponse(escrow);
+        }
+
+        if (escrow.getFundingSource() != EscrowFundingSource.WALLET) {
+            throw new AppException(ErrorCode.ESCROW_ADJUST_NOT_SUPPORTED);
+        }
+
+        disputeGuard.assertMayTransfer(escrow, null);
+
+        if (escrow.getStatus() != EscrowStatus.HOLDING) {
+            throw new AppException(ErrorCode.ESCROW_INVALID_STATUS);
+        }
+
+        long delta = total - escrow.getHeldAmount().longValueExact();
+
+        if (delta != 0) {
+            walletOrderSettlementService.adjust(escrow, request.getAmendmentId(), delta);
+        }
+
+        escrow.setHeldAmount(BigDecimal.valueOf(total));
+        escrow.setPlatformFeeAmount(BigDecimal.valueOf(fee));
+        escrow.setProviderNetAmount(BigDecimal.valueOf(total - fee));
+        escrow.setUpdatedAt(Instant.now());
+
+        addTransaction(escrow, EscrowTxnType.ADJUST, BigDecimal.valueOf(Math.abs(delta)), escrow.getHeldAmount(),
+                TriggeredBy.ORDER, delta >= 0 ? "AMENDMENT_INCREASE" : "AMENDMENT_DECREASE", request.getAmendmentId());
+
+        log.info("Escrow of order {} adjusted by {} for amendment {}", escrow.getOrderId(), delta, request.getAmendmentId());
+
+        return escrowMapper.toResponse(escrowAccountRepository.save(escrow));
     }
 
     @Transactional
@@ -210,6 +293,19 @@ public class EscrowService {
     }
 
     //=====================================
+
+    private long toWholeVnd(BigDecimal amount) {
+
+        if (amount == null || amount.signum() <= 0) {
+            throw new AppException(ErrorCode.ESCROW_ADJUST_INVALID);
+        }
+
+        try {
+            return amount.longValueExact();
+        } catch (ArithmeticException e) {
+            throw new AppException(ErrorCode.ESCROW_ADJUST_INVALID);
+        }
+    }
 
     private void addTransaction(EscrowAccount escrow, EscrowTxnType type, BigDecimal amount,
                                 BigDecimal balanceAfter, TriggeredBy triggeredBy, String reasonCode) {

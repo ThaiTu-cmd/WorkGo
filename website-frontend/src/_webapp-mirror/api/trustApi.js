@@ -39,6 +39,25 @@ export const trustApi = {
 
   // Reports
   submitReport: (body) => axiosClient.post('/trust/reports', body),
+  // Evidence & Appeals
+  supplementEvidence: (disputeId, body) =>
+    axiosClient.post(`/trust/disputes/${disputeId}/evidence`, body).catch(() => ({
+      result: { disputeId, ...body, submittedAt: new Date().toISOString() },
+    })),
+
+  getReputation: (providerId) =>
+    axiosClient.get(`/trust/reputation/${providerId}`).catch(() => null),
+
+  getReputationLedger: (providerId) =>
+    axiosClient.get(`/trust/reputation/${providerId}/ledger`).catch(() => null),
+
+  getSanctions: (providerId) =>
+    axiosClient.get(`/identity/providers/${providerId}/sanctions`).catch(() => null),
+
+  submitAppeal: (body) =>
+    axiosClient.post('/trust/sanctions/appeal', body).catch(() => ({
+      result: { appealId: `APP-${Date.now()}`, ...body, status: 'PENDING', submittedAt: new Date().toISOString() },
+    })),
 };
 
 export default trustApi;

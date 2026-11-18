@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { UserPlus } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
-import { authApi, splitFullName } from "../../webapp-bridge/backend";
+import { authApi, splitFullName, useAuthToken } from "../../webapp-bridge/backend";
 import { registerSchema } from "./authValidation";
 import styles from "./RegisterPage.module.css";
 export type TrungPageProps = {
@@ -16,6 +16,7 @@ export default function RegisterPage({
   onShowToast
 }: TrungPageProps) {
   const tr = useTranslations("misc");
+  const token = useAuthToken();
   const [name, setName] = useState("");
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
@@ -23,6 +24,7 @@ export default function RegisterPage({
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Partial<Record<"name" | "userName" | "email" | "phone" | "password" | "form", string>>>({});
   const [submitting, setSubmitting] = useState(false);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = registerSchema.safeParse({
@@ -65,6 +67,29 @@ export default function RegisterPage({
     onShowToast(tr("m1149"));
     onNavigate("login");
   };
+
+  if (token) {
+    return (
+      <main className={styles.wrap}>
+        <div className={styles.card}>
+          <h1 className={styles.title}>
+            <UserPlus size={24} className={styles.titleIcon} aria-hidden="true" />
+            {tr("m1152")}
+          </h1>
+          <p className={styles.sub}>Bạn hiện đang đăng nhập trên hệ thống WorkGo.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" }}>
+            <button type="button" className={styles.submit} onClick={() => onNavigate("profile-settings")}>
+              Quản lý hồ sơ cá nhân
+            </button>
+            <button type="button" className={styles.submit} style={{ background: "transparent", color: "var(--wg-primary)", border: "1px solid var(--wg-primary)" }} onClick={() => onNavigate("catalog")}>
+              Đến danh mục dịch vụ
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return <main className={styles.wrap}>
       <div className={styles.card}>
         <h1 className={styles.title}>

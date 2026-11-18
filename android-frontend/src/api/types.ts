@@ -252,6 +252,81 @@ export type EscrowDto = {
   refundedAt?: string | null;
 };
 
+
+
+export type WalletEntryType =
+  | 'HOLD'
+  | 'RELEASE'
+  | 'TOPUP'
+  | 'REFUND'
+  | 'FEE_DEBT'
+  | 'PAYOUT'
+  | 'ADJUSTMENT';
+
+export type WalletEntryDto = {
+  id: string;
+  type?: WalletEntryType;
+  entryType?: WalletEntryType;
+  amount: number;
+  balanceAfter?: number;
+  description?: string;
+  label?: string;
+  referenceId?: string;
+  createdAt?: string;
+  at?: string;
+  status?: string;
+};
+
+export type WalletDto = {
+  availableBalance: number;
+  heldBalance: number;
+  debtBalance: number;
+  currency?: string;
+};
+
+export type TopUpCreationRequest = {
+  amount: number;
+  gateway: PaymentGateway;
+  paymentMethod?: PaymentMethod;
+};
+
+export type TopUpDto = {
+  topUpId: string;
+  amount: number;
+  gateway: PaymentGateway;
+  status: 'INITIATED' | 'PENDING' | 'SUCCESS' | 'FAILED' | 'UNKNOWN';
+  paymentUrl?: string | null;
+  qrCodeUrl?: string | null;
+  deeplink?: string | null;
+  expiresAt?: string | null;
+};
+
+export type PayoutSettingsDto = {
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  bankCode?: string;
+};
+
+export type PayoutRequest = {
+  amount: number;
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  bankCode?: string;
+};
+
+export type PayoutDto = {
+  payoutId: string;
+  amount: number;
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  status: string;
+  requestedAt?: string;
+};
+
+
 // ---- trust-service ----
 export type ReviewDirection = 'CLIENT_TO_PROVIDER' | 'PROVIDER_TO_CLIENT';
 
@@ -349,3 +424,130 @@ export type MessageSendReq = {
   attachments?: MessageAttachment[];
   clientMessageId: string;
 };
+
+
+// ---- trust-service disputes, reports & reputation ----
+export type DisputeStatus =
+  | 'OPEN'
+  | 'UNDER_REVIEW'
+  | 'RESOLVED'
+  | 'RESOLVED_CLIENT'
+  | 'RESOLVED_PROVIDER'
+  | 'REJECTED'
+  | 'CANCELLED'
+  | 'CLOSED';
+
+export type DisputeKind = 'REPORT' | 'DISPUTE';
+
+export type DisputeDecisionType = 'RELEASE' | 'REFUND' | 'SPLIT';
+
+export type SettlementStatus =
+  | 'FROZEN'
+  | 'SETTLED'
+  | 'REFUNDED'
+  | 'SPLIT_COMPLETED'
+  | 'RECONCILIATION_PENDING';
+
+export type SupplementaryEvidence = {
+  evidenceUrl?: string;
+  note?: string;
+  submittedAt: string;
+};
+
+export type DisputeDecisionDto = {
+  type: DisputeDecisionType;
+  reason: string;
+  providerPercent?: number;
+  clientPercent?: number;
+  decidedAt: string;
+  settlementStatus: SettlementStatus;
+};
+
+export type DisputeDto = {
+  disputeId: string;
+  orderId: string;
+  openedBy?: string;
+  openedByRole?: string;
+  clientId?: string;
+  providerId?: string;
+  reason: string;
+  description?: string;
+  evidenceUrl?: string;
+  status: DisputeStatus;
+  resolution?: string;
+  createdAt: string;
+  resolvedAt?: string;
+  supplementaryEvidences?: SupplementaryEvidence[];
+  decision?: DisputeDecisionDto;
+};
+
+export type DisputeCreateReq = {
+  orderId: string;
+  reason: string;
+  description?: string;
+  evidenceUrl?: string;
+};
+
+export type ReportTargetType =
+  | 'USER'
+  | 'POST'
+  | 'JOB'
+  | 'SERVICE'
+  | 'MESSAGE'
+  | 'ORDER'
+  | 'REVIEW';
+
+export type ReportReq = {
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: string;
+  description?: string;
+  evidenceUrl?: string;
+};
+
+export type ReportDto = {
+  reportId: string;
+  reporterId?: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: string;
+  description?: string;
+  evidenceUrl?: string;
+  status?: string;
+  createdAt?: string;
+};
+
+export type ReputationLedgerEntry = {
+  id: string;
+  timestamp: string;
+  event: string;
+  source: string;
+  delta: number;
+  balance: number;
+  referenceId: string;
+  note?: string;
+};
+
+export type ReputationResponse = {
+  providerId: string;
+  score: number;
+  tier: string;
+  ledger: ReputationLedgerEntry[];
+};
+
+export type AppealReq = {
+  sanctionId?: string;
+  disputeId?: string;
+  reason: string;
+  explanation: string;
+  evidenceUrl?: string;
+};
+
+export type AppealResponse = {
+  appealId: string;
+  status: string;
+  submittedAt: string;
+};
+
+
+

@@ -64,6 +64,10 @@ export type CatalogFilterParams = {
   section?: string;
   // Finance hub pre-selected tab ("wallet" | "deposit" | "payout").
   tab?: string;
+  // Top-up amount or deficit amount passed to payment-gateway
+  amount?: string | number;
+  // Top-up transaction ID for callback / polling
+  topUpId?: string;
   // "messages": thread to open (created if this is the first contact).
   chat?: ChatTarget;
 };
@@ -875,7 +879,11 @@ function SessionShell({ initialPage }: { initialPage?: string }) {
       )}
 
       {currentPage === "payment-gateway" && (
-        <PaymentGatewayPage onNavigate={handleNavigate} onShowToast={showToast} />
+        <PaymentGatewayPage
+          onNavigate={handleNavigate}
+          onShowToast={showToast}
+          params={typeof window !== "undefined" ? parseUrlParams(window.location.search).params : undefined}
+        />
       )}
 
       {currentPage === "wallet" && (

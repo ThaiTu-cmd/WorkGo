@@ -101,6 +101,66 @@
   outline-offset: 2px;
 }
 
+.guardBanner {
+  margin-top: 16px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guardTitle {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.guardAction {
+  align-self: flex-start;
+  min-height: 38px;
+  border-radius: 8px;
+  background: #dc2626;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  border: none;
+  cursor: pointer;
+}
+
+.guardAction:hover {
+  background: #b91c1c;
+}
+
+.jobPreview {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--surface-subtle, #f8fafc);
+  border: 1px solid var(--border-default, #e2e8f0);
+  border-radius: 12px;
+}
+
+.jobPreviewTitle {
+  font-weight: 700;
+  color: var(--wg-text);
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.jobPreviewMeta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--wg-text-secondary);
+}
+
 @media (max-width: 640px) {
   .row {
     grid-template-columns: 1fr;

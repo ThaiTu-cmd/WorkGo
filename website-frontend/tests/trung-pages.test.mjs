@@ -146,25 +146,21 @@ test("trung-pages: all mock data sets exist and are structured properly", () => 
   for (const m of [
     "mockJobs.ts",
     "mockProposals.ts",
-    "mockWallet.ts",
-    "mockDisputes.ts",
-    "mockPayout.ts",
-    "mockReviews.ts",
   ]) {
     assert.ok(fs.existsSync(path.join(TRUNG, "_mocks", m)), `missing mock file ${m}`);
   }
 
-  // Profile, addresses and provider profile come from identity-service now.
-  for (const gone of ["mockProviders.ts", "mockAddresses.ts", "mockProfile.ts"]) {
+  // Profile, addresses, provider profile, wallet, payout, disputes, and reviews come from backend services now.
+  for (const gone of [
+    "mockProviders.ts",
+    "mockAddresses.ts",
+    "mockProfile.ts",
+    "mockWallet.ts",
+    "mockPayout.ts",
+    "mockDisputes.ts",
+    "mockReviews.ts",
+  ]) {
     assert.ok(!fs.existsSync(path.join(TRUNG, "_mocks", gone)), `${gone} must be removed`);
   }
-
-  const payout = read(path.join(TRUNG, "_mocks/mockPayout.ts"));
-  assert.ok(payout.includes("Vietcombank"), "mockPayout must have bank name");
-  assert.ok(payout.includes("0071001234567"), "mockPayout must have account number");
-
-  const reviews = read(path.join(TRUNG, "_mocks/mockReviews.ts"));
-  assert.ok(reviews.includes("ORD-1038"), "mockReviews must reference order");
-  assert.ok(reviews.includes("stars: 5"), "mockReviews must have 5-star review");
 });
 

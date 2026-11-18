@@ -46,6 +46,64 @@ export const paymentApi = {
   // DEV ONLY (payment-service profile "dev"): settle a MOCK payment as the gateway would.
   simulateMockPayment: (paymentCode, success) =>
     axiosClient.post(`/payment/dev/payments/${paymentCode}/${success ? 'success' : 'fail'}`),
+
+  // Wallet & Top-up endpoints (FE-10 / Việc 20, 22, 30, 37)
+  getWallet: () => axiosClient.get('/payment/wallets/me'),
+
+  getWalletLedger: ({ page = 0, size = 20, type } = {}) =>
+    axiosClient.get('/payment/wallets/ledger', {
+      params: { page, size, ...(type && type !== 'ALL' && { type }) },
+    }),
+
+  /**
+   * @param {{ amount: number, gateway: string, paymentMethod?: string }} params
+   * @param {string} [idempotencyKey]
+   */
+  createTopUp: ({ amount, gateway, paymentMethod }, idempotencyKey = newIdempotencyKey()) =>
+    axiosClient.post(
+      '/payment/wallets/topup',
+      { amount, gateway, ...(paymentMethod && { paymentMethod }) },
+      { headers: { 'Idempotency-Key': idempotencyKey } },
+    ),
+
+  getTopUp: (topUpId) => axiosClient.get(`/payment/wallets/topup/${topUpId}`),
+
+  pollTopUpStatus: async (topUpId, { intervalMs = 1500, maxAttempts = 20 } = {}) => {
+    for (let i = 0; i < maxAttempts; i++) {
+      const res = await axiosClient.get(`/payment/wallets/topup/${topUpId}`);
+      const topUp = res?.result ?? res;
+      if (topUp?.status && !['INITIATED', 'PENDING', 'UNKNOWN'].includes(topUp.status)) {
+        return topUp;
+      }
+      if (i < maxAttempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, intervalMs));
+      }
+    }
+    const finalRes = await axiosClient.get(`/payment/wallets/topup/${topUpId}`);
+    return finalRes?.result ?? finalRes;
+  },
+
+  // Payout Settings & Request (Việc 30 / Việc 37)
+  getPayoutSettings: () => axiosClient.get('/payment/payout-settings/me'),
+
+  savePayoutSettings: (body) => axiosClient.post('/payment/payout-settings', body),
+
+  /**
+   * @param {{ amount: number, bankName: string, accountName: string, accountNumber: string, bankCode?: string }} params
+   * @param {string} [idempotencyKey]
+   */
+  requestPayout: (
+    { amount, bankName, accountName, accountNumber, bankCode },
+    idempotencyKey = newIdempotencyKey(),
+  ) =>
+    axiosClient.post(
+      '/payment/payouts',
+      { amount, bankName, accountName, accountNumber, ...(bankCode && { bankCode }) },
+      { headers: { 'Idempotency-Key': idempotencyKey } },
+    ),
+
+  getPayouts: ({ page = 0, size = 20 } = {}) =>
+    axiosClient.get('/payment/payouts', { params: { page, size } }),
 };
 
 // The MOCK gateway has no hosted page; it only exists while payment-service runs
@@ -100,6 +158,14 @@ const ERROR_MESSAGES = {
   3009: 'Khung giờ đã hết thời gian giữ chỗ. Vui lòng đặt đơn mới.',
   3012: 'Số tiền nằm ngoài hạn mức của cổng thanh toán này. Hãy chọn cổng khác.',
   3101: 'Chưa có thông tin ký quỹ (escrow) cho đơn này.',
+  3201: 'Số dư khả dụng trong ví không đủ để thực hiện thanh toán.',
+  3202: 'Số tiền nạp tối thiểu là 50.000 ₫.',
+  3203: 'Số tiền nạp tối đa là 100.000.000 ₫.',
+  3204: 'Giao dịch nạp tiền đang được xử lý hoặc đối soát.',
+  3205: 'Không tìm thấy thông tin ví của người dùng.',
+  3206: 'Tài khoản đang có dư nợ hoặc bị áp dụng chế tài, không thể rút tiền.',
+  3207: 'Số tiền rút tối thiểu là 100.000 ₫.',
+  3208: 'Số tiền rút vượt quá số dư khả dụng.',
   3301: 'Cổng thanh toán tạm thời không phản hồi. Vui lòng thử lại hoặc chọn cổng khác.',
 };
 

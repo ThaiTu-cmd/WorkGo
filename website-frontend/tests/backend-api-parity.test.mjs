@@ -224,6 +224,14 @@ test("API Parity: paymentApi calls payment-service through the gateway", async (
     await paymentApi.getEscrow("o1");
     await paymentApi.simulateMockPayment("PAY1", true);
     await paymentApi.simulateMockPayment("PAY1", false);
+    await paymentApi.getWallet();
+    await paymentApi.getWalletLedger({ page: 0, size: 20 });
+    await paymentApi.createTopUp({ amount: 100000, gateway: "VNPAY" }, "key-topup");
+    await paymentApi.getTopUp("top-1");
+    await paymentApi.getPayoutSettings();
+    await paymentApi.savePayoutSettings({ bankName: "Vietcombank", accountName: "TRAN HUU TRUNG", accountNumber: "0071001234567" });
+    await paymentApi.requestPayout({ amount: 500000, bankName: "Vietcombank", accountName: "TRAN HUU TRUNG", accountNumber: "0071001234567" }, "key-payout");
+    await paymentApi.getPayouts();
   } finally {
     Object.assign(axiosClient, original);
   }
@@ -235,6 +243,14 @@ test("API Parity: paymentApi calls payment-service through the gateway", async (
     ["GET", "/payment/escrows/orders/o1", undefined],
     ["POST", "/payment/dev/payments/PAY1/success", undefined, undefined],
     ["POST", "/payment/dev/payments/PAY1/fail", undefined, undefined],
+    ["GET", "/payment/wallets/me", undefined],
+    ["GET", "/payment/wallets/ledger", { page: 0, size: 20 }],
+    ["POST", "/payment/wallets/topup", { amount: 100000, gateway: "VNPAY" }, { "Idempotency-Key": "key-topup" }],
+    ["GET", "/payment/wallets/topup/top-1", undefined],
+    ["GET", "/payment/payout-settings/me", undefined],
+    ["POST", "/payment/payout-settings", { bankName: "Vietcombank", accountName: "TRAN HUU TRUNG", accountNumber: "0071001234567" }, undefined],
+    ["POST", "/payment/payouts", { amount: 500000, bankName: "Vietcombank", accountName: "TRAN HUU TRUNG", accountNumber: "0071001234567" }, { "Idempotency-Key": "key-payout" }],
+    ["GET", "/payment/payouts", { page: 0, size: 20 }],
   ]);
 });
 

@@ -101,6 +101,46 @@
   outline-offset: 2px;
 }
 
+.checklist {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--surface-subtle, #f8fafc);
+  border: 1px solid var(--border-default, #e2e8f0);
+  border-radius: 12px;
+}
+
+.checklistTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--wg-text);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.checklistGrid {
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--wg-text-secondary);
+}
+
+.checkItemValid {
+  color: #166534;
+  font-weight: 500;
+}
+
+.checkItemInvalid {
+  color: var(--wg-text-muted);
+}
+
 @media (max-width: 640px) {
   .row {
     grid-template-columns: 1fr;

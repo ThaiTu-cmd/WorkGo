@@ -1,8 +1,8 @@
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { radius, spacing, useColors } from './theme';
 
-type Props = { children: React.ReactNode; onPress?: () => void; style?: ViewStyle; accessibilityLabel?: string };
+type Props = { children: React.ReactNode; onPress?: () => void; style?: StyleProp<ViewStyle>; accessibilityLabel?: string };
 
 export function Card({ children, onPress, style, accessibilityLabel }: Props) {
   const c = useColors();

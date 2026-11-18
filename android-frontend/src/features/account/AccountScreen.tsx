@@ -54,6 +54,7 @@ export function AccountScreen() {
       <Card style={styles.menu}>
         <MenuItem icon="person-outline" label={t('accountScreen.thong_tin_ca_nhan')} href="/account/profile" />
         <MenuItem icon="location-outline" label={t('accountScreen.so_dia_chi')} href="/account/addresses" />
+        <MenuItem icon="wallet-outline" label="Ví & Ký quỹ" href="/payment/wallet" />
       </Card>
 
       <Card style={styles.menu}>

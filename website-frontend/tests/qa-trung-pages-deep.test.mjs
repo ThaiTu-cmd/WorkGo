@@ -128,19 +128,18 @@ test("HP-TRUNG-06: mockProposals structure and status types (PENDING, ACCEPTED, 
   assert.ok(file.includes("export const mockProposals: Proposal[] = ["));
 });
 
-test("HP-TRUNG-07: mockWallet holds valid escrow and release state with history", () => {
-  const file = read(path.join(TRUNG, "_mocks/mockWallet.ts"));
-  assert.ok(file.includes("held: 3500000"));
-  assert.ok(file.includes("released: 12750000"));
-  assert.ok(file.includes("HOLD") && file.includes("RELEASE") && file.includes("TOPUP") && file.includes("PAYOUT"));
+test("HP-TRUNG-07: mockWallet eliminated, paymentTypes defines valid escrow and ledger types", () => {
+  assert.ok(!fs.existsSync(path.join(TRUNG, "_mocks/mockWallet.ts")), "mockWallet.ts must be eliminated");
+  const typesFile = read(path.join(TRUNG, "payment/paymentTypes.ts"));
+  assert.ok(typesFile.includes("HOLD") && typesFile.includes("RELEASE") && typesFile.includes("TOPUP") && typesFile.includes("PAYOUT"));
 });
 
-test("HP-TRUNG-08: mockDisputes covers REPORT and DISPUTE kinds with OPEN/RESOLVED status", () => {
-  const file = read(path.join(TRUNG, "_mocks/mockDisputes.ts"));
-  assert.ok(file.includes("REPORT"));
-  assert.ok(file.includes("DISPUTE"));
-  assert.ok(file.includes("OPEN"));
-  assert.ok(file.includes("RESOLVED"));
+test("HP-TRUNG-08: disputes and reviews are loaded from trust-service via the bridge", () => {
+  assert.ok(!fs.existsSync(path.join(TRUNG, "_mocks/mockDisputes.ts")), "mockDisputes must be gone");
+  assert.ok(!fs.existsSync(path.join(TRUNG, "_mocks/mockReviews.ts")), "mockReviews must be gone");
+  const file = read(path.join(TRUNG, "trust/DisputeCenterPage.tsx"));
+  assert.ok(file.includes("webapp-bridge/backend"));
+  assert.ok(file.includes("trustApi.getMyDisputes"));
 });
 
 test("HP-TRUNG-09: provider profile is loaded from identity-service via the bridge", () => {
@@ -480,8 +479,7 @@ test("EC-TRUNG-14: PaymentGateway mock top-up increases released balance and wri
   assert.equal(nextWallet.history[0].amount, 500000);
 });
 
-test("EC-TRUNG-15: LocalStorage quota exception resilience & SSR safety across all components", () => {
-  const quotaMsg = "Bộ nhớ trình duyệt bị đầy hoặc bị chặn — thay đổi chỉ được giữ trong phiên này.";
+test("EC-TRUNG-15: Backend API resilience & error handling across all components", () => {
   const pages = [
     "jobs/JobPostPage.tsx",
     "jobs/SubmitProposalPage.tsx",
@@ -495,8 +493,8 @@ test("EC-TRUNG-15: LocalStorage quota exception resilience & SSR safety across a
   for (const p of pages) {
     const src = read(path.join(TRUNG, p));
     assert.ok(
-      src.includes(quotaMsg) || src.includes("quotaToast"),
-      `${p} must guard localStorage write with quota toast error message`
+      src.includes("onShowToast") && (src.includes("catch") || src.includes("try")),
+      `${p} must guard async API calls and display error toast`
     );
   }
 });

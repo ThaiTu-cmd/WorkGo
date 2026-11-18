@@ -2,6 +2,7 @@
    the tab bar aligns with those pages' own 1320px/32px content column. */
 .page {
   min-height: 50vh;
+  overflow-wrap: break-word;
 }
 
 .tabBarWrap {
@@ -28,7 +29,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 40px;
+  min-height: 44px;
   padding: 8px 22px;
   border-radius: var(--radius-full);
   font-weight: 600;

@@ -57,6 +57,11 @@ export default function RootLayout() {
               <Stack.Screen name="chat/[id]" options={{ title: t('chat.tro_chuyen') }} />
               <Stack.Screen name="notifications" options={{ title: t('notifications.title') }} />
               <Stack.Screen name="inbox" options={{ title: t('chat.tin_nhan') }} />
+              <Stack.Screen name="jobs/index" options={{ title: 'Sàn việc làm' }} />
+              <Stack.Screen name="jobs/[id]/index" options={{ title: 'Chi tiết việc làm' }} />
+              <Stack.Screen name="jobs/new" options={{ title: 'Đăng việc làm' }} />
+              <Stack.Screen name="jobs/[id]/proposal" options={{ title: 'Gửi đề xuất' }} />
+              <Stack.Screen name="jobs/[id]/review" options={{ title: 'Đề xuất đã nhận' }} />
             </Stack>
           </ThemeProvider>
           </CommunicationProvider>

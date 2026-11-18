@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { LogIn } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
-import { authApi } from "../../webapp-bridge/backend";
+import { authApi, useAuthToken } from "../../webapp-bridge/backend";
 import { loginSchema } from "./authValidation";
 import styles from "./LoginPage.module.css";
 export type TrungPageProps = {
@@ -16,6 +16,7 @@ export default function LoginPage({
   onShowToast
 }: TrungPageProps) {
   const tr = useTranslations("misc");
+  const token = useAuthToken();
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{
@@ -24,6 +25,16 @@ export default function LoginPage({
     form?: string;
   }>({});
   const [submitting, setSubmitting] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+      onShowToast(tr("m1334"));
+    } catch {
+      // logout drops token locally
+    }
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = loginSchema.safeParse({
@@ -57,6 +68,32 @@ export default function LoginPage({
     // Signed-in default view is the catalog, not the guest landing.
     onNavigate("catalog");
   };
+
+  if (token) {
+    return (
+      <main className={styles.wrap}>
+        <div className={styles.card}>
+          <h1 className={styles.title}>
+            <LogIn size={24} className={styles.titleIcon} aria-hidden="true" />
+            {tr("m1145")}
+          </h1>
+          <p className={styles.sub}>Bạn hiện đang đăng nhập trên hệ thống WorkGo.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" }}>
+            <button type="button" className={styles.submit} onClick={() => onNavigate("profile-settings")}>
+              Quản lý hồ sơ cá nhân
+            </button>
+            <button type="button" className={styles.submit} style={{ background: "transparent", color: "var(--wg-primary)", border: "1px solid var(--wg-primary)" }} onClick={() => onNavigate("catalog")}>
+              Đến danh mục dịch vụ
+            </button>
+            <button type="button" className={styles.link} style={{ marginTop: "12px", textAlign: "center" }} onClick={handleLogout}>
+              Đăng xuất khỏi tài khoản hiện tại
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return <main className={styles.wrap}>
       <div className={styles.card}>
         <h1 className={styles.title}>

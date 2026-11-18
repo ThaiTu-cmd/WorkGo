@@ -74,6 +74,81 @@
   margin-top: 16px;
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+.secondary {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--wg-primary);
+  border: 1px solid var(--wg-primary);
+  font-weight: 700;
+  padding: 12px 18px;
+  cursor: pointer;
+}
+
+.secondary:hover {
+  background: var(--wg-primary-light, #eff6ff);
+}
+
+.editCard {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid var(--wg-border);
+  border-radius: 12px;
+  background: var(--wg-background, #f8fafc);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--wg-text);
+}
+
+.editField input,
+.editField textarea {
+  min-height: 44px;
+  border: 1px solid var(--wg-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: var(--wg-surface);
+}
+
+.kycTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.kycVerified {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.kycPending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.kycMissing {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .primary {

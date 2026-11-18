@@ -77,6 +77,23 @@ export default function ProfileSettingsPage({
       cancelled = true;
     };
   }, [token]);
+
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      onShowToast("Ảnh đại diện không được vượt quá 2MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setAvatarUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!me) return;
@@ -131,6 +148,8 @@ export default function ProfileSettingsPage({
           <label className={styles.field}>
             <span>{tr("m1342")}</span>
             <input type="url" value={avatarUrl} onChange={e => setAvatarUrl(e.target.value)} placeholder="https://..." inputMode="url" />
+            <span style={{ fontSize: "0.8rem", color: "var(--wg-text-secondary)" }}>Hoặc tải ảnh từ thiết bị:</span>
+            <input type="file" accept="image/*" onChange={handleAvatarFileChange} style={{ minHeight: "auto", padding: "8px" }} />
           </label>
           <label className={styles.field}>
             <span>{tr("m295")}</span>
@@ -146,6 +165,15 @@ export default function ProfileSettingsPage({
             {saving ? tr("m1130") : tr("m1337")}
           </button>
         </form>
+
+        <div style={{ marginTop: "24px", paddingTop: "16px", borderTop: "1px solid var(--wg-border)", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <button type="button" onClick={() => onNavigate("address-book")} className={styles.submit} style={{ flex: 1, minWidth: "160px", background: "transparent", color: "var(--wg-primary)", border: "1px solid var(--wg-primary)" }}>
+            Sổ địa chỉ
+          </button>
+          <button type="button" onClick={() => onNavigate("provider-onboarding")} className={styles.submit} style={{ flex: 1, minWidth: "160px", background: "transparent", color: "var(--wg-primary)", border: "1px solid var(--wg-primary)" }}>
+            Đăng ký làm Chuyên gia (Provider)
+          </button>
+        </div>
       </div>
     </main>;
 }

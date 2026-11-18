@@ -2,6 +2,8 @@
   max-width: 1320px;
   margin: 0 auto;
   padding: 24px 32px 32px;
+  overflow-wrap: break-word;
+  min-height: 44px;
 }
 
 .shell {

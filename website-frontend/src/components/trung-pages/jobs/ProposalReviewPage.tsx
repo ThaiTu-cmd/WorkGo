@@ -1,13 +1,13 @@
 "use client";
 
 // Prototype Mode
+// Đánh Giá & Duyệt Đề Xuất - Proposal Review with Lock & Order Creation Sync
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { CheckCircle2, XCircle, RefreshCw, ShoppingCart, Loader2, FileText } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { jobApi, useAuthToken } from "../../webapp-bridge/backend";
-import { type Job } from "../_mocks/mockJobs";
-import { type Proposal } from "../_mocks/mockProposals";
+import { type JobSummary, type ProposalItem, type OrderSyncStatus } from "./types";
 import styles from "./ProposalReviewPage.module.css";
 
 export type TrungPageProps = {
@@ -17,118 +17,279 @@ export type TrungPageProps = {
 };
 
 export default function ProposalReviewPage({
+  onNavigate,
   onShowToast,
   jobId
 }: TrungPageProps) {
   const tr = useTranslations("misc");
   const token = useAuthToken();
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<JobSummary[]>([]);
   const [selectedJobId, setSelectedJobId] = useState(jobId ?? "");
-  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [proposals, setProposals] = useState<ProposalItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
+  // Concurrency & action locks
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
+  // Order sync states for accepted proposal: { [proposalId]: { status, orderId } }
+  const [syncStates, setSyncStates] = useState<Record<string, { status: OrderSyncStatus; orderId?: string }>>({});
+  const pollingTimersRef = useRef<Record<string, NodeJS.Timeout>>({});
+
+  // Clean up polling timers on unmount
   useEffect(() => {
-    let cancelled = false;
-    jobApi.searchJobs({ page: 0, size: 50 }).then((res: { result?: { data?: unknown[] } }) => {
-      if (cancelled) return;
-      const apiList = (res?.result?.data || (Array.isArray(res?.result) ? res.result : [])) as Array<{
-        jobId: string;
-        title: string;
-      }>;
-      if (Array.isArray(apiList)) {
-        setJobs(apiList.map(j => ({
-          jobId: j.jobId,
-          title: j.title,
-          description: "",
-          budget: 0,
-          type: "DIGITAL",
-          clientName: "",
-          bidsCount: 0,
-          createdAt: ""
-        })));
-        if (!selectedJobId && apiList.length > 0) {
-          setSelectedJobId(apiList[0].jobId);
+    const timers = pollingTimersRef.current;
+    return () => {
+      Object.values(timers).forEach(t => clearTimeout(t));
+    };
+  }, []);
+
+  // Order sync status polling
+  const syncRef = useRef<(proposalId: string, attempt?: number) => void>(() => {});
+
+  const checkOrderSync = useCallback(async (proposalId: string, attempt = 1) => {
+    try {
+      const res = await jobApi.orderSync(proposalId);
+      const r = (res as { result?: { orderSyncStatus?: OrderSyncStatus; status?: OrderSyncStatus; orderId?: string } })?.result;
+      const status: OrderSyncStatus = r?.orderSyncStatus || r?.status || "PENDING";
+      const orderId = r?.orderId;
+
+      setSyncStates(prev => ({
+        ...prev,
+        [proposalId]: { status, orderId }
+      }));
+
+      // If pending and attempts < 6, poll again after 2 seconds
+      if (status === "PENDING" && attempt < 6) {
+        if (pollingTimersRef.current[proposalId]) {
+          clearTimeout(pollingTimersRef.current[proposalId]);
         }
+        pollingTimersRef.current[proposalId] = setTimeout(() => {
+          syncRef.current(proposalId, attempt + 1);
+        }, 2000);
       }
-    }).catch(() => {
-      // Backend not running
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedJobId]);
+    } catch {
+      // Non-blocking
+    }
+  }, []);
 
   useEffect(() => {
-    if (!selectedJobId) return undefined;
+    syncRef.current = checkOrderSync;
+  }, [checkOrderSync]);
+
+  // 1. Fetch Client's Jobs (prioritize getMyJobs if logged in, fallback to searchJobs)
+  useEffect(() => {
     let cancelled = false;
 
-    jobApi.getJobProposals(selectedJobId).then((res: { result?: { data?: unknown[] } }) => {
-      if (cancelled) return;
-      const apiProps = (res?.result?.data || (Array.isArray(res?.result) ? res.result : [])) as Array<{
-        proposalId: string;
-        jobId: string;
-        price?: number;
-        estimatedDays?: number;
-        message?: string;
-        status?: string;
-        createdAt?: string;
-      }>;
-      if (Array.isArray(apiProps)) {
-        setProposals(apiProps.map(p => ({
-          proposalId: p.proposalId,
-          jobId: p.jobId,
-          providerName: tr("m1174"),
-          bidPrice: Number(p.price || 0),
-          durationDays: Number(p.estimatedDays || 1),
-          message: p.message || "",
-          status: (p.status as "PENDING" | "ACCEPTED" | "REJECTED") || "PENDING",
-          createdAt: p.createdAt ? p.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
-        })));
-      } else {
-        setProposals([]);
+    const fetchJobs = async () => {
+      try {
+        let jobList: JobSummary[] = [];
+
+        if (token) {
+          try {
+            const myRes = await jobApi.getMyJobs({ page: 0, size: 50 });
+            const pageData = (myRes as { result?: { data?: unknown[] } })?.result?.data;
+            if (Array.isArray(pageData) && pageData.length > 0) {
+              jobList = pageData.map(j => {
+                const item = j as Record<string, unknown>;
+                return {
+                  jobId: String(item.jobId),
+                  title: String(item.title ?? "Công việc"),
+                  description: String(item.description ?? ""),
+                  budgetMin: Number(item.budgetMin ?? 0),
+                  budgetMax: Number(item.budgetMax ?? 0),
+                  currency: String(item.currency ?? "VND"),
+                  executionType: (item.executionType as JobSummary["executionType"]) || "DIGITAL",
+                  status: String(item.status ?? "OPEN"),
+                  applicationCount: Number(item.applicationCount ?? 0),
+                  createdAt: String(item.createdAt ?? "").slice(0, 10)
+                };
+              });
+            }
+          } catch {
+            // Non-client or error, fall through to public search
+          }
+        }
+
+        if (jobList.length === 0) {
+          const publicRes = await jobApi.searchJobs({ page: 0, size: 50 });
+          const publicData = (publicRes as { result?: { data?: unknown[] } })?.result?.data;
+          if (Array.isArray(publicData)) {
+            jobList = publicData.map(j => {
+              const item = j as Record<string, unknown>;
+              return {
+                jobId: String(item.jobId),
+                title: String(item.title ?? "Công việc"),
+                description: String(item.description ?? ""),
+                budgetMin: Number(item.budgetMin ?? 0),
+                budgetMax: Number(item.budgetMax ?? 0),
+                currency: String(item.currency ?? "VND"),
+                executionType: (item.executionType as JobSummary["executionType"]) || "DIGITAL",
+                status: String(item.status ?? "OPEN"),
+                applicationCount: Number(item.applicationCount ?? 0),
+                createdAt: String(item.createdAt ?? "").slice(0, 10)
+              };
+            });
+          }
+        }
+
+        if (!cancelled) {
+          setJobs(jobList);
+          if (!selectedJobId && jobList.length > 0) {
+            setSelectedJobId(jobList[0].jobId);
+          }
+        }
+      } catch {
+        if (!cancelled) setJobs([]);
       }
-    }).catch(() => {
-      if (!cancelled) setProposals([]);
-    }).finally(() => {
-      if (!cancelled) setLoading(false);
-    });
+    };
+
+    fetchJobs();
 
     return () => {
       cancelled = true;
     };
-  }, [token, selectedJobId, tr]);
+  }, [token, selectedJobId]);
 
-  const list = useMemo(() => {
-    const rows = selectedJobId ? proposals.filter(p => p.jobId === selectedJobId) : proposals;
-    return [...rows].sort((a, b) => a.bidPrice - b.bidPrice);
-  }, [proposals, selectedJobId]);
-
-  const hasAccepted = useMemo(
-    () => (selectedJobId ? proposals.some(p => p.jobId === selectedJobId && p.status === "ACCEPTED") : false),
-    [proposals, selectedJobId]
-  );
-
-  const accept = async (id: string) => {
-    if (!token) {
-      onShowToast("Vui lòng đăng nhập để thao tác");
+  // 2. Fetch Proposals for Selected Job
+  useEffect(() => {
+    if (!selectedJobId) {
       return;
     }
+    let cancelled = false;
+
+    const fetchProposals = async () => {
+      try {
+        const res = await jobApi.getJobProposals(selectedJobId, { page: 0, size: 50 });
+        if (cancelled) return;
+        const apiData = (res as { result?: { data?: unknown[] } | unknown[] })?.result;
+        const rawList = (apiData && typeof apiData === "object" && "data" in apiData
+          ? (apiData as { data?: unknown[] }).data
+          : apiData ?? (Array.isArray(res) ? res : [])) as Array<{
+          proposalId: string;
+          jobId: string;
+          price?: number;
+          currency?: string;
+          estimatedDays?: number;
+          message?: string;
+          terms?: string;
+          status?: string;
+          createdAt?: string;
+          expiresAt?: string;
+          provider?: {
+            businessName?: string;
+            providerProfileId?: string;
+            ratingAvg?: number;
+            ratingCount?: number;
+          };
+        }>;
+
+        if (Array.isArray(rawList)) {
+          const mapped: ProposalItem[] = rawList.map(p => ({
+            proposalId: p.proposalId,
+            jobId: p.jobId,
+            providerId: p.provider?.providerProfileId,
+            providerName: p.provider?.businessName || tr("m1174"),
+            price: Number(p.price || 0),
+            currency: p.currency || "VND",
+            estimatedDays: Number(p.estimatedDays || 1),
+            message: p.message || "",
+            terms: p.terms || undefined,
+            status: (p.status as ProposalItem["status"]) || "PENDING",
+            createdAt: p.createdAt ? p.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
+            expiresAt: p.expiresAt ? p.expiresAt.slice(0, 10) : undefined
+          }));
+
+          setProposals(mapped);
+
+          // Check if there is already an accepted proposal, initiate order sync check
+          const accepted = mapped.find(p => p.status === "ACCEPTED");
+          if (accepted) {
+            checkOrderSync(accepted.proposalId);
+          }
+        } else {
+          setProposals([]);
+        }
+      } catch {
+        if (!cancelled) setProposals([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchProposals();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedJobId, tr, checkOrderSync]);
+
+  // Filter & sort proposals
+  const list = useMemo(() => {
+    return proposals.filter(p => {
+      if (statusFilter !== "ALL" && p.status !== statusFilter) return false;
+      return true;
+    }).sort((a, b) => a.price - b.price);
+  }, [proposals, statusFilter]);
+
+  const hasAccepted = useMemo(
+    () => proposals.some(p => p.status === "ACCEPTED"),
+    [proposals]
+  );
+
+  // Accept Proposal
+  const accept = async (id: string) => {
+    if (!token) {
+      onShowToast("Vui lòng đăng nhập để thao tác.");
+      return;
+    }
+
+    if (processingId) return; // Concurrency lock
+    setProcessingId(id);
+
     try {
-      await jobApi.acceptProposal(id);
+      const res = await jobApi.acceptProposal(id);
+      const resResult = (res as { result?: { orderSyncStatus?: OrderSyncStatus; status?: OrderSyncStatus; orderId?: string } })?.result;
+      const initialStatus: OrderSyncStatus = resResult?.orderSyncStatus || resResult?.status || "PENDING";
+      const initialOrderId = resResult?.orderId;
+
+      // Update proposal statuses locally
       setProposals(prev =>
-        prev.map(p => (p.proposalId === id ? { ...p, status: "ACCEPTED" } : p.jobId === selectedJobId ? { ...p, status: "REJECTED" } : p))
+        prev.map(p => (
+          p.proposalId === id
+            ? { ...p, status: "ACCEPTED" }
+            : p.status === "PENDING"
+            ? { ...p, status: "REJECTED" }
+            : p
+        ))
       );
+
+      setSyncStates(prev => ({
+        ...prev,
+        [id]: { status: initialStatus, orderId: initialOrderId }
+      }));
+
       onShowToast(tr("m1227"));
+
+      // Poll sync status to see when Order is created in outbox
+      checkOrderSync(id);
     } catch (err: unknown) {
       onShowToast((err as Error)?.message || tr("m1140"));
+    } finally {
+      setProcessingId(null);
     }
   };
 
+  // Reject Proposal
   const reject = async (id: string) => {
     if (!token) {
-      onShowToast("Vui lòng đăng nhập để thao tác");
+      onShowToast("Vui lòng đăng nhập để thao tác.");
       return;
     }
+
+    if (processingId) return; // Concurrency lock
+    setProcessingId(id);
+
     try {
       await jobApi.rejectProposal(id);
       setProposals(prev =>
@@ -137,6 +298,22 @@ export default function ProposalReviewPage({
       onShowToast(tr("m1228"));
     } catch (err: unknown) {
       onShowToast((err as Error)?.message || tr("m1140"));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  // Retry Order Creation if outbox failed
+  const retryOrder = async (proposalId: string) => {
+    setProcessingId(proposalId);
+    try {
+      await jobApi.retryOrder(proposalId);
+      onShowToast("Đã gửi yêu cầu thử lại tạo đơn hàng.");
+      checkOrderSync(proposalId);
+    } catch (err: unknown) {
+      onShowToast((err as Error)?.message || "Không thể thử lại tạo đơn hàng.");
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -147,76 +324,211 @@ export default function ProposalReviewPage({
           <h1 className={styles.title}>{tr("m1224")}</h1>
           <p className={styles.sub}>{tr("m1234")}</p>
         </div>
-        <select
-          value={selectedJobId}
-          onChange={e => setSelectedJobId(e.target.value)}
-          aria-label={tr("m1232")}
-          className={styles.jobSelect}
-        >
-          {jobs.length === 0 ? (
-            <option value="">{tr("m1217")}</option>
-          ) : (
-            jobs.map(j => (
-              <option key={j.jobId} value={j.jobId}>
-                {j.title}
-              </option>
-            ))
-          )}
-        </select>
+
+        <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+          <select
+            value={selectedJobId}
+            onChange={e => setSelectedJobId(e.target.value)}
+            aria-label={tr("m1232")}
+            className={styles.jobSelect}
+            style={{
+              minHeight: "44px",
+              border: "1px solid var(--wg-border)",
+              borderRadius: "10px",
+              padding: "8px 12px",
+              background: "var(--wg-surface)",
+              fontWeight: 600,
+              fontSize: "0.95rem"
+            }}
+          >
+            {jobs.length === 0 ? (
+              <option value="">{tr("m1217")}</option>
+            ) : (
+              jobs.map(j => (
+                <option key={j.jobId} value={j.jobId}>
+                  {j.title} ({j.applicationCount} báo giá)
+                </option>
+              ))
+            )}
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            aria-label="Lọc theo trạng thái đề xuất"
+            style={{
+              minHeight: "44px",
+              border: "1px solid var(--wg-border)",
+              borderRadius: "10px",
+              padding: "8px 12px",
+              background: "var(--wg-surface)",
+              fontSize: "0.92rem"
+            }}
+          >
+            <option value="ALL">Tất cả trạng thái</option>
+            <option value="PENDING">Đang chờ duyệt</option>
+            <option value="ACCEPTED">Đã chấp nhận</option>
+            <option value="REJECTED">Đã từ chối</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (
-        <p className={styles.empty}>{tr("m1161")}</p>
+        <div style={{ textAlign: "center", padding: "40px 0" }}>
+          <Loader2 size={32} className="spin" style={{ animation: "spin 1s linear infinite", color: "var(--wg-primary)" }} />
+          <p className={styles.empty}>{tr("m1161")}</p>
+        </div>
       ) : list.length === 0 ? (
         <p className={styles.empty}>{tr("m1235")}</p>
       ) : (
         <ul className={styles.list}>
-          {list.map(p => (
-            <li key={p.proposalId} className={styles.card}>
-              <div className={styles.row}>
-                <div>
-                  <strong className={styles.provider}>{p.providerName}</strong>
-                  <span className={styles.time}>{p.createdAt}</span>
-                </div>
-                <span className={`${styles.badge} ${styles[p.status.toLowerCase()]}`}>
-                  {p.status === "PENDING"
-                    ? tr("m1237")
-                    : p.status === "ACCEPTED"
-                    ? tr("m1238")
-                    : tr("m1239")}
-                </span>
-              </div>
-              <p className={styles.msg}>{p.message}</p>
-              <div className={styles.meta}>
-                <span className={styles.price}>
-                  {p.bidPrice.toLocaleString("vi-VN")} ₫
-                </span>
-                <span className={styles.duration}>
-                  {tr("m1236", { p0: p.durationDays })}
-                </span>
-              </div>
-              {p.status === "PENDING" && !hasAccepted ? (
-                <div className={styles.actions}>
-                  <button
-                    type="button"
-                    className={styles.accept}
-                    onClick={() => accept(p.proposalId)}
+          {list.map(p => {
+            const sync = syncStates[p.proposalId];
+            const isRowLocked = processingId === p.proposalId;
+
+            return (
+              <li key={p.proposalId} className={styles.item}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                  <div>
+                    <strong className={styles.provider}>{p.providerName}</strong>
+                    <div style={{ fontSize: "0.8rem", color: "var(--wg-text-muted)" }}>
+                      Gửi lúc: {p.createdAt}
+                      {p.expiresAt && ` • Hết hạn: ${p.expiresAt}`}
+                    </div>
+                  </div>
+                  <span
+                    className={styles.status}
+                    data-status={p.status}
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      background:
+                        p.status === "ACCEPTED"
+                          ? "#dcfce7"
+                          : p.status === "REJECTED"
+                          ? "#fee2e2"
+                          : "#fef3c7",
+                      color:
+                        p.status === "ACCEPTED"
+                          ? "#166534"
+                          : p.status === "REJECTED"
+                          ? "#991b1b"
+                          : "#92400e"
+                    }}
                   >
-                    <CheckCircle2 size={16} aria-hidden="true" />
-                    {tr("m1240")}
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.reject}
-                    onClick={() => reject(p.proposalId)}
-                  >
-                    <XCircle size={16} aria-hidden="true" />
-                    {tr("m1241")}
-                  </button>
+                    {p.status === "PENDING"
+                      ? tr("m1237")
+                      : p.status === "ACCEPTED"
+                      ? tr("m1238")
+                      : p.status === "REJECTED"
+                      ? tr("m1239")
+                      : p.status}
+                  </span>
                 </div>
-              ) : null}
-            </li>
-          ))}
+
+                <div style={{ display: "flex", gap: "16px", alignItems: "baseline", marginTop: "4px" }}>
+                  <span className={styles.bid}>{p.price.toLocaleString("vi-VN")} ₫</span>
+                  <span style={{ fontSize: "0.88rem", color: "var(--wg-text-secondary)" }}>
+                    {tr("m1236", { p0: p.estimatedDays })}
+                  </span>
+                </div>
+
+                <p className={styles.msg}>{p.message}</p>
+
+                {p.terms && (
+                  <div className={styles.termsBox}>
+                    <FileText size={14} style={{ display: "inline", marginRight: "4px", verticalAlign: "middle" }} />
+                    <strong>Cam kết:</strong> {p.terms}
+                  </div>
+                )}
+
+                {/* Order Outbox Sync Status Banner when proposal is accepted */}
+                {p.status === "ACCEPTED" && (
+                  <div
+                    className={`${styles.syncBanner} ${
+                      sync?.status === "SUCCESS"
+                        ? styles.syncSuccess
+                        : sync?.status === "FAILED"
+                        ? styles.syncFailed
+                        : styles.syncPending
+                    }`}
+                  >
+                    {sync?.status === "SUCCESS" ? (
+                      <>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <CheckCircle2 size={18} />
+                          <span>Đã tạo đơn hàng thành công! {sync.orderId ? `Mã: ${sync.orderId.slice(0, 8)}...` : ""}</span>
+                        </div>
+                        {sync.orderId && (
+                          <button
+                            type="button"
+                            className={styles.syncAction}
+                            style={{ background: "#166534", color: "#ffffff" }}
+                            onClick={() => onNavigate("payment-gateway", { orderId: sync.orderId })}
+                          >
+                            <ShoppingCart size={14} style={{ display: "inline", marginRight: "4px" }} />
+                            Xem đơn hàng
+                          </button>
+                        )}
+                      </>
+                    ) : sync?.status === "FAILED" ? (
+                      <>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <XCircle size={18} />
+                          <span>Đồng bộ tạo đơn hàng chưa thành công.</span>
+                        </div>
+                        <button
+                          type="button"
+                          className={styles.syncAction}
+                          style={{ background: "#dc2626", color: "#ffffff" }}
+                          disabled={isRowLocked}
+                          onClick={() => retryOrder(p.proposalId)}
+                        >
+                          <RefreshCw size={14} style={{ display: "inline", marginRight: "4px" }} />
+                          Thử lại tạo đơn
+                        </button>
+                      </>
+                    ) : (
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <Loader2 size={16} className="spin" style={{ animation: "spin 1s linear infinite" }} />
+                        <span>Hệ thống đang đồng bộ tạo đơn hàng (Order Outbox)...</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Accept & Reject Action buttons (with concurrency lock) */}
+                {p.status === "PENDING" && !hasAccepted && (
+                  <div className={styles.actions}>
+                    <button
+                      type="button"
+                      className={styles.primary}
+                      disabled={Boolean(processingId)}
+                      onClick={() => accept(p.proposalId)}
+                      style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                    >
+                      {isRowLocked ? (
+                        <Loader2 size={16} className="spin" style={{ animation: "spin 1s linear infinite" }} />
+                      ) : (
+                        <CheckCircle2 size={16} aria-hidden="true" />
+                      )}
+                      {tr("m1240")}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.ghost}
+                      disabled={Boolean(processingId)}
+                      onClick={() => reject(p.proposalId)}
+                      style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                    >
+                      <XCircle size={16} aria-hidden="true" />
+                      {tr("m1241")}
+                    </button>
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </main>

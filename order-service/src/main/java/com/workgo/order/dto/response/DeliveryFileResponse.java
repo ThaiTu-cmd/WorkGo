@@ -18,6 +18,8 @@ public class DeliveryFileResponse {
 
     String fileUrl;
 
+    UUID storedFileId;
+
     String fileName;
 
     String mimeType;

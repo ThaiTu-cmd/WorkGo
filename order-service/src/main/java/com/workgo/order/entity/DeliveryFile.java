@@ -26,6 +26,9 @@ public class DeliveryFile {
     @Column(name = "file_url", columnDefinition = "TEXT")
     String fileUrl;
 
+    @Column(name = "stored_file_id")
+    UUID storedFileId;
+
     @Column(name = "file_name")
     String fileName;
 

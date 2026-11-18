@@ -20,6 +20,10 @@ public class ServiceMediaResponse {
 
     String url;
 
+    String mimeType;
+
+    Long sizeBytes;
+
     MediaType mediaType;
 
     boolean cover;

@@ -35,6 +35,9 @@ public class WorkEvidence {
     @Column(name = "file_url", columnDefinition = "TEXT")
     String fileUrl;
 
+    @Column(name = "stored_file_id")
+    UUID storedFileId;
+
     @Column(name = "latitude")
     Double latitude;
 

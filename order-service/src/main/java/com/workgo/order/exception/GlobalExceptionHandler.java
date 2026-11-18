@@ -7,6 +7,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -42,6 +43,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(errorCode.getStatusCode())
                 .body(apiResponse);
+    }
+
+    @ExceptionHandler(value = MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiResponse> handlingMaxUploadSize(MaxUploadSizeExceededException exception){
+        ErrorCode errorCode = ErrorCode.ORDER_FILE_TOO_LARGE;
+
+        return ResponseEntity.status(errorCode.getStatusCode())
+                .body(ApiResponse.builder()
+                        .code(errorCode.getCode())
+                        .message(errorCode.getMessage())
+                        .build());
     }
 
     @ExceptionHandler(value = AccessDeniedException.class)

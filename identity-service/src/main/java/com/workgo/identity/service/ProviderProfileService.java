@@ -11,9 +11,12 @@ import com.workgo.identity.entity.ProviderProfile;
 import com.workgo.identity.entity.Role;
 import com.workgo.identity.entity.User;
 import com.workgo.identity.entity.UserRole;
+import com.workgo.identity.enumeration.AdminActionType;
 import com.workgo.identity.enumeration.RoleName;
 import com.workgo.identity.enumeration.VerificationStatus;
 import com.workgo.identity.repository.*;
+import com.workgo.identity.service.admin.AdminAction;
+import com.workgo.identity.service.admin.AdminAuditService;
 import com.workgo.identity.util.AttributeUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +26,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -39,6 +44,7 @@ public class ProviderProfileService {
     RoleRepository roleRepository;
     UserRoleRepository userRoleRepository;
     AttributeUtil attributeUtil;
+    AdminAuditService adminAuditService;
 
 
     //Tao provider profile
@@ -77,7 +83,7 @@ public class ProviderProfileService {
     }
 
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public PageResponse<ProviderProfileResponse> getProvidersByVerificationStatus(
             VerificationStatus status, int page, int size) {
 
@@ -113,12 +119,14 @@ public class ProviderProfileService {
     }
 
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ProviderProfileResponse updateVerificationStatus(UUID providerId, VerificationStatus status) {
         ProviderProfile providerProfile = providerProfileRepository.findById(providerId)
                 .orElseThrow(() -> new AppException(ErrorCode.PROVIDER_PROFILE_NOT_EXISTED));
 
         User user = providerProfile.getUser();
+        VerificationStatus beforeStatus = providerProfile.getVerificationStatus();
 
         providerProfile.setVerificationStatus(
                 providerProfile.getVerificationStatus().transitionTo(status));
@@ -131,19 +139,26 @@ public class ProviderProfileService {
 
             }
 
-            Role role = roleRepository.findById(RoleName.PROVIDER)
-                    .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+            boolean hasProviderRole = user.getUserRoles().stream()
+                    .anyMatch(userRole -> userRole.getRole().getRoleName() == RoleName.PROVIDER);
 
-            UserRole userRole = UserRole.builder()
-                    .grantedAt(Instant.now())
-                    .userNameHost("System")
-                    .user(user)
-                    .role(role)
-                    .build();
+            if(!hasProviderRole){
+                Role role = roleRepository.findById(RoleName.PROVIDER)
+                        .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
 
-            userRoleRepository.save(userRole);
+                UserRole userRole = UserRole.builder()
+                        .grantedAt(Instant.now())
+                        .userNameHost("System")
+                        .user(user)
+                        .role(role)
+                        .build();
 
-            user.getUserRoles().add(userRole);
+                userRoleRepository.save(userRole);
+
+                user.getUserRoles().add(userRole);
+                user.setAuthorizationVersion(user.getAuthorizationVersion() + 1);
+            }
+
             user.setProviderProfile(providerProfile);
             userRepository.save(user);
         }
@@ -151,8 +166,17 @@ public class ProviderProfileService {
 
         providerProfile.setUpdatedAt(Instant.now());
 
-        return providerProfileMapper.toProviderProfileResponse(
-                providerProfileRepository.save(providerProfile));
+        ProviderProfile savedProfile = providerProfileRepository.save(providerProfile);
+
+        adminAuditService.record(AdminAction.builder()
+                .action(AdminActionType.PROVIDER_STATUS_UPDATED)
+                .targetType("PROVIDER_PROFILE")
+                .targetId(providerId)
+                .beforeState(Map.of("verificationStatus", beforeStatus))
+                .afterState(Map.of("verificationStatus", savedProfile.getVerificationStatus()))
+                .build());
+
+        return providerProfileMapper.toProviderProfileResponse(savedProfile);
     }
 
 

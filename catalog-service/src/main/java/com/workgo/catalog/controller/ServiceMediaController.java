@@ -5,13 +5,18 @@ import com.workgo.catalog.dto.PageResponse;
 import com.workgo.catalog.dto.request.ServiceMediaCreationRequest;
 import com.workgo.catalog.dto.request.ServiceMediaUpdateRequest;
 import com.workgo.catalog.dto.response.ServiceMediaResponse;
+import com.workgo.catalog.entity.ServiceMedia;
 import com.workgo.catalog.exception.ErrorCode;
 import com.workgo.catalog.service.ServiceMediaService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Duration;
 import java.util.UUID;
 
 @RestController
@@ -89,4 +94,28 @@ public class ServiceMediaController {
                 .build();
     }
 
+    @PostMapping(value = "/services/{serviceId}/upload", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    ApiResponse<ServiceMediaResponse> uploadServiceMedia(
+            @PathVariable UUID serviceId,
+            @RequestPart("file") MultipartFile file,
+            @RequestParam(value = "cover", defaultValue = "false") boolean cover
+    ) {
+        return ApiResponse.<ServiceMediaResponse>builder()
+                .code(ErrorCode.SUCCESS.getCode())
+                .message(ErrorCode.SUCCESS.getMessage())
+                .result(serviceMediaService.uploadServiceMedia(serviceId, file, cover))
+                .build();
+    }
+
+    @GetMapping("/{serviceMediaId}/content")
+    ResponseEntity<byte[]> getContent(@PathVariable UUID serviceMediaId) {
+
+        ServiceMedia serviceMedia = serviceMediaService.loadUploadedMedia(serviceMediaId);
+
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.parseMediaType(serviceMedia.getMimeType()))
+                .header("X-Content-Type-Options", "nosniff")
+                .cacheControl(CacheControl.maxAge(Duration.ofDays(1)).cachePublic())
+                .body(serviceMediaService.readStoredContent(serviceMedia));
+    }
 }

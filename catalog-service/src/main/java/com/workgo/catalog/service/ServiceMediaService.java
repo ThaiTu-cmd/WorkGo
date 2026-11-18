@@ -6,11 +6,14 @@ import com.workgo.catalog.dto.request.ServiceMediaUpdateRequest;
 import com.workgo.catalog.dto.response.ServiceMediaResponse;
 import com.workgo.catalog.entity.Service;
 import com.workgo.catalog.entity.ServiceMedia;
+import com.workgo.catalog.enumeration.MediaType;
 import com.workgo.catalog.exception.AppException;
 import com.workgo.catalog.exception.ErrorCode;
 import com.workgo.catalog.mapper.ServiceMediaMapper;
 import com.workgo.catalog.repository.ServiceMediaRepository;
 import com.workgo.catalog.repository.ServiceRepository;
+import com.workgo.catalog.service.storage.FileStorage;
+import com.workgo.catalog.service.storage.FileTypeDetector;
 import com.workgo.catalog.utils.TokenUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +23,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.util.HexFormat;
+import java.util.Map;
 import java.util.UUID;
 
 @org.springframework.stereotype.Service
@@ -28,17 +38,30 @@ import java.util.UUID;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class ServiceMediaService {
 
+    static int MAX_MEDIA = 20;
+    static Map<String, MediaType> ALLOWED_TYPES = Map.of(
+            "image/jpeg", MediaType.IMAGE,
+            "image/png", MediaType.IMAGE,
+            "image/webp", MediaType.IMAGE,
+            "video/mp4", MediaType.VIDEO);
+    static Map<MediaType, Long> MAX_SIZE = Map.of(
+            MediaType.IMAGE, 5L * 1024 * 1024,
+            MediaType.VIDEO, 50L * 1024 * 1024);
+
     ServiceMediaRepository serviceMediaRepository;
     ServiceMediaMapper serviceMediaMapper;
     ServiceRepository serviceRepository;
     TokenUtils tokenUtils;
+    FileStorage fileStorage;
+    FileTypeDetector fileTypeDetector;
 
-    @PreAuthorize("hasAnyRole('PROVIDER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('PROVIDER')")
     public ServiceMediaResponse createServiceMedia(UUID serviceId, ServiceMediaCreationRequest request) {
         Service service = serviceRepository.findById(serviceId)
                 .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_EXISTED));
 
         tokenUtils.assertServiceOwner(service);
+        assertHttpsUrl(request.getUrl());
 
         if(serviceMediaRepository.existsByService_ServiceIdAndUrl(serviceId, request.getUrl())){
             throw new AppException(ErrorCode.MEDIA_EXISTED);
@@ -75,6 +98,58 @@ public class ServiceMediaService {
                 .build();
     }
 
+    @Transactional
+    @PreAuthorize("hasAnyRole('PROVIDER')")
+    public ServiceMediaResponse uploadServiceMedia(UUID serviceId, MultipartFile file, boolean cover) {
+        Service service = serviceRepository.findById(serviceId)
+                .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_EXISTED));
+
+        tokenUtils.assertServiceOwner(service);
+
+        if (file == null) throw new AppException(ErrorCode.FILE_REQUIRED);
+
+        if (serviceMediaRepository.countByService_ServiceId(serviceId) >= MAX_MEDIA) {
+            throw new AppException(ErrorCode.MEDIA_LIMIT);
+        }
+
+        byte[] content = readContent(file);
+        if (content.length == 0) throw new AppException(ErrorCode.FILE_EMPTY);
+
+        String mimeType = fileTypeDetector.detect(content);
+        MediaType mediaType = mimeType == null ? null : ALLOWED_TYPES.get(mimeType);
+        if (mediaType == null) throw new AppException(ErrorCode.FILE_TYPE_NOT_ALLOWED);
+        if (content.length > MAX_SIZE.get(mediaType)) throw new AppException(ErrorCode.FILE_TOO_LARGE);
+
+        String storageKey = "services/" + serviceId + "/" + UUID.randomUUID();
+        fileStorage.put(storageKey, content);
+
+        ServiceMedia serviceMedia = serviceMediaRepository.save(ServiceMedia.builder()
+                .mediaType(mediaType)
+                .cover(cover)
+                .storageKey(storageKey)
+                .mimeType(mimeType)
+                .sizeBytes((long) content.length)
+                .sha256(sha256(content))
+                .service(service)
+                .build());
+
+        serviceMedia.setUrl("/medias/" + serviceMedia.getServiceMediaId() + "/content");
+
+        return serviceMediaMapper.toServiceMediaResponse(serviceMediaRepository.save(serviceMedia));
+    }
+
+    public ServiceMedia loadUploadedMedia(UUID mediaId) {
+
+        return serviceMediaRepository.findById(mediaId)
+                .filter(media -> media.getStorageKey() != null)
+                .orElseThrow(() -> new AppException(ErrorCode.MEDIA_NOT_EXISTED));
+    }
+
+    public byte[] readStoredContent(ServiceMedia serviceMedia) {
+
+        return fileStorage.get(serviceMedia.getStorageKey());
+    }
+
     public ServiceMediaResponse getServiceMedia(UUID mediaId) {
         ServiceMedia serviceMedia = serviceMediaRepository.findById(mediaId)
                 .orElseThrow(() -> new AppException(ErrorCode.MEDIA_NOT_EXISTED));
@@ -82,12 +157,17 @@ public class ServiceMediaService {
         return serviceMediaMapper.toServiceMediaResponse(serviceMedia);
     }
 
-    @PreAuthorize("hasAnyRole('PROVIDER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('PROVIDER')")
     public ServiceMediaResponse updateServiceMedia(UUID mediaId, ServiceMediaUpdateRequest request) {
         ServiceMedia serviceMedia = serviceMediaRepository.findById(mediaId)
                 .orElseThrow(() -> new AppException(ErrorCode.MEDIA_NOT_EXISTED));
 
         tokenUtils.assertServiceOwner(serviceMedia.getService());
+
+        if (request.getUrl() != null) {
+            if (serviceMedia.getStorageKey() != null) throw new AppException(ErrorCode.MEDIA_URL_INVALID);
+            assertHttpsUrl(request.getUrl());
+        }
 
         serviceMediaMapper.updateMediaService(serviceMedia, request);
 
@@ -96,7 +176,7 @@ public class ServiceMediaService {
         return serviceMediaMapper.toServiceMediaResponse(saveMedia);
     }
 
-    @PreAuthorize("hasAnyRole('PROVIDER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('PROVIDER')")
     public void deleteServiceMedia(UUID mediaId) {
 
         ServiceMedia serviceMedia = serviceMediaRepository.findById(mediaId)
@@ -110,4 +190,31 @@ public class ServiceMediaService {
 
     }
 
+    //=====================================
+
+    //chan javascript:, data:, http: khi user tu dan link anh ngoai
+    private void assertHttpsUrl(String url) {
+
+        if (url == null || !url.regionMatches(true, 0, "https://", 0, 8) || url.length() > 2048) {
+            throw new AppException(ErrorCode.MEDIA_URL_INVALID);
+        }
+    }
+
+    private byte[] readContent(MultipartFile file) {
+
+        try {
+            return file.getBytes();
+        } catch (IOException e) {
+            throw new AppException(ErrorCode.FILE_STORAGE_ERROR);
+        }
+    }
+
+    private String sha256(byte[] content) {
+
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(content));
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 }

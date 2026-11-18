@@ -3,10 +3,12 @@ package com.workgo.identity.Exception;
 import com.workgo.identity.dto.ApiResponse;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.net.ResponseCache;
 
@@ -44,6 +46,30 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(errorCode.getStatusCode())
                 .body(apiResponse);
+    }
+
+    @ExceptionHandler(value = ObjectOptimisticLockingFailureException.class)
+    ResponseEntity<ApiResponse> handlingOptimisticLockingFailure(ObjectOptimisticLockingFailureException exception){
+        ErrorCode errorCode = ErrorCode.STALE_VERSION;
+
+        return ResponseEntity.status(errorCode.getStatusCode())
+                .body(ApiResponse
+                        .builder()
+                        .code(errorCode.getCode())
+                        .message(errorCode.getMessage())
+                        .build()
+                );
+    }
+
+    @ExceptionHandler(value = MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiResponse> handlingMaxUploadSize(MaxUploadSizeExceededException exception){
+        ErrorCode errorCode = ErrorCode.FILE_TOO_LARGE;
+
+        return ResponseEntity.status(errorCode.getStatusCode())
+                .body(ApiResponse.builder()
+                        .code(errorCode.getCode())
+                        .message(errorCode.getMessage())
+                        .build());
     }
 
     @ExceptionHandler(value = AccessDeniedException.class)

@@ -11,11 +11,13 @@ import com.workgo.payment.exception.ErrorCode;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
 @Component
+@Profile("dev")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class MockGatewayClient implements PaymentGatewayClient {
 

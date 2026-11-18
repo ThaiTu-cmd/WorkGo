@@ -66,7 +66,7 @@ public class AuthenticationService {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
-        var token = generateToken(user);
+        var token = generateToken(user, Instant.now().getEpochSecond());
 
         return AuthenticationResponse.builder()
                 .token(token)
@@ -136,7 +136,7 @@ public class AuthenticationService {
             throw new AppException(ErrorCode.USER_NOT_EXISTED);
         }
 
-        String token = generateToken(user);
+        String token = generateToken(user, signedJwt.getJWTClaimsSet().getLongClaim("authTime"));
 
         return AuthenticationResponse.builder()
                 .token(token)
@@ -162,10 +162,17 @@ public class AuthenticationService {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
+        User user = userRepository.findByUserName(signedJWT.getJWTClaimsSet().getSubject());
+        Long tokenVersion = signedJWT.getJWTClaimsSet().getLongClaim("authorizationVersion");
+
+        if(user == null || tokenVersion == null || !tokenVersion.equals(user.getAuthorizationVersion())){
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
         return signedJWT;
     }
 
-    private String generateToken(User user) throws JOSEException {
+    private String generateToken(User user, Long authTime) throws JOSEException {
         String providerId = null;
         if(user.getProviderProfile() != null && user.getProviderProfile().getProviderProfileId() != null){
             providerId = user.getProviderProfile().getProviderProfileId().toString();
@@ -185,6 +192,8 @@ public class AuthenticationService {
                 .claim("scope", buildScope(user))
                 .claim("userId", user.getUserId())
                 .claim("providerId", providerId)
+                .claim("authorizationVersion", user.getAuthorizationVersion())
+                .claim("authTime", authTime)
                 .build();
 
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());

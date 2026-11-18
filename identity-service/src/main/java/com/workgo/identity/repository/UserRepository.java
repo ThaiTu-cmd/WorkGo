@@ -29,6 +29,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByPhone(String phone);
 
+    @Query(value = "SELECT EXISTS(SELECT 1 FROM users WHERE user_name = :userName)", nativeQuery = true)
+    boolean existsAnyStatusByUserName(@Param("userName") String userName);
+
     Page<User> findAll(Pageable pageable);
 
 }

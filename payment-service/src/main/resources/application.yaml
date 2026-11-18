@@ -6,8 +6,6 @@ server:
 spring:
   application:
     name: payment-service
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
   datasource:
     url: jdbc:postgresql://localhost:${PAYMENT_DB_PORT:5436}/${PAYMENT_DB:payment_db}
     username: ${DB_USERNAME:postgres}
@@ -36,9 +34,10 @@ logging:
 
 app:
   services:
+    identity: ${IDENTITY_SERVICE_URL:http://localhost:8081/identity}
     order: ${ORDER_SERVICE_URL:http://localhost:8083/order}
     trust: ${TRUST_HTTP_URL:http://localhost:8087/trust}
-  internal-key: ${INTERNAL_API_KEY:dev-internal-key}
+  internal-key: ${INTERNAL_API_KEY:}
   frontend-result-url: ${PAYMENT_RESULT_URL:http://localhost:3000/payment/result}
 
 payment:

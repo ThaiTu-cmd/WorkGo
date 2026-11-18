@@ -28,6 +28,18 @@ public class ServiceMedia {
     @Column(name = "url")
     String url;
 
+    @Column(name = "storage_key")
+    String storageKey;
+
+    @Column(name = "mime_type")
+    String mimeType;
+
+    @Column(name = "size_bytes")
+    Long sizeBytes;
+
+    @Column(name = "sha256")
+    String sha256;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "media_type")
     MediaType mediaType;

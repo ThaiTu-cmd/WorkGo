@@ -1,6 +1,7 @@
 package com.workgo.order.reppository;
 
 import com.workgo.order.entity.Order;
+import com.workgo.order.enumeration.ExecutionType;
 import com.workgo.order.enumeration.OrderStatus;
 import com.workgo.order.enumeration.PaymentStatus;
 import com.workgo.order.enumeration.SourceType;
@@ -39,4 +40,18 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     List<Order> findTop50ByOrderStatusAndCreatedAtLessThanEqualOrderByCreatedAtAsc(
             OrderStatus orderStatus, Instant createdBefore);
+
+    @Query("SELECT o FROM Order o WHERE (:status IS NULL OR o.orderStatus = :status) " +
+            "AND (:executionType IS NULL OR o.executionType = :executionType) " +
+            "AND (:clientId IS NULL OR o.clientId = :clientId) " +
+            "AND (:providerId IS NULL OR o.providerId = :providerId) " +
+            "AND (:from IS NULL OR o.createdAt >= :from) " +
+            "AND (:to IS NULL OR o.createdAt < :to)")
+    Page<Order> searchForMonitoring(@Param("status") OrderStatus status,
+                                    @Param("executionType") ExecutionType executionType,
+                                    @Param("clientId") UUID clientId,
+                                    @Param("providerId") UUID providerId,
+                                    @Param("from") Instant from,
+                                    @Param("to") Instant to,
+                                    Pageable pageable);
 }

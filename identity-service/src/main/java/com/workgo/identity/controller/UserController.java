@@ -3,11 +3,15 @@ package com.workgo.identity.controller;
 import com.workgo.identity.Exception.ErrorCode;
 import com.workgo.identity.dto.ApiResponse;
 import com.workgo.identity.dto.PageResponse;
+import com.workgo.identity.dto.request.AccountLockRequest;
+import com.workgo.identity.dto.request.AdminUserUpdateRequest;
+import com.workgo.identity.dto.request.RoleChangeRequest;
 import com.workgo.identity.dto.request.UserCreationRequest;
 import com.workgo.identity.dto.request.UserUpdateRequest;
 import com.workgo.identity.dto.response.UserCreationResponse;
 import com.workgo.identity.dto.response.UserResponse;
 import com.workgo.identity.service.UserService;
+import com.workgo.identity.service.admin.AccountAdminService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -26,6 +30,7 @@ import java.util.UUID;
 public class UserController {
 
     UserService userService;
+    AccountAdminService accountAdminService;
 
     @PostMapping("/registration")
     ApiResponse<UserCreationResponse> createUser(@RequestBody @Valid UserCreationRequest request){
@@ -70,14 +75,38 @@ public class UserController {
     }
 
     @PutMapping("/{userId}")
-    public ApiResponse<UserResponse> updateUser(
+    ApiResponse<UserResponse> updateUser(
             @PathVariable UUID userId,
-            @RequestBody UserUpdateRequest request
+            @RequestBody AdminUserUpdateRequest request
     ){
         return ApiResponse.<UserResponse>builder()
                 .code(ErrorCode.SUCCESS.getCode())
                 .message(ErrorCode.SUCCESS.getMessage())
-                .result(userService.updateUser(userId, request))
+                .result(accountAdminService.updateUser(userId, request))
+                .build();
+    }
+
+    @PostMapping("/{userId}/roles/grant")
+    ApiResponse<UserResponse> grantRole(
+            @PathVariable UUID userId,
+            @RequestBody RoleChangeRequest request
+    ){
+        return ApiResponse.<UserResponse>builder()
+                .code(ErrorCode.SUCCESS.getCode())
+                .message(ErrorCode.SUCCESS.getMessage())
+                .result(accountAdminService.grantRole(userId, request))
+                .build();
+    }
+
+    @PostMapping("/{userId}/roles/revoke")
+    ApiResponse<UserResponse> revokeRole(
+            @PathVariable UUID userId,
+            @RequestBody RoleChangeRequest request
+    ){
+        return ApiResponse.<UserResponse>builder()
+                .code(ErrorCode.SUCCESS.getCode())
+                .message(ErrorCode.SUCCESS.getMessage())
+                .result(accountAdminService.revokeRole(userId, request))
                 .build();
     }
 
@@ -93,13 +122,16 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}")
-    public ApiResponse<Void> deleteUser(
-            @PathVariable UUID userId
+    ApiResponse<Void> deleteUser(
+            @PathVariable UUID userId,
+            @RequestBody AccountLockRequest request
     ){
 
-        userService.deleteUser(userId);
+        accountAdminService.lockUser(userId, request);
 
         return ApiResponse.<Void>builder()
+                .code(ErrorCode.SUCCESS.getCode())
+                .message(ErrorCode.SUCCESS.getMessage())
                 .build();
     }
 

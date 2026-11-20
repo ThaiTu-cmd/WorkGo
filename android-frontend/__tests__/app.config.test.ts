@@ -27,6 +27,12 @@ test('identity', () => {
   expect(config.slug).toBe('workgo');
   expect(config.scheme).toBe('workgo');
   expect(config.android?.package).toBe('com.workgo.app');
+  expect(config.android?.adaptiveIcon?.backgroundColor).toBe('#1dbf73');
+  expect(config.plugins).toContainEqual(['expo-splash-screen', {
+    backgroundColor: '#1dbf73',
+    image: './assets/images/splash-icon.png',
+    imageWidth: 120,
+  }]);
 });
 
 test('cleartext only with WORKGO_ALLOW_HTTP=1', () => {

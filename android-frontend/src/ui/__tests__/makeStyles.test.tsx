@@ -9,6 +9,12 @@ const useColorScheme = jest.requireMock('react-native/Libraries/Utilities/useCol
 
 const useStyles = makeStyles((colors) => ({ title: { color: colors.text } }));
 
+test('brand palette keeps the original WorkGo green in both schemes', () => {
+  expect(lightColors.primary).toBe('#1dbf73');
+  expect(lightColors.primaryDark).toBe('#158852');
+  expect(darkColors.primary).toBe('#1dbf73');
+});
+
 test('styles follow the color scheme while the app is open', async () => {
   useColorScheme.mockReturnValue('light');
   const { result, rerender } = await renderHook(() => useStyles());

@@ -33,7 +33,7 @@ export default function ReviewFormPage({
   const token = useAuthToken();
   const [order, setOrder] = useState(orderId ?? "");
   const [eligibleOrders, setEligibleOrders] = useState<string[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [loadingOrders, setLoadingOrders] = useState(Boolean(token && !orderId));
   const [stars, setStars] = useState(5);
   const [comment, setComment] = useState("");
   const [error, setError] = useState("");
@@ -46,7 +46,6 @@ export default function ReviewFormPage({
   useEffect(() => {
     if (!token || orderId) return;
     let cancelled = false;
-    setLoadingOrders(true);
     orderApi
       .getMyOrders("CLIENT", 0, 50)
       .then((res: unknown) => {

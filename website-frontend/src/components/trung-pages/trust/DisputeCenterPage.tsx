@@ -99,12 +99,11 @@ export default function DisputeCenterPage({
 
   // Eligible orders for dispute/report picker
   const [eligibleDisputeOrders, setEligibleDisputeOrders] = useState<string[]>([]);
-  const [loadingDisputeOrders, setLoadingDisputeOrders] = useState(false);
+  const [loadingDisputeOrders, setLoadingDisputeOrders] = useState(Boolean(token && !initialOrderId));
 
   useEffect(() => {
     if (!token || initialOrderId) return undefined;
     let cancelled = false;
-    setLoadingDisputeOrders(true);
     orderApi
       .getMyOrders("CLIENT", 0, 50)
       .then((res: unknown) => {

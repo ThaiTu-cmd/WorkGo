@@ -15,7 +15,7 @@ export type WalletEntry = {
   label: string;
   referenceId?: string;
   at: string;
-  status?: "COMPLETED" | "PENDING" | "UNKNOWN" | "FAILED";
+  status?: string;
 };
 
 export type WalletState = {
@@ -33,7 +33,7 @@ export type SavedPayout = {
   bankCode?: string;
 };
 
-export type TopUpStatus = "INITIATED" | "PENDING" | "SUCCESS" | "FAILED" | "UNKNOWN";
+export type TopUpStatus = "INITIATED" | "PENDING" | "SUCCEEDED" | "FAILED" | "UNKNOWN";
 
 export type TopUpRecord = {
   topUpId: string;

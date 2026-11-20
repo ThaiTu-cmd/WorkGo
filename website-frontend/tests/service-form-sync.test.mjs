@@ -67,15 +67,28 @@ test("planMediaChanges on edit updates the cover, deletes removed images and the
     videoUrl: " ",
   });
   assert.deepEqual(ops, [
-    { op: "update", id: "c", body: { url: "https://x/new.jpg", mediaType: "IMAGE", cover: true } },
     { op: "delete", id: "g1" },
     { op: "delete", id: "v" },
+    { op: "update", id: "c", body: { url: "https://x/new.jpg", mediaType: "IMAGE", cover: true } },
   ]);
 });
 
 test("planMediaChanges does nothing when nothing changed", () => {
   const original = { cover: { id: "c", url: "https://x/c.jpg" }, gallery: [], video: null };
   assert.deepEqual(planMediaChanges(original, { coverImage: "https://x/c.jpg", gallery: [], videoUrl: "" }), []);
+});
+
+test("planMediaChanges uploads selected files and replaces stored URLs without editing them", () => {
+  const cover = new Blob(["cover"], { type: "image/png" });
+  const gallery = new Blob(["gallery"], { type: "image/png" });
+  const original = { cover: { id: "old", url: "/medias/old/content" }, gallery: [], video: null };
+  assert.deepEqual(planMediaChanges(original, { coverFile: cover, gallery: [{ file: gallery }] }), [
+    { op: "upload", file: cover, replaceId: "old", body: { mediaType: "IMAGE", cover: true } },
+    { op: "upload", file: gallery, body: { mediaType: "IMAGE", cover: false } },
+  ]);
+  assert.deepEqual(planMediaChanges(original, { coverImage: "https://example.test/cover.png" }), [
+    { op: "create", replaceId: "old", body: { mediaType: "IMAGE", cover: true, url: "https://example.test/cover.png" } },
+  ]);
 });
 
 test("validateAddons needs a name and a positive price", () => {

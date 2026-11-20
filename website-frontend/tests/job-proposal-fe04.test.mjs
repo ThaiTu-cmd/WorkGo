@@ -61,7 +61,7 @@ test("FE-04: SubmitProposalPage guards against negative wallet balance and sanct
   const content = read("SubmitProposalPage.tsx");
   assert.ok(content.includes("paymentApi.getWallet"), "SubmitProposalPage must check wallet balance");
   assert.ok(content.includes("isWalletBlocked"), "SubmitProposalPage must maintain isWalletBlocked state");
-  assert.ok(content.includes("debtBalance"), "SubmitProposalPage must inspect debtBalance");
+  assert.ok(content.includes("outstandingFee"), "SubmitProposalPage must inspect the wallet's outstandingFee");
   assert.ok(content.includes("providerApi.getMyProfile"), "SubmitProposalPage must check provider profile & sanctions");
   assert.ok(content.includes("isSanctionBlocked"), "SubmitProposalPage must maintain isSanctionBlocked state");
   assert.ok(content.includes("SUSPENDED"), "SubmitProposalPage must block SUSPENDED providers");

@@ -1,25 +1,16 @@
 import { useTranslations } from "next-intl";
 import React, { useRef, useState } from 'react';
-import { FileUp, Link2, Paperclip, Plus, Trash2 } from 'lucide-react';
+import { FileUp, Paperclip, Trash2 } from 'lucide-react';
 import { orderApi } from '../../../api/orderApi';
 import OrderFlowDialog from './OrderFlowDialog';
 import evidenceStyles from './WorkEvidence.module.css';
 import styles from './OrderFlow.module.css';
 import { orderLabel } from '../../../utils/orderNumber';
 
-// No file storage service yet: small files travel as data URLs (like evidence photos).
-export const MAX_FILE_BYTES = 2 * 1024 * 1024;
+const MAX_DELIVERY_FILE_BYTES = 50 * 1024 * 1024;
+const DELIVERY_FILE_TYPES = 'image/jpeg,image/png,image/webp,application/pdf,application/zip,video/mp4,.zip';
 const isHttpUrl = s => /^https?:\/\/\S+$/i.test(s.trim());
 const formatSize = bytes => bytes == null ? '' : bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.ceil(bytes / 1024)} KB`;
-// `tr` comes from the calling component (useTranslations only exists inside components).
-const readAsDataUrl = (file, tr) => new Promise((resolve, reject) => {
-  const reader = new FileReader();
-  reader.onload = () => resolve(reader.result);
-  reader.onerror = () => reject(new Error(tr("m764", {
-    p0: file.name
-  })));
-  reader.readAsDataURL(file);
-});
 
 // The 6 digits the client reads to the provider on arrival.
 export function CheckinCode({
@@ -104,60 +95,46 @@ export function RevisionDialog({
     </OrderFlowDialog>;
 }
 
-// Provider, DIGITAL + IN_PROGRESS: message + files (links or small uploads) → DELIVERED.
+// Provider, DIGITAL + IN_PROGRESS: message + files → DELIVERED.
 export function DeliveryDialog({
   order,
   onClose,
   onDone
 }) {
   const tr = useTranslations("misc");
+  const t = useTranslations('orderWorkspace');
   const [message, setMessage] = useState('');
-  const [files, setFiles] = useState([]); // DeliveryFileRequest + local key
-  const [linkName, setLinkName] = useState('');
-  const [linkUrl, setLinkUrl] = useState('');
+  const [files, setFiles] = useState([]);
   const [fileError, setFileError] = useState('');
   const fileRef = useRef(null);
-  const addLink = () => {
-    if (!isHttpUrl(linkUrl)) return setFileError(tr("m1524"));
-    setFileError('');
-    const url = linkUrl.trim();
-    setFiles(prev => [...prev, {
-      key: `${Date.now()}-${url}`,
-      fileUrl: url,
-      fileName: linkName.trim() || url
-    }]);
-    setLinkName('');
-    setLinkUrl('');
-  };
-  const addFiles = async e => {
+  const nextFileKey = useRef(0);
+  const uploadedIds = useRef(new WeakMap());
+  const addFiles = e => {
     const picked = [...(e.target.files || [])];
     e.target.value = '';
-    const tooBig = picked.filter(f => f.size > MAX_FILE_BYTES);
-    setFileError(tooBig.length ? tr("m1453", {
-      p0: tooBig.map(f => f.name).join(', ')
-    }) : '');
-    try {
-      const read = await Promise.all(picked.filter(f => f.size <= MAX_FILE_BYTES).map(async f => ({
-        key: `${Date.now()}-${f.name}`,
-        fileUrl: await readAsDataUrl(f, tr),
-        fileName: f.name,
-        mimeType: f.type || null,
-        sizeBytes: f.size
-      })));
-      setFiles(prev => [...prev, ...read]);
-    } catch (err) {
-      setFileError(err.message);
-    }
+    const invalid = picked.filter(file => !file.size || file.size > MAX_DELIVERY_FILE_BYTES);
+    setFileError(invalid.length ? t('deliveryFileSize', { p0: invalid.map(file => file.name).join(', ') }) : '');
+    const valid = picked.filter(file => file.size && file.size <= MAX_DELIVERY_FILE_BYTES)
+      .map(file => ({ file, key: ++nextFileKey.current }));
+    setFiles(prev => [...prev, ...valid]);
   };
   return <OrderFlowDialog title={tr("m1454", {
     p0: orderLabel(order)
   })} submitLabel={tr("m819")} canSubmit={files.length > 0} onSubmit={async () => {
+    const attachments = [];
+    for (const { file } of files) {
+      let fileId = uploadedIds.current.get(file);
+      if (!fileId) {
+        const response = await orderApi.uploadFile(order.orderId, 'DELIVERY', file);
+        fileId = response?.result?.storedFileId;
+        if (!fileId) throw new Error(t('uploadError'));
+        uploadedIds.current.set(file, fileId);
+      }
+      attachments.push({ fileId });
+    }
     await orderApi.submitDelivery(order.orderId, {
       message: message.trim() || null,
-      files: files.map(({
-        key,
-        ...file
-      }) => file)
+      files: attachments
     });
     onDone(tr("m1525"));
   }} onClose={onClose}>
@@ -169,32 +146,22 @@ export function DeliveryDialog({
       <div className={evidenceStyles.field}>
         <span className={evidenceStyles.label}>{tr("m791")}</span>
         {files.length > 0 && <ul className={styles.fileList}>
-            {files.map(f => <li key={f.key} className={styles.fileRow}>
-                {f.fileUrl.startsWith('data:') ? <Paperclip size={14} /> : <Link2 size={14} />}
-                <span className={styles.fileName}>{f.fileName}</span>
-                {f.sizeBytes != null && <small>{formatSize(f.sizeBytes)}</small>}
-                <button type="button" className={evidenceStyles.iconBtn} onClick={() => setFiles(prev => prev.filter(x => x.key !== f.key))} aria-label={tr("m1455", {
-            p0: f.fileName
+            {files.map(({ file, key }) => <li key={key} className={styles.fileRow}>
+                <Paperclip size={14} aria-hidden="true" />
+                <span className={styles.fileName}>{file.name}</span>
+                <small>{formatSize(file.size)}</small>
+                <button type="button" className={evidenceStyles.iconBtn} onClick={() => setFiles(prev => prev.filter(x => x.key !== key))} aria-label={tr("m1455", {
+            p0: file.name
           })}>
                   <Trash2 size={14} />
                 </button>
               </li>)}
           </ul>}
-        <div className={styles.linkRow}>
-          <input className={styles.input} value={linkName} onChange={e => setLinkName(e.target.value)} placeholder={tr("m1527")} aria-label={tr("m1528")} />
-          <input className={styles.input} value={linkUrl} onChange={e => setLinkUrl(e.target.value)} onKeyDown={e => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            addLink();
-          }
-        }} placeholder="https://drive.google.com/..." aria-label={tr("m778")} />
-          <button type="button" className={evidenceStyles.secondaryBtn} onClick={addLink} disabled={!linkUrl.trim()}>
-            <Plus size={14} />{tr("m792")}</button>
-        </div>
         <button type="button" className={styles.uploadBtn} onClick={() => fileRef.current?.click()}>
           <FileUp size={16} />{tr("m793")}</button>
-        <input ref={fileRef} type="file" multiple hidden onChange={addFiles} />
-        {fileError && <p className={styles.warn}>{fileError}</p>}
+        <input ref={fileRef} type="file" accept={DELIVERY_FILE_TYPES} multiple hidden onChange={addFiles} />
+        <p className={styles.note}>{t('deliveryFileHelp')}</p>
+        {fileError && <p className={styles.warn} role="alert">{fileError}</p>}
       </div>
     </OrderFlowDialog>;
 }

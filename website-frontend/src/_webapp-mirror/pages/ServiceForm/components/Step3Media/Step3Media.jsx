@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Sparkles, Plus, X } from 'lucide-react';
 import { isHttpUrl } from '../../formValidation';
 import { initialAvatar, placeholderCover } from '../../../../api/adapters';
+import { catalogMediaUrl, isStoredCatalogMedia } from '../../../../api/catalogApi';
 import { useMyDisplayName } from '../../../../hooks/useMyDisplayName';
 import styles from './Step3Media.module.css';
 export default function Step3Media({
@@ -11,11 +12,24 @@ export default function Step3Media({
   errors = {}
 }) {
   const tr = useTranslations("misc");
+  const mediaTr = useTranslations("catalogUpload");
   // The preview shows the signed-in provider, not a sample person.
   const providerName = useMyDisplayName() || tr("m86");
   const gallery = formData.gallery || [];
   const [newImageUrl, setNewImageUrl] = useState('');
   const [galleryError, setGalleryError] = useState('');
+  const [fileError, setFileError] = useState('');
+  const selectFile = (event, maxMb, save) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!file.size || file.size > maxMb * 1024 * 1024) {
+      setFileError(mediaTr('fileSize', { p0: maxMb }));
+      return;
+    }
+    setFileError('');
+    save(file);
+  };
 
   // catalog rejects a second media with the same URL on one service (MEDIA_EXISTED).
   const addImage = () => {
@@ -34,7 +48,7 @@ export default function Step3Media({
     setNewImageUrl('');
   };
   const removeImage = idx => onChange('gallery', gallery.filter((_, i) => i !== idx));
-  const coverUrl = formData.coverImage || placeholderCover(formData.title);
+  const coverUrl = catalogMediaUrl(formData.coverImage) || placeholderCover(formData.title);
   const basePrice = formData.packages?.basic?.price || 2500000;
   const formattedPrice = new Intl.NumberFormat('vi-VN').format(basePrice) + ' ₫';
   return <div className={styles.card}>
@@ -50,7 +64,10 @@ export default function Step3Media({
           <div className={styles.formGroup}>
             <label className={styles.label} htmlFor="coverUrlInput">{tr("m1106")}<span className={styles.required}>*</span>
             </label>
-            <input type="url" id="coverUrlInput" className={styles.input} placeholder="https://images.unsplash.com/photo-..." value={formData.coverImage || ''} onChange={e => onChange('coverImage', e.target.value)} />
+            <input type="url" id="coverUrlInput" className={styles.input} placeholder="https://images.unsplash.com/photo-..." value={isStoredCatalogMedia(formData.coverImage) ? '' : formData.coverImage || ''} onChange={e => { onChange('coverFile', null); onChange('coverImage', e.target.value); }} />
+            <label className={styles.label} htmlFor="catalog-cover-file">{mediaTr('cover')}</label>
+            <input id="catalog-cover-file" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => selectFile(e, 5, file => onChange('coverFile', file))} />
+            {formData.coverFile && <p>{formData.coverFile.name}</p>}
             {errors.coverImage && <p style={{
             color: '#ef4444',
             fontSize: '0.75rem',
@@ -72,10 +89,10 @@ export default function Step3Media({
             marginBottom: '0.5rem'
           }}>{tr("m1109")}</p>
             {gallery.length > 0 && <div className={styles.galleryGrid}>
-                {gallery.map((item, idx) => <div key={item.id || item.url} className={styles.gallerySlot}>
-                    <img src={item.url} alt={tr("m1099", {
+                {gallery.map((item, idx) => <div key={item.id || item.url || idx} className={styles.gallerySlot}>
+                    {item.url ? <img src={catalogMediaUrl(item.url)} alt={tr("m1099", {
                 p0: idx + 1
-              })} />
+              })} /> : <span>{item.file?.name}</span>}
                     <button type="button" className={styles.galleryRemove} onClick={() => removeImage(idx)} aria-label={tr("m1100", {
                 p0: idx + 1
               })}>
@@ -96,6 +113,8 @@ export default function Step3Media({
               <button type="button" className={styles.galleryAddBtn} onClick={addImage}>
                 <Plus size={16} aria-hidden="true" />{tr("m1110")}</button>
             </div>
+            <label className={styles.label} htmlFor="catalog-gallery-file">{mediaTr('gallery')}</label>
+            <input id="catalog-gallery-file" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => selectFile(e, 5, file => onChange('gallery', [...gallery, { file }]))} />
             {galleryError && <p style={{
             color: '#ef4444',
             fontSize: '0.75rem',
@@ -106,13 +125,19 @@ export default function Step3Media({
           {/* Video URL */}
           <div className={styles.formGroup}>
             <label className={styles.label} htmlFor="videoUrlInput">{tr("m1111")}</label>
-            <input type="url" id="videoUrlInput" className={styles.input} placeholder="https://youtube.com/watch?v=..." value={formData.videoUrl || ''} onChange={e => onChange('videoUrl', e.target.value)} />
+            <input type="url" id="videoUrlInput" className={styles.input} placeholder="https://youtube.com/watch?v=..." value={isStoredCatalogMedia(formData.videoUrl) ? '' : formData.videoUrl || ''} onChange={e => { onChange('videoFile', null); onChange('videoUrl', e.target.value); }} />
+            <label className={styles.label} htmlFor="catalog-video-file">{mediaTr('video')}</label>
+            <input id="catalog-video-file" type="file" accept="video/mp4" onChange={e => selectFile(e, 50, file => onChange('videoFile', file))} />
+            {formData.videoFile && <p>{formData.videoFile.name}</p>}
+            {isStoredCatalogMedia(formData.videoUrl) && <a href={catalogMediaUrl(formData.videoUrl)} target="_blank" rel="noopener noreferrer">{mediaTr('openVideo')}</a>}
+            {(formData.videoFile || isStoredCatalogMedia(formData.videoUrl)) && <button type="button" onClick={() => { onChange('videoFile', null); onChange('videoUrl', ''); }}>{mediaTr('removeVideo')}</button>}
             {errors.videoUrl && <p style={{
             color: '#ef4444',
             fontSize: '0.75rem',
             marginTop: '0.375rem'
           }}>{errors.videoUrl}</p>}
           </div>
+          {fileError && <p role="alert">{fileError}</p>}
         </div>
 
         {/* Right: Live Marketplace Card Preview */}

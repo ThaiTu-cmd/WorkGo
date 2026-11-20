@@ -7,6 +7,7 @@ import OrderExecutionInfo from './components/OrderExecutionInfo';
 import WorkEvidencePanel from './components/WorkEvidencePanel';
 import DigitalDeliveryPanel from './components/DigitalDeliveryPanel';
 import OrderBriefPanel from './components/OrderBriefPanel';
+import OrderAgreementPanel from './components/OrderAgreementPanel';
 import EscrowPanel from './components/EscrowPanel';
 import { CheckinCode, CheckinDialog, DeliveryDialog, RequirementsDialog, RevisionDialog } from './components/OrderFlowDialogs';
 import flowStyles from './components/OrderFlow.module.css';
@@ -257,8 +258,9 @@ function milestone(order, role, tr) {
       };
   }
 }
-const paymentLabel = (order, tr) => {
+const paymentLabel = (order, tr, t) => {
   if (order.orderStatus === 'CANCELLED') return order.paymentStatus === 'SUCCEEDED' ? tr("m1598") : tr("m1599");
+  if (order.paymentMethod === 'CASH') return t(order.paymentStatus === 'CASH_SETTLED' ? 'cashReceived' : 'cashOnSite');
   if (order.orderStatus === 'COMPLETED') return tr("m1600");
   return order.paymentStatus === 'SUCCEEDED' ? tr("m1601") : tr("m1599");
 };
@@ -304,20 +306,60 @@ function CheckinCodeCard({
     </section>;
 }
 
+function CashOrderPanel({ order, onsite, role, onUpdated }) {
+  const tr = useTranslations('misc');
+  const t = useTranslations('orderWorkspace');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const orderActive = ['IN_PROGRESS', 'DELIVERED'].includes(order.orderStatus);
+  const mayConfirm = onsite && orderActive && role === 'PROVIDER' && !onsite.cashReceivedAt;
+  const mayAccept = onsite && order.orderStatus === 'DELIVERED' && role === 'CLIENT' && onsite.status === 'SERVICE_DONE';
+  const submit = async () => {
+    if (busy || !window.confirm(mayConfirm ? t('confirmCash') : tr('m841'))) return;
+    setBusy(true);
+    setError('');
+    try {
+      if (mayConfirm) {
+        await orderApi.confirmCashReceived(order.orderId);
+      } else {
+        await orderApi.acceptOnsite(order.orderId);
+      }
+      onUpdated();
+    } catch (err) {
+      setError(orderErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return <section className={flowStyles.panel} aria-label={t('cashOnSite')}>
+    <strong className={flowStyles.panelTitle}>{t('cashOnSite')}</strong>
+    {onsite && <p className={flowStyles.note}>{t(onsite.cashReceivedAt ? 'cashReceived' : 'cashWaiting')}
+      {onsite.cashReceivedAt && ` · ${formatDateTime(onsite.cashReceivedAt)}`}
+    </p>}
+    {(mayConfirm || mayAccept) && <button type="button" className={styles.btn + ' ' + styles.btn_primary} disabled={busy} onClick={submit}>
+      {mayConfirm ? t('confirmCash') : tr('m1584')}
+    </button>}
+    {error && <p className={flowStyles.warn} role="alert">{error}</p>}
+  </section>;
+}
+
 // Server-side progress of an expanded order: execution info for every order,
 // plus the flow panel of its type (on-site evidence / digital deliveries).
 // The dashboard remounts it (key) after a flow action so everything refetches.
 function OrderLiveDetails({
   order,
   role,
-  onShowToast
+  onShowToast,
+  onUpdated
 }) {
-  const tr = useTranslations("misc");
   const executionState = useOrderExecution(order.orderId);
+  const cash = order.paymentMethod === 'CASH';
   return <>
       <OrderExecutionInfo state={executionState} order={order} role={role} onShowToast={onShowToast} />
       <OrderBriefPanel order={order} role={role} />
-      {order.paymentStatus && order.paymentStatus !== 'PENDING' && <EscrowPanel orderId={order.orderId} role={role} />}
+      <OrderAgreementPanel order={order} role={role} onUpdated={onUpdated} />
+      {cash ? <CashOrderPanel order={order} onsite={executionState.execution?.onsite} role={role} onUpdated={onUpdated} />
+        : order.paymentStatus && order.paymentStatus !== 'PENDING' && <EscrowPanel orderId={order.orderId} role={role} />}
       {order.executionType === 'ONSITE' && role === 'CLIENT' && order.orderStatus === 'CONFIRMED' && <CheckinCodeCard orderId={order.orderId} />}
       {order.executionType === 'DIGITAL' && <DigitalDeliveryPanel orderId={order.orderId} role={role} />}
       {order.executionType === 'ONSITE' && <WorkEvidencePanel orderId={order.orderId} role={role} orderStatus={order.orderStatus} onsiteStatus={executionState.execution?.onsite?.status} onShowToast={onShowToast} />}
@@ -331,6 +373,7 @@ export default function OrderDashboardPage({
   onOpenPayment
 }) {
   const tr = useTranslations("misc");
+  const t = useTranslations('orderWorkspace');
   const [role, setRole] = useState('CLIENT');
   const [page, setPage] = useState(0);
   const [tab, setTab] = useState('ACTIVE');
@@ -387,7 +430,7 @@ export default function OrderDashboardPage({
         const d = new Date(o.completedAt);
         return d.getMonth() === month && d.getFullYear() === year;
       }).length,
-      escrow: orders.filter(o => ['CONFIRMED', 'IN_PROGRESS', 'DELIVERED'].includes(o.orderStatus)).reduce((sum, o) => sum + (role === 'CLIENT' ? o.totalAmount : o.providerNetAmount), 0)
+      escrow: orders.filter(o => o.paymentMethod !== 'CASH' && ['CONFIRMED', 'IN_PROGRESS', 'DELIVERED'].includes(o.orderStatus)).reduce((sum, o) => sum + (role === 'CLIENT' ? o.totalAmount : o.providerNetAmount), 0)
     };
   }, [orders, counts, role]);
   const visible = useMemo(() => {
@@ -405,11 +448,14 @@ export default function OrderDashboardPage({
     setTab('ACTIVE');
     setExpandedId(null);
   };
-  const afterFlowAction = (order, message) => {
-    toast(`${orderLabel(order)}: ${message}`);
+  const refreshOrder = order => {
     setExpandedId(order.orderId);
     setDetailsVersion(v => v + 1);
     reload();
+  };
+  const afterFlowAction = (order, message) => {
+    toast(`${orderLabel(order)}: ${message}`);
+    refreshOrder(order);
   };
 
   const SERVER_ACTIONS = {
@@ -593,7 +639,9 @@ export default function OrderDashboardPage({
                   const exec = EXECUTION[o.executionType];
                   const ms = milestone(o, role, tr);
                   // Flow actions need the live order; local demo rows only get cancel.
-                  const actions = actionsFor(role, o).filter(a => !(a.cancel && o.cancelRequest) && (isLive || a.cancel));
+                  const actions = actionsFor(role, o)
+                    .filter(a => !(a.cancel && o.cancelRequest) && (isLive || a.cancel))
+                    .filter(a => !(o.paymentMethod === 'CASH' && a.run === 'acceptOnsite'));
                   const busy = busyId === o.orderId;
                   const expanded = expandedId === o.orderId;
                   return <React.Fragment key={o.orderId}>
@@ -612,8 +660,8 @@ export default function OrderDashboardPage({
                           </td>
                           <td data-label={tr("m259")}>
                             <OrderStatusBadge status={o.orderStatus} />
-                            <span className={`${styles.pay} ${o.paymentStatus !== 'SUCCEEDED' && o.orderStatus !== 'CANCELLED' ? styles.payWarn : ''}`}>
-                              {paymentLabel(o, tr)}
+                            <span className={`${styles.pay} ${!['SUCCEEDED', 'CASH_SETTLED'].includes(o.paymentStatus) && o.orderStatus !== 'CANCELLED' ? styles.payWarn : ''}`}>
+                              {paymentLabel(o, tr, t)}
                             </span>
                             {o.cancelRequest && <span className={styles.cancelChip}>{tr("m874")}</span>}
                           </td>
@@ -677,7 +725,7 @@ export default function OrderDashboardPage({
                                     <dd>{formatDateTime(o.orderStatus === 'CANCELLED' ? o.cancelledAt : o.completedAt)}</dd>
                                   </div>
                                 </dl>
-                                {isLive && <OrderLiveDetails key={`${o.orderId}-${o.orderStatus}-${detailsVersion}`} order={o} role={role} onShowToast={toast} />}
+                                {isLive && <OrderLiveDetails key={`${o.orderId}-${o.orderStatus}-${detailsVersion}`} order={o} role={role} onShowToast={toast} onUpdated={() => refreshOrder(o)} />}
                                 {(o.cancelRequest || o.cancelReason) && <div className={styles.cancelInfo}>
                                     <strong>
                                       {o.cancelRequest ? tr("m1456", {

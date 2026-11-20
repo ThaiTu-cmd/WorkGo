@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   devIndicators: false,
   compress: true,
+  experimental: {
+    proxyClientMaxBodySize: '51mb',
+  },
   // Proxy backend calls through the API gateway (avoids CORS in the browser).
   async rewrites() {
     const gateway = process.env.API_GATEWAY_URL || "http://localhost:8888";

@@ -3,11 +3,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, ArrowLeft, CheckCircle2, CreditCard, FlaskConical, Loader2, ShieldCheck, XCircle } from 'lucide-react';
 import checkoutStyles from '../Checkout/CheckoutPage.module.css';
 import styles from './OrderPaymentPage.module.css';
-import PaymentOptionPicker from '../Checkout/PaymentOptionPicker';
+import WalletTopUpEmbed from '../../../components/trung-pages/payment/WalletTopUpEmbed';
 import OrderStatusBadge from '../OrderDashboard/components/OrderStatusBadge';
 import { CheckinCode } from '../OrderDashboard/components/OrderFlowDialogs';
 import { orderApi, orderErrorMessage } from '../../api/orderApi';
-import { DEFAULT_PAYMENT_OPTION, ORDER_PAYMENT_TIMEOUT_MINUTES, isPaymentWaiting, paymentApi, paymentErrorMessage, startPayment } from '../../api/paymentApi';
+import { ORDER_PAYMENT_TIMEOUT_MINUTES, isPaymentWaiting, paymentApi, paymentErrorMessage } from '../../api/paymentApi';
 import { orderLabel } from '../../utils/orderNumber';
 
 // Gateways only redirect the browser back here; the payment is confirmed by
@@ -40,13 +40,15 @@ export default function OrderPaymentPage({
   orderId,
   paymentId,
   gatewayResult,
+  topUpId,
+  onTrackTopUp,
   onOpenPayment,
   onViewOrders,
   onGoHome,
   onShowToast
 }) {
   const tr = useTranslations("misc");
-  return paymentId ? <PaymentStatusView key={paymentId} paymentId={paymentId} gatewayResult={gatewayResult} tr={tr} onOpenPayment={onOpenPayment} onViewOrders={onViewOrders} onGoHome={onGoHome} onShowToast={onShowToast} /> : <PayOrderView key={orderId || 'none'} orderId={orderId} tr={tr} onOpenPayment={onOpenPayment} onViewOrders={onViewOrders} onGoHome={onGoHome} />;
+  return paymentId ? <PaymentStatusView key={paymentId} paymentId={paymentId} gatewayResult={gatewayResult} tr={tr} onOpenPayment={onOpenPayment} onViewOrders={onViewOrders} onGoHome={onGoHome} onShowToast={onShowToast} /> : <PayOrderView key={`${orderId || 'none'}:${topUpId || ''}`} orderId={orderId} topUpId={topUpId} onTrackTopUp={onTrackTopUp} tr={tr} onViewOrders={onViewOrders} onGoHome={onGoHome} />;
 }
 function PageFrame({
   tr,
@@ -66,22 +68,39 @@ function PageFrame({
     </div>;
 }
 
-// ---------- orderId: choose a gateway and start the payment ----------
 function PayOrderView({
   orderId,
+  topUpId,
+  onTrackTopUp,
   tr,
-  onOpenPayment,
   onViewOrders,
   onGoHome
 }) {
+  const walletTr = useTranslations('orderWallet');
   const [state, setState] = useState({
     status: orderId ? 'loading' : 'error',
     order: null,
     error: null
   });
-  const [option, setOption] = useState(DEFAULT_PAYMENT_OPTION);
+  const [balance, setBalance] = useState(null);
+  const [trackedTopUpId, setTrackedTopUpId] = useState(topUpId);
+  const [charged, setCharged] = useState(false);
   const [paying, setPaying] = useState(false);
+  const submission = useRef(false);
   const [payError, setPayError] = useState('');
+  const refreshBalance = useCallback(async () => {
+    try {
+      const wallet = unwrap(await paymentApi.getWallet());
+      if (wallet?.balance != null) {
+        const nextBalance = Number(wallet.balance);
+        setBalance(nextBalance);
+        return nextBalance;
+      }
+    } catch {
+      // Payment service still validates the available balance on submit.
+    }
+    return null;
+  }, []);
   useEffect(() => {
     if (!orderId) return undefined;
     let cancelled = false;
@@ -98,22 +117,41 @@ function PayOrderView({
         error: err
       });
     });
+    paymentApi.getEscrow(orderId).then(res => {
+      if (!cancelled && unwrap(res)?.fundingSource === 'WALLET') setCharged(true);
+    }).catch(() => {});
     return () => {
       cancelled = true;
     };
   }, [orderId]);
+  useEffect(() => {
+    if (!orderId) return undefined;
+    const onFocus = () => { void refreshBalance(); };
+    onFocus();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [orderId, refreshBalance]);
   const pay = async () => {
+    if (submission.current || charged) return;
+    submission.current = true;
     setPaying(true);
     setPayError('');
     try {
-      await startPayment(orderId, option, {
-        onMock: payment => onOpenPayment && onOpenPayment({
-          orderId,
-          paymentId: payment?.paymentId
-        })
-      });
+      const escrow = unwrap(await paymentApi.payOrderWithWallet(orderId));
+      if (!escrow?.escrowAccountId) throw new Error();
+      setCharged(true);
+      window.dispatchEvent(new Event('workgo-orders-changed'));
+      const updated = unwrap(await orderApi.getOrder(orderId))?.order;
+      if (updated) setState({ status: 'ready', order: updated, error: null });
     } catch (err) {
-      setPayError(err?.status ? paymentErrorMessage(err) : tr("m1303"));
+      if (Number(err?.code) === 3402) {
+        setPayError(walletTr('insufficient'));
+        await refreshBalance();
+      } else {
+        setPayError(err?.status ? paymentErrorMessage(err) : tr("m1303"));
+      }
+    } finally {
+      submission.current = false;
       setPaying(false);
     }
   };
@@ -142,26 +180,38 @@ function PayOrderView({
         </section>
       </PageFrame>;
   }
-  if (order.orderStatus !== 'PENDING_PAYMENT') {
+  if (charged || order.orderStatus !== 'PENDING_PAYMENT' || order.paymentMethod === 'CASH') {
     return <PageFrame tr={tr} onBack={back}>
         <section className={checkoutStyles.emptyState}>
           <ShieldCheck size={48} className={checkoutStyles.successIcon} />
           <h1 className={checkoutStyles.pageTitle} title={order.orderNumber}>{orderLabel(order)}</h1>
           <OrderStatusBadge status={order.orderStatus} />
-          <p>{tr("m1719")}</p>
+          <p>{charged && order.orderStatus === 'PENDING_PAYMENT' ? walletTr('syncing') : tr("m1719")}</p>
           <div className={checkoutStyles.successActions}>
-            {onViewOrders && <button type="button" className={checkoutStyles.btnPay} onClick={onViewOrders}>{tr("m475")}</button>}
+            {onViewOrders && <button type="button" className={checkoutStyles.btnPay} onClick={() => onViewOrders(orderId)}>{tr("m475")}</button>}
           </div>
         </section>
       </PageFrame>;
   }
   const deadline = paymentDeadline(order);
+  const needsTopUp = balance !== null && balance < Number(order.totalAmount);
   return <PageFrame tr={tr} onBack={back}>
       <h1 className={checkoutStyles.pageTitle}>
         <CreditCard size={26} className={checkoutStyles.titleIcon} aria-hidden="true" />{tr("m1713")}</h1>
       <div className={checkoutStyles.checkoutGrid}>
         <div className={checkoutStyles.mainCol}>
-          <PaymentOptionPicker value={option} onChange={setOption} disabled={paying} />
+          <section className={checkoutStyles.card}>
+            <h2 className={checkoutStyles.cardTitle}>{walletTr('WALLET')}</h2>
+            {balance !== null && <p>{walletTr('balance', { p0: formatPrice(balance) })}</p>}
+          </section>
+          {(needsTopUp || trackedTopUpId) && <WalletTopUpEmbed requiredAmount={Number(order.totalAmount)} currentBalance={balance ?? undefined} initialTopUpId={trackedTopUpId} onTrackTopUp={id => {
+            setTrackedTopUpId(id);
+            onTrackTopUp?.(id);
+          }} onSuccess={() => {
+            void refreshBalance().then(nextBalance => {
+              if (nextBalance !== null && nextBalance >= Number(order.totalAmount)) setPayError('');
+            });
+          }} />}
         </div>
         <aside className={checkoutStyles.snapshot} aria-label={tr("m1713")}>
           <dl className={styles.summary}>
@@ -172,6 +222,10 @@ function PayOrderView({
             {order.title && <div>
                 <dt>{tr("m84")}</dt>
                 <dd>{order.title}</dd>
+              </div>}
+            {order.platformFee != null && <div>
+                <dt>{walletTr('fee')}</dt>
+                <dd>{formatPrice(order.platformFee)}</dd>
               </div>}
             <div>
               <dt>{tr("m1716")}</dt>

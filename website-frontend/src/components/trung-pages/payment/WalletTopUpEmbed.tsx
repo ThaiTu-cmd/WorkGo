@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Wallet,
   CheckCircle2,
@@ -12,8 +13,10 @@ import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/weba
 import {
   paymentApi,
   paymentErrorMessage,
+  newIdempotencyKey,
   useAuthToken,
-  MOCK_PAYMENT_ENABLED
+  MOCK_PAYMENT_ENABLED,
+  TOP_UP_MINIMUM_VND
 } from "../../webapp-bridge/backend";
 import type { TopUpStatus } from "./paymentTypes";
 import styles from "./WalletTopUpEmbed.module.css";
@@ -23,8 +26,10 @@ export type WalletTopUpEmbedProps = {
   requiredAmount?: number;
   /** Current available wallet balance of the user */
   currentBalance?: number;
-  /** Callback fired with the new available balance when top-up succeeds */
-  onSuccess?: (newBalance: number) => void;
+  initialTopUpId?: string;
+  onTrackTopUp?: (id?: string) => void;
+  /** Callback fired when the server confirms the top-up */
+  onSuccess?: () => void;
   /** Callback fired when user cancels top-up */
   onCancel?: () => void;
   /** Navigation handler to other Trung pages */
@@ -40,108 +45,75 @@ type GatewayOption = "VNPAY" | "MOMO" | "MOCK";
 export default function WalletTopUpEmbed({
   requiredAmount = 0,
   currentBalance = 0,
+  initialTopUpId,
+  onTrackTopUp,
   onSuccess,
   onCancel,
   onNavigate,
   onShowToast,
   embedded = true
 }: WalletTopUpEmbedProps) {
+  const tr = useTranslations("orderWallet");
   const token = useAuthToken();
   const shortfall = Math.max(0, requiredAmount - currentBalance);
 
-  // Default to shortfall if > 50,000, else default to 100,000
-  const initialAmount = shortfall >= 50000 ? shortfall : Math.max(50000, shortfall);
+  const initialAmount = Math.max(TOP_UP_MINIMUM_VND, shortfall);
   const [amountRaw, setAmountRaw] = useState(String(initialAmount));
   const [gateway, setGateway] = useState<GatewayOption>("VNPAY");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const submission = useRef(false);
+  const attempt = useRef<{ amount: number; gateway: GatewayOption; key: string } | null>(null);
 
   // Polling state
-  const [activeTopUpId, setActiveTopUpId] = useState<string | null>(null);
-  const [topUpStatus, setTopUpStatus] = useState<TopUpStatus | null>(null);
+  const [activeTopUpId, setActiveTopUpId] = useState<string | null>(initialTopUpId || null);
+  const [topUpCode, setTopUpCode] = useState<string | null>(null);
+  const [hostedUrl, setHostedUrl] = useState<string | null>(null);
+  const [topUpStatus, setTopUpStatus] = useState<TopUpStatus | null>(initialTopUpId ? 'PENDING' : null);
+  const [refreshAttempt, setRefreshAttempt] = useState(0);
   const [pollCount, setPollCount] = useState(0);
-  const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const pollTopUpRef = useRef<(id: string) => Promise<void>>(async () => {});
 
-  // Poll transaction status
-  const pollTopUp = useCallback(async (topUpId: string) => {
-    try {
-      const res = await paymentApi.getTopUp(topUpId);
-      const data = (res as { result?: Record<string, unknown> })?.result ?? res ?? {};
-      const status = (data.status ?? "UNKNOWN") as TopUpStatus;
-      setTopUpStatus(status);
-
-      if (status === "SUCCESS") {
-        const added = Number(data.amount ?? amountRaw);
-        const nextBalance = currentBalance + added;
-        if (onShowToast) {
-          onShowToast(`Nạp ví thành công! Đã cộng ${added.toLocaleString("vi-VN")} ₫.`);
-        }
-        if (onSuccess) {
-          onSuccess(nextBalance);
-        }
-        return;
-      }
-
-      if (status === "FAILED") {
-        if (onShowToast) {
-          onShowToast("Giao dịch nạp tiền thất bại hoặc bị hủy.");
-        }
-        return;
-      }
-
-      // Continue polling if INITIATED, PENDING, or UNKNOWN
-      setPollCount(prev => {
-        const next = prev + 1;
-        if (next < 15) {
-          pollTimerRef.current = setTimeout(() => {
-            void pollTopUpRef.current(topUpId);
-          }, 2500);
-        } else if (status === "UNKNOWN" && onShowToast) {
-          onShowToast("Giao dịch đang được đối soát tự động. Số dư ví sẽ được cập nhật sớm.");
-        }
-        return next;
-      });
-    } catch {
-      setPollCount(prev => {
-        const next = prev + 1;
-        if (next < 15) {
-          pollTimerRef.current = setTimeout(() => {
-            void pollTopUpRef.current(topUpId);
-          }, 3000);
-        }
-        return next;
-      });
-    }
-  }, [amountRaw, currentBalance, onSuccess, onShowToast]);
+  const callbacks = useRef({ onSuccess, onShowToast });
+  useEffect(() => { callbacks.current = { onSuccess, onShowToast }; }, [onSuccess, onShowToast]);
 
   useEffect(() => {
-    pollTopUpRef.current = pollTopUp;
-  }, [pollTopUp]);
-
-  useEffect(() => {
-    if (activeTopUpId && (topUpStatus === "PENDING" || topUpStatus === "INITIATED" || topUpStatus === "UNKNOWN")) {
-      const timer = setTimeout(() => {
-        void pollTopUpRef.current(activeTopUpId);
-      }, 0);
-      return () => {
-        clearTimeout(timer);
-        if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
-      };
-    }
-    return () => {
-      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+    if (!activeTopUpId || !token) return undefined;
+    let stopped = false;
+    let count = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const check = async () => {
+      try {
+        const res = await paymentApi.getTopUp(activeTopUpId);
+        if (stopped) return;
+        const data = (res as { result?: Record<string, unknown> })?.result;
+        if (!data?.status) throw new Error(tr('topUpUnavailable'));
+        const status = data.status as TopUpStatus;
+        if (data.gateway === 'VNPAY' || data.gateway === 'MOMO' || data.gateway === 'MOCK') setGateway(data.gateway);
+        setTopUpCode(typeof data.topUpCode === 'string' ? data.topUpCode : null);
+        setHostedUrl(data.gateway !== 'MOCK' && typeof data.paymentUrl === 'string' ? data.paymentUrl : null);
+        setTopUpStatus(status);
+        setError('');
+        if (status === 'SUCCEEDED') {
+          callbacks.current.onSuccess?.();
+          return;
+        }
+        if (status === 'FAILED') return;
+      } catch (err) {
+        if (stopped) return;
+        setError(paymentErrorMessage(err));
+      }
+      count += 1;
+      setPollCount(count);
+      if (count < 15) timer = setTimeout(() => { void check(); }, 2500);
     };
-  }, [activeTopUpId, topUpStatus]);
-
+    void check();
+    return () => { stopped = true; clearTimeout(timer); };
+  }, [activeTopUpId, token, refreshAttempt, tr]);
   const handleCreateTopUp = async () => {
-    const amt = Number(String(amountRaw).replace(/[^\d]/g, ""));
-    if (!Number.isFinite(amt) || amt < 50000) {
-      setError("Số tiền nạp tối thiểu là 50.000 ₫.");
-      return;
-    }
-    if (amt > 100000000) {
-      setError("Số tiền nạp tối đa là 100.000.000 ₫.");
+    if (submission.current) return;
+    const amt = /^\d+$/.test(amountRaw.trim()) ? Number(amountRaw) : NaN;
+    if (!Number.isSafeInteger(amt) || amt < TOP_UP_MINIMUM_VND) {
+      setError(tr('topUpMinimum', { p0: TOP_UP_MINIMUM_VND.toLocaleString() }));
       return;
     }
     setError("");
@@ -152,59 +124,63 @@ export default function WalletTopUpEmbed({
       return;
     }
 
+    submission.current = true;
     setIsSubmitting(true);
     try {
+      if (attempt.current?.amount !== amt || attempt.current.gateway !== gateway) {
+        attempt.current = { amount: amt, gateway, key: newIdempotencyKey() };
+      }
       const res = await paymentApi.createTopUp({
         amount: amt,
         gateway,
         paymentMethod: gateway === "MOMO" ? "WALLET" : "QR"
-      });
+      }, attempt.current.key);
 
       const data = (res as { result?: Record<string, unknown> })?.result ?? res ?? {};
-      const topUpId = String(data.topUpId ?? data.id ?? `top-${Date.now()}`);
+      if (typeof data.topUpId !== "string") throw new Error(tr("topUpUnavailable"));
+      attempt.current = null;
+      const topUpId = data.topUpId;
+      onTrackTopUp?.(topUpId);
       const paymentUrl = data.paymentUrl ? String(data.paymentUrl) : null;
       const initialStatus = (data.status ?? "PENDING") as TopUpStatus;
 
       setActiveTopUpId(topUpId);
+      setTopUpCode(typeof data.topUpCode === "string" ? data.topUpCode : null);
+      setHostedUrl(gateway === "MOCK" ? null : paymentUrl);
       setTopUpStatus(initialStatus);
       setPollCount(0);
 
-      // In real gateway mode (VNPay/MoMo with hosted URL): redirect
-      if (gateway !== "MOCK" && paymentUrl && typeof window !== "undefined") {
-        window.location.assign(paymentUrl);
-        return;
-      }
+
 
       if (onShowToast) {
         onShowToast("Đang kết nối cổng thanh toán...");
       }
     } catch (err: unknown) {
-      const msg = paymentErrorMessage(err);
+      const msg = Number((err as { code?: number })?.code) === 3505 ? tr('topUpLimits') : paymentErrorMessage(err);
       setError(msg);
       if (onShowToast) onShowToast(msg);
     } finally {
+      submission.current = false;
       setIsSubmitting(false);
     }
   };
 
   const handleSimulateMock = async (success: boolean) => {
-    if (!activeTopUpId) return;
+    if (!activeTopUpId || !topUpCode || gateway !== "MOCK" || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await paymentApi.simulateMockPayment(activeTopUpId, success);
-    } catch {
-      // ignore
+      await paymentApi.simulateMockTopUp(topUpCode, success);
+      setRefreshAttempt(value => value + 1);
+    } catch (err) {
+      setError(paymentErrorMessage(err));
+    } finally {
+      setIsSubmitting(false);
     }
-    setTopUpStatus(success ? "SUCCESS" : "FAILED");
-    if (success && onSuccess) {
-      const amt = Number(amountRaw);
-      onSuccess(currentBalance + amt);
-    }
-    setIsSubmitting(false);
   };
 
   return (
     <div className={`${styles.wrap} ${embedded ? styles.embedded : ""}`}>
+      {error && activeTopUpId && <p role="alert">{error}</p>}
       <div className={styles.header}>
         <h3 className={styles.title}>
           <Wallet size={18} color="var(--primary, #1677FF)" />
@@ -250,10 +226,16 @@ export default function WalletTopUpEmbed({
 
       {/* Transaction status card */}
       {activeTopUpId && topUpStatus ? (
-        topUpStatus === "SUCCESS" ? (
+        topUpStatus === "SUCCEEDED" ? (
           <div className={styles.successBox}>
             <CheckCircle2 size={20} color="#059669" />
             <span>Nạp tiền thành công! Bạn có thể tiếp tục thanh toán đơn hàng.</span>
+            {shortfall > 0 && <button type="button" onClick={() => {
+              onTrackTopUp?.();
+              setActiveTopUpId(null);
+              setTopUpStatus(null);
+              setAmountRaw(String(Math.max(TOP_UP_MINIMUM_VND, shortfall)));
+            }}>{tr('topUpMore')}</button>}
           </div>
         ) : topUpStatus === "FAILED" ? (
           <div
@@ -274,6 +256,7 @@ export default function WalletTopUpEmbed({
               type="button"
               className={styles.chip}
               onClick={() => {
+                onTrackTopUp?.();
                 setActiveTopUpId(null);
                 setTopUpStatus(null);
               }}
@@ -294,7 +277,9 @@ export default function WalletTopUpEmbed({
                 ? "Hệ thống đang tự động kiểm tra trạng thái xác nhận từ ngân hàng..."
                 : `Vui lòng hoàn tất thanh toán trên cổng ${gateway}. Hệ thống đang kiểm tra kết quả (${pollCount + 1}/15)...`}
             </p>
-            {MOCK_PAYMENT_ENABLED || gateway === "MOCK" ? (
+            {hostedUrl && <a href={hostedUrl} target="_blank" rel="noopener noreferrer">{tr("openTopUpGateway")}</a>}
+            <button type="button" onClick={() => { setPollCount(0); setRefreshAttempt(value => value + 1); }}>{tr('checkTopUp')}</button>
+            {MOCK_PAYMENT_ENABLED && gateway === "MOCK" && topUpCode ? (
               <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
                 <button
                   type="button"

@@ -19,5 +19,5 @@ export { useMessages } from "@/_webapp-mirror/hooks/useMessages";
 export { jobApi } from "@/_webapp-mirror/api/jobApi";
 export { trustApi } from "@/_webapp-mirror/api/trustApi";
 export { notificationApi } from "@/_webapp-mirror/api/notificationApi";
-export { paymentApi, paymentErrorMessage, startPayment, PAYMENT_OPTIONS, MOCK_PAYMENT_ENABLED } from "@/_webapp-mirror/api/paymentApi";
+export { paymentApi, paymentErrorMessage, newIdempotencyKey, MOCK_PAYMENT_ENABLED, TOP_UP_MINIMUM_VND } from "@/_webapp-mirror/api/paymentApi";
 export { compressImage } from "@/_webapp-mirror/utils/compressImage";

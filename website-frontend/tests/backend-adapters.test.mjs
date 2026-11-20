@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { walletHistory } from '../src/components/trung-pages/payment/walletHistory.js';
 import {
   fromAddressForm,
   joinFullName,
@@ -18,6 +19,16 @@ test("adapters: pageItems reads wrapped and bare PageResponse", () => {
   assert.deepEqual(pageItems({ result: { data: [1, 2] } }), [1, 2]);
   assert.deepEqual(pageItems({ data: [3] }), [3]);
   assert.deepEqual(pageItems(null), []);
+});
+
+test('wallet history keeps pending receipts and uses only server identifiers and timestamps', () => {
+  const pending = { topUpId: 't1', topUpCode: 'TOP1', amount: 10_000, status: 'PENDING', createdAt: '2026-11-19T00:00:00Z' };
+  const payout = { payoutId: 'p1', amount: 50_000, status: 'FAILED', createdAt: '2026-11-18T00:00:00Z' };
+  const history = walletHistory([pending], [payout], []);
+  assert.deepEqual(history.map(row => [row.id, row.type, row.status]), [['t1', 'TOPUP', 'PENDING'], ['p1', 'PAYOUT', 'FAILED']]);
+  assert.equal(history[0].balanceAfter, undefined);
+  assert.equal(history[1].referenceId, undefined);
+  assert.deepEqual(walletHistory([], [], []), []);
 });
 
 test("adapters: toPackages keeps ACTIVE packages, cheapest first, tiers by price", () => {

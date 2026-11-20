@@ -55,12 +55,23 @@ export const catalogApi = {
   deleteAddon: (addonId) => axiosClient.delete(`/catalog/addons/${addonId}`),
 
   // Service Media
+  uploadMedia: (serviceId, file, cover = false) => {
+    const body = new FormData();
+    body.append('file', file);
+    return axiosClient.post(`/catalog/medias/services/${serviceId}/upload`, body, { params: { cover } });
+  },
   createMedia: (serviceId, body) => axiosClient.post(`/catalog/medias/services/${serviceId}`, body),
   getMedias: (serviceId, page = 0, size = 20) =>
     axiosClient.get(`/catalog/medias/services/${serviceId}`, { params: { page, size } }),
   getMedia: (serviceMediaId) => axiosClient.get(`/catalog/medias/${serviceMediaId}`),
   updateMedia: (serviceMediaId, body) => axiosClient.put(`/catalog/medias/${serviceMediaId}`, body),
-  deleteMedia: (serviceMediaId) => axiosClient.delete(`/catalog/medias/${serviceMediaId}`),
+  deleteMedia: async (serviceMediaId) => {
+    try {
+      return await axiosClient.delete(`/catalog/medias/${serviceMediaId}`);
+    } catch (err) {
+      if (err?.status !== 404 || Number(err.code) !== 1016) throw err;
+    }
+  },
 };
 
 // catalog-service codes for rules, slots, service status and ownership.
@@ -77,6 +88,9 @@ const CATALOG_MESSAGES = {
 
 export const catalogErrorMessage = (err) =>
   (err?.code !== undefined && CATALOG_MESSAGES[err.code]) || err?.message || 'Không lưu được thay đổi. Vui lòng thử lại.';
+
+export const isStoredCatalogMedia = (url) => /^\/medias\/[^/]+\/content$/.test(url);
+export const catalogMediaUrl = (url) => isStoredCatalogMedia(url) ? `/api/v1/catalog${url}` : url;
 
 // 403 also means "not the owner of this service" (1025); only a missing
 // role (1007, or no code) means the account is not a provider yet.

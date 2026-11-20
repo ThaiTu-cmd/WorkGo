@@ -28,6 +28,24 @@ export const orderApi = {
   getOrderHistory: (orderId, page = 0, size = 10) =>
     axiosClient.get(`/order/orders/${orderId}/history`, { params: { page, size } }),
 
+  getAgreement: (orderId) => axiosClient.get(`/order/orders/${orderId}/agreement`),
+  getAmendments: (orderId) => axiosClient.get(`/order/orders/${orderId}/amendments`),
+  proposeAmendment: (orderId, body) => axiosClient.post(`/order/orders/${orderId}/amendments`, body),
+  respondAmendment: (orderId, amendmentId, action) =>
+    axiosClient.post(`/order/orders/${orderId}/amendments/${amendmentId}/${action}`),
+
+  uploadFile: (orderId, context, file) => {
+    const body = new FormData();
+    body.set('context', context);
+    body.set('file', file);
+    return axiosClient.post(`/order/orders/${orderId}/files`, body);
+  },
+  downloadFile: async (orderId, fileId) => {
+    const { result } = await axiosClient.get(`/order/orders/${orderId}/files/${fileId}/download-url`);
+    if (!result?.url?.startsWith(`/orders/files/${fileId}/content?`)) throw new Error();
+    return axiosClient.get(`/order${result.url}`, { responseType: 'blob' });
+  },
+
   // ExecutionResponse { executionType, startedAt, deliveredAt, completedAt,
   //   digital: { status, deadlineAt, revisionLimit, revisionsUsed, requirementSubmittedAt },
   //   onsite:  { status, addressSnapshot, scheduledStart, scheduledEnd, bookingSlotId, ... } }
@@ -52,6 +70,7 @@ export const orderApi = {
   checkin: (orderId, code) => axiosClient.post(`/order/orders/onsite/${orderId}/checkin`, { code }),
   completeOnsite: (orderId) => axiosClient.post(`/order/orders/onsite/${orderId}/complete`),
   acceptOnsite: (orderId) => axiosClient.post(`/order/orders/onsite/${orderId}/accept`),
+  confirmCashReceived: (orderId) => axiosClient.post(`/order/orders/onsite/${orderId}/cash-received`),
 
   // DIGITAL flow. Client sends requirements (CONFIRMED → IN_PROGRESS), then on the
   // latest delivery either asks for a revision (DELIVERED → IN_PROGRESS) or accepts it
@@ -60,7 +79,7 @@ export const orderApi = {
   submitRequirements: (orderId, values) =>
     axiosClient.post(`/order/orders/digital/${orderId}/requirements`, { values }),
 
-  // body: { message, files: [{ fileUrl, fileName, mimeType, sizeBytes }] }
+  // body: { message, files: [{ fileId }] }
   submitDelivery: (orderId, body) => axiosClient.post(`/order/orders/digital/${orderId}/submissions`, body),
 
   // DeliveryPackageResponse[] newest version first:

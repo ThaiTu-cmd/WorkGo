@@ -1,30 +1,23 @@
 import { useTranslations } from "next-intl";
 import React from 'react';
 import styles from './CheckoutPage.module.css';
-import { PAYMENT_OPTIONS } from '../../api/paymentApi';
-
-// Gateway radio list shared by Checkout and the order payment page.
-// `value` / `onChange` work with PAYMENT_OPTIONS ids.
 export default function PaymentOptionPicker({
   value,
   onChange,
+  isOnsite,
   disabled = false
 }) {
-  const tr = useTranslations("misc");
+  const tr = useTranslations("orderWallet");
+  const methods = isOnsite ? ['WALLET', 'CASH'] : ['WALLET'];
   return <section className={styles.card}>
-      <h2 className={styles.cardTitle}>{tr("m488")}</h2>
-      <p className={styles.cardSub}>{tr("m489")}</p>
-      <div className={styles.gatewayList} role="radiogroup" aria-label={tr("m461")}>
-        {PAYMENT_OPTIONS.map(option => <label key={option.id} className={`${styles.gatewayCard} ${value === option.id ? styles.gatewaySelected : ''}`}>
-            <input type="radio" name="gateway" value={option.id} checked={value === option.id} disabled={disabled} onChange={() => onChange(option.id)} className={styles.gatewayInput} />
-            <span className={`${styles.gwLogo} ${styles[option.logoClass]}`} aria-hidden="true">
-              {option.logo}
-            </span>
+      <h2 className={styles.cardTitle}>{tr("method")}</h2>
+      <div className={styles.gatewayList} role="radiogroup" aria-label={tr("method")}>
+        {methods.map(method => <label key={method} className={`${styles.gatewayCard} ${value === method ? styles.gatewaySelected : ''}`}>
+            <input type="radio" name="paymentMethod" value={method} checked={value === method} disabled={disabled} onChange={() => onChange(method)} className={styles.gatewayInput} />
             <span className={styles.gwText}>
-              <strong>{tr(option.name)}</strong>
-              <small>{tr(option.desc)}</small>
+              <strong>{tr(method)}</strong>
+              <small>{tr(`${method}Detail`)}</small>
             </span>
-            <span className={styles.gwFee}>{tr("m490")}</span>
           </label>)}
       </div>
     </section>;

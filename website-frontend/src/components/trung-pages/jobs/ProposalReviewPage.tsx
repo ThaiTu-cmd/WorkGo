@@ -464,7 +464,7 @@ export default function ProposalReviewPage({
                             type="button"
                             className={styles.syncAction}
                             style={{ background: "#166534", color: "#ffffff" }}
-                            onClick={() => onNavigate("payment-gateway", { orderId: sync.orderId })}
+                            onClick={() => onNavigate("order-payment", { orderId: sync.orderId })}
                           >
                             <ShoppingCart size={14} style={{ display: "inline", marginRight: "4px" }} />
                             Xem đơn hàng

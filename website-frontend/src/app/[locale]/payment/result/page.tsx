@@ -17,11 +17,16 @@ export default async function PaymentResultPage({
 
   const q = new URLSearchParams({ page: "order-payment" });
   const paymentId = first(sp.paymentId);
+  const topUpId = first(sp.topUpId);
   const result = first(sp.result);
   if (paymentId) q.set("paymentId", paymentId);
   if (result) q.set("result", result);
-  // Without a paymentId (signature could not be verified) the client lands on Orders.
-  if (!paymentId) q.set("page", "orders");
+  if (topUpId) {
+    q.set("page", "payment-gateway");
+    q.set("topUpId", topUpId);
+  } else if (!paymentId) {
+    q.set("page", "orders");
+  }
 
   redirect(`/${locale === "en" ? "en" : "vi"}?${q.toString()}`);
 }

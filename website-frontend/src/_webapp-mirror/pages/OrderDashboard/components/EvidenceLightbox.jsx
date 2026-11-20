@@ -1,7 +1,8 @@
 import { useTranslations } from "next-intl";
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, ExternalLink, MapPin, X } from 'lucide-react';
 import { phaseOf } from '../../../api/evidenceApi';
+import { orderApi } from '../../../api/orderApi';
 import styles from './WorkEvidence.module.css';
 export const formatTime = iso => iso ? new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'short',
@@ -10,17 +11,40 @@ export const formatTime = iso => iso ? new Intl.DateTimeFormat('vi-VN', {
 
 // Full-size view of one evidence photo with its phase, times and GPS position.
 export default function EvidenceLightbox({
+  orderId,
   items,
   index,
   onChange,
   onClose
 }) {
   const tr = useTranslations("misc");
+  const t = useTranslations('orderWorkspace');
   const item = items[index];
+  const fileId = item.storedFileId;
+  const [photo, setPhoto] = useState(null);
+  const [retry, setRetry] = useState(0);
+  const loadedPhoto = photo?.fileId === fileId && photo?.retry === retry ? photo : null;
+  const src = fileId ? loadedPhoto?.url : item.fileUrl;
   const phase = phaseOf(item.phase);
   const hasPrev = index > 0;
   const hasNext = index < items.length - 1;
   const hasGps = item.latitude != null && item.longitude != null;
+  useEffect(() => {
+    if (!fileId) return;
+    let cancelled = false;
+    let url;
+    orderApi.downloadFile(orderId, fileId).then(blob => {
+      if (cancelled) return;
+      url = URL.createObjectURL(blob);
+      setPhoto({ fileId, retry, url });
+    }).catch(() => {
+      if (!cancelled) setPhoto({ fileId, retry, error: true });
+    });
+    return () => {
+      cancelled = true;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [orderId, fileId, retry]);
   useEffect(() => {
     const onKey = e => {
       if (e.key === 'Escape') onClose();
@@ -40,9 +64,14 @@ export default function EvidenceLightbox({
           {hasPrev && <button type="button" className={`${styles.navBtn} ${styles.navPrev}`} onClick={() => onChange(index - 1)} aria-label={tr("m689")}>
               <ChevronLeft size={22} />
             </button>}
-          <img src={item.fileUrl} alt={tr("m690", {
+          {src && <img src={src} alt={tr("m690", {
           p0: phase.label
-        })} className={styles.lightboxImg} />
+        })} className={styles.lightboxImg} />}
+          {fileId && !loadedPhoto && <span role="status">{t('downloading')}</span>}
+          {loadedPhoto?.error && <div role="alert">
+              <p>{t('downloadError')}</p>
+              <button type="button" className={styles.secondaryBtn} onClick={() => setRetry(value => value + 1)}>{tr("m604")}</button>
+            </div>}
           {hasNext && <button type="button" className={`${styles.navBtn} ${styles.navNext}`} onClick={() => onChange(index + 1)} aria-label={tr("m691")}>
               <ChevronRight size={22} />
             </button>}

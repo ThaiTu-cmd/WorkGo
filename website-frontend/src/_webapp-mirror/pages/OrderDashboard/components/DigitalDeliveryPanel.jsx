@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
-import React from 'react';
+import React, { useState } from 'react';
 import { Link2, Paperclip, PackageCheck, RefreshCw } from 'lucide-react';
+import { orderApi } from '../../../api/orderApi';
 import { useDigitalDelivery } from '../../../hooks/useDigitalDelivery';
 import evidenceStyles from './WorkEvidence.module.css';
 import styles from './OrderFlow.module.css';
@@ -26,6 +27,9 @@ export default function DigitalDeliveryPanel({
   role
 }) {
   const tr = useTranslations("misc");
+  const t = useTranslations('orderWorkspace');
+  const [downloading, setDownloading] = useState(null);
+  const [downloadError, setDownloadError] = useState(false);
   const {
     status,
     deliveries,
@@ -33,6 +37,23 @@ export default function DigitalDeliveryPanel({
     reload
   } = useDigitalDelivery(orderId);
   const revisionsOf = packageId => revisions.filter(r => r.deliveryPackageId === packageId);
+  const download = async file => {
+    setDownloading(file.storedFileId);
+    setDownloadError(false);
+    try {
+      const blob = await orderApi.downloadFile(orderId, file.storedFileId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file.fileName || t('downloadFile');
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setDownloadError(true);
+    } finally {
+      setDownloading(null);
+    }
+  };
   return <section className={styles.panel} aria-label={tr("m679")}>
       <strong className={styles.panelTitle}>
         <PackageCheck size={16} aria-hidden="true" />{tr("m679")}{status === 'ready' && <span className={evidenceStyles.count}>{deliveries.length}</span>}
@@ -46,6 +67,7 @@ export default function DigitalDeliveryPanel({
       {status === 'ready' && deliveries.length === 0 && <p className={styles.note}>
           {role === 'PROVIDER' ? tr("m680") : tr("m681")}
         </p>}
+      {downloadError && <p className={styles.warn} role="alert">{t('downloadError')}</p>}
 
       {deliveries.map(d => <article key={d.deliveryPackageId} className={styles.version}>
           <div className={styles.versionHead}>
@@ -59,6 +81,12 @@ export default function DigitalDeliveryPanel({
           {d.message && <p className={styles.quote}>{d.message}</p>}
           <ul className={styles.fileList}>
             {(d.files || []).map(f => {
+          if (f.storedFileId) return <li key={f.deliveryFileId} className={styles.fileRow}>
+              <Paperclip size={14} aria-hidden="true" />
+              <button type="button" className={evidenceStyles.linkBtn} disabled={downloading !== null} onClick={() => download(f)}>
+                {downloading === f.storedFileId ? t('downloading') : f.fileName || t('downloadFile')}
+              </button>
+            </li>;
           const isData = f.fileUrl?.startsWith('data:');
           // Uploaded files are downloaded, never opened; only http(s) links open in a tab.
           const linkProps = isData ? {

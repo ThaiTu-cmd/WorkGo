@@ -13,6 +13,7 @@ export type AdminNavItem = {
   path: string;
   label: string;
   icon: LucideIcon;
+  labelKey?: "payouts" | "fees" | "monitoring" | "audit" | "reconciliation";
   /** Shown as a small tag; "soon" items have a placeholder page only. */
   badge?: "soon";
 };
@@ -53,11 +54,12 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     title: "Tài chính",
     items: [
       { path: "escrow", label: "Ký quỹ", icon: Vault, badge: "soon" },
-      { path: "fees", label: "Phí", icon: Vault, badge: "soon" },
+      { path: "fees", label: "Phí", labelKey: "fees", icon: Vault },
+      { path: "payouts", label: "Lệnh rút tiền", labelKey: "payouts", icon: Vault },
       { path: "sanctions", label: "Chế tài", icon: Users, badge: "soon" },
-      { path: "monitoring", label: "Giám sát", icon: LayoutDashboard, badge: "soon" },
-      { path: "audit", label: "Audit", icon: FileCheck2, badge: "soon" },
-      { path: "reconciliation", label: "Đối soát", icon: Vault, badge: "soon" },
+      { path: "monitoring", label: "Giám sát", labelKey: "monitoring", icon: LayoutDashboard },
+      { path: "audit", label: "Audit", labelKey: "audit", icon: FileCheck2 },
+      { path: "reconciliation", label: "Đối soát", labelKey: "reconciliation", icon: Vault },
     ],
   },
 ];

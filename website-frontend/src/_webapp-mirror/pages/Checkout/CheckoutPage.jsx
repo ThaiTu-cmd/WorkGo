@@ -1,15 +1,11 @@
 import { useTranslations } from "next-intl";
-import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowLeft, BadgeCheck, Clock, CreditCard, HelpCircle, Loader2, Lock, RotateCcw, ShieldCheck } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, BadgeCheck, Clock, CreditCard, Loader2, Lock, RotateCcw, ShieldCheck } from 'lucide-react';
 import styles from './CheckoutPage.module.css';
 import { orderApi, isOrderable, orderErrorMessage, NOT_ORDERABLE_MESSAGE } from '../../api/orderApi';
-import { DEFAULT_PAYMENT_OPTION, ORDER_PAYMENT_TIMEOUT_MINUTES, paymentErrorMessage, startPayment } from '../../api/paymentApi';
+import { paymentApi, newIdempotencyKey } from '../../api/paymentApi';
 import OnsiteBookingSection, { formatOrderAddress } from './OnsiteBookingSection';
 import PaymentOptionPicker from './PaymentOptionPicker';
-import { orderLabel } from '../../utils/orderNumber';
-
-// Mirrors order-service `order.platform-fee-rate` (application.yaml).
-const PLATFORM_FEE_RATE = 0.1;
 // Labels below are keys of the "misc" dictionary (tr() at render).
 const EXECUTION_LABELS = {
   DIGITAL: 'm1643',
@@ -31,67 +27,38 @@ const formatTime = date => new Intl.DateTimeFormat('vi-VN', {
   year: 'numeric'
 }).format(date);
 
-// Same shape as order-service PricingSnapshot. Used as the preview until the
-// order is created; afterwards the server's OrderResponse amounts win.
-function buildPricingSnapshot(pkg, addons) {
-  const subtotal = (pkg.price || 0) + addons.reduce((sum, a) => sum + a.price, 0);
-  const platformFee = Math.round(subtotal * PLATFORM_FEE_RATE);
-  return {
-    subtotal,
-    platformFeeRate: PLATFORM_FEE_RATE,
-    platformFee,
-    // Same as order-service: the client pays the listed price; the platform
-    // fee comes out of the provider's share.
-    totalAmount: subtotal,
-    providerNetAmount: subtotal - platformFee,
-    currency: 'VND'
-  };
-}
 export default function CheckoutPage({
   order,
   onGoBack,
   onShowToast,
-  onDone,
   onViewOrders,
   onOpenAddressBook,
   onOpenPayment
 }) {
   const tr = useTranslations("misc");
-  const [gateway, setGateway] = useState(DEFAULT_PAYMENT_OPTION);
+  const walletTr = useTranslations("orderWallet");
+  const [paymentMethod, setPaymentMethod] = useState('WALLET');
   const [agreed, setAgreed] = useState(false);
   // ONSITE only: { slot, address } picked in OnsiteBookingSection.
   const [booking, setBooking] = useState({
     slot: null,
     address: null
   });
-  // 'review' → 'creating' (POST /orders) → 'paying' (POST /payments, then leave for
-  // the gateway). 'unpaid': the order exists but the payment could not be started.
-  const [phase, setPhase] = useState('review');
-  // OrderResponse from POST /order/orders.
-  const [createdOrder, setCreatedOrder] = useState(null);
-  const [payError, setPayError] = useState('');
+  const [creating, setCreating] = useState(false);
+  const submission = useRef(false);
+  const attempt = useRef(null);
+  const [feePolicy, setFeePolicy] = useState(null);
   const [snapshotAt] = useState(() => new Date());
-  const pricing = useMemo(() => {
-    if (!order) return null;
-    const preview = buildPricingSnapshot(order.pkg, order.addons);
-    if (!createdOrder) return preview;
-    const num = (v, fallback) => v === null || v === undefined ? fallback : Number(v);
-    return {
-      ...preview,
-      subtotal: num(createdOrder.subtotal, preview.subtotal),
-      platformFee: num(createdOrder.platformFee, preview.platformFee),
-      totalAmount: num(createdOrder.totalAmount, preview.totalAmount),
-      providerNetAmount: num(createdOrder.providerNetAmount, preview.providerNetAmount),
-      currency: createdOrder.currency || preview.currency
-    };
-  }, [order, createdOrder]);
+  const hasOrder = Boolean(order);
   useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  }, [phase]);
-  if (!order || !pricing) {
+    if (!hasOrder) return undefined;
+    let active = true;
+    paymentApi.getCurrentFeePolicy().then(res => {
+      if (active) setFeePolicy(res?.result);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [hasOrder]);
+  if (!order) {
     return <div className={styles.pageContainer}>
         <div className={styles.contentWrapper}>
           <div className={styles.emptyState}>
@@ -111,53 +78,47 @@ export default function CheckoutPage({
   const orderable = isOrderable(service.executionType);
   const isOnsite = service.executionType === 'ONSITE';
   const bookingReady = !isOnsite || booking.slot && booking.address;
+  const method = isOnsite ? paymentMethod : 'WALLET';
+  const subtotal = Number(pkg.price) + addons.reduce((sum, addon) => sum + Number(addon.price), 0);
+  const feeRate = feePolicy?.successFeeRate;
+  const fee = feeRate == null ? null : Math.round(subtotal * Number(feeRate));
 
-  // 1) create the order (pricing and slot hold happen server-side),
-  // 2) create its payment and leave for the gateway (MOCK: in-app result page).
   const handlePay = async () => {
-    if (!agreed || phase !== 'review' || !orderable || !bookingReady) return;
-    setPhase('creating');
-    let created;
+    if (submission.current || !agreed || !orderable || !bookingReady) return;
+    submission.current = true;
+    setCreating(true);
     try {
-      const res = await orderApi.createOrder({
+      const body = {
         serviceId: service.serviceId,
         packageId: pkg.id,
         addonIds: addons.map(a => a.id),
+        paymentMethod: method,
         ...(isOnsite && {
           bookingSlotId: booking.slot.bookingSlotId,
           address: formatOrderAddress(booking.address)
         })
-      });
-      created = res?.result ?? null;
-      setCreatedOrder(created);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('workgo-orders-changed'));
+      };
+      const payload = JSON.stringify(body);
+      if (attempt.current?.payload !== payload) {
+        attempt.current = { payload, key: newIdempotencyKey() };
       }
+      const res = await orderApi.createOrder(body, attempt.current.key);
+      const created = res?.result;
+      if (!created?.orderId) throw new Error();
+      attempt.current = null;
+      window.dispatchEvent(new Event('workgo-orders-changed'));
+      if ((created.paymentMethod || method) === 'CASH') onViewOrders(created.orderId);
+      else onOpenPayment({ orderId: created.orderId });
     } catch (err) {
-      setPhase('review');
       if (onShowToast) {
+        const key = { 2006: 'cashNotAllowed', 2007: 'cashLimit', 2008: 'cashBusy', 2009: 'providerRestricted', 3049: 'creationKeyInvalid', 3050: 'creationKeyConflict' }[Number(err?.code)];
         onShowToast(err?.status === 401 ? tr("m453") : tr("m1451", {
-          p0: err?.status ? orderErrorMessage(err) : tr("m1303")
+          p0: key ? walletTr(key) : err?.status ? orderErrorMessage(err) : tr("m1303")
         }));
       }
-      return;
-    }
-    if (!created?.orderId) {
-      setPayError(tr("m1303"));
-      setPhase('unpaid');
-      return;
-    }
-    setPhase('paying');
-    try {
-      await startPayment(created.orderId, gateway, {
-        onMock: payment => onOpenPayment && onOpenPayment({
-          orderId: created.orderId,
-          paymentId: payment?.paymentId
-        })
-      });
-    } catch (err) {
-      setPayError(err?.status ? paymentErrorMessage(err) : tr("m1303"));
-      setPhase('unpaid');
+    } finally {
+      submission.current = false;
+      setCreating(false);
     }
   };
   const steps = [{
@@ -165,16 +126,16 @@ export default function CheckoutPage({
     state: 'done'
   }, {
     label: tr("m456"),
-    state: phase === 'unpaid' ? 'done' : 'active'
+    state: 'active'
   }, {
     label: tr("m457"),
-    state: phase === 'unpaid' ? 'active' : 'todo'
+    state: 'todo'
   }];
   return <div className={styles.pageContainer}>
       <div className={styles.contentWrapper}>
         {/* Breadcrumb */}
         <nav className={styles.breadcrumbNav} aria-label="Breadcrumb">
-          <button type="button" className={styles.backBtn} onClick={onGoBack} disabled={phase !== 'review'}>
+          <button type="button" className={styles.backBtn} onClick={onGoBack} disabled={creating}>
             <ArrowLeft size={16} />{tr("m467")}</button>
           <span className={styles.sep}>/</span>
           <span>{tr("m468")}</span>
@@ -193,24 +154,7 @@ export default function CheckoutPage({
             </React.Fragment>)}
         </ol>
 
-        {phase === 'unpaid' ? <section className={styles.successCard} aria-live="polite">
-            <AlertTriangle size={56} className={styles.warnIcon} />
-            <h1 className={styles.pageTitle}>{tr("m1709")}</h1>
-            <p>{tr("m1710", {
-              p0: (createdOrder && orderLabel(createdOrder)) || '—',
-              p1: payError
-            })}</p>
-            <p className={styles.mutedText}>{tr("m1711", {
-              p0: ORDER_PAYMENT_TIMEOUT_MINUTES
-            })}</p>
-            <div className={styles.successActions}>
-              {onOpenPayment && createdOrder?.orderId && <button type="button" className={styles.btnPay} onClick={() => onOpenPayment({
-                orderId: createdOrder.orderId
-              })}>{tr("m1712")}</button>}
-              {onViewOrders && <button type="button" className={styles.btnSecondary} onClick={onViewOrders}>{tr("m475")}</button>}
-              <button type="button" className={styles.btnSecondary} onClick={onDone}>{tr("m476")}</button>
-            </div>
-          </section> : <>
+        <>
             <h1 className={styles.pageTitle}>
               <CreditCard size={26} className={styles.titleIcon} aria-hidden="true" />{tr("m1490")}</h1>
 
@@ -273,8 +217,7 @@ export default function CheckoutPage({
 
                 {isOnsite && <OnsiteBookingSection serviceId={service.serviceId} value={booking} onChange={setBooking} onOpenAddressBook={onOpenAddressBook} />}
 
-                {/* Payment gateways */}
-                <PaymentOptionPicker value={gateway} onChange={setGateway} disabled={phase !== 'review'} />
+                <PaymentOptionPicker value={method} onChange={setPaymentMethod} isOnsite={isOnsite} disabled={creating} />
               </div>
 
               {/* ===== Right column: Order Snapshot ===== */}
@@ -296,29 +239,24 @@ export default function CheckoutPage({
                     </div>)}
                   <div className={`${styles.priceRow} ${styles.priceRowSubtotal}`}>
                     <dt>{tr("m493")}</dt>
-                    <dd>{formatPrice(pricing.subtotal)}</dd>
+                    <dd>{formatPrice(subtotal)}</dd>
                   </div>
-                  <div className={styles.priceRow}>
-                    <dt>{tr("m1492")}{Math.round(pricing.platformFeeRate * 100)}{tr("m1493")}<span className={styles.tip} tabIndex={0} data-tip={tr("m462")} aria-label={tr("m462")}>
-                        <HelpCircle size={14} />
-                      </span>
-                    </dt>
-                    <dd>{formatPrice(pricing.platformFee)}</dd>
-                  </div>
+                  {fee !== null && <div className={styles.priceRow}>
+                    <dt>{walletTr("estimatedFee")}</dt>
+                    <dd>{formatPrice(fee)}</dd>
+                  </div>}
                 </dl>
 
                 <div className={styles.totalRow}>
                   <span>{tr("m495")}</span>
-                  <strong>{formatPrice(pricing.totalAmount)}</strong>
+                  <strong>{formatPrice(subtotal)}</strong>
                 </div>
-                <p className={styles.netNote}>{tr("m1494")}{formatPrice(pricing.providerNetAmount)}
-                </p>
 
-                <div className={styles.escrowBox}>
+                {method === 'WALLET' && <div className={styles.escrowBox}>
                   <ShieldCheck size={22} />
                   <p>
                     <strong>{tr("m497")}</strong>{tr("m1495")}</p>
-                </div>
+                </div>}
 
                 <label className={styles.agree}>
                   <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} />
@@ -330,18 +268,18 @@ export default function CheckoutPage({
                   </p>}
                 {orderable && !bookingReady && <p className={styles.notOrderable}>{tr("m500")}</p>}
 
-                <button type="button" className={styles.btnPay} disabled={!agreed || phase !== 'review' || !orderable || !bookingReady} onClick={handlePay}>{tr("m468")}{formatPrice(pricing.totalAmount)}
+                <button type="button" className={styles.btnPay} disabled={!agreed || creating || !orderable || !bookingReady} onClick={handlePay}>{walletTr(method === 'CASH' ? 'bookCash' : 'continueWallet')}
                 </button>
                 <p className={styles.snapshotTime}>{tr("m1496")}{formatTime(snapshotAt)}{tr("m1497")}</p>
               </aside>
             </div>
-          </>}
+          </>
       </div>
 
-      {(phase === 'creating' || phase === 'paying') && <div className={styles.overlay} role="status" aria-live="polite">
+      {creating && <div className={styles.overlay} role="status" aria-live="polite">
           <div className={styles.overlayBox}>
             <Loader2 size={36} className={styles.spinner} />
-            <p>{phase === 'creating' ? tr("m503") : tr("m1708")}</p>
+            <p>{tr("m503")}</p>
           </div>
         </div>}
     </div>;

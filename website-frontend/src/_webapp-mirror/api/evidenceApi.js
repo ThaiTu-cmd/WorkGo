@@ -25,14 +25,14 @@ export const evidenceErrorMessage = (err) =>
   ERROR_MESSAGES[err?.code] || err?.message || 'Không gửi được bằng chứng. Vui lòng thử lại.';
 
 export const evidenceApi = {
-  // WorkEvidenceResponse { workEvidenceId, executionId, phase, uploadedBy, fileUrl,
+  // WorkEvidenceResponse { workEvidenceId, executionId, phase, uploadedBy, storedFileId, fileUrl,
   //   latitude, longitude, capturedAt, createdAt }, paged and newest first.
   getEvidence: (orderId, { phase, page = 0, size = 50 } = {}) =>
     axiosClient.get(`/order/orders/${orderId}/evidence`, {
       params: phase ? { phase, page, size } : { page, size },
     }),
 
-  // body: { phase, fileUrl, latitude?, longitude?, capturedAt? }
+  // body: { phase, fileId, latitude?, longitude?, capturedAt? }
   createEvidence: (orderId, body) => axiosClient.post(`/order/orders/${orderId}/evidence`, body),
 };
 

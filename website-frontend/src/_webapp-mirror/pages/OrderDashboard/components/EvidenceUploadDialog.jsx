@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from 'react';
 import { Camera, CheckCircle2, ImagePlus, Loader2, MapPin, MapPinOff, X } from 'lucide-react';
 import { EVIDENCE_PHASES, evidenceApi, evidenceErrorMessage } from '../../../api/evidenceApi';
+import { orderApi } from '../../../api/orderApi';
 import { compressImage } from '../../../utils/compressImage';
 import styles from './WorkEvidence.module.css';
 
@@ -18,8 +19,9 @@ export default function EvidenceUploadDialog({
   onCreated
 }) {
   const tr = useTranslations("misc");
+  const t = useTranslations('orderWorkspace');
   const [phase, setPhase] = useState(defaultPhase);
-  const [photo, setPhoto] = useState(null); // { dataUrl, capturedAt }
+  const [photo, setPhoto] = useState(null);
   const [preparing, setPreparing] = useState(false);
   const [geo, setGeo] = useState({
     status: 'loading'
@@ -86,9 +88,18 @@ export default function EvidenceUploadDialog({
     setSubmitting(true);
     setError('');
     try {
+      let fileId = photo.fileId;
+      if (!fileId) {
+        const blob = await (await fetch(photo.dataUrl)).blob();
+        const file = new File([blob], 'evidence.jpg', { type: blob.type });
+        const response = await orderApi.uploadFile(orderId, 'WORK_EVIDENCE', file);
+        fileId = response?.result?.storedFileId;
+        if (!fileId) throw new Error(t('uploadError'));
+        setPhoto({ ...photo, fileId });
+      }
       await evidenceApi.createEvidence(orderId, {
         phase,
-        fileUrl: photo.dataUrl,
+        fileId,
         capturedAt: photo.capturedAt,
         ...(geo.status === 'ok' ? {
           latitude: geo.latitude,
@@ -114,7 +125,7 @@ export default function EvidenceUploadDialog({
           <fieldset className={styles.field}>
             <legend>{tr("m703")}</legend>
             <div className={styles.segmented}>
-              {EVIDENCE_PHASES.map(p => <button key={p.value} type="button" aria-pressed={phase === p.value} className={`${styles.segment} ${phase === p.value ? styles[`segmentActive_${p.tone}`] : ''}`} onClick={() => setPhase(p.value)}>
+              {EVIDENCE_PHASES.map(p => <button key={p.value} type="button" disabled={submitting} aria-pressed={phase === p.value} className={`${styles.segment} ${phase === p.value ? styles[`segmentActive_${p.tone}`] : ''}`} onClick={() => setPhase(p.value)}>
                   {p.label}
                 </button>)}
             </div>
@@ -124,7 +135,7 @@ export default function EvidenceUploadDialog({
             <span className={styles.label}>{tr("m704")}</span>
             {photo ? <div className={styles.preview}>
                 <img src={photo.dataUrl} alt={tr("m698")} />
-                <button type="button" className={styles.changeBtn} onClick={() => fileRef.current?.click()}>{tr("m705")}</button>
+                <button type="button" className={styles.changeBtn} disabled={submitting} onClick={() => fileRef.current?.click()}>{tr("m705")}</button>
               </div> : <div className={styles.dropzone}>
                 {preparing ? <span className={styles.dropHint}>
                     <Loader2 size={18} className={styles.spin} aria-hidden="true" />{tr("m706")}</span> : <>

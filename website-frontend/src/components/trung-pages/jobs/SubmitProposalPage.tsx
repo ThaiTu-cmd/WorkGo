@@ -89,8 +89,8 @@ export default function SubmitProposalPage({
       if (cancelled) return;
       const r = res as { result?: Record<string, unknown> } & Record<string, unknown>;
       const data = r?.result ?? r ?? {};
-      const debt = Number(data.debtBalance ?? data.debt ?? 0);
-      const available = Number(data.availableBalance ?? data.available ?? 0);
+      const debt = Number(data.outstandingFee ?? 0);
+      const available = Number(data.balance ?? 0);
       if (debt > 0 || available < 0) {
         setIsWalletBlocked(true);
         setDebtAmount(debt > 0 ? debt : Math.abs(available));

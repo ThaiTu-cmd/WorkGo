@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
-import { getCheckinCode, payViaMock } from './helpers/payment.mjs';
+import { getCheckinCode, payFromWallet } from './helpers/payment.mjs';
+import { uploadOrderImage } from './helpers/order-files.mjs';
 
 const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:8888/api/v1';
 
@@ -80,7 +81,7 @@ test('TC-EDGE-01: Chặn bên yêu cầu tự duyệt đơn hủy của chính m
     body: JSON.stringify({ serviceId: DIGITAL_SERVICE_ID, packageId: DIGITAL_PACKAGE_ID, addonIds: [] }),
   });
   const orderId = (await createRes.json()).result.orderId;
-  await payViaMock(GATEWAY_URL, clientToken, orderId);
+  await payFromWallet(GATEWAY_URL, clientToken, orderId);
 
   // 2. Client gửi yêu cầu hủy
   await fetch(`${GATEWAY_URL}/order/orders/${orderId}/cancel`, {
@@ -109,7 +110,7 @@ test('TC-EDGE-02: Chặn gửi trùng yêu cầu hủy trên cùng một đơn h
     body: JSON.stringify({ serviceId: DIGITAL_SERVICE_ID, packageId: DIGITAL_PACKAGE_ID, addonIds: [] }),
   });
   const orderId = (await createRes.json()).result.orderId;
-  await payViaMock(GATEWAY_URL, clientToken, orderId);
+  await payFromWallet(GATEWAY_URL, clientToken, orderId);
 
   // 2. Gửi yêu cầu hủy lần 1
   const cancel1 = await fetch(`${GATEWAY_URL}/order/orders/${orderId}/cancel`, {
@@ -139,16 +140,17 @@ test('TC-EDGE-03: Chặn hủy đơn hàng đã hoàn tất (COMPLETED)', async 
     body: JSON.stringify({ serviceId: DIGITAL_SERVICE_ID, packageId: DIGITAL_PACKAGE_ID, addonIds: [] }),
   });
   const orderId = (await createRes.json()).result.orderId;
-  await payViaMock(GATEWAY_URL, clientToken, orderId);
+  await payFromWallet(GATEWAY_URL, clientToken, orderId);
   await fetch(`${GATEWAY_URL}/order/orders/digital/${orderId}/requirements`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${clientToken}` },
     body: JSON.stringify({ values: { note: 'Done quickly' } }),
   });
+  const fileId = await uploadOrderImage(GATEWAY_URL, providerToken, orderId, 'DELIVERY', 'f.png');
   await fetch(`${GATEWAY_URL}/order/orders/digital/${orderId}/submissions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${providerToken}` },
-    body: JSON.stringify({ message: 'Done', files: [{ fileUrl: 'https://cdn.workgo.vn/f.png', fileName: 'f.png', mimeType: 'image/png', sizeBytes: 100, fileHash: 'hash' }] }),
+    body: JSON.stringify({ message: 'Done', files: [{ fileId }] }),
   });
   await fetch(`${GATEWAY_URL}/order/orders/digital/${orderId}/accept`, {
     method: 'POST',
@@ -190,7 +192,7 @@ test('TC-EDGE-04: Chuyên gia Check-in Onsite thất bại khi nhập sai mã x�
     }),
   });
   const orderId = (await createRes.json()).result.orderId;
-  await payViaMock(GATEWAY_URL, clientToken, orderId);
+  await payFromWallet(GATEWAY_URL, clientToken, orderId);
 
   // Align scheduled_start to NOW()
   queryDb(
@@ -230,7 +232,7 @@ test('TC-EDGE-05: Chặn hoàn tất Onsite nếu thiếu bằng chứng thi cô
     }),
   });
   const orderId = (await createRes.json()).result.orderId;
-  await payViaMock(GATEWAY_URL, clientToken, orderId);
+  await payFromWallet(GATEWAY_URL, clientToken, orderId);
   const checkinCode = await getCheckinCode(GATEWAY_URL, clientToken, orderId);
 
   queryDb(
@@ -292,7 +294,7 @@ test('TC-EDGE-08: Nghiệm thu Digital thất bại khi chưa có bài nộp bà
     body: JSON.stringify({ serviceId: DIGITAL_SERVICE_ID, packageId: DIGITAL_PACKAGE_ID, addonIds: [] }),
   });
   const orderId = (await createRes.json()).result.orderId;
-  await payViaMock(GATEWAY_URL, clientToken, orderId);
+  await payFromWallet(GATEWAY_URL, clientToken, orderId);
 
   // Client bấm nghiệm thu khi chưa có bàn giao
   const acceptRes = await fetch(`${GATEWAY_URL}/order/orders/digital/${orderId}/accept`, {

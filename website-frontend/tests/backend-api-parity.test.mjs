@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from 'node:module';
+import vm from 'node:vm';
+import ts from 'typescript';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,7 +17,7 @@ import { authApi } from "../src/_webapp-mirror/api/authApi.js";
 import { providerApi } from "../src/_webapp-mirror/api/providerApi.js";
 import { adminApi } from "../src/_webapp-mirror/api/adminApi.js";
 import { orderApi, isOrderable, orderErrorMessage } from "../src/_webapp-mirror/api/orderApi.js";
-import { paymentApi, paymentErrorMessage, startPayment, PAYMENT_OPTIONS } from "../src/_webapp-mirror/api/paymentApi.js";
+import { paymentApi, paymentErrorMessage } from "../src/_webapp-mirror/api/paymentApi.js";
 import axiosClient from "../src/_webapp-mirror/api/axiosClient.js";
 import { evidenceApi } from "../src/_webapp-mirror/api/evidenceApi.js";
 import { verificationApi } from "../src/_webapp-mirror/api/verificationApi.js";
@@ -211,56 +214,77 @@ test("API Parity: orderApi no longer confirms payments itself", () => {
   assert.equal(orderApi.confirmPayment, undefined);
 });
 
+test("API Parity: Catalog uploads media as multipart with a cover flag", async () => {
+  const original = axiosClient.post;
+  axiosClient.post = async (url, data, config) => {
+    assert.equal(url, "/catalog/medias/services/s1/upload");
+    assert.equal(config.params.cover, true);
+    assert.ok(data.get("file") instanceof Blob);
+  };
+  try {
+    await catalogApi.uploadMedia("s1", new Blob(["image"], { type: "image/png" }), true);
+  } finally {
+    axiosClient.post = original;
+  }
+});
+
+test("Catalog delete retries accept only an already-removed media response", async (t) => {
+  t.mock.method(axiosClient, 'delete', async () => { throw { status: 404, code: 1016 }; });
+  await catalogApi.deleteMedia('removed');
+  axiosClient.delete = async () => { throw { status: 403, code: 1007 }; };
+  await assert.rejects(catalogApi.deleteMedia('someone-elses'), error => error.status === 403);
+});
+
 test("API Parity: paymentApi calls payment-service through the gateway", async () => {
   const calls = [];
   const original = { get: axiosClient.get, post: axiosClient.post };
   axiosClient.get = async (url, config) => calls.push(["GET", url, config?.params]);
   axiosClient.post = async (url, body, config) => calls.push(["POST", url, body, config?.headers]);
   try {
-    await paymentApi.createPayment({ orderId: "o1", gateway: "VNPAY", paymentMethod: "QR" }, "key-1");
-    await paymentApi.createPayment({ orderId: "o1", gateway: "MOCK" }, "key-2");
     await paymentApi.getPayment("p1");
     await paymentApi.getPaymentsOfOrder("o1");
     await paymentApi.getEscrow("o1");
     await paymentApi.simulateMockPayment("PAY1", true);
     await paymentApi.simulateMockPayment("PAY1", false);
+    await paymentApi.payOrderWithWallet("o1");
+    await paymentApi.getCurrentFeePolicy();
     await paymentApi.getWallet();
-    await paymentApi.getWalletLedger({ page: 0, size: 20 });
+    await paymentApi.getTopUps();
+    await paymentApi.getFees();
     await paymentApi.createTopUp({ amount: 100000, gateway: "VNPAY" }, "key-topup");
     await paymentApi.getTopUp("top-1");
-    await paymentApi.getPayoutSettings();
-    await paymentApi.savePayoutSettings({ bankName: "Vietcombank", accountName: "TRAN HUU TRUNG", accountNumber: "0071001234567" });
-    await paymentApi.requestPayout({ amount: 500000, bankName: "Vietcombank", accountName: "TRAN HUU TRUNG", accountNumber: "0071001234567" }, "key-payout");
+    await paymentApi.simulateMockTopUp("TOP1", true);
+    await paymentApi.requestPayout({ amount: 500000, bankCode: "VCB", accountName: "TRAN HUU TRUNG", accountNumber: "0071001234567" }, "key-payout");
     await paymentApi.getPayouts();
   } finally {
     Object.assign(axiosClient, original);
   }
   assert.deepEqual(calls, [
-    ["POST", "/payment/payments", { orderId: "o1", gateway: "VNPAY", paymentMethod: "QR" }, { "Idempotency-Key": "key-1" }],
-    ["POST", "/payment/payments", { orderId: "o1", gateway: "MOCK" }, { "Idempotency-Key": "key-2" }],
     ["GET", "/payment/payments/p1", undefined],
     ["GET", "/payment/payments", { orderId: "o1" }],
     ["GET", "/payment/escrows/orders/o1", undefined],
     ["POST", "/payment/dev/payments/PAY1/success", undefined, undefined],
     ["POST", "/payment/dev/payments/PAY1/fail", undefined, undefined],
-    ["GET", "/payment/wallets/me", undefined],
-    ["GET", "/payment/wallets/ledger", { page: 0, size: 20 }],
-    ["POST", "/payment/wallets/topup", { amount: 100000, gateway: "VNPAY" }, { "Idempotency-Key": "key-topup" }],
-    ["GET", "/payment/wallets/topup/top-1", undefined],
-    ["GET", "/payment/payout-settings/me", undefined],
-    ["POST", "/payment/payout-settings", { bankName: "Vietcombank", accountName: "TRAN HUU TRUNG", accountNumber: "0071001234567" }, undefined],
-    ["POST", "/payment/payouts", { amount: 500000, bankName: "Vietcombank", accountName: "TRAN HUU TRUNG", accountNumber: "0071001234567" }, { "Idempotency-Key": "key-payout" }],
-    ["GET", "/payment/payouts", { page: 0, size: 20 }],
+    ["POST", "/payment/wallet/orders/o1/pay", undefined, undefined],
+    ["GET", "/payment/fee-policies/current", undefined],
+    ["GET", "/payment/wallet", undefined],
+    ["GET", "/payment/wallet/top-ups", undefined],
+    ["GET", "/payment/wallet/fees", undefined],
+    ["POST", "/payment/wallet/top-ups", { amount: 100000, gateway: "VNPAY" }, { "Idempotency-Key": "key-topup" }],
+    ["GET", "/payment/wallet/top-ups/top-1", undefined],
+    ["POST", "/payment/dev/payments/top-ups/TOP1/success", undefined, undefined],
+    ["POST", "/payment/wallet/payouts", { amount: 500000, bankCode: "VCB", accountName: "TRAN HUU TRUNG", accountNumber: "0071001234567" }, { "Idempotency-Key": "key-payout" }],
+    ["GET", "/payment/wallet/payouts", undefined],
   ]);
 });
 
-test("API Parity: createPayment always sends a fresh Idempotency-Key", async () => {
+test("API Parity: distinct top-ups always receive distinct Idempotency-Keys", async () => {
   const keys = [];
   const original = axiosClient.post;
   axiosClient.post = async (_url, _body, config) => keys.push(config?.headers?.["Idempotency-Key"]);
   try {
-    await paymentApi.createPayment({ orderId: "o1", gateway: "MOCK" });
-    await paymentApi.createPayment({ orderId: "o1", gateway: "MOCK" });
+    await paymentApi.createTopUp({ amount: 50000, gateway: "MOCK" });
+    await paymentApi.createTopUp({ amount: 50000, gateway: "MOCK" });
   } finally {
     axiosClient.post = original;
   }
@@ -269,23 +293,222 @@ test("API Parity: createPayment always sends a fresh Idempotency-Key", async () 
   assert.notEqual(keys[0], keys[1]);
 });
 
-test("Payment flow: MOCK payments stay in the app, real gateways redirect", async () => {
-  const original = axiosClient.post;
-  axiosClient.post = async (_url, body) => ({
-    result: { paymentId: "p1", gateway: body.gateway, paymentUrl: "https://sandbox.example/pay" },
+test('checkout top-up recovery reads an existing receipt after reload and waits for server confirmation', async () => {
+  let confirmed = 0;
+  let created = 0;
+  let status = 'PENDING';
+  const receipts = [];
+  const screen = loadTopUpComponent('WalletTopUpEmbed.tsx', {
+    initialTopUpId: 'existing-receipt', requiredAmount: 50000, currentBalance: 0,
+    onSuccess: () => { confirmed += 1; },
+  }, {
+    createTopUp: async () => { created += 1; },
+    getTopUp: async id => {
+      receipts.push(id);
+      return { result: { topUpId: id, status, gateway: 'VNPAY', amount: 50000, paymentUrl: 'https://sandbox.example/receipt' } };
+    },
   });
-  try {
-    let mocked = null;
-    const payment = await startPayment("o1", "mock", { onMock: (p) => { mocked = p; } });
-    assert.equal(payment.paymentId, "p1");
-    assert.equal(mocked?.paymentId, "p1", "MOCK hands the payment to onMock");
-  } finally {
-    axiosClient.post = original;
-  }
-  assert.ok(PAYMENT_OPTIONS.some((o) => o.gateway === "VNPAY"));
-  assert.ok(PAYMENT_OPTIONS.some((o) => o.gateway === "MOMO"));
-  assert.ok(PAYMENT_OPTIONS.every((o) => ["MOCK", "VNPAY", "MOMO"].includes(o.gateway)), "only gateways payment-service supports");
+  await screen.flush();
+  assert.equal(created, 0);
+  assert.equal(confirmed, 0);
+  assert.match(screen.text(), /https:\/\/sandbox.example\/receipt/);
+  status = 'SUCCEEDED';
+  await screen.clickText('Check transaction again');
+  await screen.flush();
+  assert.equal(confirmed, 1);
+  assert.deepEqual(receipts, ['existing-receipt', 'existing-receipt']);
+  screen.unmount();
 });
+
+test('checkout top-up reuses its key after a lost acknowledgement and records the receipt for reload', async () => {
+  const calls = [];
+  const tracked = [];
+  const receipt = { topUpId: 'saved', status: 'PENDING', gateway: 'VNPAY', paymentUrl: 'https://sandbox.example/receipt' };
+  const screen = loadTopUpComponent('WalletTopUpEmbed.tsx', {
+    requiredAmount: 10000, onTrackTopUp: id => tracked.push(id),
+  }, {
+    createTopUp: async (body, key) => {
+      calls.push({ body, key });
+      if (calls.length === 1) throw new Error('Acknowledgement lost');
+      return { result: receipt };
+    },
+    getTopUp: async () => ({ result: receipt }),
+  });
+  await screen.clickClass('submitBtn');
+  await screen.clickClass('submitBtn');
+  await screen.flush();
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].key, calls[1].key);
+  assert.equal(calls[0].body.amount, 10000);
+  assert.deepEqual(tracked, ['saved']);
+  screen.unmount();
+});
+
+test('checkout reuses the creation key after a lost acknowledgement and changes it with the request', async () => {
+  const calls = [];
+  const navigated = [];
+  let attempts = 0;
+  const order = { service: { serviceId: 's1', executionType: 'DIGITAL' }, pkg: { id: 'p1', price: 50000 }, addons: [] };
+  const screen = loadTopUpComponent('CheckoutPage.jsx', {
+    order, onOpenPayment: receipt => navigated.push(receipt), onShowToast: () => {},
+  }, { getCurrentFeePolicy: async () => ({ result: { successFeeRate: 0.1 } }) }, {
+    '../../api/orderApi': { orderApi: { createOrder: async (body, key) => {
+      calls.push({ body, key });
+      if (calls.length < 3) throw new Error('Acknowledgement lost');
+      return { result: { orderId: 'saved', paymentMethod: 'WALLET' } };
+    } }, isOrderable, orderErrorMessage },
+    '../../api/paymentApi': { paymentApi: { getCurrentFeePolicy: async () => ({ result: {} }) }, newIdempotencyKey: () => `order-attempt-${++attempts}` },
+    './OnsiteBookingSection': { default: () => null },
+    './PaymentOptionPicker': { default: () => null },
+  });
+  screen.changeInput(node => node.props.type === 'checkbox', { checked: true });
+  await screen.clickClass('btnPay');
+  await screen.clickClass('btnPay');
+  assert.ok(calls[0].key, 'the caller must retain an explicit key');
+  assert.equal(calls[0].key, calls[1].key);
+  assert.equal(navigated.length, 0);
+  order.pkg = { id: 'p2', price: 75000 };
+  screen.rerender();
+  await screen.clickClass('btnPay');
+  assert.notEqual(calls[1].key, calls[2].key);
+  assert.equal(navigated.length, 1);
+  assert.equal(navigated[0].orderId, 'saved');
+  screen.unmount();
+});
+
+for (const [locale, messages] of [
+  ['en', [
+    'The order request identifier is invalid. Please return to the service and try again.',
+    'This order request cannot be reused. Please check your orders before creating a new one.',
+  ]],
+  ['vi', [
+    'Mã yêu cầu đặt đơn không hợp lệ. Vui lòng quay lại dịch vụ và thử lại.',
+    'Yêu cầu đặt đơn này không thể dùng lại. Vui lòng kiểm tra danh sách đơn trước khi tạo đơn mới.',
+  ]],
+]) {
+  test(`checkout translates creation key errors in ${locale} and keeps the user on checkout`, async () => {
+    const toasts = [];
+    let navigated = 0;
+    let code = 3049;
+    const screen = loadTopUpComponent('CheckoutPage.jsx', {
+      order: { service: { serviceId: 's1', executionType: 'DIGITAL' }, pkg: { id: 'p1', price: 50000 }, addons: [] },
+      onShowToast: message => toasts.push(message), onOpenPayment: () => { navigated += 1; },
+    }, {}, {
+      '../../api/orderApi': { orderApi: { createOrder: async () => { throw { code, status: code === 3049 ? 400 : 409, message: 'Raw backend error' }; } }, isOrderable, orderErrorMessage },
+      '../../api/paymentApi': { paymentApi: { getCurrentFeePolicy: async () => ({ result: {} }) }, newIdempotencyKey: () => 'retry-key' },
+      './OnsiteBookingSection': { default: () => null },
+      './PaymentOptionPicker': { default: () => null },
+    }, locale);
+    screen.changeInput(node => node.props.type === 'checkbox', { checked: true });
+    await screen.clickClass('btnPay');
+    code = 3050;
+    await screen.clickClass('btnPay');
+    assert.equal(toasts.length, 2);
+    messages.forEach((message, index) => assert.ok(toasts[index].includes(message), toasts[index]));
+    assert.equal(navigated, 0);
+    screen.unmount();
+  });
+}
+
+for (const [filename, inputId, buttonClass] of [
+  ['WalletTopUpEmbed.tsx', 'embed-topup-amount', 'submitBtn'],
+  ['PaymentGatewayPage.tsx', 'wg-payment-amount', 'submit'],
+]) {
+  test(`${filename} rejects decimal, negative and malformed top-up input without changing the amount`, async () => {
+    const calls = [];
+    const screen = loadTopUpComponent(filename, { onNavigate: () => {}, onShowToast: () => {} }, {
+      getWallet: async () => ({ result: {} }),
+      createTopUp: async body => { calls.push(body); throw new Error('no receipt'); },
+    });
+    for (const value of ['-10000', '10000.5', '1e5', '10abc000']) {
+      screen.changeInput(node => node.props.id === inputId, { value });
+      await screen.clickClass(buttonClass);
+      assert.equal(calls.length, 0, `must reject ${value}`);
+    }
+    screen.changeInput(node => node.props.id === inputId, { value: '10000' });
+    await screen.clickClass(buttonClass);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].amount, 10000);
+    screen.unmount();
+  });
+}
+
+function loadTopUpComponent(filename, props, api, imports = {}, locale = 'en') {
+  const require = createRequire(import.meta.url);
+  const dict = JSON.parse(fs.readFileSync(new URL(`../src/dictionaries/${locale}.json`, import.meta.url), 'utf8'));
+  const translators = new Map();
+  const state = [];
+  const pendingEffects = [];
+  const cleanups = new Map();
+  let cursor = 0;
+  const hooks = {
+    useState: initial => {
+      const index = cursor++;
+      if (!(index in state)) state[index] = typeof initial === 'function' ? initial() : initial;
+      return [state[index], next => { state[index] = typeof next === 'function' ? next(state[index]) : next; }];
+    },
+    useRef: initial => {
+      const index = cursor++;
+      return state[index] ?? (state[index] = { current: initial });
+    },
+    useEffect: (effect, deps) => {
+      const index = cursor++;
+      if (!state[index] || deps.some((dep, i) => dep !== state[index][i])) {
+        state[index] = deps;
+        pendingEffects.push(() => { cleanups.get(index)?.(); cleanups.set(index, effect()); });
+      }
+    },
+  };
+  const exports = {};
+  const jsx = (type, props) => ({ type, props });
+  const mockRequire = name => {
+    if (name in imports) return imports[name];
+    if (name === 'react') return { ...hooks, default: { Fragment: 'fragment' } };
+    if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx };
+    if (name === 'next-intl') return { useTranslations: ns => {
+      if (!translators.has(ns)) translators.set(ns, (key, values = {}) => (dict[ns]?.[key] || key).replace(/\{(\w+)\}/g, (_, name) => values[name]));
+      return translators.get(ns);
+    } };
+    if (name.endsWith('webapp-bridge/backend')) return {
+      paymentApi: api, useAuthToken: () => 'user-token', TOP_UP_MINIMUM_VND: 10000,
+      newIdempotencyKey: () => 'attempt-key', paymentErrorMessage: err => err.message,
+    };
+    if (name.endsWith('.css')) return { default: new Proxy({}, { get: (_, key) => key }) };
+    return require(name);
+  };
+  const componentPath = filename === 'CheckoutPage.jsx' ? '../src/_webapp-mirror/pages/Checkout/' : '../src/components/trung-pages/payment/';
+  const source = fs.readFileSync(new URL(componentPath + filename, import.meta.url), 'utf8');
+  const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText;
+  vm.runInNewContext(compiled, { exports, require: mockRequire, setTimeout: () => 1, clearTimeout: () => {}, window: { dispatchEvent() {}, location: { search: '', assign() {} } }, Event, URLSearchParams });
+  let tree;
+  function render() { cursor = 0; tree = exports.default(props); pendingEffects.splice(0).forEach(run => run()); }
+  function elements(node) {
+    if (Array.isArray(node)) return node.flatMap(child => elements(child));
+    if (!node || typeof node !== 'object') return [];
+    return [node, ...elements(node.props?.children)];
+  }
+  async function click(predicate) {
+    const button = elements(tree).find(node => node.type === 'button' && predicate(node));
+    assert.ok(button, 'Expected an enabled button');
+    await button.props.onClick();
+    render();
+  }
+  render();
+  return {
+    rerender: render,
+    changeInput: (predicate, target) => {
+      const input = elements(tree).find(node => node.type === 'input' && predicate(node));
+      assert.ok(input, 'Expected an input');
+      input.props.onChange({ target });
+      render();
+    },
+    flush: async () => { await new Promise(setImmediate); render(); },
+    text: () => JSON.stringify(tree),
+    clickText: text => click(node => JSON.stringify(node.props.children).includes(text)),
+    clickClass: name => click(node => node.props.className === name),
+    unmount: () => { for (const cleanup of cleanups.values()) cleanup?.(); },
+  };
+}
 
 test("Payment flow: payment-service and order-service error codes are mapped separately", () => {
   assert.match(paymentErrorMessage({ code: 3003 }), /đã được thanh toán/);

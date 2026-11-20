@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { AlertCircle, ChevronLeft, ChevronRight, Inbox, Loader2 } from "lucide-react";
 import { ApiError } from "@/components/webapp-bridge/backend";
 import styles from "./admin.module.css";
@@ -8,19 +9,60 @@ import styles from "./admin.module.css";
 export const cx = (...names: Array<string | false | null | undefined>) =>
   names.filter(Boolean).join(" ");
 
-export function errorMessage(err: unknown): string {
-  if (err instanceof ApiError && err.status === 403) {
-    return "Tài khoản không có quyền thực hiện thao tác này.";
-  }
-  return err instanceof Error ? err.message : "Đã có lỗi xảy ra.";
+export function AdminTable({
+  headers,
+  children,
+  list,
+  paginate = true,
+}: {
+  headers: string[];
+  children: ReactNode;
+  list: ReturnType<typeof useAdminList<unknown>>;
+  paginate?: boolean;
+}) {
+  return (
+    <div className={styles.card}>
+      <ListState loading={list.loading} error={list.error} empty={!list.items.length} onRetry={list.reload} />
+      {!list.loading && !list.error && list.items.length > 0 && <>
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead><tr>{headers.map((header) => <th scope="col" key={header}>{header}</th>)}</tr></thead>
+            <tbody>{children}</tbody>
+          </table>
+        </div>
+        {paginate && <Pagination page={list.page} totalPages={list.totalPages} totalElements={list.totalElements} onChange={list.setPage} />}
+      </>}
+    </div>
+  );
 }
 
-export function formatDate(value?: string | null): string {
+export function errorMessage(err: unknown, t?: (key: "forbidden" | "failedRequest") => string): string {
+  if (err instanceof ApiError && err.status === 403) {
+    return t ? t("forbidden") : "Tài khoản không có quyền thực hiện thao tác này.";
+  }
+  return err instanceof Error ? err.message : t ? t("failedRequest") : "Đã có lỗi xảy ra.";
+}
+
+export function formatDate(value?: string | null, locale = "vi-VN"): string {
   if (!value) return "—";
   const d = new Date(value);
   return Number.isNaN(d.getTime())
     ? "—"
-    : d.toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" });
+    : d.toLocaleString(locale, { dateStyle: "short", timeStyle: "short" });
+}
+
+export function formatMoney(locale: string, amount?: number, currency = "VND") {
+  if (amount == null) return "—";
+  return new Intl.NumberFormat(locale, { style: "currency", currency }).format(amount);
+}
+
+export function downloadAdminFile(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export function shortId(id?: string | null): string {
@@ -48,8 +90,9 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 export function StatusBadge({ status }: { status?: string | null }) {
+  const t = useTranslations("adminOperations");
   if (!status) return <span className={styles.badge}>—</span>;
-  return <span className={cx(styles.badge, STATUS_TONE[status])}>{STATUS_LABEL[status] ?? status}</span>;
+  return <span className={cx(styles.badge, STATUS_TONE[status])}>{status in STATUS_LABEL ? t("status" + status) : status}</span>;
 }
 
 // Mirrors identity-service VerificationStatus.canTransitionTo.
@@ -71,6 +114,7 @@ export function StatusTabs({
   options: string[];
   onChange: (next: string) => void;
 }) {
+  const t = useTranslations("adminOperations");
   return (
     <div className={styles.tabs} role="tablist">
       {options.map((s) => (
@@ -82,7 +126,7 @@ export function StatusTabs({
           className={cx(styles.tab, s === value && styles.tabActive)}
           onClick={() => onChange(s)}
         >
-          {STATUS_LABEL[s] ?? s}
+          {s in STATUS_LABEL ? t("status" + s) : s}
         </button>
       ))}
     </div>
@@ -125,10 +169,11 @@ export function ListState({
   empty: boolean;
   onRetry?: () => void;
 }) {
+  const t = useTranslations("adminOperations");
   if (loading) {
     return (
       <div className={styles.state}>
-        <Loader2 className={styles.spin} size={22} /> Đang tải…
+        <Loader2 className={styles.spin} size={22} /> {t("loading")}
       </div>
     );
   }
@@ -139,7 +184,7 @@ export function ListState({
         {error}
         {onRetry && (
           <button type="button" className={styles.btn} onClick={onRetry}>
-            Thử lại
+            {t("retry")}
           </button>
         )}
       </div>
@@ -148,7 +193,7 @@ export function ListState({
   if (empty) {
     return (
       <div className={styles.state}>
-        <Inbox size={22} /> Không có dữ liệu.
+        <Inbox size={22} /> {t("empty")}
       </div>
     );
   }
@@ -166,10 +211,11 @@ export function Pagination({
   totalElements: number;
   onChange: (page: number) => void;
 }) {
+  const t = useTranslations("adminOperations");
   return (
     <div className={styles.pagination}>
       <span>
-        Tổng {totalElements} · Trang {totalPages ? page + 1 : 0}/{totalPages}
+        {t("pagination", { p0: totalElements, p1: totalPages ? page + 1 : 0, p2: totalPages })}
       </span>
       <div className={styles.paginationButtons}>
         <button
@@ -177,7 +223,7 @@ export function Pagination({
           className={styles.btn}
           disabled={page <= 0}
           onClick={() => onChange(page - 1)}
-          aria-label="Trang trước"
+          aria-label={t("previousPage")}
         >
           <ChevronLeft size={16} />
         </button>
@@ -186,7 +232,7 @@ export function Pagination({
           className={styles.btn}
           disabled={page + 1 >= totalPages}
           onClick={() => onChange(page + 1)}
-          aria-label="Trang sau"
+          aria-label={t("nextPage")}
         >
           <ChevronRight size={16} />
         </button>
@@ -201,6 +247,7 @@ export function ConfirmDialog({
   confirmLabel,
   danger,
   busy,
+  disabled,
   onConfirm,
   onCancel,
 }: {
@@ -209,9 +256,11 @@ export function ConfirmDialog({
   confirmLabel: string;
   danger?: boolean;
   busy?: boolean;
+  disabled?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const t = useTranslations("adminOperations");
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !busy) onCancel();
@@ -229,13 +278,13 @@ export function ConfirmDialog({
         <div className={styles.dialogBody}>{body}</div>
         <div className={styles.dialogActions}>
           <button type="button" className={styles.btn} onClick={onCancel} disabled={busy}>
-            Huỷ
+            {t("cancel")}
           </button>
           <button
             type="button"
             className={cx(styles.btn, danger ? styles.btnDangerSolid : styles.btnPrimary)}
             onClick={onConfirm}
-            disabled={busy}
+            disabled={busy || disabled}
             autoFocus
           >
             {busy && <Loader2 size={14} className={styles.spin} />}
@@ -257,6 +306,7 @@ type PageResult<T> = { data?: T[]; totalElements?: number; totalPages?: number }
  * (e.g. the status filter) resets to page 0.
  */
 export function useAdminList<T>(load: (page: number) => Promise<{ result?: PageResult<T> }>, key: string) {
+  const t = useTranslations("adminOperations");
   const [state, setState] = useState({ key, page: 0 });
   const page = state.key === key ? state.page : 0;
   const [nonce, setNonce] = useState(0);
@@ -285,7 +335,7 @@ export function useAdminList<T>(load: (page: number) => Promise<{ result?: PageR
         }
       })
       .catch((err) => {
-        if (alive) setLoaded({ request, items: [], totalElements: 0, totalPages: 0, error: errorMessage(err) });
+        if (alive) setLoaded({ request, items: [], totalElements: 0, totalPages: 0, error: errorMessage(err, t) });
       });
     return () => {
       alive = false;
@@ -308,4 +358,8 @@ export function useAdminList<T>(load: (page: number) => Promise<{ result?: PageR
     error: loading ? null : loaded.error,
     reload,
   };
+}
+
+export function useAdminArray<T>(load: () => Promise<{ result?: T[] }>, key: string) {
+  return useAdminList<T>(async () => ({ result: { data: (await load())?.result } }), key);
 }

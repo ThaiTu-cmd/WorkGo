@@ -87,25 +87,6 @@
   white-space: nowrap;
 }
 
-.linkRow {
-  display: grid;
-  grid-template-columns: 1fr 1.4fr auto;
-  gap: 6px;
-}
-
-.linkRow button {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-}
-
-@media (max-width: 520px) {
-  .linkRow {
-    grid-template-columns: 1fr;
-  }
-}
-
 .uploadBtn {
   display: inline-flex;
   align-items: center;

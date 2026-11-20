@@ -3,10 +3,53 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
+import ts from 'typescript';
+import { createRequire } from 'node:module';
+import { Readable } from 'node:stream';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const frontendRoot = path.resolve(__dirname, '..');
+
+test('real shell URL functions preserve the Order and pending top-up across reload', () => {
+  const source = fs.readFileSync(path.join(frontendRoot, 'src/components/webapp-bridge/webapp-shell.tsx'), 'utf8');
+  const ast = ts.createSourceFile('shell.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const printer = ts.createPrinter();
+  const functions = ast.statements.filter(node => ts.isFunctionDeclaration(node) && ['buildTargetUrl', 'parseUrlParams'].includes(node.name?.text));
+  assert.equal(functions.length, 2);
+  const compiled = ts.transpileModule(functions.map(node => printer.printNode(ts.EmitHint.Unspecified, node, ast)).join('\n'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS },
+  }).outputText;
+  const exports = {};
+  vm.runInNewContext(compiled, { exports, URLSearchParams, window: { location: { pathname: '/en', search: '' } }, KNOWN_PAGE_KEYS: new Set(['order-payment', 'payment-gateway']) });
+  const url = exports.buildTargetUrl('order-payment', { orderId: 'order-1', topUpId: 'receipt-1', amount: 10000 });
+  const parsed = exports.parseUrlParams(new URL(url, 'http://localhost').search);
+  assert.equal(parsed.page, 'order-payment');
+  assert.equal(parsed.params.orderId, 'order-1');
+  assert.equal(parsed.params.topUpId, 'receipt-1');
+  assert.equal(parsed.params.amount, '10000');
+});
+
+test('Next proxy configuration forwards a full supported 50 MiB multipart request', async () => {
+  const require = createRequire(import.meta.url);
+  const source = fs.readFileSync(path.join(frontendRoot, 'next.config.ts'), 'utf8');
+  const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+  const exports = {};
+  vm.runInNewContext(compiled, { exports, require: name => {
+    assert.equal(name, 'next-intl/plugin');
+    return { default: () => config => config };
+  } });
+  const bytes = require('next/dist/compiled/bytes');
+  const max = bytes.parse(exports.default.experimental.proxyClientMaxBodySize);
+  const { getCloneableBody } = require('next/dist/server/body-streams');
+  const chunks = Array.from({ length: 51 }, () => Buffer.alloc(1024 * 1024, 1));
+  const request = Readable.from(chunks);
+  const stream = getCloneableBody(request, max).cloneBodyStream();
+  let forwarded = 0;
+  for await (const chunk of stream) forwarded += chunk.length;
+  assert.equal(forwarded, 51 * 1024 * 1024);
+});
 
 // TC-401: Package "22" dependency complete removal check
 test('TC-URL-01: Gỡ bỏ triệt để dependency "22" khỏi package.json và package-lock.json', () => {

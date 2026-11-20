@@ -166,6 +166,8 @@ export function buildTargetUrl(page: TrungPageKey, params: CatalogFilterParams =
   if (params.providerId) q.set("providerId", params.providerId);
   if (params.orderId) q.set("orderId", params.orderId);
   if (params.paymentId) q.set("paymentId", params.paymentId);
+  if (params.amount) q.set("amount", String(params.amount));
+  if (params.topUpId) q.set("topUpId", params.topUpId);
   if (params.tab) q.set("tab", params.tab);
 
   const pathname = window.location.pathname;
@@ -192,6 +194,8 @@ export function parseUrlParams(search: string = typeof window !== "undefined" ? 
     providerId: searchParams.get("providerId") || "",
     orderId: searchParams.get("orderId") || "",
     paymentId: searchParams.get("paymentId") || "",
+    amount: searchParams.get("amount") || undefined,
+    topUpId: searchParams.get("topUpId") || undefined,
     tab: searchParams.get("tab") || "wallet",
   };
 
@@ -559,6 +563,13 @@ function SessionShell({ initialPage }: { initialPage?: string }) {
     }
   };
 
+  const trackTopUp = (topUpId?: string) => {
+    const url = new URL(window.location.href);
+    if (topUpId) url.searchParams.set("topUpId", topUpId);
+    else url.searchParams.delete("topUpId");
+    window.history.replaceState(window.history.state, "", url);
+  };
+
   // Smooth scroll to hash anchor on home page load if present
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.hash && currentPage === "home") {
@@ -731,13 +742,12 @@ function SessionShell({ initialPage }: { initialPage?: string }) {
       )}
 
       {currentPage === "checkout" && (
-        /* Checkout: Order Snapshot + payment gateway (mock) */
+        /* Checkout: Order Snapshot and payment method */
         <CheckoutPage
           order={checkoutOrder}
           onGoBack={() => setCurrentPage("detail")}
           onShowToast={showToast}
-          onDone={() => handleNavigate("home")}
-          onViewOrders={() => handleNavigate("orders")}
+          onViewOrders={(orderId?: string) => handleNavigate("orders", { orderId })}
           onOpenAddressBook={() => handleNavigate("address-book")}
           onOpenPayment={(p: CatalogFilterParams) => handleNavigate("order-payment", p)}
         />
@@ -749,8 +759,10 @@ function SessionShell({ initialPage }: { initialPage?: string }) {
           orderId={selectedOrderId}
           paymentId={selectedPaymentId}
           gatewayResult={paymentResult}
+          topUpId={parseUrlParams().params.topUpId}
+          onTrackTopUp={trackTopUp}
           onOpenPayment={(p: CatalogFilterParams) => handleNavigate("order-payment", p)}
-          onViewOrders={() => handleNavigate("orders")}
+          onViewOrders={(orderId?: string) => handleNavigate("orders", { orderId: typeof orderId === "string" ? orderId : undefined })}
           onGoHome={() => handleNavigate("home")}
           onShowToast={showToast}
         />
@@ -880,9 +892,11 @@ function SessionShell({ initialPage }: { initialPage?: string }) {
 
       {currentPage === "payment-gateway" && (
         <PaymentGatewayPage
+          key={typeof window !== "undefined" ? window.location.search : ""}
           onNavigate={handleNavigate}
           onShowToast={showToast}
           params={typeof window !== "undefined" ? parseUrlParams(window.location.search).params : undefined}
+          onTrackTopUp={trackTopUp}
         />
       )}
 

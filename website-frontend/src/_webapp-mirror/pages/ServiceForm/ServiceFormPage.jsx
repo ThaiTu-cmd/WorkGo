@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 import React, { useState, useEffect } from 'react';
-import { catalogApi, catalogErrorMessage, isNotProvider } from '../../api/catalogApi';
+import { catalogApi, catalogErrorMessage, isNotProvider, isStoredCatalogMedia } from '../../api/catalogApi';
 import { NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
 import { pageItems, toPackages } from '../../api/adapters';
 import { addonsToForm, applyMediaOp, attachGalleryIds, defaultPackages, mediasToForm, planAddonChanges, planMediaChanges, toAddonBody, toPackageBody, toServiceBody } from './serviceFormSync';
@@ -24,6 +24,7 @@ export default function ServiceFormPage({
   onShowToast
 }) {
   const tr = useTranslations("misc");
+  const walletTr = useTranslations("orderWallet");
   const isEdit = mode === 'edit' && serviceId;
   const defaultFormData = {
     title: '',
@@ -52,6 +53,7 @@ export default function ServiceFormPage({
   // only the add-ons and media that changed.
   const [originalAddonIds, setOriginalAddonIds] = useState([]);
   const [originalMedia, setOriginalMedia] = useState(null);
+  const [pendingMediaDelete, setPendingMediaDelete] = useState(null);
   // Create mode: id of the service a save already created. If a later step of
   // that save failed, the next save continues on this service instead of
   // creating a second one.
@@ -141,12 +143,12 @@ export default function ServiceFormPage({
       if (addonErr) errs.addons = addonErr;
     }
     if (step === 3) {
-      if (!formData.coverImage || !formData.coverImage.trim()) {
+      if (!formData.coverFile && !formData.coverImage?.trim()) {
         errs.coverImage = tr("m1119");
-      } else if (!isHttpUrl(formData.coverImage)) {
+      } else if (!formData.coverFile && !isHttpUrl(formData.coverImage) && !isStoredCatalogMedia(formData.coverImage)) {
         errs.coverImage = tr("m1120");
       }
-      if (formData.videoUrl?.trim() && !isHttpUrl(formData.videoUrl)) {
+      if (!formData.videoFile && formData.videoUrl?.trim() && !isHttpUrl(formData.videoUrl) && !isStoredCatalogMedia(formData.videoUrl)) {
         errs.videoUrl = tr("m1121");
       }
     }
@@ -196,6 +198,8 @@ export default function ServiceFormPage({
     let addons = formData.addons;
     let addonIdsOnServer = id ? originalAddonIds : [];
     let media = id ? originalMedia : null;
+    let mediaForm = formData;
+    let mediaToDelete = pendingMediaDelete;
     try {
       if (id) {
         await catalogApi.updateService(id, serviceBody);
@@ -234,10 +238,31 @@ export default function ServiceFormPage({
         await catalogApi.deleteAddon(addonId);
         addonIdsOnServer = addonIdsOnServer.filter(x => x !== addonId);
       }
-      for (const step of planMediaChanges(media, formData)) {
-        let newId = null;
-        if (step.op === 'create') newId = (await catalogApi.createMedia(id, step.body))?.result?.serviceMediaId ?? null;else if (step.op === 'update') await catalogApi.updateMedia(step.id, step.body);else await catalogApi.deleteMedia(step.id);
-        media = applyMediaOp(media, step, newId);
+      if (mediaToDelete) {
+        await catalogApi.deleteMedia(mediaToDelete);
+        mediaToDelete = null;
+      }
+      for (const step of planMediaChanges(media, mediaForm)) {
+        if (step.op === 'upload' || step.op === 'create') {
+          const res = step.op === 'upload'
+            ? await catalogApi.uploadMedia(id, step.file, step.body.cover)
+            : await catalogApi.createMedia(id, step.body);
+          const saved = res?.result;
+          if (!saved?.serviceMediaId || !saved.url) throw new Error(tr("m1124"));
+          media = applyMediaOp(media, { op: 'create', body: { ...step.body, url: saved.url } }, saved.serviceMediaId);
+          if (step.body.cover) mediaForm = { ...mediaForm, coverImage: saved.url, coverFile: null };
+          else if (step.body.mediaType === 'VIDEO') mediaForm = { ...mediaForm, videoUrl: saved.url, videoFile: null };
+          else if (step.file) mediaForm = { ...mediaForm, gallery: mediaForm.gallery.map(item => item.file === step.file ? { id: saved.serviceMediaId, url: saved.url } : item) };
+          mediaToDelete = step.replaceId;
+          if (mediaToDelete) {
+            await catalogApi.deleteMedia(mediaToDelete);
+            mediaToDelete = null;
+          }
+        } else {
+          if (step.op === 'update') await catalogApi.updateMedia(step.id, step.body);
+          else await catalogApi.deleteMedia(step.id);
+          media = applyMediaOp(media, step);
+        }
       }
       if (!isEdit && targetStatus === 'PUBLISHED') {
         await catalogApi.setServiceStatus(id, 'PUBLISHED');
@@ -251,6 +276,7 @@ export default function ServiceFormPage({
         setPackageIds(pkgIds);
         setOriginalAddonIds(addonIdsOnServer);
         setOriginalMedia(media);
+        setPendingMediaDelete(mediaToDelete);
         // Only add the new server ids: keep whatever was typed while saving.
         setFormData(prev => ({
           ...prev,
@@ -258,13 +284,17 @@ export default function ServiceFormPage({
             ...a,
             id: addons[i].id
           }),
-          gallery: attachGalleryIds(prev.gallery, media)
+          coverImage: mediaForm.coverImage,
+          coverFile: mediaForm.coverFile,
+          videoUrl: mediaForm.videoUrl,
+          videoFile: mediaForm.videoFile,
+          gallery: attachGalleryIds(mediaForm.gallery, media)
         }));
       }
       if (onShowToast) {
         if (isNotProvider(err)) onShowToast(NOT_PROVIDER_MESSAGE);else {
           onShowToast(tr("m1459", {
-            p0: catalogErrorMessage(err)
+            p0: Number(err?.code) === 1058 ? walletTr("publishRestricted") : catalogErrorMessage(err)
           }));
           if (!isEdit && id) onShowToast(tr("m1570"));
         }

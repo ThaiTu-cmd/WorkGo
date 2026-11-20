@@ -18,6 +18,7 @@ import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/weba
 import { paymentApi, useAuthToken } from "../../webapp-bridge/backend";
 import type { WalletEntry, WalletState, WalletEntryType } from "./paymentTypes";
 import styles from "./WalletPage.module.css";
+import { walletHistory } from './walletHistory';
 
 export type TrungPageProps = {
   onNavigate: (page: TrungPageKey, params?: CatalogFilterParams) => void;
@@ -29,9 +30,9 @@ type FilterType = "ALL" | WalletEntryType;
 const parseWalletResponse = (res: unknown): { available: number; held: number; debt: number; currency: string } => {
   const r = res as { result?: Record<string, unknown> } & Record<string, unknown>;
   const data = r?.result ?? r ?? {};
-  const available = Number(data.availableBalance ?? data.available ?? 0);
+  const available = Number(data.balance ?? 0);
   const held = Number(data.heldBalance ?? data.held ?? 0);
-  const debt = Number(data.debtBalance ?? data.debt ?? 0);
+  const debt = Number(data.outstandingFee ?? 0);
   const currency = String(data.currency ?? "VND");
   return {
     available: Number.isFinite(available) ? available : 0,
@@ -39,29 +40,6 @@ const parseWalletResponse = (res: unknown): { available: number; held: number; d
     debt: Number.isFinite(debt) ? debt : 0,
     currency
   };
-};
-
-const parseLedgerEntries = (res: unknown): WalletEntry[] => {
-  const r = res as { result?: { content?: unknown[] } | unknown[] } & Record<string, unknown>;
-  const rawList = (r?.result && typeof r.result === "object" && "content" in r.result
-    ? (r.result as { content?: unknown[] }).content
-    : r?.result ?? (Array.isArray(r) ? r : [])) as unknown[];
-
-  if (!Array.isArray(rawList)) return [];
-
-  return rawList.map((item: unknown, idx: number) => {
-    const it = item as Record<string, unknown>;
-    return {
-      id: String(it.id ?? it.entryId ?? `w-${idx}`),
-      type: (it.entryType ?? it.type ?? "ADJUSTMENT") as WalletEntryType,
-      amount: Number(it.amount ?? 0),
-      balanceAfter: it.balanceAfter !== undefined ? Number(it.balanceAfter) : undefined,
-      label: String(it.description ?? it.label ?? it.reason ?? "Giao dịch ví"),
-      referenceId: it.referenceId ? String(it.referenceId) : undefined,
-      at: String(it.createdAt ?? it.at ?? new Date().toISOString().slice(0, 10)),
-      status: it.status as WalletEntry["status"]
-    };
-  });
 };
 
 const getBadgeClass = (type: WalletEntryType) => {
@@ -103,13 +81,15 @@ const getTypeLabel = (type: WalletEntryType): string => {
 };
 
 export default function WalletPage({
-  onNavigate,
-  onShowToast
+  onNavigate
 }: TrungPageProps) {
   const tr = useTranslations("misc");
+  const historyTr = useTranslations('walletHistory');
   const token = useAuthToken();
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<FilterType>("ALL");
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [wallet, setWallet] = useState<WalletState>({
     available: 0,
     held: 0,
@@ -122,20 +102,23 @@ export default function WalletPage({
     if (!token) return;
     if (manual) setIsLoading(true);
     try {
-      const [walletRes, ledgerRes] = await Promise.allSettled([
+      const [walletRes, topUpsRes, payoutsRes, feesRes] = await Promise.all([
         paymentApi.getWallet(),
-        paymentApi.getWalletLedger({ page: 0, size: 50 })
+        paymentApi.getTopUps(),
+        paymentApi.getPayouts(),
+        paymentApi.getFees(),
       ]);
-
-      let wData = { available: 0, held: 0, debt: 0, currency: "VND" };
-      if (walletRes.status === "fulfilled" && walletRes.value) {
-        wData = parseWalletResponse(walletRes.value);
-      }
-
-      let entries: WalletEntry[] = [];
-      if (ledgerRes.status === "fulfilled" && ledgerRes.value) {
-        entries = parseLedgerEntries(ledgerRes.value);
-      }
+      const wData = parseWalletResponse(walletRes);
+      const records = walletHistory(topUpsRes?.result ?? [], payoutsRes?.result ?? [], feesRes?.result ?? []);
+      const entries: WalletEntry[] = records.map(row => ({
+        id: row.id,
+        type: row.type as WalletEntryType,
+        amount: Number(row.amount),
+        label: row.referenceId || row.id,
+        referenceId: row.referenceId,
+        at: row.createdAt || '—',
+        status: row.status,
+      }));
 
       setWallet({
         available: wData.available,
@@ -144,12 +127,14 @@ export default function WalletPage({
         currency: wData.currency,
         history: entries
       });
+      setLoaded(true);
+      setLoadError('');
     } catch {
-      onShowToast("Không thể đồng bộ dữ liệu ví từ máy chủ.");
+      setLoadError(historyTr('loadError'));
     } finally {
       if (manual) setIsLoading(false);
     }
-  }, [token, onShowToast]);
+  }, [token, historyTr]);
 
   useEffect(() => {
     if (!token) return;
@@ -188,6 +173,8 @@ export default function WalletPage({
         ) : null}
       </div>
 
+      {loadError && <p role="alert">{loadError}</p>}
+
       {!token ? (
         <div className={styles.authBanner}>
           <div>
@@ -206,22 +193,6 @@ export default function WalletPage({
           </button>
         </div>
       ) : null}
-
-      <div
-        style={{
-          marginTop: "16px",
-          padding: "12px 16px",
-          backgroundColor: "var(--warning-bg, #fef3c7)",
-          border: "1px solid var(--border-default, #fde68a)",
-          borderRadius: "8px",
-          color: "var(--text-primary, #92400e)",
-          fontSize: "0.85rem",
-          fontWeight: 500,
-          lineHeight: 1.5
-        }}
-      >
-        <strong>{tr("m1294")}</strong>: Hệ thống WorkGo áp dụng thanh toán qua ví và ký quỹ (Escrow). Tiền nạp vào ví sẵn sàng để thanh toán đơn hàng mới hoặc nạp bù dư nợ. Tiền ký quỹ được giữ an toàn tại cổng thanh toán và chỉ giải phóng cho chuyên gia khi đơn hoàn tất nghiệm thu.
-      </div>
 
       {wallet.debt > 0 ? (
         <div className={styles.debtBanner} role="alert">
@@ -247,7 +218,7 @@ export default function WalletPage({
           <section className={`${styles.balance} ${styles.balanceAvailable}`} aria-label={tr("m1291")}>
             <span className={styles.balanceLabel}>{tr("m1297")}</span>
             <strong className={`${styles.balanceValue} ${styles.balanceValueAvailable}`}>
-              {wallet.available.toLocaleString("vi-VN")} ₫
+              {loaded ? wallet.available.toLocaleString("vi-VN") + ' ₫' : '—'}
             </strong>
             <span className={styles.balanceDesc}>
               Sẵn sàng để đặt dịch vụ hoặc rút về tài khoản ngân hàng
@@ -275,10 +246,10 @@ export default function WalletPage({
           <section className={`${styles.balance} ${styles.balanceHeld}`} aria-label={tr("m1290")}>
             <span className={styles.balanceLabel}>{tr("m1296")}</span>
             <strong className={`${styles.balanceValue} ${styles.balanceValueHeld}`}>
-              {wallet.held.toLocaleString("vi-VN")} ₫
+              —
             </strong>
             <span className={styles.balanceDesc}>
-              Đang tạm giữ bảo đảm cho các đơn hàng đang tiến hành
+              {historyTr('escrowDetails')}
             </span>
             <div className={styles.actions}>
               <button
@@ -295,10 +266,10 @@ export default function WalletPage({
           <section className={`${styles.balance} ${styles.balanceDebt}`} aria-label="Dư nợ tài khoản">
             <span className={styles.balanceLabel}>Dư nợ tài khoản</span>
             <strong className={`${styles.balanceValue} ${wallet.debt > 0 ? styles.balanceValueDebt : ""}`}>
-              {wallet.debt.toLocaleString("vi-VN")} ₫
+              {loaded ? wallet.debt.toLocaleString("vi-VN") + ' ₫' : '—'}
             </strong>
             <span className={styles.balanceDesc}>
-              {wallet.debt > 0
+              {!loaded ? '—' : wallet.debt > 0
                 ? "Cần nạp bù để tiếp tục nhận việc hoặc tạo đơn mới"
                 : "Tài khoản sạch, không có dư nợ nợ phí"}
             </span>
@@ -325,11 +296,8 @@ export default function WalletPage({
                 [
                   { key: "ALL", label: "Tất cả" },
                   { key: "TOPUP", label: "Nạp tiền" },
-                  { key: "HOLD", label: "Ký quỹ" },
-                  { key: "RELEASE", label: "Giải ngân" },
                   { key: "FEE_DEBT", label: "Nợ phí" },
                   { key: "PAYOUT", label: "Rút tiền" },
-                  { key: "REFUND", label: "Hoàn tiền" }
                 ] as const
               ).map(t => (
                 <button
@@ -349,7 +317,7 @@ export default function WalletPage({
           {filteredHistory.length === 0 ? (
             <div className={styles.empty}>
               <CreditCard size={32} style={{ marginBottom: "8px", opacity: 0.5 }} />
-              <p>{tr("m1298")}</p>
+              <p>{!token ? historyTr('loginToView') : loaded ? tr("m1298") : historyTr('loading')}</p>
             </div>
           ) : (
             <div className={styles.tableWrap}>
@@ -359,14 +327,12 @@ export default function WalletPage({
                     <th scope="col">{tr("m1299")}</th>
                     <th scope="col">{tr("m1300")}</th>
                     <th scope="col">{tr("m1301")}</th>
-                    <th scope="col">Số dư sau</th>
+                    <th scope="col">{historyTr('status')}</th>
                     <th scope="col">{tr("m1302")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredHistory.map(h => {
-                    const isCredit = h.type === "TOPUP" || h.type === "RELEASE" || h.type === "REFUND";
-                    const isDebit = h.type === "HOLD" || h.type === "FEE_DEBT" || h.type === "PAYOUT";
                     return (
                       <tr key={h.id}>
                         <td>
@@ -376,6 +342,7 @@ export default function WalletPage({
                               Mã: {h.referenceId}
                             </small>
                           ) : null}
+                          {h.type === 'TOPUP' && ['INITIATED', 'PENDING', 'UNKNOWN'].includes(h.status || '') && <button type="button" onClick={() => onNavigate('payment-gateway', { topUpId: h.id })}>{historyTr('resumeTopUp')}</button>}
                         </td>
                         <td>
                           <span className={getBadgeClass(h.type)}>
@@ -384,22 +351,13 @@ export default function WalletPage({
                         </td>
                         <td>
                           <span
-                            className={
-                              isCredit
-                                ? styles.amountPlus
-                                : isDebit
-                                ? styles.amountMinus
-                                : styles.amountNeutral
-                            }
+                            className={styles.amountNeutral}
                           >
-                            {isCredit ? "+" : isDebit ? "-" : ""}
                             {h.amount.toLocaleString("vi-VN")} ₫
                           </span>
                         </td>
                         <td>
-                          {h.balanceAfter !== undefined
-                            ? `${h.balanceAfter.toLocaleString("vi-VN")} ₫`
-                            : "—"}
+                          {h.status || '—'}
                         </td>
                         <td>
                           <span style={{ fontSize: "0.85rem", color: "var(--wg-text-secondary)" }}>

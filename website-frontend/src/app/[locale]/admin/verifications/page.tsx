@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { RefreshCw } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { adminApi } from "@/components/webapp-bridge/backend";
 import {
+  AdminTable,
   ConfirmDialog,
   ListState,
   Notice,
@@ -15,10 +17,12 @@ import {
   VERIFICATION_STATUSES,
   VERIFICATION_TRANSITIONS,
   cx,
+  downloadAdminFile,
   errorMessage,
   formatDate,
   shortId,
   useAdminList,
+  useAdminArray,
 } from "@/components/admin/ui";
 import styles from "@/components/admin/admin.module.css";
 
@@ -31,6 +35,13 @@ type Verification = {
   verifiedAt?: string;
   verifiedBy?: string;
   providerProfileId?: string;
+};
+
+type VerificationDocument = {
+  verificationDocumentId: string;
+  originalName: string;
+  mimeType: string;
+  createdAt: string;
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -47,11 +58,13 @@ const ACTION: Record<string, { label: string; className: string }> = {
 };
 
 export default function AdminVerificationsPage() {
+  const t = useTranslations("adminOperations");
   const [status, setStatus] = useState("PENDING");
   const list = useAdminList<Verification>((page) => adminApi.listVerifications({ status, page, size: 10 }), status);
   const [pending, setPending] = useState<{ item: Verification; next: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+  const [verificationId, setVerificationId] = useState<string | null>(null);
 
   const confirm = async () => {
     if (!pending) return;
@@ -82,7 +95,7 @@ export default function AdminVerificationsPage() {
       </Notice>
       {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
 
-      <StatusTabs value={status} options={VERIFICATION_STATUSES} onChange={setStatus} />
+      <StatusTabs value={status} options={VERIFICATION_STATUSES} onChange={(next) => { setStatus(next); setVerificationId(null); }} />
 
       <div className={styles.card}>
         <ListState loading={list.loading} error={list.error} empty={!list.items.length} onRetry={list.reload} />
@@ -128,6 +141,9 @@ export default function AdminVerificationsPage() {
                       </td>
                       <td>
                         <div className={styles.actions}>
+                          <button type="button" className={styles.btn} onClick={() => setVerificationId(v.providerVerificationId)} aria-pressed={verificationId === v.providerVerificationId}>
+                            {t("verificationDocuments")}
+                          </button>
                           {(VERIFICATION_TRANSITIONS[v.verificationStatus] ?? []).map((next) => (
                             <button
                               key={next}
@@ -155,6 +171,8 @@ export default function AdminVerificationsPage() {
         )}
       </div>
 
+      {verificationId && <VerificationDocuments key={verificationId} verificationId={verificationId} onClose={() => setVerificationId(null)} />}
+
       {pending && (
         <ConfirmDialog
           title={`${ACTION[pending.next].label} giấy tờ này?`}
@@ -169,5 +187,46 @@ export default function AdminVerificationsPage() {
         />
       )}
     </>
+  );
+}
+
+function VerificationDocuments({ verificationId, onClose }: { verificationId: string; onClose: () => void }) {
+  const t = useTranslations("adminOperations");
+  const list = useAdminArray<VerificationDocument>(() => adminApi.listVerificationDocuments(verificationId), verificationId);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function download(file: VerificationDocument) {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const blob = await adminApi.downloadVerificationDocument(verificationId, file.verificationDocumentId);
+      if (!(blob instanceof Blob)) throw new Error(t("downloadFailed"));
+      downloadAdminFile(blob, file.originalName);
+    } catch (err) {
+      setError(err instanceof Error && err.message === "INVALID_VERIFICATION_DOCUMENT_LINK" ? t("downloadFailed") : errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className={cx(styles.card, styles.cardPad, styles.stack)} aria-label={t("verificationDocuments")}>
+      <div className={styles.pageHeader}>
+        <h2>{t("verificationDocuments")}</h2>
+        <button type="button" className={styles.btn} onClick={onClose}>{t("close")}</button>
+      </div>
+      {error && <Notice tone="error">{error}</Notice>}
+      <AdminTable list={list} paginate={false} headers={[t("document"), t("createdAt"), t("actions")]}>
+        {list.items.map((file) => (
+          <tr key={file.verificationDocumentId}>
+            <td>{file.originalName}<div className={styles.cellSub}>{file.mimeType}</div></td>
+            <td>{formatDate(file.createdAt)}</td>
+            <td><button type="button" className={styles.btn} disabled={busy} onClick={() => void download(file)}>{t("download")}</button></td>
+          </tr>
+        ))}
+      </AdminTable>
+    </section>
   );
 }

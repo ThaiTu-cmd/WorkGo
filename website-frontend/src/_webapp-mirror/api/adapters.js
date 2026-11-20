@@ -1,6 +1,7 @@
 // Pure mappers: backend DTOs (identity / catalog / order-service) → the shapes
 // the existing UI components render. Fields the backend does not expose yet
 // come back empty so the matching section hides itself (see BACKEND_GAPS.md).
+import { catalogMediaUrl } from './catalogApi.js';
 
 // Spring PageResponse lands either wrapped (ApiResponse.result) or bare.
 export const pageItems = (res) => res?.result?.data ?? res?.data ?? [];
@@ -73,7 +74,7 @@ export const toMediaList = (medias = [], title = '') =>
   medias
     .filter((m) => m.url && (!m.mediaType || m.mediaType === 'IMAGE'))
     .sort((a, b) => Number(Boolean(b.cover)) - Number(Boolean(a.cover)))
-    .map((m, i) => ({ id: m.serviceMediaId, url: m.url, isCover: i === 0, alt: title }));
+    .map((m, i) => ({ id: m.serviceMediaId, url: catalogMediaUrl(m.url), isCover: i === 0, alt: title }));
 
 // Provider profiles registered in identity_db (fallback when unauthenticated)
 export const DB_PROVIDERS = {
@@ -130,7 +131,7 @@ export const fastestDeliveryDays = (packages = []) => {
 // (ServiceMediaResponse[]) the cover image when given.
 export const toServiceCard = (dto, { category = null, provider = null, packages = null, medias = null } = {}) => {
   const providerView = toProvider(provider, dto.providerId);
-  const realCover = dto.coverImage || toMediaList(medias || [])[0]?.url || null;
+  const realCover = catalogMediaUrl(dto.coverImage) || toMediaList(medias || [])[0]?.url || null;
   const hasRealCover = Boolean(realCover);
   const coverImage = realCover || placeholderCover(dto.title);
   return {
@@ -161,7 +162,7 @@ export const toServiceDetail = ({ service, packages = [], addons = [], medias = 
   const mediaList = toMediaList(medias, service.title);
   const pkgs = toPackages(packages);
   const hasRealMedia = mediaList.length > 0 || Boolean(service.coverImage);
-  const coverUrl = mediaList[0]?.url || service.coverImage || placeholderCover(service.title);
+  const coverUrl = mediaList[0]?.url || catalogMediaUrl(service.coverImage) || placeholderCover(service.title);
   const fullMediaList = mediaList.length > 0 ? mediaList : [
     { id: 'cover-1', url: coverUrl, isCover: true, alt: service.title, source: hasRealMedia ? 'real' : 'placeholder' },
   ];

@@ -95,7 +95,7 @@ export default function WorkEvidencePanel({
             p0: phase.label,
             p1: formatTime(e.capturedAt)
           })}>
-                  <img src={e.fileUrl} alt="" loading="lazy" className={styles.tileImg} />
+                  {e.storedFileId ? <Camera size={24} aria-hidden="true" /> : <img src={e.fileUrl} alt="" loading="lazy" className={styles.tileImg} />}
                   <span className={`${styles.phaseChip} ${styles[`tone_${phase.tone}`]}`}>{phase.short}</span>
                   <span className={styles.tileMeta}>
                     {formatTime(e.capturedAt)}
@@ -108,6 +108,6 @@ export default function WorkEvidencePanel({
 
       {dialogOpen && <EvidenceUploadDialog orderId={orderId} defaultPhase={nextPhase} onClose={() => setDialogOpen(false)} onCreated={handleCreated} />}
 
-      {viewIndex != null && visible[viewIndex] && <EvidenceLightbox items={visible} index={viewIndex} onChange={setViewIndex} onClose={() => setViewIndex(null)} />}
+      {viewIndex != null && visible[viewIndex] && <EvidenceLightbox orderId={orderId} items={visible} index={viewIndex} onChange={setViewIndex} onClose={() => setViewIndex(null)} />}
     </section>;
 }

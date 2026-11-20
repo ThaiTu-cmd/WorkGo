@@ -2,6 +2,7 @@
 
 import { useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useParams, usePathname } from "next/navigation";
 import { Home, Loader2, LogOut, Menu, ShieldCheck, ShieldX, X } from "lucide-react";
 import { authApi, decodeToken, useAuthToken } from "@/components/webapp-bridge/backend";
@@ -13,6 +14,7 @@ import styles from "./admin.module.css";
 const noopSubscribe = () => () => {};
 
 export default function AdminShell({ children }: { children: ReactNode }) {
+  const t = useTranslations("adminOperations");
   const token = useAuthToken() as string | null;
   // useAuthToken starts null until it reads localStorage after mount, so wait
   // for the client before deciding between login / forbidden / admin.
@@ -66,7 +68,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
                     onClick={() => setMenuOpen(false)}
                   >
                     <item.icon size={18} aria-hidden="true" />
-                    {item.label}
+                    {item.labelKey ? t(item.labelKey) : item.label}
                     {item.badge === "soon" && <span className={styles.navBadge}>Sắp có</span>}
                   </Link>
                 );

@@ -2,7 +2,7 @@
 
 // transparency badge: Mock Demo
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CreditCard,
   ShieldCheck,
@@ -18,8 +18,10 @@ import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/weba
 import {
   paymentApi,
   paymentErrorMessage,
+  newIdempotencyKey,
   useAuthToken,
-  MOCK_PAYMENT_ENABLED
+  MOCK_PAYMENT_ENABLED,
+  TOP_UP_MINIMUM_VND
 } from "../../webapp-bridge/backend";
 import type { TopUpStatus } from "./paymentTypes";
 import styles from "./PaymentGatewayPage.module.css";
@@ -28,6 +30,7 @@ export type TrungPageProps = {
   onNavigate: (page: TrungPageKey, params?: CatalogFilterParams) => void;
   onShowToast: (message: string) => void;
   params?: CatalogFilterParams;
+  onTrackTopUp?: (id?: string) => void;
 };
 
 type Tab = "STRIPE" | "VNPAY" | "MOMO" | "MOCK";
@@ -37,9 +40,11 @@ const PRESET_AMOUNTS = [50000, 100000, 200000, 500000, 1000000, 2000000];
 export default function PaymentGatewayPage({
   onNavigate,
   onShowToast,
-  params
+  params,
+  onTrackTopUp
 }: TrungPageProps) {
   const tr = useTranslations("misc");
+  const walletTr = useTranslations("orderWallet");
   const token = useAuthToken();
   const [tab, setTab] = useState<Tab>("VNPAY");
   const [amountRaw, setAmountRaw] = useState(() => {
@@ -52,6 +57,8 @@ export default function PaymentGatewayPage({
   });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submission = useRef(false);
+  const attempt = useRef<{ amount: number; gateway: string; key: string } | null>(null);
 
   // Debt & Wallet balance state
   const [debtAmount, setDebtAmount] = useState(0);
@@ -73,9 +80,10 @@ export default function PaymentGatewayPage({
     return null;
   });
   const [topUpAmount, setTopUpAmount] = useState<number>(0);
+  const [topUpCode, setTopUpCode] = useState<string | null>(null);
+  const [hostedUrl, setHostedUrl] = useState<string | null>(null);
+  const [refreshAttempt, setRefreshAttempt] = useState(0);
   const [pollCount, setPollCount] = useState<number>(0);
-  const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const pollStatusRef = useRef<(id: string) => Promise<void>>(async () => {});
 
   // Check current debt on mount if logged in
   useEffect(() => {
@@ -84,7 +92,7 @@ export default function PaymentGatewayPage({
     paymentApi.getWallet().then(res => {
       if (cancelled) return;
       const data = (res as { result?: Record<string, unknown> })?.result ?? res ?? {};
-      const debt = Number(data.debtBalance ?? data.debt ?? 0);
+      const debt = Number(data.outstandingFee ?? 0);
       if (debt > 0) {
         setDebtAmount(debt);
         setAmountRaw(String(debt));
@@ -97,98 +105,56 @@ export default function PaymentGatewayPage({
     };
   }, [token]);
 
-  // Poll top-up transaction status (handles INITIATED, PENDING, and UNKNOWN)
-  const pollStatus = useCallback(async (topUpId: string) => {
-    try {
-      const res = await paymentApi.getTopUp(topUpId);
-      const data = (res as { result?: Record<string, unknown> })?.result ?? res ?? {};
-      const status = (data.status ?? "UNKNOWN") as TopUpStatus;
-      setTopUpStatus(status);
-      if (data.amount) {
+  const notify = useRef(onShowToast);
+  useEffect(() => { notify.current = onShowToast; }, [onShowToast]);
+  useEffect(() => {
+    if (!activeTopUpId || !token) return undefined;
+    let stopped = false;
+    let count = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const check = async () => {
+      try {
+        const res = await paymentApi.getTopUp(activeTopUpId);
+        if (stopped) return;
+        const data = (res as { result?: Record<string, unknown> })?.result;
+        if (!data?.status) throw new Error(walletTr('topUpUnavailable'));
+        const status = data.status as TopUpStatus;
+        setTopUpStatus(status);
         setTopUpAmount(Number(data.amount));
-      }
-
-      // Terminal states stop polling
-      if (status === "SUCCESS") {
-        onShowToast(`Nạp tiền thành công! Đã cộng ${Number(data.amount ?? topUpAmount).toLocaleString("vi-VN")} ₫ vào ví.`);
-        return;
-      }
-      if (status === "FAILED") {
-        onShowToast("Giao dịch nạp tiền thất bại hoặc bị từ chối.");
-        return;
-      }
-
-      // Continue polling if still INITIATED, PENDING, or UNKNOWN (max 20 attempts)
-      setPollCount(prev => {
-        const next = prev + 1;
-        if (next < 20) {
-          pollTimerRef.current = setTimeout(() => {
-            void pollStatusRef.current(topUpId);
-          }, 2500);
-        } else if (status === "UNKNOWN") {
-          // Reached timeout while UNKNOWN: explain reconciliation guarantee
-          onShowToast("Giao dịch đang được đối soát tự động với ngân hàng. Số dư ví sẽ được cập nhật sớm.");
+        if (data.gateway === 'VNPAY' || data.gateway === 'MOMO' || data.gateway === 'MOCK') setTab(data.gateway);
+        setTopUpCode(data.gateway === 'MOCK' && typeof data.topUpCode === 'string' ? data.topUpCode : null);
+        setHostedUrl(data.gateway !== 'MOCK' && typeof data.paymentUrl === 'string' ? data.paymentUrl : null);
+        setError('');
+        if (status === 'SUCCEEDED') {
+          notify.current(walletTr('topUpConfirmed'));
+          return;
         }
-        return next;
-      });
-    } catch {
-      // Network hiccup during polling: treat as UNKNOWN and retry
-      setPollCount(prev => {
-        const next = prev + 1;
-        if (next < 20) {
-          pollTimerRef.current = setTimeout(() => {
-            void pollStatusRef.current(topUpId);
-          }, 3000);
-        }
-        return next;
-      });
-    }
-  }, [topUpAmount, onShowToast]);
-
-  useEffect(() => {
-    pollStatusRef.current = pollStatus;
-  }, [pollStatus]);
-
-  useEffect(() => {
-    if (activeTopUpId && (topUpStatus === "PENDING" || topUpStatus === "INITIATED" || topUpStatus === "UNKNOWN")) {
-      const timer = setTimeout(() => {
-        void pollStatusRef.current(activeTopUpId);
-      }, 0);
-      return () => {
-        clearTimeout(timer);
-        if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
-      };
-    }
-    return () => {
-      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+        if (status === 'FAILED') return;
+      } catch (err) {
+        if (stopped) return;
+        setError(paymentErrorMessage(err));
+      }
+      count += 1;
+      setPollCount(count);
+      if (count < 20) timer = setTimeout(() => { void check(); }, 2500);
     };
-  }, [activeTopUpId, topUpStatus]);
-
+    void check();
+    return () => { stopped = true; clearTimeout(timer); };
+  }, [activeTopUpId, token, refreshAttempt, walletTr]);
   const handlePresetSelect = (val: number) => {
     setAmountRaw(String(val));
     setError("");
   };
 
   const confirm = async () => {
-    const amount = Number(String(amountRaw).replace(/[^\d]/g, ""));
+    if (submission.current) return;
+    const amount = /^\d+$/.test(amountRaw.trim()) ? Number(amountRaw) : NaN;
     if (!Number.isFinite(amount) || amount <= 0) {
       setError(tr("m1265"));
       return;
     }
-    if (amount < 50000) {
-      setError(
-        tr("m1461", {
-          p0: (50000).toLocaleString("vi-VN")
-        })
-      );
-      return;
-    }
-    if (amount > 100000000) {
-      setError(
-        tr("m1462", {
-          p0: (100000000).toLocaleString("vi-VN")
-        })
-      );
+    if (!Number.isSafeInteger(amount) || amount < TOP_UP_MINIMUM_VND) {
+      setError(walletTr('topUpMinimum', { p0: TOP_UP_MINIMUM_VND.toLocaleString() }));
       return;
     }
     setError("");
@@ -199,25 +165,34 @@ export default function PaymentGatewayPage({
       return;
     }
 
+    submission.current = true;
     setIsSubmitting(true);
     setTopUpAmount(amount);
 
     try {
       const gateway = tab === "STRIPE" ? "VNPAY" : tab;
       const paymentMethod = tab === "MOMO" ? "WALLET" : "QR";
+      if (attempt.current?.amount !== amount || attempt.current.gateway !== gateway) {
+        attempt.current = { amount, gateway, key: newIdempotencyKey() };
+      }
 
       const res = await paymentApi.createTopUp({
         amount,
         gateway,
         paymentMethod
-      });
+      }, attempt.current.key);
 
       const data = (res as { result?: Record<string, unknown> })?.result ?? res ?? {};
-      const topUpId = String(data.topUpId ?? data.id ?? `top-${Date.now()}`);
+      if (typeof data.topUpId !== "string") throw new Error(tr("m1303"));
+      attempt.current = null;
+      const topUpId = data.topUpId;
+      onTrackTopUp?.(topUpId);
       const paymentUrl = data.paymentUrl ? String(data.paymentUrl) : null;
       const initialStatus = (data.status ?? "PENDING") as TopUpStatus;
 
       setActiveTopUpId(topUpId);
+      setTopUpCode(gateway === "MOCK" && typeof data.topUpCode === "string" ? data.topUpCode : null);
+      setHostedUrl(gateway !== 'MOCK' ? paymentUrl : null);
       setTopUpStatus(initialStatus);
       setPollCount(0);
 
@@ -229,31 +204,32 @@ export default function PaymentGatewayPage({
 
       onShowToast("Yêu cầu nạp tiền đã được khởi tạo. Đang xử lý giao dịch...");
     } catch (err: unknown) {
-      const msg = paymentErrorMessage(err);
+      const msg = Number((err as { code?: number })?.code) === 3505 ? walletTr('topUpLimits') : paymentErrorMessage(err);
       setError(msg);
       onShowToast(msg);
     } finally {
+      submission.current = false;
       setIsSubmitting(false);
     }
   };
 
   const handleSimulateMock = async (success: boolean) => {
-    if (!activeTopUpId) return;
+    if (!activeTopUpId || !topUpCode || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await paymentApi.simulateMockPayment(activeTopUpId, success);
-      setTopUpStatus(success ? "SUCCESS" : "FAILED");
-      onShowToast(success ? "Giả lập thanh toán thành công!" : "Giả lập thanh toán thất bại.");
-    } catch {
-      // Mock gateway endpoint not available in production, set local status
-      setTopUpStatus(success ? "SUCCESS" : "FAILED");
+      await paymentApi.simulateMockTopUp(topUpCode, success);
+      setRefreshAttempt(value => value + 1);
+    } catch (err) {
+      setError(paymentErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const resetForm = () => {
+    onTrackTopUp?.();
     setActiveTopUpId(null);
+    setTopUpCode(null);
     setTopUpStatus(null);
     setPollCount(0);
     setError("");
@@ -279,7 +255,7 @@ export default function PaymentGatewayPage({
             lineHeight: 1.5
           }}
         >
-          <strong>{tr("m1273")}</strong>: Cổng thanh toán nạp tiền ví WorkGo tích hợp VNPay và MoMo theo quy chuẩn bảo mật liên ngân hàng. Tiền nạp sẽ được cộng trực tiếp vào số dư khả dụng và có thể sử dụng ngay để đặt dịch vụ hoặc bù dư nợ.
+          <strong>{tab === 'MOCK' && MOCK_PAYMENT_ENABLED ? tr("m1273") : walletTr('topUpDescription')}</strong>
         </div>
 
         {debtAmount > 0 ? (
@@ -298,7 +274,7 @@ export default function PaymentGatewayPage({
         {activeTopUpId && topUpStatus ? (
           <div
             className={`${styles.statusCard} ${
-              topUpStatus === "SUCCESS"
+              topUpStatus === "SUCCEEDED"
                 ? styles.statusSuccess
                 : topUpStatus === "FAILED"
                 ? styles.statusFailed
@@ -314,7 +290,9 @@ export default function PaymentGatewayPage({
                 <p className={styles.statusDesc}>
                   Hệ thống đang kết nối với cổng thanh toán {tab}. Vui lòng không đóng trình duyệt trong khi giao dịch đang được thực hiện (Lần kiểm tra: {pollCount + 1}/20).
                 </p>
-                {MOCK_PAYMENT_ENABLED || tab === "MOCK" ? (
+                {hostedUrl && <a href={hostedUrl} target="_blank" rel="noopener noreferrer">{walletTr('openTopUpGateway')}</a>}
+                <button type="button" onClick={() => setRefreshAttempt(value => value + 1)}>{walletTr('checkTopUp')}</button>
+                {MOCK_PAYMENT_ENABLED && topUpCode ? (
                   <div className={styles.statusActions}>
                     <button
                       type="button"
@@ -348,7 +326,7 @@ export default function PaymentGatewayPage({
                   <button
                     type="button"
                     className={styles.secondaryBtn}
-                    onClick={() => pollStatus(activeTopUpId)}
+                    onClick={() => setRefreshAttempt(value => value + 1)}
                   >
                     <RefreshCw size={14} style={{ marginRight: "4px" }} />
                     Kiểm tra lại trạng thái
@@ -363,7 +341,7 @@ export default function PaymentGatewayPage({
                   </button>
                 </div>
               </>
-            ) : topUpStatus === "SUCCESS" ? (
+            ) : topUpStatus === "SUCCEEDED" ? (
               <>
                 <CheckCircle2 size={36} color="#059669" />
                 <h2 className={styles.statusTitle} style={{ color: "#065f46" }}>

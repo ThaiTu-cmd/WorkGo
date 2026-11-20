@@ -26,6 +26,7 @@ export default function MyServicesPage({
   onOpenProviderOnboarding
 }) {
   const tr = useTranslations("misc");
+  const walletTr = useTranslations("orderWallet");
   // Loads on mount, so returning here after the service form shows the saved changes.
   const {
     status,
@@ -90,7 +91,7 @@ export default function MyServicesPage({
       }
     } catch (err) {
       if (onShowToast) onShowToast(tr("m1452", {
-        p0: catalogErrorMessage(err)
+        p0: Number(err?.code) === 1058 ? walletTr("publishRestricted") : catalogErrorMessage(err)
       }));
     }
   };

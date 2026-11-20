@@ -103,27 +103,31 @@ export function mediasToForm(medias = []) {
 
 // Media calls that bring the server from `original` (mediasToForm shape) to the
 // form values. Each op: { op: 'create', body } | { op: 'update', id, body } | { op: 'delete', id }.
-export function planMediaChanges(original, { coverImage, gallery = [], videoUrl }) {
+export function planMediaChanges(original, { coverImage, coverFile, gallery = [], videoUrl, videoFile }) {
   const before = original || { cover: null, gallery: [], video: null };
   const ops = [];
 
   // Single slots (cover image, demo video): update in place, create, or delete.
-  const syncSlot = (prev, url, mediaType, cover) => {
+  const syncSlot = (prev, url, file, mediaType, cover) => {
     const next = clean(url);
-    if (prev && !next) ops.push({ op: 'delete', id: prev.id });
+    if (file) ops.push({ op: 'upload', file, replaceId: prev?.id, body: { mediaType, cover } });
+    else if (prev && !next) ops.push({ op: 'delete', id: prev.id });
+    else if (prev?.url.startsWith('/medias/') && next !== prev.url) ops.push({ op: 'create', replaceId: prev.id, body: { url: next, mediaType, cover } });
     else if (prev && next !== prev.url) ops.push({ op: 'update', id: prev.id, body: { url: next, mediaType, cover } });
     else if (!prev && next) ops.push({ op: 'create', body: { url: next, mediaType, cover } });
   };
-  syncSlot(before.cover, coverImage, 'IMAGE', true);
+  syncSlot(before.cover, coverImage, coverFile, 'IMAGE', true);
 
   const keptIds = new Set(gallery.filter((g) => g.id).map((g) => g.id));
   before.gallery.filter((g) => !keptIds.has(g.id)).forEach((g) => ops.push({ op: 'delete', id: g.id }));
   gallery
-    .filter((g) => !g.id && clean(g.url))
-    .forEach((g) => ops.push({ op: 'create', body: { url: clean(g.url), mediaType: 'IMAGE', cover: false } }));
+    .filter((g) => !g.id && (g.file || clean(g.url)))
+    .forEach((g) => ops.push(g.file
+      ? { op: 'upload', file: g.file, body: { mediaType: 'IMAGE', cover: false } }
+      : { op: 'create', body: { url: clean(g.url), mediaType: 'IMAGE', cover: false } }));
 
-  syncSlot(before.video, videoUrl, 'VIDEO', false);
-  return ops;
+  syncSlot(before.video, videoUrl, videoFile, 'VIDEO', false);
+  return [...ops.filter(step => step.op === 'delete'), ...ops.filter(step => step.op !== 'delete')];
 }
 
 // Server media state (mediasToForm shape) after one planMediaChanges op has

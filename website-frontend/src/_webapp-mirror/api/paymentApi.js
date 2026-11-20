@@ -1,21 +1,17 @@
 import axiosClient from './axiosClient.js';
 
 // payment-service endpoints via gateway (/api/v1/payment/**).
-//
-// Flow: the client creates a payment for a PENDING_PAYMENT order, the browser goes
-// to `paymentUrl` (VNPay / MoMo). The gateway calls payment-service back (IPN),
-// payment-service confirms the order in order-service, and the browser is sent
-// to /payment/result?paymentId=…&result=success|failed|invalid. The result page
-// polls GET /payments/{id} because the redirect itself does not change any data.
+// Orders are paid from the WorkGo wallet. Legacy gateway receipts remain readable.
 
 // Mirrors order-service `order.payment-timeout-minutes`: an unpaid order is
 // cancelled (and its booking slot released) this long after it was created.
 export const ORDER_PAYMENT_TIMEOUT_MINUTES = 30;
+export const TOP_UP_MINIMUM_VND = 10_000;
 
 export const PAYMENT_WAITING_STATUSES = ['INITIATED', 'PENDING'];
 export const isPaymentWaiting = (payment) => PAYMENT_WAITING_STATUSES.includes(payment?.status);
 
-const newIdempotencyKey = () => {
+export const newIdempotencyKey = () => {
   try {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
   } catch {
@@ -25,17 +21,6 @@ const newIdempotencyKey = () => {
 };
 
 export const paymentApi = {
-  // body: { orderId, gateway: 'MOCK'|'VNPAY'|'MOMO', paymentMethod?: 'QR'|'WALLET'|'ATM_CARD'|'INTL_CARD' }
-  // PaymentResponse { paymentId, paymentCode, orderId, amount, gateway, paymentMethod,
-  //   status, paymentUrl, qrCodeUrl, deeplink, failureCode, failureMessage, paidAt, expiresAt }
-  // A still-valid PENDING payment of the same gateway is returned instead of a new one.
-  createPayment: ({ orderId, gateway, paymentMethod }, idempotencyKey = newIdempotencyKey()) =>
-    axiosClient.post(
-      '/payment/payments',
-      { orderId, gateway, ...(paymentMethod && { paymentMethod }) },
-      { headers: { 'Idempotency-Key': idempotencyKey } },
-    ),
-
   getPayment: (paymentId) => axiosClient.get(`/payment/payments/${paymentId}`),
 
   getPaymentsOfOrder: (orderId) => axiosClient.get('/payment/payments', { params: { orderId } }),
@@ -47,13 +32,18 @@ export const paymentApi = {
   simulateMockPayment: (paymentCode, success) =>
     axiosClient.post(`/payment/dev/payments/${paymentCode}/${success ? 'success' : 'fail'}`),
 
-  // Wallet & Top-up endpoints (FE-10 / Việc 20, 22, 30, 37)
-  getWallet: () => axiosClient.get('/payment/wallets/me'),
+  simulateMockTopUp: (topUpCode, success) =>
+    axiosClient.post(`/payment/dev/payments/top-ups/${topUpCode}/${success ? 'success' : 'fail'}`),
 
-  getWalletLedger: ({ page = 0, size = 20, type } = {}) =>
-    axiosClient.get('/payment/wallets/ledger', {
-      params: { page, size, ...(type && type !== 'ALL' && { type }) },
-    }),
+  payOrderWithWallet: (orderId) => axiosClient.post(`/payment/wallet/orders/${orderId}/pay`),
+
+  getCurrentFeePolicy: () => axiosClient.get('/payment/fee-policies/current'),
+
+  // Wallet & Top-up endpoints (FE-10 / Việc 20, 22, 30, 37)
+  getWallet: () => axiosClient.get('/payment/wallet'),
+
+  getTopUps: () => axiosClient.get('/payment/wallet/top-ups'),
+  getFees: () => axiosClient.get('/payment/wallet/fees'),
 
   /**
    * @param {{ amount: number, gateway: string, paymentMethod?: string }} params
@@ -61,16 +51,16 @@ export const paymentApi = {
    */
   createTopUp: ({ amount, gateway, paymentMethod }, idempotencyKey = newIdempotencyKey()) =>
     axiosClient.post(
-      '/payment/wallets/topup',
+      '/payment/wallet/top-ups',
       { amount, gateway, ...(paymentMethod && { paymentMethod }) },
       { headers: { 'Idempotency-Key': idempotencyKey } },
     ),
 
-  getTopUp: (topUpId) => axiosClient.get(`/payment/wallets/topup/${topUpId}`),
+  getTopUp: (topUpId) => axiosClient.get(`/payment/wallet/top-ups/${topUpId}`),
 
   pollTopUpStatus: async (topUpId, { intervalMs = 1500, maxAttempts = 20 } = {}) => {
     for (let i = 0; i < maxAttempts; i++) {
-      const res = await axiosClient.get(`/payment/wallets/topup/${topUpId}`);
+      const res = await paymentApi.getTopUp(topUpId);
       const topUp = res?.result ?? res;
       if (topUp?.status && !['INITIATED', 'PENDING', 'UNKNOWN'].includes(topUp.status)) {
         return topUp;
@@ -79,31 +69,25 @@ export const paymentApi = {
         await new Promise((resolve) => setTimeout(resolve, intervalMs));
       }
     }
-    const finalRes = await axiosClient.get(`/payment/wallets/topup/${topUpId}`);
+    const finalRes = await paymentApi.getTopUp(topUpId);
     return finalRes?.result ?? finalRes;
   },
 
-  // Payout Settings & Request (Việc 30 / Việc 37)
-  getPayoutSettings: () => axiosClient.get('/payment/payout-settings/me'),
-
-  savePayoutSettings: (body) => axiosClient.post('/payment/payout-settings', body),
-
   /**
-   * @param {{ amount: number, bankName: string, accountName: string, accountNumber: string, bankCode?: string }} params
+   * @param {{ amount: number, bankCode: string, accountName: string, accountNumber: string }} params
    * @param {string} [idempotencyKey]
    */
   requestPayout: (
-    { amount, bankName, accountName, accountNumber, bankCode },
+    { amount, accountName, accountNumber, bankCode },
     idempotencyKey = newIdempotencyKey(),
   ) =>
     axiosClient.post(
-      '/payment/payouts',
-      { amount, bankName, accountName, accountNumber, ...(bankCode && { bankCode }) },
+      '/payment/wallet/payouts',
+      { amount, bankCode, accountName, accountNumber },
       { headers: { 'Idempotency-Key': idempotencyKey } },
     ),
 
-  getPayouts: ({ page = 0, size = 20 } = {}) =>
-    axiosClient.get('/payment/payouts', { params: { page, size } }),
+  getPayouts: () => axiosClient.get('/payment/wallet/payouts'),
 };
 
 // The MOCK gateway has no hosted page; it only exists while payment-service runs
@@ -111,37 +95,6 @@ export const paymentApi = {
 // NEXT_PUBLIC_ENABLE_MOCK_PAYMENT=false (or forced on with "true").
 const MOCK_FLAG = process.env.NEXT_PUBLIC_ENABLE_MOCK_PAYMENT;
 export const MOCK_PAYMENT_ENABLED = MOCK_FLAG ? MOCK_FLAG === 'true' : process.env.NODE_ENV !== 'production';
-
-// Payment options offered to the client. name / desc are "misc" dictionary keys.
-export const PAYMENT_OPTIONS = [
-  { id: 'vnpay-qr', gateway: 'VNPAY', paymentMethod: 'QR', name: 'm1640', desc: 'm1636', logo: 'VNPAY', logoClass: 'gwVnpay' },
-  { id: 'vnpay-card', gateway: 'VNPAY', paymentMethod: 'INTL_CARD', name: 'm1634', desc: 'm1642', logo: 'VISA', logoClass: 'gwCard' },
-  { id: 'momo', gateway: 'MOMO', paymentMethod: 'WALLET', name: 'm1633', desc: 'm1637', logo: 'MoMo', logoClass: 'gwMomo' },
-  ...(MOCK_PAYMENT_ENABLED
-    ? [{ id: 'mock', gateway: 'MOCK', name: 'm1706', desc: 'm1707', logo: 'TEST', logoClass: 'gwMock' }]
-    : []),
-];
-export const DEFAULT_PAYMENT_OPTION = MOCK_PAYMENT_ENABLED ? 'mock' : 'vnpay-qr';
-export const findPaymentOption = (id) => PAYMENT_OPTIONS.find((o) => o.id === id) || PAYMENT_OPTIONS[0];
-
-// Creates the payment for `orderId` with the chosen option. VNPay / MoMo leave the
-// app (window.location to the hosted page); MOCK calls `onMock(payment)` so the
-// caller can open the in-app result page, where the result is simulated.
-export async function startPayment(orderId, optionId, { onMock } = {}) {
-  const option = findPaymentOption(optionId);
-  const res = await paymentApi.createPayment({
-    orderId,
-    gateway: option.gateway,
-    paymentMethod: option.paymentMethod,
-  });
-  const payment = res?.result ?? res;
-  if (option.gateway !== 'MOCK' && payment?.paymentUrl && typeof window !== 'undefined') {
-    window.location.assign(payment.paymentUrl);
-    return payment;
-  }
-  if (onMock) onMock(payment);
-  return payment;
-}
 
 // payment-service error codes → messages the user can act on. Its 3xxx codes
 // overlap order-service's, so keep the two maps apart.

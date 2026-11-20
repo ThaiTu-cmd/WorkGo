@@ -115,7 +115,7 @@ const isAuthEndpoint = (url) =>
   url.startsWith('/identity/auth/refresh') ||
   url.startsWith('/identity/users/registration');
 
-async function request(method, url, { params, data, headers: extraHeaders } = {}, isRetry = false) {
+async function request(method, url, { params, data, headers: extraHeaders, responseType } = {}, isRetry = false) {
   const token = getAccessToken();
   const version = sessionVersion;
 
@@ -125,7 +125,8 @@ async function request(method, url, { params, data, headers: extraHeaders } = {}
   }
 
   const query = params ? `?${new URLSearchParams(params)}` : '';
-  const headers = { 'Content-Type': 'application/json', ...extraHeaders };
+  const multipart = data instanceof FormData;
+  const headers = multipart ? { ...extraHeaders } : { 'Content-Type': 'application/json', ...extraHeaders };
   if (token) headers.Authorization = `Bearer ${token}`;
 
   let res;
@@ -133,13 +134,13 @@ async function request(method, url, { params, data, headers: extraHeaders } = {}
     res = await fetch(`${BASE_URL}${url}${query}`, {
       method,
       headers,
-      body: data !== undefined ? JSON.stringify(data) : undefined,
+      body: multipart || data === undefined ? data : JSON.stringify(data),
     });
   } catch {
     throw new ApiError(0, null);
   }
   const contentType = res.headers.get('content-type') || '';
-  const body = await res.json().catch(() => null);
+  const body = responseType === 'blob' && res.ok ? await res.blob() : await res.json().catch(() => null);
   if (version !== sessionVersion) throw sessionChanged();
   if (!res.ok) {
     const error = new ApiError(res.status, body, contentType);
@@ -149,7 +150,7 @@ async function request(method, url, { params, data, headers: extraHeaders } = {}
         if (version !== sessionVersion) throw sessionChanged();
         if (newToken) {
           writeAccessToken(newToken);
-          return request(method, url, { params, data, headers: extraHeaders }, true);
+          return request(method, url, { params, data, headers: extraHeaders, responseType }, true);
         }
       }
       if (token) setAccessToken(null);

@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
-import { getCheckinCode, payViaMock } from './helpers/payment.mjs';
+import { getCheckinCode, payFromWallet } from './helpers/payment.mjs';
+import { TEST_ORDER_IMAGE, uploadOrderImage } from './helpers/order-files.mjs';
 
 const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:8888/api/v1';
 
@@ -136,15 +137,17 @@ test('TC-01: Tạo đơn hàng Digital thật & lưu DB', async () => {
 });
 
 test('TC-02: Thanh toán Escrow chuyển trạng thái đơn hàng sang CONFIRMED', async () => {
-  // Real flow: payment-service MOCK payment → dev settle → order-service confirmed.
-  const { payment, order } = await payViaMock(GATEWAY_URL, clientToken, digitalOrderId);
+  const { escrow, order } = await payFromWallet(GATEWAY_URL, clientToken, digitalOrderId);
   assert.equal(order.orderStatus, 'CONFIRMED');
   assert.equal(order.paymentStatus, 'SUCCEEDED');
 
-  const payRes = await fetch(`${GATEWAY_URL}/payment/payments/${payment.paymentId}`, {
-    headers: { Authorization: `Bearer ${clientToken}` },
-  });
-  assert.equal((await payRes.json()).result?.status, 'SUCCEEDED');
+  const headers = { Authorization: `Bearer ${clientToken}` };
+  assert.equal(escrow.fundingSource, 'WALLET');
+  const balanceBeforeRetry = (await (await fetch(`${GATEWAY_URL}/payment/wallet`, { headers })).json()).result.balance;
+  const retry = await fetch(`${GATEWAY_URL}/payment/wallet/orders/${digitalOrderId}/pay`, { method: 'POST', headers });
+  assert.equal((await retry.json()).result?.escrowAccountId, escrow.escrowAccountId);
+  const balanceAfterRetry = (await (await fetch(`${GATEWAY_URL}/payment/wallet`, { headers })).json()).result.balance;
+  assert.equal(balanceAfterRetry, balanceBeforeRetry);
 
   // Verify in PostgreSQL order_db: execution and digital_execution created
   const execStatus = queryDb(
@@ -191,6 +194,7 @@ test('TC-03: Khách nộp yêu cầu Digital chuyển trạng thái sang IN_PROG
 });
 
 test('TC-04: Chuyên gia nộp bài bàn giao chuyển trạng thái sang DELIVERED', async () => {
+  const fileId = await uploadOrderImage(GATEWAY_URL, providerToken, digitalOrderId, 'DELIVERY', 'logo_v1.png');
   const res = await fetch(`${GATEWAY_URL}/order/orders/digital/${digitalOrderId}/submissions`, {
     method: 'POST',
     headers: {
@@ -198,16 +202,8 @@ test('TC-04: Chuyên gia nộp bài bàn giao chuyển trạng thái sang DELIVE
       Authorization: `Bearer ${providerToken}`,
     },
     body: JSON.stringify({
-      message: 'Gửi khách hàng bản demo logo đợt 1 và link source vector.',
-      files: [
-        {
-          fileUrl: 'https://cdn.workgo.vn/deliveries/logo_v1.png',
-          fileName: 'logo_v1.png',
-          mimeType: 'image/png',
-          sizeBytes: 2048576,
-          fileHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-        },
-      ],
+      message: 'Gửi khách hàng bản demo logo đợt 1.',
+      files: [{ fileId }],
     }),
   });
 
@@ -215,6 +211,19 @@ test('TC-04: Chuyên gia nộp bài bàn giao chuyển trạng thái sang DELIVE
   assert.equal(res.status, 200, `Submit delivery failed: ${JSON.stringify(data)}`);
   assert.equal(data.code, 1000);
   assert.ok(data.result?.deliveryPackageId);
+  assert.equal(data.result.files[0].storedFileId, fileId);
+
+  const downloadUrl = `${GATEWAY_URL}/order/orders/${digitalOrderId}/files/${fileId}/download-url`;
+  const forbidden = await fetch(downloadUrl, { headers: { Authorization: `Bearer ${adminToken}` } });
+  assert.equal(forbidden.status, 404);
+  const clientHeaders = { Authorization: `Bearer ${clientToken}` };
+  const linkResponse = await fetch(downloadUrl, { headers: clientHeaders });
+  assert.equal(linkResponse.status, 200);
+  const { result: { url } } = await linkResponse.json();
+  const fileResponse = await fetch(`${GATEWAY_URL}/order${url}`, { headers: clientHeaders });
+  assert.equal(fileResponse.status, 200);
+  assert.equal(fileResponse.headers.get('Content-Type'), 'image/png');
+  assert.deepEqual(Buffer.from(await fileResponse.arrayBuffer()), TEST_ORDER_IMAGE);
 
   // Verify in PostgreSQL order_db
   const orderStatus = queryDb(
@@ -266,6 +275,7 @@ test('TC-05: Khách yêu cầu chỉnh sửa (Revision) chuyển trạng thái s
 
 test('TC-06: Khách nghiệm thu Digital (Accept) hoàn tất đơn hàng COMPLETED', async () => {
   // Provider submits second delivery
+  const fileId = await uploadOrderImage(GATEWAY_URL, providerToken, digitalOrderId, 'DELIVERY', 'logo_v2.png');
   const subRes = await fetch(`${GATEWAY_URL}/order/orders/digital/${digitalOrderId}/submissions`, {
     method: 'POST',
     headers: {
@@ -274,15 +284,7 @@ test('TC-06: Khách nghiệm thu Digital (Accept) hoàn tất đơn hàng COMPLE
     },
     body: JSON.stringify({
       message: 'Bàn giao logo v2 đã chỉnh sửa theo phản hồi.',
-      files: [
-        {
-          fileUrl: 'https://cdn.workgo.vn/deliveries/logo_v2.png',
-          fileName: 'logo_v2.png',
-          mimeType: 'image/png',
-          sizeBytes: 2148576,
-          fileHash: 'abcdef1234567890',
-        },
-      ],
+      files: [{ fileId }],
     }),
   });
   assert.equal(subRes.status, 200);
@@ -376,7 +378,7 @@ test('TC-08: Yêu cầu hủy đơn đã xác nhận & Đối tác Duyệt (PEND
   const createData = await createRes.json();
   cancelConfirmedOrderId = createData.result.orderId;
 
-  await payViaMock(GATEWAY_URL, clientToken, cancelConfirmedOrderId);
+  await payFromWallet(GATEWAY_URL, clientToken, cancelConfirmedOrderId);
 
   // Client requests cancellation
   const cancelReqRes = await fetch(`${GATEWAY_URL}/order/orders/${cancelConfirmedOrderId}/cancel`, {
@@ -431,7 +433,7 @@ test('TC-09: Yêu cầu hủy đơn & Đối tác Từ chối (PENDING -> REJECT
   const createData = await createRes.json();
   cancelInProgressOrderId = createData.result.orderId;
 
-  await payViaMock(GATEWAY_URL, clientToken, cancelInProgressOrderId);
+  await payFromWallet(GATEWAY_URL, clientToken, cancelInProgressOrderId);
 
   await fetch(`${GATEWAY_URL}/order/orders/digital/${cancelInProgressOrderId}/requirements`, {
     method: 'POST',
@@ -521,7 +523,7 @@ test('TC-10: Đặt dịch vụ tận nơi (Onsite) kèm Slot & Địa chỉ', a
 
 test('TC-11: Thực thi Onsite: Check-in -> Báo xong việc -> Nghiệm thu', async () => {
   // Confirm payment for Onsite order -> generates checkin code
-  await payViaMock(GATEWAY_URL, clientToken, onsiteOrderId);
+  await payFromWallet(GATEWAY_URL, clientToken, onsiteOrderId);
   onsiteCheckinCode = await getCheckinCode(GATEWAY_URL, clientToken, onsiteOrderId);
   assert.ok(onsiteCheckinCode, 'Checkin code must be generated for onsite order');
 
@@ -555,6 +557,7 @@ test('TC-11: Thực thi Onsite: Check-in -> Báo xong việc -> Nghiệm thu', a
   assert.equal(checkinData.result.status, 'IN_SERVICE');
 
   // Provider submits work evidence (phase: AFTER required before completion)
+  const fileId = await uploadOrderImage(GATEWAY_URL, providerToken, onsiteOrderId, 'WORK_EVIDENCE', 'onsite_after_repair.png');
   const evidenceRes = await fetch(`${GATEWAY_URL}/order/orders/${onsiteOrderId}/evidence`, {
     method: 'POST',
     headers: {
@@ -563,7 +566,7 @@ test('TC-11: Thực thi Onsite: Check-in -> Báo xong việc -> Nghiệm thu', a
     },
     body: JSON.stringify({
       phase: 'AFTER',
-      fileUrl: 'https://cdn.workgo.vn/evidence/onsite_after_repair.jpg',
+      fileId,
       latitude: 10.762622,
       longitude: 106.660172,
     }),
@@ -571,6 +574,7 @@ test('TC-11: Thực thi Onsite: Check-in -> Báo xong việc -> Nghiệm thu', a
   const evidenceData = await evidenceRes.json();
   assert.equal(evidenceRes.status, 200, `Upload evidence failed: ${JSON.stringify(evidenceData)}`);
   assert.equal(evidenceData.code, 1000);
+  assert.equal(evidenceData.result.storedFileId, fileId);
 
   // Provider completes work
   const completeRes = await fetch(`${GATEWAY_URL}/order/orders/onsite/${onsiteOrderId}/complete`, {

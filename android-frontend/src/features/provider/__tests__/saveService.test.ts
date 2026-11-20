@@ -8,7 +8,7 @@ jest.mock('@/api/catalogApi', () => ({
     updateService: jest.fn(async () => ({})),
     createPackage: jest.fn(async (_s: string, b: { name: string }) => ({ result: { packageId: `pk-${b.name}` } })),
     updatePackage: jest.fn(async () => ({})),
-    createMedia: jest.fn(async () => ({})),
+    uploadImage: jest.fn(async () => ({})),
     setServiceStatus: jest.fn(async () => ({})),
   },
 }));
@@ -26,7 +26,7 @@ test('new service: create → packages → media (first is cover) → publish', 
       { name: 'Tiêu chuẩn', price: 300000 },
       { name: 'Cơ bản', price: 200000 },
     ],
-    images: ['data:a', 'data:b'],
+    images: ['file:///a.jpg', 'file:///b.jpg'],
     hasCover: false,
   });
 
@@ -35,7 +35,7 @@ test('new service: create → packages → media (first is cover) → publish', 
     expect.objectContaining({ categoryId: 'c1', executionType: 'ONSITE', title: 'Sửa máy lạnh', basePrice: 200000, currency: 'VND' })
   );
   expect(api.createPackage).toHaveBeenCalledTimes(2);
-  expect(api.createMedia.mock.calls.map(([, b]) => b.cover)).toEqual([true, false]);
+  expect(api.uploadImage.mock.calls.map(([, , cover]) => cover)).toEqual([true, false]);
   expect(api.setServiceStatus).toHaveBeenCalledWith('new1', 'PUBLISHED');
   expect(api.updateService).not.toHaveBeenCalled();
 });
@@ -55,17 +55,17 @@ test('retry after a media failure resumes without re-creating the service or pac
     serviceId: null,
     info,
     packages: [{ name: 'Cơ bản', price: 200000 }],
-    images: ['data:a', 'data:b'],
+    images: ['file:///a.jpg', 'file:///b.jpg'],
     hasCover: false,
   };
-  api.createMedia.mockResolvedValueOnce({} as never).mockRejectedValueOnce(new Error('value too long'));
-  await expect(saveService(input, progress)).rejects.toThrow('value too long');
+  api.uploadImage.mockResolvedValueOnce({} as never).mockRejectedValueOnce(new Error('media unavailable'));
+  await expect(saveService(input, progress)).rejects.toThrow('media unavailable');
   expect(progress.serviceId).toBe('new1');
 
   await saveService(input, progress);
   expect(api.createService).toHaveBeenCalledTimes(1);
   expect(api.createPackage).toHaveBeenCalledTimes(1);
-  expect(api.createMedia.mock.calls.map(([, b]) => b.url)).toEqual(['data:a', 'data:b', 'data:b']);
+  expect(api.uploadImage.mock.calls.map(([, uri]) => uri)).toEqual(['file:///a.jpg', 'file:///b.jpg', 'file:///b.jpg']);
   expect(api.setServiceStatus).toHaveBeenCalledTimes(1);
 });
 
@@ -78,7 +78,7 @@ test('edit: keeps the stored slug, leaves the status alone, updates existing pac
       { id: 'pk1', name: 'Cơ bản', price: 250000 },
       { name: 'Mới', price: 400000 },
     ],
-    images: ['data:c'],
+    images: ['file:///c.jpg'],
     hasCover: true,
   });
 
@@ -90,6 +90,6 @@ test('edit: keeps the stored slug, leaves the status alone, updates existing pac
   expect(api.updateService.mock.calls[0][1]).not.toHaveProperty('status');
   expect(api.updatePackage).toHaveBeenCalledWith('pk1', expect.objectContaining({ price: 250000 }));
   expect(api.createPackage).toHaveBeenCalledWith('s1', expect.objectContaining({ name: 'Mới' }));
-  expect(api.createMedia).toHaveBeenCalledWith('s1', { url: 'data:c', mediaType: 'IMAGE', cover: false });
+  expect(api.uploadImage).toHaveBeenCalledWith('s1', 'file:///c.jpg', false);
   expect(api.setServiceStatus).not.toHaveBeenCalled();
 });

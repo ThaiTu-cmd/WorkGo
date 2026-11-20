@@ -5,6 +5,11 @@ jest.mock('../client', () => ({ http: { get: jest.fn(), post: jest.fn() } }));
 
 beforeEach(() => jest.clearAllMocks());
 
+test('wallet order payment uses the order ID as its server idempotency scope', async () => {
+  await paymentApi.payOrder('o1');
+  expect(http.post).toHaveBeenCalledWith('/payment/wallet/orders/o1/pay');
+});
+
 test('createPayment posts the order and gateway with the Idempotency-Key header', async () => {
   await paymentApi.createPayment({ orderId: 'o1', gateway: 'VNPAY', paymentMethod: 'QR' }, 'key-1');
   expect(http.post).toHaveBeenCalledWith(
@@ -37,30 +42,26 @@ test('simulateMock settles a MOCK payment through the dev endpoint', async () =>
 
 test('wallet and payout endpoints call the correct payment-service routes', async () => {
   await paymentApi.getWallet();
-  await paymentApi.getWalletLedger({ page: 0, size: 20 });
+  await paymentApi.getTopUps();
+  await paymentApi.getPayouts();
+  await paymentApi.getFees();
   await paymentApi.createTopUp({ amount: 100000, gateway: 'VNPAY' }, 'key-topup');
   await paymentApi.getTopUp('top-1');
-  await paymentApi.getPayoutSettings();
-  await paymentApi.savePayoutSettings({ bankName: 'Vietcombank', accountName: 'TRAN HUU TRUNG', accountNumber: '0071001234567' });
-  await paymentApi.requestPayout({ amount: 500000, bankName: 'Vietcombank', accountName: 'TRAN HUU TRUNG', accountNumber: '0071001234567' }, 'key-payout');
+  await paymentApi.requestPayout({ amount: 500000, bankCode: 'VCB', accountName: 'TRAN HUU TRUNG', accountNumber: '0071001234567' }, 'key-payout');
 
-  expect(http.get).toHaveBeenCalledWith('/payment/wallets/me');
-  expect(http.get).toHaveBeenCalledWith('/payment/wallets/ledger', { params: { page: 0, size: 20 } });
+  expect(http.get).toHaveBeenCalledWith('/payment/wallet');
+  expect(http.get).toHaveBeenCalledWith('/payment/wallet/top-ups');
+  expect(http.get).toHaveBeenCalledWith('/payment/wallet/payouts');
+  expect(http.get).toHaveBeenCalledWith('/payment/wallet/fees');
   expect(http.post).toHaveBeenCalledWith(
-    '/payment/wallets/topup',
+    '/payment/wallet/top-ups',
     { amount: 100000, gateway: 'VNPAY' },
     { headers: { 'Idempotency-Key': 'key-topup' } }
   );
-  expect(http.get).toHaveBeenCalledWith('/payment/wallets/topup/top-1');
-  expect(http.get).toHaveBeenCalledWith('/payment/payout-settings/me');
-  expect(http.post).toHaveBeenCalledWith('/payment/payout-settings', {
-    bankName: 'Vietcombank',
-    accountName: 'TRAN HUU TRUNG',
-    accountNumber: '0071001234567'
-  });
+  expect(http.get).toHaveBeenCalledWith('/payment/wallet/top-ups/top-1');
   expect(http.post).toHaveBeenCalledWith(
-    '/payment/payouts',
-    { amount: 500000, bankName: 'Vietcombank', accountName: 'TRAN HUU TRUNG', accountNumber: '0071001234567' },
+    '/payment/wallet/payouts',
+    { amount: 500000, bankCode: 'VCB', accountName: 'TRAN HUU TRUNG', accountNumber: '0071001234567' },
     { headers: { 'Idempotency-Key': 'key-payout' } }
   );
 });

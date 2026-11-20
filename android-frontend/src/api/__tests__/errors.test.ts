@@ -5,9 +5,11 @@ import {
   evidenceErrorMessage,
   isNotProvider,
   notProviderMessage,
+  orderErrorMessage,
   paymentErrorMessage,
   unreachableMessage,
 } from '../errors';
+import { setLanguage } from '@/i18n';
 
 test('evidenceErrorMessage maps 2023', () => {
   expect(evidenceErrorMessage(new ApiError(400, { code: 2023 }))).toBe('Vui lòng chụp hoặc chọn một ảnh.');
@@ -61,4 +63,22 @@ test('isNotProvider is true for 1007 / code-less 403, false for 1025', () => {
   expect(isNotProvider(new ApiError(403, {}))).toBe(true);
   expect(isNotProvider(new ApiError(403, { code: 1025 }))).toBe(false);
   expect(isNotProvider(new ApiError(404, {}))).toBe(false);
+});
+
+test.each(['vi', 'en'] as const)('maps Order creation key errors in %s without changing their status', (language) => {
+  setLanguage(language);
+  try {
+    const invalid = new ApiError(400, { code: 3049 });
+    const conflict = new ApiError(409, { code: 3050 });
+    expect(orderErrorMessage(invalid)).toBe(language === 'vi'
+      ? 'Mã tạo đơn không hợp lệ. Vui lòng mở lại màn hình đặt dịch vụ.'
+      : 'The order request key is invalid. Please reopen checkout.');
+    expect(orderErrorMessage(conflict)).toBe(language === 'vi'
+      ? 'Mã tạo đơn đã được dùng cho nội dung khác hoặc đơn đã xóa. Vui lòng kiểm tra danh sách đơn trước khi đặt lại.'
+      : 'This request key belongs to a different or deleted order. Check your orders before placing another one.');
+    expect(invalid.status).toBe(400);
+    expect(conflict.status).toBe(409);
+  } finally {
+    setLanguage('vi');
+  }
 });

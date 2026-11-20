@@ -32,13 +32,19 @@ function EvidenceUploadSheet({ orderId, onClose }: { orderId: string; onClose: (
   const once = useSingleFlight();
   const [phase, setPhase] = React.useState<EvidencePhase>('BEFORE');
   const [image, setImage] = React.useState<PickedImage | null>(null);
+  const uploaded = React.useRef<{ uri: string; id: string } | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   const upload = useMutation({
+    networkMode: 'always',
     mutationFn: async () => {
       if (!image) throw new Error(t('evidenceUploadSheet.vui_long_chup_hoac_chon'));
       const location = await getLocationOrNull();
-      return evidenceApi.createEvidence(orderId, buildEvidenceBody(phase, image, location));
+      if (uploaded.current?.uri !== image.uri) {
+        const { result } = await evidenceApi.uploadImage(orderId, image.uri);
+        uploaded.current = { uri: image.uri, id: result.storedFileId };
+      }
+      return evidenceApi.createEvidence(orderId, buildEvidenceBody(phase, uploaded.current.id, image.capturedAt, location));
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: qk.evidence(orderId) });
@@ -68,7 +74,7 @@ function EvidenceUploadSheet({ orderId, onClose }: { orderId: string; onClose: (
               <Chip key={p.value} label={p.label} selected={phase === p.value} onPress={() => setPhase(p.value)} />
             ))}
           </View>
-          {image ? <Image source={{ uri: image.dataUrl }} style={styles.preview} contentFit="cover" /> : null}
+          {image ? <Image source={{ uri: image.uri }} style={styles.preview} contentFit="cover" /> : null}
           <View style={styles.row}>
             <Button title={t('evidenceUploadSheet.chup_anh')} variant="secondary" style={styles.flex} onPress={() => void choose('camera')} />
             <Button title={t('evidenceUploadSheet.chon_anh')} variant="secondary" style={styles.flex} onPress={() => void choose('library')} />

@@ -40,8 +40,8 @@ export function SubmitProposalScreen({
   });
 
   const wallet = walletQuery.data;
-  const isWalletBlocked = Boolean(wallet && (wallet.debtBalance > 0 || wallet.availableBalance < 0));
-  const debtAmount = wallet?.debtBalance ?? 0;
+  const isWalletBlocked = wallet?.mayStartNewWork === false;
+  const debtAmount = wallet?.outstandingFee ?? 0;
 
   // 2. Check Provider Profile & Sanction Guard
   const profileQuery = useQuery({

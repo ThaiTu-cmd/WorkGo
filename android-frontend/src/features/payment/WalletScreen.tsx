@@ -10,6 +10,7 @@ import type { WalletDto, WalletEntryDto, WalletEntryType } from '@/api/types';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { formatDateTime, formatVnd } from '@/lib/format';
+import { useT } from '@/i18n';
 import {
   Badge,
   Button,
@@ -23,7 +24,6 @@ import {
   SkeletonList,
   spacing,
   useColors,
-  type Tone,
 } from '@/ui';
 
 type FilterType = 'ALL' | WalletEntryType;
@@ -31,14 +31,12 @@ type FilterType = 'ALL' | WalletEntryType;
 const FILTERS: { key: FilterType; label: string }[] = [
   { key: 'ALL', label: 'Tất cả' },
   { key: 'TOPUP', label: 'Nạp tiền' },
-  { key: 'HOLD', label: 'Ký quỹ' },
-  { key: 'RELEASE', label: 'Giải ngân' },
   { key: 'FEE_DEBT', label: 'Nợ phí' },
   { key: 'PAYOUT', label: 'Rút tiền' },
-  { key: 'REFUND', label: 'Hoàn tiền' },
 ];
 
 export function WalletScreen() {
+  const t = useT();
   const styles = useStyles();
   const colors = useColors();
   const router = useRouter();
@@ -57,20 +55,19 @@ export function WalletScreen() {
   });
 
   const ledgerQuery = useQuery({
-    queryKey: qk.walletLedger({ type: filter }),
+    queryKey: qk.walletLedger(),
     enabled: signedIn,
     queryFn: async () => {
-      const res = await paymentApi.getWalletLedger({
-        page: 0,
-        size: 50,
-        type: filter === 'ALL' ? undefined : filter,
-      });
-      const data = res?.result ?? res;
-      if (Array.isArray(data)) return data as WalletEntryDto[];
-      if (data && typeof data === 'object' && 'content' in data && Array.isArray((data as { content?: unknown[] }).content)) {
-        return (data as { content: WalletEntryDto[] }).content;
-      }
-      return [] as WalletEntryDto[];
+      const [topUps, payouts, fees] = await Promise.all([paymentApi.getTopUps(), paymentApi.getPayouts(), paymentApi.getFees()]);
+      const entries: (WalletEntryDto & { topUpId?: string })[] = [
+        ...topUps.result.map((item) => ({ id: 'topup-' + item.topUpId, type: 'TOPUP' as const, amount: item.amount,
+          referenceId: item.topUpCode, status: item.status, createdAt: item.createdAt ?? undefined, topUpId: item.topUpId })),
+        ...payouts.result.map((item) => ({ id: 'payout-' + item.payoutId, type: 'PAYOUT' as const, amount: item.amount,
+          referenceId: item.payoutCode, status: item.status, createdAt: item.createdAt })),
+        ...fees.result.map((item) => ({ id: 'fee-' + item.feeAssessmentId, type: 'FEE_DEBT' as const, amount: item.amount,
+          referenceId: item.orderId, status: item.status, createdAt: item.createdAt })),
+      ];
+      return entries.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
     },
   });
 
@@ -89,28 +86,9 @@ export function WalletScreen() {
     );
   }
 
-  const wallet = walletQuery.data ?? { availableBalance: 0, heldBalance: 0, debtBalance: 0 };
-  const available = Number(wallet.availableBalance ?? 0);
-  const held = Number(wallet.heldBalance ?? 0);
-  const debt = Number(wallet.debtBalance ?? 0);
-  const entries = ledgerQuery.data ?? [];
-
-  const getTone = (type?: WalletEntryType): Tone => {
-    switch (type) {
-      case 'TOPUP':
-      case 'RELEASE':
-      case 'REFUND':
-        return 'success';
-      case 'HOLD':
-        return 'warning';
-      case 'FEE_DEBT':
-        return 'danger';
-      case 'PAYOUT':
-        return 'neutral';
-      default:
-        return 'neutral';
-    }
-  };
+  const available = walletQuery.data?.balance;
+  const debt = walletQuery.data?.outstandingFee ?? 0;
+  const entries = (ledgerQuery.data ?? []).filter((item) => filter === 'ALL' || item.type === filter);
 
   const getTypeLabel = (type?: WalletEntryType): string => {
     switch (type) {
@@ -123,7 +101,7 @@ export function WalletScreen() {
       case 'REFUND':
         return 'Hoàn tiền';
       case 'FEE_DEBT':
-        return 'Nợ phí';
+        return t('wallet.fee');
       case 'PAYOUT':
         return 'Rút tiền';
       default:
@@ -146,7 +124,7 @@ export function WalletScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.title}>Ví & Ký quỹ</Text>
-          <Text style={styles.sub}>Quản lý số dư, tiền ký quỹ đơn hàng và lịch sử bút toán.</Text>
+          <Text style={styles.sub}>{t('wallet.history_scope')}</Text>
         </View>
 
         {/* Debt warning banner if debt > 0 */}
@@ -173,23 +151,17 @@ export function WalletScreen() {
         <View style={styles.balanceGrid}>
           <Card style={[styles.balanceCard, styles.balanceCardPrimary]}>
             <Text style={styles.balanceLabel}>Số dư khả dụng</Text>
-            <Text style={[styles.balanceValue, { color: colors.primary }]}>{formatVnd(available)}</Text>
+            <Text style={[styles.balanceValue, { color: colors.primary }]}>{available === undefined ? '—' : formatVnd(available)}</Text>
             <Text style={styles.balanceHint}>Sẵn sàng đặt đơn hoặc rút về ngân hàng</Text>
-          </Card>
-
-          <Card style={[styles.balanceCard, styles.balanceCardHeld]}>
-            <Text style={styles.balanceLabel}>Đang ký quỹ (Escrow)</Text>
-            <Text style={[styles.balanceValue, { color: colors.warning }]}>{formatVnd(held)}</Text>
-            <Text style={styles.balanceHint}>Tạm giữ an toàn theo từng đơn dịch vụ</Text>
           </Card>
 
           <Card style={[styles.balanceCard, debt > 0 ? styles.balanceCardDanger : null]}>
             <Text style={styles.balanceLabel}>Dư nợ tài khoản</Text>
             <Text style={[styles.balanceValue, debt > 0 ? { color: colors.danger } : null]}>
-              {formatVnd(debt)}
+              {walletQuery.data ? formatVnd(debt) : '—'}
             </Text>
             <Text style={styles.balanceHint}>
-              {debt > 0 ? 'Cần nạp bù để gỡ hạn chế nhận việc' : 'Tài khoản sạch, không nợ phí'}
+              {walletQuery.data ? (debt > 0 ? 'Cần nạp bù để gỡ hạn chế nhận việc' : 'Tài khoản sạch, không nợ phí') : null}
             </Text>
           </Card>
         </View>
@@ -216,7 +188,7 @@ export function WalletScreen() {
             {FILTERS.map((f) => (
               <Chip
                 key={f.key}
-                label={f.label}
+                label={f.key === 'FEE_DEBT' ? t('wallet.fee') : f.label}
                 selected={filter === f.key}
                 onPress={() => setFilter(f.key)}
               />
@@ -239,36 +211,35 @@ export function WalletScreen() {
           <View style={styles.entryList}>
             {entries.map((item) => {
               const entryType = (item.entryType ?? item.type ?? 'ADJUSTMENT') as WalletEntryType;
-              const isCredit = entryType === 'TOPUP' || entryType === 'RELEASE' || entryType === 'REFUND';
-              const isDebit = entryType === 'HOLD' || entryType === 'FEE_DEBT' || entryType === 'PAYOUT';
               const amt = Number(item.amount ?? 0);
 
               return (
                 <Card key={item.id} style={styles.entryCard}>
                   <View style={styles.entryHeader}>
                     <View style={styles.entryTitleCol}>
-                      <Text style={styles.entryLabel}>{item.description ?? item.label ?? 'Giao dịch ví'}</Text>
+                      <Text style={styles.entryLabel}>{getTypeLabel(entryType)}</Text>
                       {item.referenceId ? (
                         <Text style={styles.entryRef}>Mã: {item.referenceId}</Text>
                       ) : null}
                     </View>
-                    <Badge label={getTypeLabel(entryType)} tone={getTone(entryType)} />
+                    <Badge label={item.status ?? getTypeLabel(entryType)} tone={item.status === 'SUCCEEDED' || item.status === 'PAID' ? 'success' : item.status === 'OUTSTANDING' || item.status === 'FAILED' ? 'danger' : 'neutral'} />
                   </View>
 
                   <View style={styles.entryFooter}>
                     <Text
                       style={[
                         styles.entryAmount,
-                        isCredit ? { color: colors.success } : isDebit ? { color: colors.danger } : null,
                       ]}
                     >
-                      {isCredit ? '+' : isDebit ? '-' : ''}
                       {formatVnd(amt)}
                     </Text>
                     <Text style={styles.entryDate}>
                       {item.createdAt || item.at ? formatDateTime(item.createdAt ?? item.at ?? '') : ''}
                     </Text>
                   </View>
+                  {item.topUpId && (item.status === 'INITIATED' || item.status === 'PENDING' || item.status === 'UNKNOWN') ? (
+                    <Button title={t('wallet.resume_top_up')} variant="secondary" onPress={() => router.push({ pathname: '/payment/topup', params: { topUpId: item.topUpId } })} />
+                  ) : null}
                 </Card>
               );
             })}
@@ -331,10 +302,6 @@ const useStyles = makeStyles((colors) => ({
   balanceCardPrimary: {
     borderLeftWidth: 4,
     borderLeftColor: colors.primary,
-  },
-  balanceCardHeld: {
-    borderLeftWidth: 4,
-    borderLeftColor: colors.warning,
   },
   balanceCardDanger: {
     borderLeftWidth: 4,

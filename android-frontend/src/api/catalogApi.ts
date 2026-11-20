@@ -1,4 +1,5 @@
 import { http } from './client';
+import { imageFormData } from '@/lib/image';
 import type { AddonDto, ApiResponse, CategoryDto, ExecutionType, MediaDto, PackageDto, Paged, ServiceDto, ServiceStatus } from './types';
 
 export type ServiceBody = {
@@ -64,8 +65,11 @@ export const catalogApi = {
 
   updatePackage: (packageId: string, body: PackageBody) => http.put<ApiResponse<PackageDto>>(`/catalog/packages/${packageId}`, body),
 
-  createMedia: (serviceId: string, body: { url: string; mediaType: 'IMAGE' | 'VIDEO' | 'FILE'; cover: boolean }) =>
-    http.post<ApiResponse<MediaDto>>(`/catalog/medias/services/${serviceId}`, body),
+  uploadImage: async (serviceId: string, uri: string, cover: boolean) => {
+    const body = await imageFormData(uri);
+    body.append('cover', String(cover));
+    return http.post<ApiResponse<MediaDto>>(`/catalog/medias/services/${serviceId}/upload`, body);
+  },
 
   getPackages: (serviceId: string, page = 0, size = 20) =>
     http.get<Paged<PackageDto>>(`/catalog/packages/services/${serviceId}`, { params: { page, size } }),

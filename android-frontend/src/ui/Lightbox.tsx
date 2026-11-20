@@ -4,13 +4,13 @@ import { Modal, Pressable, Text, View } from 'react-native';
 import { font, makeStyles, spacing } from './theme';
 import { useT } from '@/i18n';
 
-export function Lightbox({ uri, caption, onClose }: { uri: string | null; caption?: string; onClose: () => void }) {
+export function Lightbox({ uri, headers, caption, onClose }: { uri: string | null; headers?: Record<string, string>; caption?: string; onClose: () => void }) {
   const t = useT();
   const styles = useStyles();
   return (
     <Modal visible={Boolean(uri)} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable accessibilityRole="button" accessibilityLabel={t('lightbox.dong_anh')} style={styles.backdrop} onPress={onClose}>
-        {uri ? <Image source={{ uri }} style={styles.image} contentFit="contain" /> : null}
+        {uri ? <Image source={{ uri, headers }} cachePolicy={headers ? 'none' : undefined} style={styles.image} contentFit="contain" /> : null}
         {caption ? (
           <View style={styles.caption}>
             <Text style={styles.captionText}>{caption}</Text>

@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import * as React from 'react';
 
 import { paymentApi } from '@/api/paymentApi';
-import type { WalletDto, WalletEntryDto } from '@/api/types';
+import type { WalletDto } from '@/api/types';
 
 import { WalletScreen } from '../WalletScreen';
 
@@ -17,7 +17,9 @@ jest.mock('@/auth/useRequireAuth', () => ({ useRequireAuth: () => true }));
 jest.mock('@/api/paymentApi', () => ({
   paymentApi: {
     getWallet: jest.fn(),
-    getWalletLedger: jest.fn(),
+    getTopUps: jest.fn(),
+    getPayouts: jest.fn(),
+    getFees: jest.fn(),
   },
 }));
 
@@ -36,46 +38,24 @@ function renderScreen() {
 }
 
 const mockWallet: WalletDto = {
-  availableBalance: 12500000,
-  heldBalance: 3500000,
-  debtBalance: 0,
+  balance: 12500000,
+  outstandingFee: 0,
+  mayStartNewWork: true,
   currency: 'VND',
 };
-
-const mockLedger: WalletEntryDto[] = [
-  {
-    id: 'w-1',
-    type: 'TOPUP',
-    amount: 5000000,
-    description: 'Nạp tiền qua VNPay',
-    createdAt: '2026-11-10T10:00:00Z',
-  },
-  {
-    id: 'w-2',
-    type: 'HOLD',
-    amount: 2500000,
-    description: 'Giữ hộ đơn hàng #ORD-1042',
-    referenceId: 'ORD-1042',
-    createdAt: '2026-11-12T14:30:00Z',
-  },
-  {
-    id: 'w-3',
-    type: 'RELEASE',
-    amount: 4750000,
-    description: 'Giải ngân đơn hàng #ORD-1038',
-    referenceId: 'ORD-1038',
-    createdAt: '2026-11-14T09:15:00Z',
-  },
-];
 
 beforeEach(() => {
   jest.clearAllMocks();
   (paymentApi.getWallet as jest.Mock).mockResolvedValue({ result: mockWallet });
-  (paymentApi.getWalletLedger as jest.Mock).mockResolvedValue({ result: mockLedger });
+  (paymentApi.getTopUps as jest.Mock).mockResolvedValue({ result: [{ topUpId: 't1', topUpCode: 'TOP-1', amount: 5000000, gateway: 'VNPAY', status: 'PENDING' }] });
+  (paymentApi.getPayouts as jest.Mock).mockResolvedValue({ result: [{ payoutId: 'p1', payoutCode: 'OUT-1', amount: 100000, bankCode: 'VCB', status: 'REQUESTED' }] });
+  (paymentApi.getFees as jest.Mock).mockResolvedValue({ result: [{ feeAssessmentId: 'f1', orderId: 'ORD-1042', amount: 30000, outstandingAmount: 30000, status: 'OUTSTANDING' }] });
 });
 
 test('renders empty state when there are no ledger entries', async () => {
-  (paymentApi.getWalletLedger as jest.Mock).mockResolvedValue({ result: [] });
+  (paymentApi.getTopUps as jest.Mock).mockResolvedValue({ result: [] });
+  (paymentApi.getPayouts as jest.Mock).mockResolvedValue({ result: [] });
+  (paymentApi.getFees as jest.Mock).mockResolvedValue({ result: [] });
 
   await renderScreen();
 
@@ -85,30 +65,30 @@ test('renders empty state when there are no ledger entries', async () => {
   expect(screen.getByText('Chưa có bút toán nào trong lịch sử ví của bạn.')).toBeTruthy();
 });
 
-test('renders Available and Held balances with ledger entries', async () => {
+test('renders real server top-ups, payouts and fees without treating pending money as settled', async () => {
   await renderScreen();
 
   await waitFor(() => {
     expect(screen.getByText(/12\.500\.000/)).toBeTruthy();
   });
 
-  // Verify balance values
-  expect(screen.getByText(/3\.500\.000/)).toBeTruthy();
-
-  // Verify ledger items
-  expect(screen.getByText('Nạp tiền qua VNPay')).toBeTruthy();
-  expect(screen.getByText('Giữ hộ đơn hàng #ORD-1042')).toBeTruthy();
+  expect(await screen.findByText('Mã: TOP-1')).toBeTruthy();
+  expect(screen.getByText('Mã: OUT-1')).toBeTruthy();
   expect(screen.getByText('Mã: ORD-1042')).toBeTruthy();
-  expect(screen.getByText('+5.000.000 ₫')).toBeTruthy();
-  expect(screen.getByText('-2.500.000 ₫')).toBeTruthy();
+  expect(screen.getByText('PENDING')).toBeTruthy();
+  expect(screen.getByText('REQUESTED')).toBeTruthy();
+  expect(screen.getByText('OUTSTANDING')).toBeTruthy();
+  expect(screen.queryByText('+5.000.000 ₫')).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Tiếp tục nạp tiền' }));
+  expect(mockPush).toHaveBeenCalledWith({ pathname: '/payment/topup', params: { topUpId: 't1' } });
 });
 
-test('displays debt alert card when debtBalance > 0', async () => {
+test('displays debt alert when the wallet has outstanding fees', async () => {
   (paymentApi.getWallet as jest.Mock).mockResolvedValue({
     result: {
-      availableBalance: 20000,
-      heldBalance: 0,
-      debtBalance: 30000,
+      balance: 20000,
+      outstandingFee: 30000,
+      mayStartNewWork: false,
     },
   });
 
@@ -119,7 +99,7 @@ test('displays debt alert card when debtBalance > 0', async () => {
   });
 
   const payDebtBtn = screen.getByText('Nạp bù 30.000 ₫');
-  fireEvent.press(payDebtBtn);
+  await fireEvent.press(payDebtBtn);
   expect(mockPush).toHaveBeenCalledWith('/payment/topup?amount=30000');
 });
 
@@ -130,9 +110,9 @@ test('navigates to top-up and payout settings screens', async () => {
     expect(screen.getByText('Nạp tiền vào ví')).toBeTruthy();
   });
 
-  fireEvent.press(screen.getByText('Nạp tiền vào ví'));
+  await fireEvent.press(screen.getByText('Nạp tiền vào ví'));
   expect(mockPush).toHaveBeenCalledWith('/payment/topup');
 
-  fireEvent.press(screen.getByText('Cài đặt rút tiền'));
+  await fireEvent.press(screen.getByText('Cài đặt rút tiền'));
   expect(mockPush).toHaveBeenCalledWith('/payment/payout-settings');
 });

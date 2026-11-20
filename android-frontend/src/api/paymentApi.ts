@@ -5,13 +5,11 @@ import type {
   PaymentCreationRequest,
   PaymentDto,
   WalletDto,
-  WalletEntryDto,
+  FeeAssessmentDto,
   TopUpCreationRequest,
   TopUpDto,
-  PayoutSettingsDto,
   PayoutRequest,
   PayoutDto,
-  PageResponse
 } from './types';
 
 // payment-service endpoints via gateway (/api/v1/payment/**).
@@ -36,31 +34,32 @@ export const paymentApi = {
   // 404 (code 3101) until the order has been paid.
   getEscrow: (orderId: string) => http.get<ApiResponse<EscrowDto>>(`/payment/escrows/orders/${orderId}`),
 
+  // The backend returns the existing wallet escrow when this order ID is retried.
+  payOrder: (orderId: string) => http.post<ApiResponse<EscrowDto>>(`/payment/wallet/orders/${orderId}/pay`),
+
   // DEV ONLY (payment-service profile "dev"): settle a MOCK payment as a gateway would.
   simulateMock: (paymentCode: string, success: boolean) =>
     http.post<ApiResponse<PaymentDto>>(`/payment/dev/payments/${paymentCode}/${success ? 'success' : 'fail'}`),
 
   // ---- Wallet & Ledger endpoints (FE-12) ----
-  getWallet: () => http.get<ApiResponse<WalletDto>>('/payment/wallets/me'),
+  getWallet: () => http.get<ApiResponse<WalletDto>>('/payment/wallet'),
 
-  getWalletLedger: (params?: { page?: number; size?: number; type?: string }) =>
-    http.get<ApiResponse<PageResponse<WalletEntryDto> | WalletEntryDto[]>>('/payment/wallets/ledger', { params }),
+  getTopUps: () => http.get<ApiResponse<TopUpDto[]>>('/payment/wallet/top-ups'),
+  getPayouts: () => http.get<ApiResponse<PayoutDto[]>>('/payment/wallet/payouts'),
+  getFees: () => http.get<ApiResponse<FeeAssessmentDto[]>>('/payment/wallet/fees'),
 
   createTopUp: (body: TopUpCreationRequest, idempotencyKey: string) =>
-    http.post<ApiResponse<TopUpDto>>('/payment/wallets/topup', body, {
+    http.post<ApiResponse<TopUpDto>>('/payment/wallet/top-ups', body, {
       headers: { 'Idempotency-Key': idempotencyKey }
     }),
 
-  getTopUp: (topUpId: string) => http.get<ApiResponse<TopUpDto>>(`/payment/wallets/topup/${topUpId}`),
+  getTopUp: (topUpId: string) => http.get<ApiResponse<TopUpDto>>(`/payment/wallet/top-ups/${topUpId}`),
 
-  // ---- Payout Settings & Request (FE-12) ----
-  getPayoutSettings: () => http.get<ApiResponse<PayoutSettingsDto>>('/payment/payout-settings/me'),
-
-  savePayoutSettings: (body: PayoutSettingsDto) =>
-    http.post<ApiResponse<PayoutSettingsDto>>('/payment/payout-settings', body),
+  simulateMockTopUp: (topUpCode: string, success: boolean) =>
+    http.post<ApiResponse<TopUpDto>>(`/payment/dev/payments/top-ups/${topUpCode}/${success ? 'success' : 'fail'}`),
 
   requestPayout: (body: PayoutRequest, idempotencyKey: string) =>
-    http.post<ApiResponse<PayoutDto>>('/payment/payouts', body, {
+    http.post<ApiResponse<PayoutDto>>('/payment/wallet/payouts', body, {
       headers: { 'Idempotency-Key': idempotencyKey }
     }),
 };

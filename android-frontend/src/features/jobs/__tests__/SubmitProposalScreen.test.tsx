@@ -40,7 +40,7 @@ describe('SubmitProposalScreen', () => {
 
   test('blocks when provider has wallet debt', async () => {
     (paymentApi.getWallet as jest.Mock).mockResolvedValue({
-      result: { availableBalance: 0, heldBalance: 0, debtBalance: 150000, currency: 'VND' },
+      result: { balance: 0, outstandingFee: 150000, mayStartNewWork: false, currency: 'VND' },
     });
     (providerApi.getMyProfile as jest.Mock).mockResolvedValue({
       result: { verificationStatus: 'VERIFIED' },
@@ -60,7 +60,7 @@ describe('SubmitProposalScreen', () => {
 
   test('submits proposal when guards pass', async () => {
     (paymentApi.getWallet as jest.Mock).mockResolvedValue({
-      result: { availableBalance: 500000, heldBalance: 0, debtBalance: 0, currency: 'VND' },
+      result: { balance: 500000, outstandingFee: 0, mayStartNewWork: true, currency: 'VND' },
     });
     (providerApi.getMyProfile as jest.Mock).mockResolvedValue({
       result: { verificationStatus: 'VERIFIED' },

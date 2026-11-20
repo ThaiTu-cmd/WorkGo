@@ -36,7 +36,8 @@ async function request<T>(
   path: string,
   { params, data, headers: extra, timeoutMs = DEFAULT_TIMEOUT_MS, signal: callerSignal }: RequestOpts & { data?: unknown } = {}
 ): Promise<T> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...extra };
+  const multipart = data instanceof FormData;
+  const headers: Record<string, string> = multipart ? { ...extra } : { 'Content-Type': 'application/json', ...extra };
   const token = hooks.getToken();
   const session = hooks.getSessionVersion?.() ?? token;
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -52,7 +53,7 @@ async function request<T>(
     res = await fetch(`${API_BASE_URL}${path}${queryString(params)}`, {
       method,
       headers,
-      body: data !== undefined ? JSON.stringify(data) : undefined,
+      body: multipart ? data : JSON.stringify(data),
       signal: controller.signal,
     });
   } catch {

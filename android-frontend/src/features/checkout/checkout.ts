@@ -1,5 +1,5 @@
 import type { Addon, Address, Package } from '@/api/adapters';
-import type { ExecutionType, OrderCreationRequest } from '@/api/types';
+import type { ExecutionType, OrderCreationRequest, OrderPaymentMethod } from '@/api/types';
 import { translate } from '@/i18n';
 
 // Shown to the client before ordering; the server computes the real price.
@@ -16,6 +16,7 @@ export type CheckoutInput = {
   address: Address | null;
   availableSlotCount: number;
   addressCount: number;
+  paymentMethod: OrderPaymentMethod;
 };
 
 export type CheckoutResult = { ok: true; body: OrderCreationRequest } | { ok: false; error: string };
@@ -28,6 +29,7 @@ export function validateCheckout(input: CheckoutInput): CheckoutResult {
     serviceId: input.service.serviceId,
     packageId: input.packageId,
     addonIds: input.addonIds,
+    paymentMethod: input.service.executionType === 'ONSITE' ? input.paymentMethod : 'WALLET',
   };
   if (input.service.executionType !== 'ONSITE') return { ok: true, body };
 

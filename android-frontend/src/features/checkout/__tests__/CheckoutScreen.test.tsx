@@ -57,26 +57,32 @@ test('shows the estimate for package + selected add-on', async () => {
   expect(screen.getByTestId('checkout-total')).toHaveTextContent('600.000 ₫');
 });
 
-test('on success goes to the payment screen, which starts the chosen option (MOCK in dev)', async () => {
+test('DIGITAL checkout creates a wallet order and opens its payment screen', async () => {
   (useServiceDetail as jest.Mock).mockReturnValue(detail('DIGITAL'));
   (orderApi.createOrder as jest.Mock).mockResolvedValue({ result: { orderId: 'o9' } });
   await renderCheckout();
   await fireEvent.press(screen.getByRole('button', { name: 'Đặt dịch vụ' }));
   await waitFor(() =>
-    expect(mockReplace).toHaveBeenCalledWith({ pathname: '/payment/[orderId]', params: { orderId: 'o9', option: 'mock', start: '1' } })
+    expect(mockReplace).toHaveBeenCalledWith({ pathname: '/payment/[orderId]', params: { orderId: 'o9' } })
   );
-  expect(orderApi.createOrder).toHaveBeenCalledWith({ serviceId: 's1', packageId: 'pk1', addonIds: [] }, expect.any(String));
+  expect(orderApi.createOrder).toHaveBeenCalledWith({ serviceId: 's1', packageId: 'pk1', addonIds: [], paymentMethod: 'WALLET' }, expect.any(String));
+  expect(screen.queryByRole('radio', { name: 'Tiền mặt tại chỗ' })).toBeNull();
 });
 
-test('the payment option picked at checkout is passed on', async () => {
-  (useServiceDetail as jest.Mock).mockReturnValue(detail('DIGITAL'));
-  (orderApi.createOrder as jest.Mock).mockResolvedValue({ result: { orderId: 'o9' } });
+test('ONSITE cash checkout opens the order without wallet payment', async () => {
+  (useServiceDetail as jest.Mock).mockReturnValue(detail('ONSITE'));
+  (availabilityApi.getSlots as jest.Mock).mockResolvedValue({ result: { data: [{ bookingSlotId: 'sl1', startedAt: '2099-11-12T10:00:00Z', endAt: '2099-11-12T11:00:00Z', status: 'AVAILABLE' }] } });
+  (addressApi.getMy as jest.Mock).mockResolvedValue({ result: { data: [{ addressId: 'ad1', label: 'Nhà', line1: '12 Lê Lợi' }] } });
+  (orderApi.createOrder as jest.Mock).mockResolvedValue({ result: { orderId: 'o9', paymentMethod: 'CASH' } });
   await renderCheckout();
-  await fireEvent.press(screen.getByRole('radio', { name: 'Ví MoMo' }));
+  await fireEvent.press(await screen.findByRole('radio', { name: /2099/ }));
+  await fireEvent.press(screen.getByRole('radio', { name: 'Nhà' }));
+  await fireEvent.press(screen.getByRole('radio', { name: 'Tiền mặt tại chỗ' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Đặt dịch vụ' }));
   await waitFor(() =>
-    expect(mockReplace).toHaveBeenCalledWith({ pathname: '/payment/[orderId]', params: { orderId: 'o9', option: 'momo', start: '1' } })
+    expect(mockReplace).toHaveBeenCalledWith({ pathname: '/orders/[id]', params: { id: 'o9', role: 'CLIENT' } })
   );
+  expect(orderApi.createOrder).toHaveBeenCalledWith(expect.objectContaining({ paymentMethod: 'CASH', bookingSlotId: 'sl1' }), expect.any(String));
 });
 
 test('ONSITE without slots shows the reason and never calls createOrder', async () => {
@@ -95,4 +101,22 @@ test('server error is shown and the user stays on checkout', async () => {
   await fireEvent.press(screen.getByRole('button', { name: 'Đặt dịch vụ' }));
   expect(await screen.findByText('Gói không còn hoạt động')).toBeTruthy();
   expect(mockReplace).not.toHaveBeenCalled();
+});
+
+test('retry after lost acknowledgement reuses the same key; changing the order creates a new key', async () => {
+  (useServiceDetail as jest.Mock).mockReturnValue(detail('DIGITAL'));
+  (orderApi.createOrder as jest.Mock).mockRejectedValue(new Error('Network request failed'));
+  await renderCheckout();
+  await fireEvent.press(screen.getByRole('button', { name: 'Đặt dịch vụ' }));
+  await waitFor(() => expect(orderApi.createOrder).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Đặt dịch vụ' })).not.toBeDisabled());
+  await fireEvent.press(screen.getByRole('button', { name: 'Đặt dịch vụ' }));
+  await waitFor(() => expect(orderApi.createOrder).toHaveBeenCalledTimes(2));
+  expect((orderApi.createOrder as jest.Mock).mock.calls[1][1]).toBe((orderApi.createOrder as jest.Mock).mock.calls[0][1]);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Đặt dịch vụ' })).not.toBeDisabled());
+  await fireEvent.press(screen.getByRole('checkbox', { name: 'Giao gấp' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Đặt dịch vụ' }));
+  await waitFor(() => expect(orderApi.createOrder).toHaveBeenCalledTimes(3));
+  expect((orderApi.createOrder as jest.Mock).mock.calls[2][1]).not.toBe((orderApi.createOrder as jest.Mock).mock.calls[0][1]);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Đặt dịch vụ' })).not.toBeDisabled());
 });

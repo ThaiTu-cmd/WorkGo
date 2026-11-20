@@ -3,6 +3,7 @@
 // fields the backend does not expose yet are left out.
 import type { AddonDto, AddressDto, CategoryDto, MediaDto, PackageDto, ProviderProfileDto, ServiceDto } from './types';
 import { translate } from '@/i18n';
+import { API_BASE_URL } from '@/lib/env';
 
 // Spring PageResponse lands either wrapped (ApiResponse.result) or bare.
 export function pageItems<T>(res: unknown): T[] {
@@ -101,7 +102,7 @@ export function toMediaList(medias: MediaDto[] = []): Media[] {
   return medias
     .filter((m) => m.url && (!m.mediaType || m.mediaType === 'IMAGE'))
     .sort((a, b) => Number(Boolean(b.cover)) - Number(Boolean(a.cover)))
-    .map((m, i) => ({ id: m.serviceMediaId, url: m.url, isCover: i === 0 }));
+    .map((m, i) => ({ id: m.serviceMediaId, url: m.url.startsWith('/medias/') ? `${API_BASE_URL}/catalog${m.url}` : m.url, isCover: i === 0 }));
 }
 
 export function toProvider(profile: ProviderProfileDto | null | undefined): Provider {

@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import * as React from 'react';
@@ -11,7 +11,9 @@ import { qk } from '@/api/queryKeys';
 import type { PaymentGateway, TopUpDto } from '@/api/types';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
+import { useT } from '@/i18n';
 import { formatVnd } from '@/lib/format';
+import { useSingleFlight } from '@/lib/useSingleFlight';
 import {
   Button,
   Card,
@@ -27,134 +29,102 @@ import {
 import { MOCK_PAYMENT_ENABLED, newIdempotencyKey } from './payment';
 
 const PRESET_AMOUNTS = [50000, 100000, 200000, 500000, 1000000, 2000000];
+const MIN_TOP_UP_AMOUNT = 10000;
 
 export function TopUpScreen() {
+  const t = useT();
   const styles = useStyles();
   const colors = useColors();
   const router = useRouter();
   const signedIn = useRequireAuth();
   const queryClient = useQueryClient();
-  const params = useLocalSearchParams<{ amount?: string }>();
+  const params = useLocalSearchParams<{ amount?: string; orderId?: string; topUpId?: string; fromAmendment?: string }>();
+  const once = useSingleFlight();
 
   const [amountRaw, setAmountRaw] = React.useState(() => {
-    if (params.amount && Number(params.amount) > 0) return params.amount;
+    if (params.amount && Number(params.amount) > 0) return String(Math.max(MIN_TOP_UP_AMOUNT, Number(params.amount)));
     return '500000';
   });
   const [gateway, setGateway] = React.useState<PaymentGateway>('VNPAY');
   const [error, setError] = React.useState<string | null>(null);
 
-  // Active top-up transaction tracking & UNKNOWN polling
-  const [activeTopUpId, setActiveTopUpId] = React.useState<string | null>(null);
-  const [topUpStatus, setTopUpStatus] = React.useState<string | null>(null);
-  const [topUpAmount, setTopUpAmount] = React.useState<number>(0);
-  const [pollCount, setPollCount] = React.useState<number>(0);
-  const pollTimerRef = React.useRef<NodeJS.Timeout | null>(null);
-  const pollTopUpRef = React.useRef<(id: string) => Promise<void>>(async () => {});
+  const [activeTopUpId, setActiveTopUpId] = React.useState(params.topUpId || '');
+  const attempt = React.useRef<{ amount: number; gateway: PaymentGateway; key: string } | null>(null);
+  const topUp = useQuery({
+    queryKey: qk.topUp(activeTopUpId),
+    enabled: signedIn && !!activeTopUpId,
+    queryFn: async () => (await paymentApi.getTopUp(activeTopUpId)).result,
+    refetchInterval: ({ state }) => {
+      const status = state.data?.status;
+      return status !== 'SUCCEEDED' && status !== 'FAILED' && state.dataUpdateCount < 20 ? 3000 : false;
+    },
+  });
+  const topUpStatus = topUp.data?.status;
 
-  const pollTopUp = React.useCallback(async (id: string) => {
+  React.useEffect(() => {
+    if (topUpStatus === 'SUCCEEDED') {
+      void queryClient.invalidateQueries({ queryKey: qk.wallet() });
+      void queryClient.invalidateQueries({ queryKey: qk.walletLedger() });
+    }
+  }, [topUpStatus, queryClient]);
+
+  const openGateway = async (item: TopUpDto) => {
+    if (!item.paymentUrl) return;
     try {
-      const res = await paymentApi.getTopUp(id);
-      const data = (res?.result ?? res) as TopUpDto;
-      setTopUpStatus(data.status);
-      if (data.amount) setTopUpAmount(Number(data.amount));
-
-      if (data.status === 'SUCCESS') {
-        void queryClient.invalidateQueries({ queryKey: qk.wallet() });
-        void queryClient.invalidateQueries({ queryKey: qk.walletLedger() });
-        return;
-      }
-      if (data.status === 'FAILED') {
-        return;
-      }
-
-      setPollCount((prev) => {
-        const next = prev + 1;
-        if (next < 20) {
-          pollTimerRef.current = setTimeout(() => {
-            void pollTopUpRef.current(id);
-          }, 2500);
-        }
-        return next;
-      });
-    } catch {
-      setPollCount((prev) => {
-        const next = prev + 1;
-        if (next < 20) {
-          pollTimerRef.current = setTimeout(() => {
-            void pollTopUpRef.current(id);
-          }, 3000);
-        }
-        return next;
-      });
+      setError(null);
+      await WebBrowser.openBrowserAsync(item.paymentUrl);
+    } catch (err) {
+      setError(paymentErrorMessage(err));
+    } finally {
+      void queryClient.invalidateQueries({ queryKey: qk.topUp(item.topUpId) });
     }
-  }, [queryClient]);
-
-  React.useEffect(() => {
-    pollTopUpRef.current = pollTopUp;
-  }, [pollTopUp]);
-
-  React.useEffect(() => {
-    if (activeTopUpId && (topUpStatus === 'PENDING' || topUpStatus === 'INITIATED' || topUpStatus === 'UNKNOWN')) {
-      const t = setTimeout(() => {
-        void pollTopUp(activeTopUpId);
-      }, 0);
-      return () => {
-        clearTimeout(t);
-        if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
-      };
-    }
-    return () => {
-      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
-    };
-  }, [activeTopUpId, topUpStatus, pollTopUp]);
+  };
 
   const topUpMutation = useMutation({
+    networkMode: 'always',
     mutationFn: async () => {
-      const amt = Number(String(amountRaw).replace(/[^\d]/g, ''));
-      if (!Number.isFinite(amt) || amt < 50000) {
-        throw new Error('Số tiền nạp tối thiểu là 50.000 ₫');
+      const amt = Number(amountRaw.trim());
+      if (!/^\d+$/.test(amountRaw.trim()) || !Number.isSafeInteger(amt)) {
+        throw new Error(t('paymentScreen.invalid_top_up_amount'));
       }
-      if (amt > 100000000) {
-        throw new Error('Số tiền nạp tối đa là 100.000.000 ₫');
+      if (amt < MIN_TOP_UP_AMOUNT) throw new Error(t('paymentScreen.minimum_top_up_amount', { p0: formatVnd(MIN_TOP_UP_AMOUNT) }));
+      if (attempt.current?.amount !== amt || attempt.current.gateway !== gateway) {
+        attempt.current = { amount: amt, gateway, key: newIdempotencyKey() };
       }
-
-      setTopUpAmount(amt);
       const res = await paymentApi.createTopUp(
         {
           amount: amt,
           gateway,
           paymentMethod: gateway === 'MOMO' ? 'WALLET' : 'QR',
         },
-        newIdempotencyKey()
+        attempt.current.key
       );
-      return (res?.result ?? res) as TopUpDto;
+      return res.result;
     },
     onSuccess: async (data) => {
+      setError(null);
+      queryClient.setQueryData(qk.topUp(data.topUpId), data);
       setActiveTopUpId(data.topUpId);
-      setTopUpStatus(data.status ?? 'PENDING');
-      setPollCount(0);
+      router.setParams({ topUpId: data.topUpId });
 
-      if (gateway !== 'MOCK' && data.paymentUrl) {
-        await WebBrowser.openBrowserAsync(data.paymentUrl);
-        // User closed browser, check status immediately
-        void pollTopUp(data.topUpId);
-      }
+      if (data.gateway !== 'MOCK' && (data.status === 'INITIATED' || data.status === 'PENDING')) await openGateway(data);
     },
     onError: (err) => {
       setError(paymentErrorMessage(err));
     },
   });
 
-  const handleSimulateMock = async (success: boolean) => {
-    if (!activeTopUpId) return;
-    try {
-      await paymentApi.simulateMock(activeTopUpId, success);
-      setTopUpStatus(success ? 'SUCCESS' : 'FAILED');
-      void queryClient.invalidateQueries({ queryKey: qk.wallet() });
-      void queryClient.invalidateQueries({ queryKey: qk.walletLedger() });
-    } catch {
-      setTopUpStatus(success ? 'SUCCESS' : 'FAILED');
-    }
+  const simulate = useMutation({
+    networkMode: 'always',
+    mutationFn: async ({ item, success }: { item: TopUpDto; success: boolean }) => (await paymentApi.simulateMockTopUp(item.topUpCode, success)).result,
+    onSuccess: (item) => queryClient.setQueryData(qk.topUp(item.topUpId), item),
+    onError: (err) => setError(paymentErrorMessage(err)),
+  });
+  const returnAfterTopUp = () => {
+    if (!params.orderId) return router.replace('/payment/wallet');
+    if (router.canGoBack()) return router.back();
+    if (params.fromAmendment === '1') return router.replace({ pathname: '/orders/[id]', params: { id: params.orderId, role: 'CLIENT' } });
+    router.replace({ pathname: '/payment/[orderId]', params: { orderId: params.orderId } });
   };
 
   if (!signedIn) {
@@ -175,19 +145,24 @@ export function TopUpScreen() {
           </Text>
         </View>
 
-        {activeTopUpId && topUpStatus ? (
+        {activeTopUpId ? (
           <Card style={styles.statusCard}>
             {topUpStatus === 'PENDING' || topUpStatus === 'INITIATED' ? (
               <View style={styles.centerBox}>
                 <ActivityIndicator size="large" color={colors.primary} />
                 <Text style={styles.statusTitle}>Đang xử lý giao dịch nạp tiền</Text>
                 <Text style={styles.statusDesc}>
-                  Hệ thống đang kết nối với cổng {gateway}. Vui lòng chờ trong giây lát ({pollCount + 1}/20)...
+                  {t('paymentScreen.gateway_connecting', { p0: topUp.data?.gateway ?? gateway })}
                 </Text>
-                {MOCK_PAYMENT_ENABLED || gateway === 'MOCK' ? (
+                {topUp.data?.gateway !== 'MOCK' && topUp.data?.paymentUrl ? (
+                  <Button title={t('paymentScreen.mo_lai_trang_thanh_toan')} onPress={() => void once(() => openGateway(topUp.data))} />
+                ) : null}
+                <Button title={t('paymentScreen.kiem_tra_lai')} loading={topUp.isFetching} onPress={() => void topUp.refetch()} />
+                {error && <Text accessibilityLiveRegion="polite">{error}</Text>}
+                {MOCK_PAYMENT_ENABLED && topUp.data?.gateway === 'MOCK' ? (
                   <View style={styles.mockActions}>
-                    <Button title="Giả lập nạp thành công (Dev)" onPress={() => void handleSimulateMock(true)} />
-                    <Button title="Giả lập thất bại" variant="secondary" onPress={() => void handleSimulateMock(false)} />
+                    <Button title="Giả lập nạp thành công (Dev)" loading={simulate.isPending} onPress={() => topUp.data && simulate.mutate({ item: topUp.data, success: true })} />
+                    <Button title="Giả lập thất bại" disabled={simulate.isPending} variant="secondary" onPress={() => topUp.data && simulate.mutate({ item: topUp.data, success: false })} />
                   </View>
                 ) : null}
               </View>
@@ -200,18 +175,19 @@ export function TopUpScreen() {
                 <Text style={styles.statusDesc}>
                   Kết quả từ ngân hàng đang được kiểm tra tự động để tránh trừ tiền 2 lần. Số dư ví sẽ được cập nhật sớm nhất.
                 </Text>
-                <Button title="Quay lại ví" onPress={() => router.replace('/payment/wallet')} />
+                <Button title={t('paymentScreen.kiem_tra_lai')} loading={topUp.isFetching} onPress={() => void topUp.refetch()} />
+                <Button title={params.orderId ? t('paymentScreen.return_to_order_payment') : 'Quay lại ví'} onPress={returnAfterTopUp} />
               </View>
-            ) : topUpStatus === 'SUCCESS' ? (
+            ) : topUpStatus === 'SUCCEEDED' ? (
               <View style={styles.centerBox}>
                 <Ionicons name="checkmark-circle" size={52} color={colors.success} />
                 <Text style={[styles.statusTitle, { color: colors.success }]}>Nạp tiền thành công!</Text>
                 <Text style={styles.statusDesc}>
-                  Đã cộng {formatVnd(topUpAmount)} vào số dư khả dụng của bạn.
+                  {t('paymentScreen.top_up_credited', { p0: formatVnd(Number(topUp.data?.amount)) })}
                 </Text>
-                <Button title="Xem số dư ví" onPress={() => router.replace('/payment/wallet')} />
+                <Button title={params.orderId ? t('paymentScreen.return_to_order_payment') : 'Xem số dư ví'} onPress={returnAfterTopUp} />
               </View>
-            ) : (
+            ) : topUpStatus === 'FAILED' ? (
               <View style={styles.centerBox}>
                 <Ionicons name="close-circle" size={52} color={colors.danger} />
                 <Text style={[styles.statusTitle, { color: colors.danger }]}>Giao dịch không thành công</Text>
@@ -219,10 +195,16 @@ export function TopUpScreen() {
                 <Button
                   title="Thử nạp lại"
                   onPress={() => {
-                    setActiveTopUpId(null);
-                    setTopUpStatus(null);
+                    setActiveTopUpId('');
+                    router.setParams({ topUpId: '' });
+                    attempt.current = null;
                   }}
                 />
+              </View>
+            ) : (
+              <View style={styles.centerBox}>
+                {topUp.isError ? <Text style={styles.statusDesc}>{paymentErrorMessage(topUp.error)}</Text> : <ActivityIndicator color={colors.primary} />}
+                <Button title={t('paymentScreen.kiem_tra_lai')} loading={topUp.isFetching} onPress={() => void topUp.refetch()} />
               </View>
             )}
           </Card>
@@ -280,7 +262,7 @@ export function TopUpScreen() {
               </View>
 
               <TextField
-                label="Hoặc nhập số tiền khác (tối thiểu 50.000 ₫)"
+                label={t('paymentScreen.enter_top_up_amount')}
                 value={amountRaw}
                 onChangeText={(val) => {
                   setAmountRaw(val);
@@ -297,7 +279,7 @@ export function TopUpScreen() {
                     : 'Tiến hành nạp tiền'
                 }
                 loading={topUpMutation.isPending}
-                onPress={() => topUpMutation.mutate()}
+                onPress={() => void once(() => topUpMutation.mutateAsync().catch(() => undefined))}
               />
             </Card>
           </>

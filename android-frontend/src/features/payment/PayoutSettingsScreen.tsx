@@ -5,10 +5,12 @@ import { Alert, ScrollView, Text, View } from 'react-native';
 
 import { paymentApi } from '@/api/paymentApi';
 import { qk } from '@/api/queryKeys';
-import type { PayoutSettingsDto, WalletDto } from '@/api/types';
+import type { PayoutRequest, WalletDto } from '@/api/types';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { formatVnd } from '@/lib/format';
+import { useSingleFlight } from '@/lib/useSingleFlight';
+import { useT } from '@/i18n';
 import {
   Button,
   Card,
@@ -23,7 +25,9 @@ import {
 
 import { newIdempotencyKey } from './payment';
 
-const POPULAR_BANKS = ['Vietcombank', 'MB Bank', 'Techcombank', 'BIDV', 'ACB', 'VietinBank'];
+const MIN_PAYOUT_AMOUNT = 50000;
+const POPULAR_BANKS = [{ name: 'Vietcombank', code: 'VCB' }, { name: 'MB Bank', code: 'MB' },
+  { name: 'Techcombank', code: 'TCB' }, { name: 'BIDV', code: 'BIDV' }, { name: 'ACB', code: 'ACB' }, { name: 'VietinBank', code: 'CTG' }];
 
 export function maskAccount(n: string): string {
   const digits = n.replace(/\D/g, '');
@@ -32,10 +36,13 @@ export function maskAccount(n: string): string {
 }
 
 export function PayoutSettingsScreen() {
+  const t = useT();
   const styles = useStyles();
   const colors = useColors();
   const signedIn = useRequireAuth();
   const queryClient = useQueryClient();
+  const once = useSingleFlight();
+  const [attempt, setAttempt] = React.useState<{ payload: string; key: string } | null>(null);
 
   const [bankName, setBankName] = React.useState('');
   const [accountName, setAccountName] = React.useState('');
@@ -47,15 +54,12 @@ export function PayoutSettingsScreen() {
   // Withdraw state
   const [withdrawAmount, setWithdrawAmount] = React.useState('');
   const [withdrawError, setWithdrawError] = React.useState<string | null>(null);
-
-  const settingsQuery = useQuery({
-    queryKey: qk.payoutSettings(),
-    enabled: signedIn,
-    queryFn: async () => {
-      const res = await paymentApi.getPayoutSettings();
-      return (res?.result ?? res) as PayoutSettingsDto;
-    },
-  });
+  const body: PayoutRequest = {
+    amount: Number(withdrawAmount.trim()), bankCode: bankName.trim(),
+    accountName: accountName.trim().toUpperCase(), accountNumber: accountNumber.trim(),
+  };
+  const payload = JSON.stringify(body);
+  const isReplay = attempt?.payload === payload;
 
   const walletQuery = useQuery({
     queryKey: qk.wallet(),
@@ -66,19 +70,8 @@ export function PayoutSettingsScreen() {
     },
   });
 
-  React.useEffect(() => {
-    const data = settingsQuery.data;
-    if (data) {
-      const timer = setTimeout(() => {
-        if (data.bankName) setBankName(data.bankName);
-        if (data.accountName) setAccountName(data.accountName);
-        if (data.accountNumber) setAccountNumber(data.accountNumber);
-      }, 0);
-      return () => clearTimeout(timer);
-    }
-  }, [settingsQuery.data]);
-
-  const saveMutation = useMutation({
+  const withdrawMutation = useMutation({
+    networkMode: 'always',
     mutationFn: async () => {
       let hasErr = false;
       if (!bankName.trim()) {
@@ -89,65 +82,38 @@ export function PayoutSettingsScreen() {
         setNameError('Vui lòng nhập tên chủ tài khoản từ 2 ký tự');
         hasErr = true;
       }
-      const digits = accountNumber.replace(/\D/g, '');
+      const digits = accountNumber.trim();
       if (!/^\d{8,19}$/.test(digits)) {
         setNumError('Số tài khoản phải gồm 8-19 chữ số');
         hasErr = true;
       }
       if (hasErr) throw new Error('Dữ liệu không hợp lệ');
 
-      await paymentApi.savePayoutSettings({
-        bankName: bankName.trim(),
-        accountName: accountName.trim().toUpperCase(),
-        accountNumber: digits,
-      });
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: qk.payoutSettings() });
-      Alert.alert('Thành công', 'Đã lưu thông tin tài khoản rút tiền!');
-    },
-    onError: (err) => {
-      Alert.alert('Lỗi', (err as Error)?.message || 'Không thể lưu cài đặt.');
-    },
-  });
+      const amt = Number(withdrawAmount.trim());
+      const avail = walletQuery.data?.balance ?? 0;
+      const debt = walletQuery.data?.outstandingFee ?? 0;
 
-  const withdrawMutation = useMutation({
-    mutationFn: async () => {
-      const amt = Number(String(withdrawAmount).replace(/[^\d]/g, ''));
-      const avail = Number(walletQuery.data?.availableBalance ?? 0);
-      const debt = Number(walletQuery.data?.debtBalance ?? 0);
-
-      if (!Number.isFinite(amt) || amt < 100000) {
-        setWithdrawError('Số tiền rút tối thiểu là 100.000 ₫');
+      if (!/^\d+$/.test(withdrawAmount.trim()) || !Number.isSafeInteger(amt) || amt < MIN_PAYOUT_AMOUNT) {
+        setWithdrawError(t('payout.minimum', { p0: formatVnd(MIN_PAYOUT_AMOUNT) }));
         throw new Error('Số tiền không hợp lệ');
       }
-      if (amt > avail) {
+      if (!isReplay && amt > avail) {
         setWithdrawError('Số tiền rút vượt quá số dư khả dụng');
         throw new Error('Vượt số dư');
       }
-      if (debt > 0) {
+      if (!isReplay && debt > 0) {
         setWithdrawError('Tài khoản có dư nợ, không thể rút tiền');
         throw new Error('Có dư nợ');
       }
-      if (!accountNumber) {
-        setWithdrawError('Vui lòng lưu thông tin tài khoản ngân hàng trước');
-        throw new Error('Chưa lưu ngân hàng');
-      }
-
-      await paymentApi.requestPayout(
-        {
-          amount: amt,
-          bankName,
-          accountName,
-          accountNumber,
-        },
-        newIdempotencyKey()
-      );
+      const currentAttempt = attempt?.payload === payload ? attempt : { payload, key: newIdempotencyKey() };
+      setAttempt(currentAttempt);
+      return (await paymentApi.requestPayout(body, currentAttempt.key)).result;
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: qk.wallet() });
       void queryClient.invalidateQueries({ queryKey: qk.walletLedger() });
       setWithdrawAmount('');
+      setAttempt(null);
       Alert.alert('Thành công', 'Đã tạo lệnh rút tiền về tài khoản ngân hàng!');
     },
     onError: (err) => {
@@ -163,9 +129,8 @@ export function PayoutSettingsScreen() {
     );
   }
 
-  const avail = Number(walletQuery.data?.availableBalance ?? 0);
-  const debt = Number(walletQuery.data?.debtBalance ?? 0);
-  const savedAccount = settingsQuery.data?.accountNumber ? maskAccount(settingsQuery.data.accountNumber) : null;
+  const avail = walletQuery.data?.balance ?? 0;
+  const debt = walletQuery.data?.outstandingFee ?? 0;
 
   return (
     <Screen>
@@ -177,40 +142,28 @@ export function PayoutSettingsScreen() {
           </Text>
         </View>
 
-        {savedAccount ? (
-          <Card style={styles.savedCard}>
-            <Ionicons name="card" size={24} color={colors.primary} />
-            <View style={styles.savedContent}>
-              <Text style={styles.savedTitle}>Tài khoản thụ hưởng hiện tại</Text>
-              <Text style={styles.savedDesc}>
-                {settingsQuery.data?.bankName} — {savedAccount} ({settingsQuery.data?.accountName})
-              </Text>
-            </View>
-          </Card>
-        ) : null}
-
         <Card style={styles.formCard}>
           <Text style={styles.cardTitle}>Thông tin tài khoản ngân hàng</Text>
 
           <TextField
-            label="Tên ngân hàng"
+            label={t('payout.bank_code')}
             value={bankName}
             onChangeText={(val) => {
               setBankName(val);
               setBankError(null);
             }}
-            placeholder="Ví dụ: Vietcombank"
+            placeholder="VCB"
             error={bankError ?? undefined}
           />
 
           <View style={styles.quickBanks}>
             {POPULAR_BANKS.map((b) => (
               <Chip
-                key={b}
-                label={b}
-                selected={bankName === b}
+                key={b.code}
+                label={b.name}
+                selected={bankName === b.code}
                 onPress={() => {
-                  setBankName(b);
+                  setBankName(b.code);
                   setBankError(null);
                 }}
               />
@@ -241,15 +194,9 @@ export function PayoutSettingsScreen() {
             error={numError ?? undefined}
           />
 
-          <Button
-            title="Lưu thông tin ngân hàng"
-            loading={saveMutation.isPending}
-            onPress={() => saveMutation.mutate()}
-          />
         </Card>
 
         {/* Withdrawal request section */}
-        {savedAccount ? (
           <Card style={styles.withdrawCard}>
             <Text style={styles.cardTitle}>Yêu cầu rút tiền về ngân hàng</Text>
             <View style={styles.availBox}>
@@ -267,7 +214,7 @@ export function PayoutSettingsScreen() {
             ) : null}
 
             <TextField
-              label="Số tiền muốn rút (tối thiểu 100.000 ₫)"
+              label={t('payout.amount', { p0: formatVnd(MIN_PAYOUT_AMOUNT) })}
               value={withdrawAmount}
               onChangeText={(val) => {
                 setWithdrawAmount(val);
@@ -276,18 +223,17 @@ export function PayoutSettingsScreen() {
               keyboardType="numeric"
               placeholder="500000"
               error={withdrawError ?? undefined}
-              editable={avail >= 100000 && debt === 0}
+              editable={!withdrawMutation.isPending}
             />
 
             <Button
               title="Tạo lệnh rút tiền"
               variant="secondary"
-              disabled={avail < 100000 || debt > 0}
+              disabled={!isReplay && (!walletQuery.data || avail < MIN_PAYOUT_AMOUNT || debt > 0)}
               loading={withdrawMutation.isPending}
-              onPress={() => withdrawMutation.mutate()}
+              onPress={() => { void once(() => withdrawMutation.mutateAsync().catch(() => undefined)); }}
             />
           </Card>
-        ) : null}
       </ScrollView>
     </Screen>
   );

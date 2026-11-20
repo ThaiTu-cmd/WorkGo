@@ -6,17 +6,16 @@ import { Text, View } from 'react-native';
 import { addressApi } from '@/api/addressApi';
 import { pageItems, toAddress } from '@/api/adapters';
 import { availabilityApi } from '@/api/availabilityApi';
-import { errorMessage } from '@/api/errors';
+import { errorMessage, orderErrorMessage } from '@/api/errors';
 import { orderApi } from '@/api/orderApi';
 import { qk } from '@/api/queryKeys';
-import type { AddressDto, BookingSlotDto, OrderCreationRequest } from '@/api/types';
+import type { AddressDto, BookingSlotDto, OrderCreationRequest, OrderPaymentMethod } from '@/api/types';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { useServiceDetail } from '@/features/catalog/hooks';
 import { PackagePicker } from '@/features/catalog/PackagePicker';
 import { upcomingAvailableSlots } from '@/features/orders/orderStatus';
-import { findPaymentOption, MOCK_PAYMENT_ENABLED, newIdempotencyKey } from '@/features/payment/payment';
-import { PaymentOptionPicker } from '@/features/payment/PaymentOptionPicker';
+import { newIdempotencyKey } from '@/features/payment/payment';
 import { formatDateTime, formatVnd } from '@/lib/format';
 import { useSingleFlight } from '@/lib/useSingleFlight';
 import { Button, Card, ErrorState, font, makeStyles, OptionRow, Screen, SkeletonList, spacing } from '@/ui';
@@ -41,7 +40,8 @@ export function CheckoutScreen() {
   const [slotId, setSlotId] = React.useState<string | null>(null);
   const [addressId, setAddressId] = React.useState<string | null>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
-  const [paymentOption, setPaymentOption] = React.useState(() => findPaymentOption(undefined, MOCK_PAYMENT_ENABLED).id);
+  const [paymentMethod, setPaymentMethod] = React.useState<OrderPaymentMethod>('WALLET');
+  const attempt = React.useRef<{ payload: string; key: string } | null>(null);
 
   const slots = useQuery({
     queryKey: qk.slots(params.serviceId),
@@ -55,15 +55,23 @@ export function CheckoutScreen() {
   });
 
   const create = useMutation({
-    mutationFn: (body: OrderCreationRequest) => orderApi.createOrder(body, newIdempotencyKey()),
+    networkMode: 'always',
+    mutationFn: (body: OrderCreationRequest) => {
+      const payload = JSON.stringify(body);
+      if (attempt.current?.payload !== payload) attempt.current = { payload, key: newIdempotencyKey() };
+      return orderApi.createOrder(body, attempt.current.key);
+    },
     onSuccess: (res) => {
       void queryClient.invalidateQueries({ queryKey: qk.orders('CLIENT') });
       void queryClient.invalidateQueries({ queryKey: qk.slots(params.serviceId) });
-      // The payment screen starts the chosen gateway; if that fails the order
-      // still exists and the user can retry from there or from the order.
-      router.replace({ pathname: '/payment/[orderId]', params: { orderId: res.result.orderId, option: paymentOption, start: '1' } });
+      const created = res.result;
+      if (created.paymentMethod === 'CASH') {
+        router.replace({ pathname: '/orders/[id]', params: { id: created.orderId, role: 'CLIENT' } });
+        return;
+      }
+      router.replace({ pathname: '/payment/[orderId]', params: { orderId: created.orderId } });
     },
-    onError: (err) => setSubmitError(errorMessage(err)),
+    onError: (err) => setSubmitError(orderErrorMessage(err)),
   });
 
   if (!signedIn) return <LoginRequired edges={['bottom']} />;
@@ -93,6 +101,7 @@ export function CheckoutScreen() {
     address: addressList.find((a) => a.id === addressId) ?? null,
     availableSlotCount: slotList.length,
     addressCount: addressList.length,
+    paymentMethod,
   });
   const toggleAddon = (id: string) =>
     setAddonIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
@@ -150,7 +159,12 @@ export function CheckoutScreen() {
       ) : null}
 
       <Text style={styles.section}>{t('checkoutScreen.phuong_thuc_thanh_toan')}</Text>
-      <PaymentOptionPicker value={paymentOption} onChange={setPaymentOption} />
+      {onsite ? (
+        <View accessibilityRole="radiogroup">
+          <OptionRow kind="radio" label={t('checkoutScreen.workgo_wallet')} selected={paymentMethod === 'WALLET'} onPress={() => setPaymentMethod('WALLET')} />
+          <OptionRow kind="radio" label={t('checkoutScreen.onsite_cash')} selected={paymentMethod === 'CASH'} onPress={() => setPaymentMethod('CASH')} />
+        </View>
+      ) : <Text style={styles.note}>{t('checkoutScreen.workgo_wallet')}</Text>}
 
       <Card>
         <View style={styles.totalRow}>
@@ -159,7 +173,7 @@ export function CheckoutScreen() {
             {formatVnd(estimateTotal(selectedPackage, service.addons, addonIds))}
           </Text>
         </View>
-        <Text style={styles.note}>{t('checkoutScreen.gia_cuoi_cung_do_he')}</Text>
+        <Text style={styles.note}>{t(onsite && paymentMethod === 'CASH' ? 'checkoutScreen.cash_price_note' : 'checkoutScreen.gia_cuoi_cung_do_he')}</Text>
       </Card>
 
       {!check.ok ? <Text style={styles.error}>{check.error}</Text> : null}

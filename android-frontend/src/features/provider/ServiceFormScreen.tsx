@@ -149,7 +149,7 @@ function ServiceForm({
     setError(null);
     try {
       const picked = await pickImage(source);
-      if (picked) setImages((list) => [...list, picked.dataUrl]);
+      if (picked) setImages((list) => [...list, picked.uri]);
     } catch (err) {
       setError(errorMessage(err));
     }

@@ -1,10 +1,14 @@
+import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import * as React from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { errorMessage } from '@/api/errors';
 import { phaseOf } from '@/api/evidenceApi';
+import { orderApi } from '@/api/orderApi';
 import type { EvidenceDto } from '@/api/types';
+import { useAuth } from '@/auth/AuthProvider';
+import { API_BASE_URL } from '@/lib/env';
 import { formatDateTime } from '@/lib/format';
 import { Lightbox } from '@/ui/Lightbox';
 import { font, makeStyles, radius, Skeleton, spacing } from '@/ui';
@@ -17,6 +21,15 @@ export function EvidenceGrid({ orderId, footer }: { orderId: string; footer?: Re
   const styles = useStyles();
   const evidence = useEvidence(orderId, true);
   const [open, setOpen] = React.useState<EvidenceDto | null>(null);
+  const { token } = useAuth();
+  const fileId = open?.storedFileId;
+  const download = useQuery({
+    queryKey: ['evidence-download', orderId, fileId],
+    enabled: !!fileId && !!token,
+    gcTime: 0,
+    queryFn: async () => (await orderApi.getDownloadUrl(orderId, fileId!)).result.url,
+  });
+  const url = fileId && download.data?.startsWith('/orders/files/') ? `${API_BASE_URL}/order${download.data}` : null;
 
   return (
     <View style={styles.wrap}>
@@ -36,15 +49,18 @@ export function EvidenceGrid({ orderId, footer }: { orderId: string; footer?: Re
               accessibilityLabel={t('evidenceGrid.bang_chung', { p0: phaseOf(e.phase).label })}
               onPress={() => setOpen(e)}
               style={styles.tile}>
-              <Image source={{ uri: e.fileUrl }} style={styles.img} contentFit="cover" />
+              {e.fileUrl ? <Image source={{ uri: e.fileUrl }} style={styles.img} contentFit="cover" /> : null}
               <Text style={styles.phase}>{phaseOf(e.phase).short}</Text>
             </Pressable>
           ))}
         </View>
       )}
+      {fileId && download.isFetching ? <Skeleton height={32} /> : null}
+      {fileId && download.error ? <Text style={styles.muted} accessibilityLiveRegion="polite">{errorMessage(download.error)}</Text> : null}
       {footer}
       <Lightbox
-        uri={open?.fileUrl ?? null}
+        uri={fileId ? url : open?.fileUrl ?? null}
+        headers={url && token ? { Authorization: `Bearer ${token}` } : undefined}
         caption={open ? `${phaseOf(open.phase).label} · ${formatDateTime(open.capturedAt ?? open.createdAt)}` : undefined}
         onClose={() => setOpen(null)}
       />

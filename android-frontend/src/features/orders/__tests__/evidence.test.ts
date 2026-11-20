@@ -13,18 +13,18 @@ jest.mock('expo-location', () => ({
 const loc = Location as jest.Mocked<typeof Location>;
 const image = { dataUrl: 'data:image/jpeg;base64,AAAA', capturedAt: '2026-10-30T03:00:00.000Z' };
 
-test('buildEvidenceBody omits coordinates when location is null', () => {
-  expect(buildEvidenceBody('BEFORE', image, null)).toEqual({
+test('buildEvidenceBody references the stored file and omits missing coordinates', () => {
+  expect(buildEvidenceBody('BEFORE', 'file1', image.capturedAt, null)).toEqual({
     phase: 'BEFORE',
-    fileUrl: image.dataUrl,
+    fileId: 'file1',
     capturedAt: image.capturedAt,
   });
 });
 
 test('buildEvidenceBody includes latitude/longitude and capturedAt', () => {
-  expect(buildEvidenceBody('AFTER', image, { latitude: 16.05, longitude: 108.2 })).toEqual({
+  expect(buildEvidenceBody('AFTER', 'file1', image.capturedAt, { latitude: 16.05, longitude: 108.2 })).toEqual({
     phase: 'AFTER',
-    fileUrl: image.dataUrl,
+    fileId: 'file1',
     capturedAt: image.capturedAt,
     latitude: 16.05,
     longitude: 108.2,

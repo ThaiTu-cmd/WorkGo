@@ -119,6 +119,36 @@ const PAYMENT_MESSAGES: Record<number, string> = {
   get 3301() {
     return translate('errors.cong_thanh_toan_tam_thoi');
   },
+  get 3402() {
+    return translate('errors.wallet_insufficient');
+  },
+};
+
+const ORDER_MESSAGES: Record<number, string> = {
+  get 3049() {
+    return translate('errors.order_creation_key_invalid');
+  },
+  get 3050() {
+    return translate('errors.order_creation_key_conflict');
+  },
+  get 3006() {
+    return translate('digitalDelivery.requirements_already_submitted');
+  },
+  get 3009() {
+    return translate('digitalDelivery.revision_limit_reached');
+  },
+  get 2007() {
+    return translate('errors.cash_amount_limit');
+  },
+  get 2008() {
+    return translate('errors.cash_provider_busy');
+  },
+  get 2009() {
+    return translate('errors.order_provider_debt');
+  },
+  get 3041() {
+    return translate('agreement.needs_top_up');
+  },
 };
 
 // catalog-service codes for rules, slots, service status and ownership.
@@ -147,6 +177,9 @@ const CATALOG_MESSAGES: Record<number, string> = {
   get 1028() {
     return translate('errors.ngay_trong_tuan_khong_hop');
   },
+  get 1058() {
+    return translate('errors.catalog_provider_debt');
+  },
 };
 
 function mappedMessage(err: unknown, messages: Record<number, string>, fallback: string): string {
@@ -174,4 +207,8 @@ export function isNotProvider(err: unknown): boolean {
 
 export function paymentErrorMessage(err: unknown): string {
   return mappedMessage(err, PAYMENT_MESSAGES, translate('errors.khong_thuc_hien_duoc_thanh'));
+}
+
+export function orderErrorMessage(err: unknown): string {
+  return mappedMessage(err, ORDER_MESSAGES, genericMessage());
 }

@@ -118,6 +118,7 @@ export type AddressDto = {
 // ---- order-service ----
 export type OrderStatus = 'PENDING_PAYMENT' | 'CONFIRMED' | 'IN_PROGRESS' | 'DELIVERED' | 'COMPLETED' | 'CANCELLED';
 export type OrderRole = 'CLIENT' | 'PROVIDER';
+export type OrderPaymentMethod = 'WALLET' | 'CASH';
 
 export type OrderDto = {
   orderId: string;
@@ -134,6 +135,7 @@ export type OrderDto = {
   currency?: string;
   orderStatus: OrderStatus;
   paymentStatus?: string;
+  paymentMethod?: OrderPaymentMethod | null;
   placedAt?: string | null;
   confirmedAt?: string | null;
   startedAt?: string | null;
@@ -147,8 +149,54 @@ export type OrderDto = {
 export type OrderDetailDto = {
   order: OrderDto;
   items?: unknown[];
-  snapshot?: unknown;
+  snapshot?: { requirementValues?: Record<string, unknown> | null } | null;
   execution?: ExecutionDto | null;
+};
+
+export type OrderAgreementVersion = {
+  agreementVersionId: string;
+  versionNo: number;
+  scope?: string | null;
+  acceptanceCriteria?: string | null;
+  price: Num;
+  durationDays?: number | null;
+};
+
+export type OrderAmendmentDraft = { reason: string; newScope?: string; newPrice?: number; newDurationDays?: number };
+
+export type OrderAmendment = {
+  amendmentId: string;
+  proposedByRole: OrderRole;
+  status: 'PENDING' | 'AWAITING_PAYMENT' | 'APPLIED' | 'REJECTED';
+  reason?: string | null;
+  newScope?: string | null;
+  newPrice?: Num | null;
+  newDurationDays?: number | null;
+};
+
+export type OrderDeliveryFile = {
+  deliveryFileId: string;
+  fileName: string;
+  mimeType?: string | null;
+  storedFileId?: string | null;
+  fileUrl?: string | null;
+};
+
+export type OrderDelivery = {
+  deliveryPackageId: string;
+  versionNo: number;
+  message?: string | null;
+  deliveredAt: string;
+  files: OrderDeliveryFile[];
+  status?: 'SUBMITTED' | 'REVISION_REQUESTED' | 'ACCEPTED';
+};
+
+export type OrderRevision = {
+  revisionRequestId: string;
+  deliveryPackageId: string;
+  reason: string;
+  status: 'OPEN' | 'RESOLVED';
+  createdAt: string;
 };
 
 export type OnsiteStatus = 'SCHEDULED' | 'IN_SERVICE' | 'SERVICE_DONE' | 'ACCEPT' | 'CANCELLED';
@@ -158,13 +206,15 @@ export type ExecutionDto = {
   startedAt?: string | null;
   deliveredAt?: string | null;
   completedAt?: string | null;
-  digital?: { status?: string; deadlineAt?: string | null; revisionLimit?: number; revisionsUsed?: number } | null;
+  digital?: { status?: string; requirementSubmittedAt?: string | null; deadlineAt?: string | null; revisionLimit?: number | null; revisionsUsed?: number | null } | null;
   onsite?: {
     status: OnsiteStatus;
     addressSnapshot?: string | null;
     scheduledStart?: string | null;
     scheduledEnd?: string | null;
     bookingSlotId?: string | null;
+    cashReceivedAt?: string | null;
+    clientAcceptedAt?: string | null;
   } | null;
 };
 
@@ -196,7 +246,8 @@ export type EvidencePhase = 'BEFORE' | 'DURING' | 'AFTER' | 'ISSUE';
 export type EvidenceDto = {
   workEvidenceId: string;
   phase: EvidencePhase;
-  fileUrl: string;
+  fileUrl?: string | null;
+  storedFileId?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   capturedAt?: string | null;
@@ -207,6 +258,7 @@ export type OrderCreationRequest = {
   serviceId: string;
   packageId: string;
   addonIds: string[];
+  paymentMethod: OrderPaymentMethod;
   bookingSlotId?: string;
   address?: string;
 };
@@ -278,9 +330,9 @@ export type WalletEntryDto = {
 };
 
 export type WalletDto = {
-  availableBalance: number;
-  heldBalance: number;
-  debtBalance: number;
+  balance: number;
+  outstandingFee: number;
+  mayStartNewWork: boolean;
   currency?: string;
 };
 
@@ -292,38 +344,43 @@ export type TopUpCreationRequest = {
 
 export type TopUpDto = {
   topUpId: string;
+  topUpCode: string;
   amount: number;
   gateway: PaymentGateway;
-  status: 'INITIATED' | 'PENDING' | 'SUCCESS' | 'FAILED' | 'UNKNOWN';
+  status: 'INITIATED' | 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'UNKNOWN';
   paymentUrl?: string | null;
   qrCodeUrl?: string | null;
   deeplink?: string | null;
   expiresAt?: string | null;
-};
-
-export type PayoutSettingsDto = {
-  bankName: string;
-  accountName: string;
-  accountNumber: string;
-  bankCode?: string;
+  createdAt?: string | null;
 };
 
 export type PayoutRequest = {
   amount: number;
-  bankName: string;
+  bankCode: string;
   accountName: string;
   accountNumber: string;
-  bankCode?: string;
 };
 
 export type PayoutDto = {
   payoutId: string;
   amount: number;
-  bankName: string;
+  payoutCode: string;
+  bankCode: string;
   accountName: string;
   accountNumber: string;
   status: string;
-  requestedAt?: string;
+  createdAt?: string;
+};
+
+export type FeeAssessmentDto = {
+  feeAssessmentId: string;
+  orderId: string;
+  amount: number;
+  outstandingAmount: number;
+  collectedAmount: number;
+  status: string;
+  createdAt?: string;
 };
 
 

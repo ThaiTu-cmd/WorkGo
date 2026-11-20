@@ -1,16 +1,23 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Text, View } from 'react-native';
 
-import { errorMessage } from '@/api/errors';
-import type { OrderRole } from '@/api/types';
+import { errorMessage, orderErrorMessage } from '@/api/errors';
+import { orderApi } from '@/api/orderApi';
+import { qk } from '@/api/queryKeys';
+import type { ExecutionDto, OrderRole } from '@/api/types';
 import { LoginRequired } from '@/auth/LoginRequired';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { EscrowCard } from '@/features/payment/EscrowCard';
 import { formatDateTime, formatVnd } from '@/lib/format';
-import { Badge, Button, Card, ErrorState, font, makeStyles, Screen, SkeletonList, spacing } from '@/ui';
+import { useSingleFlight } from '@/lib/useSingleFlight';
+import { Badge, Button, Card, ErrorState, font, makeStyles, Screen, SkeletonList, spacing, TextField } from '@/ui';
 
 import { CancellationCard } from './CancellationCard';
+import { DigitalDeliveryCard } from './DigitalDeliveryCard';
 import { EvidenceGrid } from './EvidenceGrid';
+import { OrderAgreementCard } from './OrderAgreementCard';
 import { useOrderDetail } from './hooks';
 import { ONSITE_STATUS_LABEL, ORDER_STATUS_LABEL, ORDER_STATUS_TONE } from './orderStatus';
 import { OrderReviewCard } from '@/features/reviews/OrderReviewCard';
@@ -29,10 +36,34 @@ export function OrderDetailScreen({
   const styles = useStyles();
   const signedIn = useRequireAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const once = useSingleFlight();
   const { id, role: roleParam } = useLocalSearchParams<{ id: string; role?: string }>();
   const role: OrderRole = roleParam === 'PROVIDER' ? 'PROVIDER' : 'CLIENT';
   const detail = useOrderDetail(id, signedIn);
   const { order, history, execution, cancellation } = detail;
+  const onsite = execution.data?.onsite;
+  const scheduled = order.data?.orderStatus === 'CONFIRMED' && onsite?.status === 'SCHEDULED';
+  const [code, setCode] = useState('');
+  const checkin = useQuery({
+    queryKey: [...qk.order(id), 'checkin-code'],
+    enabled: signedIn && role === 'CLIENT' && scheduled,
+    gcTime: 0,
+    queryFn: async () => (await orderApi.getCheckinCode(id)).result.checkinCode,
+  });
+  const onsiteAction = useMutation({
+    networkMode: 'always',
+    mutationFn: async (action: () => ReturnType<typeof orderApi.confirmCashReceived>) => (await action()).result,
+    onSuccess: (onsite) => {
+      queryClient.setQueryData<ExecutionDto>(qk.orderExecution(id), (previous) => previous && { ...previous, onsite });
+      for (const queryKey of [qk.order(id), qk.orderExecution(id), qk.orderHistory(id), qk.orders(role), qk.wallet()]) {
+        void queryClient.invalidateQueries({ queryKey });
+      }
+    },
+    onError: () => { void execution.refetch(); void order.refetch(); },
+  });
+  const runAction = (action: () => ReturnType<typeof orderApi.confirmCashReceived>) =>
+    void once(() => onsiteAction.mutateAsync(action).catch(() => undefined));
 
   if (!signedIn) return <LoginRequired edges={['bottom']} />;
   if (order.isPending) {
@@ -51,8 +82,10 @@ export function OrderDetailScreen({
   }
 
   const o = order.data;
-  const awaitingPayment = o.orderStatus === 'PENDING_PAYMENT';
-  const onsite = execution.data?.onsite;
+  const cash = o.paymentMethod === 'CASH';
+  const awaitingPayment = !cash && o.orderStatus === 'PENDING_PAYMENT';
+  const canConfirmCash = cash && role === 'PROVIDER' && !onsite?.cashReceivedAt &&
+    (o.orderStatus === 'IN_PROGRESS' || o.orderStatus === 'DELIVERED');
   const refresh = () => {
     void order.refetch();
     void history.refetch();
@@ -104,7 +137,7 @@ export function OrderDetailScreen({
 
       <CancellationCard order={o} role={role} cancellation={cancellation} />
 
-      {!awaitingPayment ? <EscrowCard orderId={o.orderId} role={role} /> : null}
+      {!awaitingPayment && !cash ? <EscrowCard orderId={o.orderId} role={role} /> : null}
 
       <Card>
         <Line label={t('orderDetailScreen.tam_tinh')} value={money(o.subtotal)} />
@@ -112,12 +145,50 @@ export function OrderDetailScreen({
         <Line label={t('orderDetailScreen.tong_cong')} value={money(o.totalAmount)} strong />
       </Card>
 
+      <OrderAgreementCard order={o} role={role} />
+
+      {o.executionType === 'DIGITAL' ? <DigitalDeliveryCard key={o.orderId} order={o} role={role} execution={execution.data?.digital} /> : null}
+
       {onsite ? (
         <Card>
           <Text style={styles.section}>{t('orderDetailScreen.thuc_hien_tai_nha')}</Text>
           <Line label={t('orderDetailScreen.trang_thai')} value={ONSITE_STATUS_LABEL[onsite.status]} />
           {onsite.scheduledStart ? <Line label={t('orderDetailScreen.lich_hen')} value={formatDateTime(onsite.scheduledStart)} /> : null}
           {onsite.addressSnapshot ? <Text style={styles.text}>{onsite.addressSnapshot}</Text> : null}
+          {scheduled && role === 'CLIENT' && checkin.data && (
+            <Line label={t('orderDetailScreen.checkin_code')} value={checkin.data} strong />
+          )}
+          {scheduled && role === 'CLIENT' && checkin.isError && (
+            <ErrorState message={orderErrorMessage(checkin.error)} onRetry={() => void checkin.refetch()} />
+          )}
+          {scheduled && role === 'PROVIDER' && (
+            <>
+              <TextField label={t('orderDetailScreen.checkin_code')} keyboardType="number-pad" maxLength={6} value={code} onChangeText={setCode} />
+              <Button title={t('orderDetailScreen.check_in')} disabled={!/^\d{6}$/.test(code)} loading={onsiteAction.isPending}
+                onPress={() => runAction(() => orderApi.checkInOnsite(id, code))} />
+            </>
+          )}
+          {role === 'PROVIDER' && o.orderStatus === 'IN_PROGRESS' && onsite.status === 'IN_SERVICE' && (
+            <Button title={t('orderDetailScreen.complete_onsite')} loading={onsiteAction.isPending}
+              onPress={() => runAction(() => orderApi.completeOnsite(id))} />
+          )}
+          {role === 'CLIENT' && o.orderStatus === 'DELIVERED' && onsite.status === 'SERVICE_DONE' && (
+            <Button title={t('orderDetailScreen.accept_onsite')} loading={onsiteAction.isPending}
+              onPress={() => runAction(() => orderApi.acceptOnsite(id))} />
+          )}
+          {cash && (
+            <Text style={styles.text}>{onsite.cashReceivedAt
+              ? t('orderDetailScreen.cash_received_at', { p0: formatDateTime(onsite.cashReceivedAt) })
+              : t('orderDetailScreen.cash_not_confirmed')}</Text>
+          )}
+          {canConfirmCash && (
+            <Button
+              title={t('orderDetailScreen.confirm_cash_received')}
+              loading={onsiteAction.isPending}
+              onPress={() => runAction(() => orderApi.confirmCashReceived(id))}
+            />
+          )}
+          {onsiteAction.error && <Text accessibilityLiveRegion="polite" style={styles.error}>{orderErrorMessage(onsiteAction.error)}</Text>}
         </Card>
       ) : null}
 
@@ -159,6 +230,7 @@ const useStyles = makeStyles((colors) => ({
   text: { fontSize: font.body, color: colors.text },
   strong: { fontWeight: '700', color: colors.primaryDark },
   muted: { fontSize: font.small + 1, color: colors.muted, flexShrink: 1 },
+  error: { fontSize: font.body, color: colors.danger },
   actionRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
   flexBtn: { flex: 1 },
 }));

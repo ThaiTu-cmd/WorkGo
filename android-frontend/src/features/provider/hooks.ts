@@ -140,7 +140,7 @@ export async function saveService(input: SaveServiceInput, progress: SaveProgres
     }
   }
   for (let i = progress.mediaSaved; i < input.images.length; i++) {
-    await catalogApi.createMedia(serviceId, { url: input.images[i], mediaType: 'IMAGE', cover: !input.hasCover && i === 0 });
+    await catalogApi.uploadImage(serviceId, input.images[i], !input.hasCover && i === 0);
     progress.mediaSaved = i + 1;
   }
   if (isNew && !progress.published) {
@@ -158,6 +158,7 @@ export function useSaveService() {
     onSuccess: (serviceId) => {
       invalidate();
       void queryClient.invalidateQueries({ queryKey: qk.service(serviceId) });
+      void queryClient.invalidateQueries({ queryKey: qk.serviceMedias(serviceId) });
     },
   });
 }

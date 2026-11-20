@@ -30,6 +30,7 @@ const address: Address = {
 };
 
 const base = {
+  paymentMethod: 'WALLET' as const,
   packageId: 'pk1',
   addonIds: ['a1'],
   slotId: null,
@@ -51,10 +52,10 @@ test('validateCheckout requires a package', () => {
   });
 });
 
-test('validateCheckout DIGITAL → body without bookingSlotId/address', () => {
-  expect(validateCheckout({ ...base, service: { serviceId: 's1', executionType: 'DIGITAL' } })).toEqual({
+test('validateCheckout DIGITAL always sends WALLET without bookingSlotId/address', () => {
+  expect(validateCheckout({ ...base, paymentMethod: 'CASH', service: { serviceId: 's1', executionType: 'DIGITAL' } })).toEqual({
     ok: true,
-    body: { serviceId: 's1', packageId: 'pk1', addonIds: ['a1'] },
+    body: { serviceId: 's1', packageId: 'pk1', addonIds: ['a1'], paymentMethod: 'WALLET' },
   });
 });
 
@@ -84,9 +85,10 @@ test('validateCheckout ONSITE with addresses but none chosen → choose-address 
   expect(r).toEqual({ ok: false, error: 'Vui lòng chọn địa chỉ.' });
 });
 
-test('validateCheckout ONSITE ok → body.address === address.detail and bookingSlotId', () => {
+test('validateCheckout preserves the ONSITE method, address and slot', () => {
   const r = validateCheckout({
     ...base,
+    paymentMethod: 'CASH',
     availableSlotCount: 3,
     slotId: 'sl1',
     addressCount: 1,
@@ -95,6 +97,6 @@ test('validateCheckout ONSITE ok → body.address === address.detail and booking
   });
   expect(r).toEqual({
     ok: true,
-    body: { serviceId: 's1', packageId: 'pk1', addonIds: ['a1'], bookingSlotId: 'sl1', address: '12 Lê Lợi, Quận 1, TP.HCM' },
+    body: { serviceId: 's1', packageId: 'pk1', addonIds: ['a1'], bookingSlotId: 'sl1', address: '12 Lê Lợi, Quận 1, TP.HCM', paymentMethod: 'CASH' },
   });
 });

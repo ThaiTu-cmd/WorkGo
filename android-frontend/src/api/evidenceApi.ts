@@ -1,6 +1,8 @@
 import { http } from './client';
+import { orderApi } from './orderApi';
 import type { ApiResponse, EvidenceDto, EvidencePhase, Paged } from './types';
 import { translate } from '@/i18n';
+import { imageFormData } from '@/lib/image';
 
 // Work evidence for ONSITE orders (order-service, /orders/{orderId}/evidence).
 // Only the order's provider may upload, and only while the order is IN_PROGRESS
@@ -46,13 +48,15 @@ export const phaseOf = (value: EvidencePhase) => EVIDENCE_PHASES.find((p) => p.v
 
 export type EvidenceBody = {
   phase: EvidencePhase;
-  fileUrl: string;
+  fileId: string;
   latitude?: number;
   longitude?: number;
   capturedAt?: string;
 };
 
 export const evidenceApi = {
+  uploadImage: async (orderId: string, uri: string) => orderApi.uploadFile(orderId, 'WORK_EVIDENCE', await imageFormData(uri)),
+
   // Paged, newest first.
   getEvidence: (orderId: string, { phase, page = 0, size = 50 }: { phase?: EvidencePhase; page?: number; size?: number } = {}) =>
     http.get<Paged<EvidenceDto>>(`/order/orders/${orderId}/evidence`, { params: { phase, page, size } }),

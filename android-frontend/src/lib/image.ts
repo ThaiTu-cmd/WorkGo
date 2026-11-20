@@ -1,15 +1,13 @@
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { translate } from '@/i18n';
 
-// There is no upload service: images travel as JPEG data URLs inside the
-// JSON body (work evidence fileUrl, service media url), like the web app.
 export const MAX_IMAGE_BYTES = 1_000_000;
 const LONG_EDGE = 1280;
 const QUALITY = 0.7;
 
-export type PickedImage = { dataUrl: string; capturedAt: string };
+export type PickedImage = { uri: string; capturedAt: string };
 
 export function dataUrlBytes(dataUrl: string): number {
   const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
@@ -21,14 +19,25 @@ export function assertImageSize(dataUrl: string): void {
   if (dataUrlBytes(dataUrl) > MAX_IMAGE_BYTES) throw new Error(translate('image.anh_qua_lon_toi_da'));
 }
 
-export async function compressToDataUrl(uri: string, width: number, height: number): Promise<string> {
+async function compressImage(uri: string, width: number, height: number): Promise<string> {
   const resize = width >= height ? { width: Math.min(width, LONG_EDGE) } : { height: Math.min(height, LONG_EDGE) };
   const result = await ImageManipulator.manipulateAsync(uri, [{ resize }], {
     compress: QUALITY,
     format: ImageManipulator.SaveFormat.JPEG,
     base64: true,
   });
-  return `data:image/jpeg;base64,${result.base64}`;
+  assertImageSize(`data:image/jpeg;base64,${result.base64}`);
+  return result.uri;
+}
+
+export async function imageFormData(uri: string): Promise<FormData> {
+  const body = new FormData();
+  if (Platform.OS === 'web') {
+    body.append('file', await (await fetch(uri)).blob(), 'photo.jpg');
+  } else {
+    body.append('file', { uri, name: 'photo.jpg', type: 'image/jpeg' } as unknown as Blob);
+  }
+  return body;
 }
 
 // Asks for the permission it needs at the moment of use. Returns null when the
@@ -50,7 +59,6 @@ export async function pickImage(source: 'camera' | 'library'): Promise<PickedIma
     source === 'camera' ? await ImagePicker.launchCameraAsync(options) : await ImagePicker.launchImageLibraryAsync(options);
   if (result.canceled || !result.assets[0]) return null;
   const asset = result.assets[0];
-  const dataUrl = await compressToDataUrl(asset.uri, asset.width, asset.height);
-  assertImageSize(dataUrl);
-  return { dataUrl, capturedAt: new Date().toISOString() };
+  const uri = await compressImage(asset.uri, asset.width, asset.height);
+  return { uri, capturedAt: new Date().toISOString() };
 }

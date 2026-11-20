@@ -2,7 +2,6 @@ import * as Location from 'expo-location';
 
 import type { EvidenceBody } from '@/api/evidenceApi';
 import type { EvidencePhase } from '@/api/types';
-import type { PickedImage } from '@/lib/image';
 
 type Coords = { latitude: number; longitude: number };
 
@@ -23,11 +22,11 @@ export async function getLocationOrNull(timeoutMs = 5000): Promise<Coords | null
   }
 }
 
-export function buildEvidenceBody(phase: EvidencePhase, image: PickedImage, location: Coords | null): EvidenceBody {
+export function buildEvidenceBody(phase: EvidencePhase, fileId: string, capturedAt: string, location: Coords | null): EvidenceBody {
   return {
     phase,
-    fileUrl: image.dataUrl,
-    capturedAt: image.capturedAt,
+    fileId,
+    capturedAt,
     ...(location ? { latitude: location.latitude, longitude: location.longitude } : {}),
   };
 }

@@ -54,6 +54,18 @@ test('builds the query string from params', async () => {
   expect(fetchMock.mock.calls[0][0]).toBe('http://10.0.2.2:8888/api/v1/catalog/services?page=0&size=50');
 });
 
+test('passes multipart body to fetch with bearer auth and leaves the boundary to the platform', async () => {
+  token = 't1';
+  respond(200, {});
+  const form = new FormData();
+  form.append('cover', 'true');
+  await http.post('/catalog/medias/services/s1/upload', form);
+  const [, init] = fetchMock.mock.calls[0];
+  expect(init.body).toBe(form);
+  expect(init.headers.Authorization).toBe('Bearer t1');
+  expect(init.headers['Content-Type']).toBeUndefined();
+});
+
 test('omits undefined params and the Authorization header without a token', async () => {
   respond(200, {});
   await http.get('/x', { params: { a: 1, b: undefined } });

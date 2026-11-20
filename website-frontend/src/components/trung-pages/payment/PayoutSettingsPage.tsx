@@ -101,6 +101,8 @@ export default function PayoutSettingsPage({
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawError, setWithdrawError] = useState("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [payoutHistory, setPayoutHistory] = useState<Array<Record<string, unknown>>>([]);
+  const [loadingPayouts, setLoadingPayouts] = useState(false);
 
   // Sync with backend on mount
   useEffect(() => {
@@ -125,6 +127,23 @@ export default function PayoutSettingsPage({
     }).catch(() => {
       // Offline fallback: loadLocalPayout already loaded
     });
+
+    // Load payout history
+    setLoadingPayouts(true);
+    paymentApi
+      .getPayouts({ page: 0, size: 20 })
+      .then(res => {
+        if (cancelled) return;
+        const data = (res as { result?: { data?: unknown[] } })?.result?.data;
+        const list = Array.isArray(data) ? data : Array.isArray(res?.result) ? (res as { result: unknown[] }).result : [];
+        setPayoutHistory(Array.isArray(list) ? (list as Array<Record<string, unknown>>) : []);
+      })
+      .catch(() => {
+        if (!cancelled) setPayoutHistory([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPayouts(false);
+      });
 
     // Load wallet balance for withdrawal card
     paymentApi.getWallet().then(res => {
@@ -474,6 +493,39 @@ export default function PayoutSettingsPage({
             </form>
           </div>
         ) : null}
+
+        {/* Payout history */}
+        <div className={styles.card} style={{ marginTop: "16px" }}>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 700, margin: 0 }}>Lịch sử rút tiền</h2>
+          {loadingPayouts ? (
+            <p className={styles.sub}>Đang tải lịch sử...</p>
+          ) : payoutHistory.length === 0 ? (
+            <p className={styles.sub}>Chưa có yêu cầu rút tiền nào.</p>
+          ) : (
+            <div style={{ overflowX: "auto", marginTop: "12px" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: "left", padding: "8px" }}>Mã</th>
+                    <th style={{ textAlign: "right", padding: "8px" }}>Số tiền</th>
+                    <th style={{ textAlign: "left", padding: "8px" }}>Trạng thái</th>
+                    <th style={{ textAlign: "left", padding: "8px" }}>Ngày</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payoutHistory.map((p, i) => (
+                    <tr key={String(p.payoutId ?? p.id ?? i)}>
+                      <td style={{ padding: "8px" }}>{String(p.payoutId ?? p.id ?? "-")}</td>
+                      <td style={{ padding: "8px", textAlign: "right" }}>{Number(p.amount ?? 0).toLocaleString("vi-VN")} ₫</td>
+                      <td style={{ padding: "8px" }}>{String(p.status ?? "-")}</td>
+                      <td style={{ padding: "8px" }}>{String(p.createdAt ?? p.requestedAt ?? "-").slice(0, 10)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );

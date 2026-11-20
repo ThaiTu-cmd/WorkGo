@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
-import { trustApi, useAuthToken } from "../../webapp-bridge/backend";
+import { trustApi, orderApi, useAuthToken } from "../../webapp-bridge/backend";
 import styles from "./ReviewFormPage.module.css";
 import type { ReviewItem } from "./types";
 
@@ -32,6 +32,8 @@ export default function ReviewFormPage({
   const tr = useTranslations("misc");
   const token = useAuthToken();
   const [order, setOrder] = useState(orderId ?? "");
+  const [eligibleOrders, setEligibleOrders] = useState<string[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
   const [stars, setStars] = useState(5);
   const [comment, setComment] = useState("");
   const [error, setError] = useState("");
@@ -39,6 +41,38 @@ export default function ReviewFormPage({
   const [alreadyReviewed, setAlreadyReviewed] = useState(false);
   const [recentReviews, setRecentReviews] = useState<ReviewItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // Load completed orders for picker when no orderId is provided by navigation.
+  useEffect(() => {
+    if (!token || orderId) return;
+    let cancelled = false;
+    setLoadingOrders(true);
+    orderApi
+      .getMyOrders("CLIENT", 0, 50)
+      .then((res: unknown) => {
+        if (cancelled) return;
+        const data = (res as { result?: { data?: unknown[] } })?.result?.data;
+        const list = Array.isArray(data) ? data : [];
+        const ids = list
+          .map((o: unknown) => {
+            const order = (o as { order?: { orderId?: string; status?: string } })?.order ?? (o as { orderId?: string; status?: string });
+            const status = String(order?.status ?? "").toUpperCase();
+            const id = String(order?.orderId ?? "");
+            return status === "COMPLETED" ? id : "";
+          })
+          .filter(Boolean);
+        setEligibleOrders(Array.from(new Set(ids)));
+      })
+      .catch(() => {
+        if (!cancelled) setEligibleOrders([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingOrders(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, orderId]);
 
   // Check order status when order changes
   useEffect(() => {
@@ -187,13 +221,30 @@ export default function ReviewFormPage({
         <form onSubmit={submit} noValidate className={styles.form}>
           <label className={styles.field}>
             <span>{tr("m1416")}</span>
-            <input
-              type="text"
-              autoFocus
-              value={order}
-              onChange={e => setOrder(e.target.value)}
-              placeholder="ORD-1042"
-            />
+            {orderId || eligibleOrders.length === 0 ? (
+              <input
+                type="text"
+                autoFocus
+                value={order}
+                onChange={e => setOrder(e.target.value)}
+                placeholder="ORD-1042"
+                disabled={Boolean(orderId)}
+              />
+            ) : (
+              <select
+                autoFocus
+                value={order}
+                onChange={e => setOrder(e.target.value)}
+                disabled={loadingOrders}
+              >
+                <option value="">{loadingOrders ? "Đang tải đơn hàng..." : "Chọn đơn hàng đã hoàn thành"}</option>
+                {eligibleOrders.map(id => (
+                  <option key={id} value={id}>
+                    {id}
+                  </option>
+                ))}
+              </select>
+            )}
           </label>
           {alreadyReviewed && (
             <div className={styles.checkedNote}>

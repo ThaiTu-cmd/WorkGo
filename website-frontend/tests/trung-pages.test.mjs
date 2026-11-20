@@ -135,19 +135,19 @@ test("trung-pages: vietnamese validation messages present", () => {
   }
 });
 
-test("trung-pages: mocks cover budgets in 50k-100M and 4 job types", () => {
-  const jobs = read(path.join(TRUNG, "_mocks/mockJobs.ts"));
+test("trung-pages: job types are defined by the Job domain contract, not mock data", () => {
+  const types = read(path.join(TRUNG, "jobs/types.ts"));
   for (const t of ["DIGITAL", "ONSITE", "DELIVERY", "APPOINTMENT"]) {
-    assert.ok(jobs.includes(`"${t}"`), `mockJobs missing type ${t}`);
+    assert.ok(types.includes(t), `Job domain contract missing type ${t}`);
   }
 });
 
-test("trung-pages: all mock data sets exist and are structured properly", () => {
+test("trung-pages: legacy mock data sets are removed from business flow", () => {
   for (const m of [
     "mockJobs.ts",
     "mockProposals.ts",
   ]) {
-    assert.ok(fs.existsSync(path.join(TRUNG, "_mocks", m)), `missing mock file ${m}`);
+    assert.ok(!fs.existsSync(path.join(TRUNG, "_mocks", m)), `legacy mock file should be removed: ${m}`);
   }
 
   // Profile, addresses, provider profile, wallet, payout, disputes, and reviews come from backend services now.

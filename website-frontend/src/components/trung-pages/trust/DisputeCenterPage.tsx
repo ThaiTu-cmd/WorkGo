@@ -21,6 +21,7 @@ import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/weba
 import {
   trustApi,
   providerApi,
+  orderApi,
   useAuthToken,
   decodeToken,
   compressImage,
@@ -95,6 +96,39 @@ export default function DisputeCenterPage({
   const token = useAuthToken();
   const decoded = decodeToken(token);
   const providerId = (decoded as { providerId?: string })?.providerId;
+
+  // Eligible orders for dispute/report picker
+  const [eligibleDisputeOrders, setEligibleDisputeOrders] = useState<string[]>([]);
+  const [loadingDisputeOrders, setLoadingDisputeOrders] = useState(false);
+
+  useEffect(() => {
+    if (!token || initialOrderId) return undefined;
+    let cancelled = false;
+    setLoadingDisputeOrders(true);
+    orderApi
+      .getMyOrders("CLIENT", 0, 50)
+      .then((res: unknown) => {
+        if (cancelled) return;
+        const data = (res as { result?: { data?: unknown[] } })?.result?.data;
+        const list = Array.isArray(data) ? data : [];
+        const ids = list
+          .map((o: unknown) => {
+            const order = (o as { order?: { orderId?: string } })?.order ?? (o as { orderId?: string });
+            return String(order?.orderId ?? "");
+          })
+          .filter(Boolean);
+        setEligibleDisputeOrders(Array.from(new Set(ids)));
+      })
+      .catch(() => {
+        if (!cancelled) setEligibleDisputeOrders([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDisputeOrders(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, initialOrderId]);
 
   // Active tab
   const [activeTab, setActiveTab] = useState<"disputes" | "reputation" | "sanctions">("disputes");
@@ -627,11 +661,27 @@ export default function DisputeCenterPage({
                 {kind === "DISPUTE" ? (
                   <label className={styles.field}>
                     <span>{tr("m1416")}</span>
-                    <input
-                      value={orderId}
-                      onChange={e => setOrderId(e.target.value)}
-                      placeholder="ORD-1042"
-                    />
+                    {initialOrderId || eligibleDisputeOrders.length === 0 ? (
+                      <input
+                        value={orderId}
+                        onChange={e => setOrderId(e.target.value)}
+                        placeholder="ORD-1042"
+                        disabled={Boolean(initialOrderId)}
+                      />
+                    ) : (
+                      <select
+                        value={orderId}
+                        onChange={e => setOrderId(e.target.value)}
+                        disabled={loadingDisputeOrders}
+                      >
+                        <option value="">{loadingDisputeOrders ? "Đang tải đơn hàng..." : "Chọn đơn hàng"}</option>
+                        {eligibleDisputeOrders.map(id => (
+                          <option key={id} value={id}>
+                            {id}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </label>
                 ) : (
                   <label className={styles.field}>

@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { BadgeCheck, CalendarDays, MessageCircle, Edit3, Check, ShieldCheck, ShieldAlert, Clock } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
-import { providerApi, verificationApi, toProvider, useAuthToken } from "../../webapp-bridge/backend";
+import { providerApi, verificationApi, catalogApi, trustApi, toProvider, useAuthToken } from "../../webapp-bridge/backend";
 import styles from "./ProviderProfilePage.module.css";
 
 export type TrungPageProps = {
@@ -142,6 +142,55 @@ export default function ProviderProfilePage({
       setSaving(false);
     }
   };
+
+  const [providerServices, setProviderServices] = useState<Array<{ serviceId: string; title: string }>>([]);
+  const [providerReviews, setProviderReviews] = useState<Array<{ orderId: string; rating: number; comment: string }>>([]);
+
+  useEffect(() => {
+    const pid = provider?.providerId;
+    if (!pid || !token) return undefined;
+    let cancelled = false;
+    catalogApi
+      .listServices({ page: 0, size: 100 })
+      .then((res: unknown) => {
+        if (cancelled) return;
+        const data = (res as { result?: { data?: unknown[] } })?.result?.data;
+        const list = Array.isArray(data) ? data : [];
+        const filtered = list
+          .filter((s: unknown) => String((s as { providerId?: string })?.providerId ?? "") === String(pid))
+          .map((s: unknown) => ({
+            serviceId: String((s as { serviceId?: string })?.serviceId ?? ""),
+            title: String((s as { title?: string })?.title ?? "Dịch vụ"),
+          }))
+          .filter(s => s.serviceId);
+        setProviderServices(filtered);
+      })
+      .catch(() => {
+        if (!cancelled) setProviderServices([]);
+      });
+
+    trustApi
+      .getProviderReviews(pid, { page: 0, size: 10 })
+      .then((res: unknown) => {
+        if (cancelled) return;
+        const data = (res as { result?: { data?: unknown[] } })?.result?.data;
+        const list = Array.isArray(data) ? data : [];
+        setProviderReviews(
+          list.map((r: unknown) => ({
+            orderId: String((r as { orderId?: string })?.orderId ?? ""),
+            rating: Number((r as { rating?: number })?.rating ?? 0),
+            comment: String((r as { comment?: string })?.comment ?? ""),
+          }))
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setProviderReviews([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [provider?.providerId, token]);
 
   const hasPendingKyc = verifications.some(
     v => (v.verificationStatus || v.status) === "PENDING"
@@ -311,6 +360,34 @@ export default function ProviderProfilePage({
             </div>
           </form>
         )}
+      <div style={{ marginTop: "16px" }}>
+        <h2 style={{ fontSize: "1rem", fontWeight: 700 }}>Dịch vụ đang cung cấp</h2>
+        {providerServices.length === 0 ? (
+          <p className={styles.bio}>Chưa có dịch vụ nào.</p>
+        ) : (
+          <ul style={{ paddingLeft: "18px" }}>
+            {providerServices.map(s => (
+              <li key={s.serviceId}>{s.title}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div style={{ marginTop: "16px" }}>
+        <h2 style={{ fontSize: "1rem", fontWeight: 700 }}>Đánh giá gần đây</h2>
+        {providerReviews.length === 0 ? (
+          <p className={styles.bio}>Chưa có đánh giá nào.</p>
+        ) : (
+          <ul style={{ paddingLeft: "18px" }}>
+            {providerReviews.map((r, i) => (
+              <li key={`${r.orderId}-${i}`}>
+                {"★".repeat(r.rating)} {r.comment}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       </section>
     </main>
   );

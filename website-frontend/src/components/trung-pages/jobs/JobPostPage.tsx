@@ -192,7 +192,7 @@ export default function JobPostPage({
       await jobApi.createJob({
         title: cleanTitle,
         description: cleanDesc,
-        categoryId: categoryId || "00000000-0000-0000-0000-000000000001",
+        categoryId: categoryId,
         budgetMin: minBudgetVal,
         budgetMax: maxBudgetVal,
         currency: "VND",

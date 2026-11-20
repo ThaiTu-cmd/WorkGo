@@ -5,6 +5,7 @@ import com.workgo.catalog.enumeration.ServiceStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
@@ -65,6 +66,7 @@ public class Service {
     long reviewCount = 0;
 
     @Builder.Default
+    @ColumnDefault("0")
     @Column(name = "rating_aggregate_version", nullable = false, updatable = false)
     long ratingAggregateVersion = 0;
 

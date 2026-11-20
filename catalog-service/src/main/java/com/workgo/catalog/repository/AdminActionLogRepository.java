@@ -21,8 +21,8 @@ public interface AdminActionLogRepository extends Repository<AdminActionLog, UUI
             "AND (:action IS NULL OR l.action = :action) " +
             "AND (:targetType IS NULL OR l.targetType = :targetType) " +
             "AND (:targetId IS NULL OR l.targetId = :targetId) " +
-            "AND (:from IS NULL OR l.createdAt >= :from) " +
-            "AND (:to IS NULL OR l.createdAt < :to)")
+            "AND (cast(:from AS timestamp) IS NULL OR l.createdAt >= :from) " +
+            "AND (cast(:to AS timestamp) IS NULL OR l.createdAt < :to)")
     Page<AdminActionLog> search(@Param("actorId") UUID actorId,
                                 @Param("action") String action,
                                 @Param("targetType") String targetType,

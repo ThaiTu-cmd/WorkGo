@@ -6,6 +6,7 @@ import com.workgo.payment.enumeration.OrderSyncStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -71,6 +72,7 @@ public class EscrowAccount {
 
     @Builder.Default
     @Enumerated(value = EnumType.STRING)
+    @ColumnDefault("'GATEWAY'")
     @Column(name = "funding_source", nullable = false)
     EscrowFundingSource fundingSource = EscrowFundingSource.GATEWAY;
 

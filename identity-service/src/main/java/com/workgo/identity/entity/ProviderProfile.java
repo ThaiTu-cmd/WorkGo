@@ -5,6 +5,7 @@ import com.workgo.identity.enumeration.VerificationStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
@@ -51,6 +52,7 @@ public class ProviderProfile {
     long ratingCount = 0;
 
     @Builder.Default
+    @ColumnDefault("0")
     @Column(name = "rating_aggregate_version", nullable = false, updatable = false)
     long ratingAggregateVersion = 0;
 
@@ -62,10 +64,12 @@ public class ProviderProfile {
 
     //ban sao tu payment (vi am / no phi), chi payment duoc ghi
     @Builder.Default
+    @ColumnDefault("false")
     @Column(name = "is_financially_restricted", nullable = false, updatable = false)
     boolean isFinanciallyRestricted = false;
 
     @Builder.Default
+    @ColumnDefault("0")
     @Column(name = "financial_restriction_version", nullable = false, updatable = false)
     long financialRestrictionVersion = 0;
 

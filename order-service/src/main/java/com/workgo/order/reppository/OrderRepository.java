@@ -24,6 +24,9 @@ import java.util.UUID;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, UUID> {
 
+    @Query(value = "SELECT * FROM orders WHERE client_id = :clientId AND idempotency_key = :key", nativeQuery = true)
+    Optional<Order> findCreationIncludingDeleted(@Param("clientId") UUID clientId, @Param("key") String key);
+
     Optional<Order> findBySourceTypeAndSourceId(SourceType sourceType, UUID sourceId);
 
     @Query(value = "SELECT EXISTS (SELECT 1 FROM orders WHERE source_type = 'PROPOSAL' AND source_id = :id)", nativeQuery = true)
@@ -56,8 +59,8 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
             "AND (:executionType IS NULL OR o.executionType = :executionType) " +
             "AND (:clientId IS NULL OR o.clientId = :clientId) " +
             "AND (:providerId IS NULL OR o.providerId = :providerId) " +
-            "AND (:from IS NULL OR o.createdAt >= :from) " +
-            "AND (:to IS NULL OR o.createdAt < :to)")
+            "AND (cast(:from AS timestamp) IS NULL OR o.createdAt >= :from) " +
+            "AND (cast(:to AS timestamp) IS NULL OR o.createdAt < :to)")
     Page<Order> searchForMonitoring(@Param("status") OrderStatus status,
                                     @Param("executionType") ExecutionType executionType,
                                     @Param("clientId") UUID clientId,

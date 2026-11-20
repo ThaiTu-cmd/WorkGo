@@ -28,12 +28,13 @@ public class OrderController {
     //client tao mot order tu service co san cua provider
     @PostMapping
     ApiResponse<OrderResponse> createOrder(
-            @RequestBody OrderCreationRequest request
+            @RequestBody OrderCreationRequest request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey
             ){
         return ApiResponse.<OrderResponse>builder()
                 .code(ErrorCode.SUCCESS.getCode())
                 .message(ErrorCode.SUCCESS.getMessage())
-                .result(orderService.createOrder(request))
+                .result(orderService.createOrder(request, idempotencyKey))
                 .build();
     }
 

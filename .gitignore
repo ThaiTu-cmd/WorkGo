@@ -117,3 +117,25 @@ trust-service/test/
 # Local receiver verification for Trust integrations
 payment-service/src/test/
 catalog-service/src/test/
+
+# Version the focused PostgreSQL regressions while keeping other local tests ignored.
+!order-service/src/test/
+order-service/src/test/**
+!order-service/src/test/**/
+!order-service/src/test/**/OrderMonitoringQueryTest.java
+!order-service/src/test/**/OrderCreationRetryTest.java
+!identity-service/src/test/
+identity-service/src/test/**
+!identity-service/src/test/**/
+!identity-service/src/test/**/AdminAuditQueryTest.java
+!identity-service/src/test/**/PopulatedSchemaUpgradeTest.java
+!catalog-service/src/test/
+catalog-service/src/test/**
+!catalog-service/src/test/**/
+!catalog-service/src/test/**/AdminAuditQueryTest.java
+!catalog-service/src/test/**/CatalogSeedTest.java
+!catalog-service/src/test/**/PopulatedSchemaUpgradeTest.java
+!payment-service/src/test/
+payment-service/src/test/**
+!payment-service/src/test/**/
+!payment-service/src/test/**/PopulatedSchemaUpgradeTest.java

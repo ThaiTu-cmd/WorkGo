@@ -115,7 +115,9 @@ public enum ErrorCode {
     ORDER_DECISION_INVALID(3045, "Decision needs decision, dispute, operation, actor and effective time", HttpStatus.BAD_REQUEST),
     ORDER_DECISION_CONFLICT(3046, "Decision id was reused with a different payload", HttpStatus.CONFLICT),
     ORDER_DECISION_TERMINAL_CONFLICT(3047, "Order already ended in a way that conflicts with this decision", HttpStatus.CONFLICT),
-    ORDER_DECISION_SETTLEMENT_MISMATCH(3048, "Settlement result does not match this order", HttpStatus.CONFLICT);
+    ORDER_DECISION_SETTLEMENT_MISMATCH(3048, "Settlement result does not match this order", HttpStatus.CONFLICT),
+    ORDER_CREATION_KEY_INVALID(3049, "Idempotency key must contain 1 to 128 visible ASCII characters", HttpStatus.BAD_REQUEST),
+    ORDER_CREATION_KEY_CONFLICT(3050, "Idempotency key was already used for a different or deleted order", HttpStatus.CONFLICT);
 
     private int code;
     private String message;

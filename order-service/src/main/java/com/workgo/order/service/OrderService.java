@@ -33,6 +33,8 @@ import com.workgo.order.reppository.*;
 import com.workgo.order.reppository.client.CatalogClient;
 import com.workgo.order.reppository.client.IdentityClient;
 import com.workgo.order.utils.TokenUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +47,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -52,6 +55,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.security.SecureRandom;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -83,6 +88,8 @@ public class OrderService {
     OrderFeeService orderFeeService;
     ProviderFinancialEligibility providerFinancialEligibility;
     TokenUtils tokenUtils;
+    JdbcTemplate jdbcTemplate;
+    ObjectMapper objectMapper;
 
     @NonFinal
     @Value("${order.payment-timeout-minutes}")
@@ -98,11 +105,38 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(OrderCreationRequest request){
+        return createOrder(request, null);
+    }
+
+    @Transactional
+    public OrderResponse createOrder(OrderCreationRequest request, String idempotencyKey){
 
         UUID clientId = tokenUtils.getCurrentUserId();
 
         if (!tokenUtils.hasRole("ROLE_CLIENT")) {
             throw new AppException(ErrorCode.FORBIDDEN);
+        }
+
+        if (request == null) throw new AppException(ErrorCode.INVALID_REQUEST_BODY);
+        if (request.getServiceId() == null) throw new AppException(ErrorCode.SERVICE_ID_REQUIRED);
+        if (request.getPackageId() == null) throw new AppException(ErrorCode.PACKAGE_ID_REQUIRED);
+
+        String requestHash = null;
+        if (idempotencyKey != null) {
+            if (idempotencyKey.isEmpty() || idempotencyKey.length() > 128
+                    || idempotencyKey.chars().anyMatch(c -> c < 33 || c > 126)) {
+                throw new AppException(ErrorCode.ORDER_CREATION_KEY_INVALID);
+            }
+            requestHash = creationRequestHash(request);
+            lockCreation("order-create:" + clientId + ":" + idempotencyKey);
+            Optional<Order> previous = orderRepository.findCreationIncludingDeleted(clientId, idempotencyKey);
+            if (previous.isPresent()) {
+                Order existing = previous.get();
+                if (existing.getIsDeleted() != 0 || !requestHash.equals(existing.getCreationRequestHash())) {
+                    throw new AppException(ErrorCode.ORDER_CREATION_KEY_CONFLICT);
+                }
+                return orderMapper.toOrderResponse(existing);
+            }
         }
 
         ServiceResponse serviceResponse = catalogClient.getService(request.getServiceId());
@@ -158,6 +192,8 @@ public class OrderService {
                 .sourceType(SourceType.SERVICE)
                 .sourceId(serviceResponse.getServiceId())
                 .clientId(clientId)
+                .idempotencyKey(idempotencyKey)
+                .creationRequestHash(requestHash)
                 .providerId(serviceResponse.getProviderId())
                 .serviceId(serviceResponse.getServiceId())
                 .packageId(packageResponse.getPackageId())
@@ -199,6 +235,24 @@ public class OrderService {
         }
 
         return orderMapper.toOrderResponse(order);
+    }
+
+    private String creationRequestHash(OrderCreationRequest request) {
+        List<UUID> addons = request.getAddonIds() == null ? List.of()
+                : request.getAddonIds().stream().distinct().sorted(Comparator.nullsFirst(Comparator.naturalOrder())).toList();
+        try {
+            byte[] payload = objectMapper.writeValueAsBytes(new Object[]{request.getServiceId(), request.getPackageId(),
+                    addons, request.getBookingSlotId(), request.getAddress(),
+                    request.getPaymentMethod() == null ? OrderPaymentMethod.WALLET : request.getPaymentMethod()});
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(payload));
+        } catch (JsonProcessingException | NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Cannot fingerprint order creation", e);
+        }
+    }
+
+    private void lockCreation(String scope) {
+        // Transaction-scoped PostgreSQL locks serialize retries and cash limits across service instances.
+        jdbcTemplate.query("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))", rs -> { }, scope);
     }
 
     @Transactional
@@ -329,6 +383,8 @@ public class OrderService {
         if (amount.compareTo(cashMaxAmount) > 0) {
             throw new AppException(ErrorCode.ORDER_CASH_LIMIT_EXCEEDED);
         }
+
+        lockCreation("order-cash:" + providerId);
 
         long openCashOrders = orderRepository.countByProviderIdAndPaymentMethodAndOrderStatusNotIn(
                 providerId, OrderPaymentMethod.CASH, List.of(OrderStatus.COMPLETED, OrderStatus.CANCELLED));

@@ -2949,6 +2949,11 @@
                   {
                     "key": "Content-Type",
                     "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{orderCreationKey}}",
+                    "description": "Use one fixed UUID per intended purchase. Keep it when retrying the same body; use a new UUID for a new purchase."
                   }
                 ],
                 "url": {
@@ -2963,7 +2968,7 @@
                     "orders"
                   ]
                 },
-                "description": "🔐 Cần token. `clientId` được lấy từ claim `userId` trong JWT.\n\n`serviceId` + `packageId` phải tồn tại bên catalog-service (order-service gọi sang qua Feign `CatalogClient`).\n`addonIds` có thể để mảng rỗng `[]`.\n\nĐơn mới sinh ra ở trạng thái **PENDING_PAYMENT** — cần thanh toán mới sang CONFIRMED, xem folder `payment-service` để thanh toán (MOCK / VNPAY / MOMO).\n\nScript test tự lưu `result.orderId` vào `{{orderId}}`.",
+                "description": "🔐 Cần role CLIENT. `clientId` lấy từ JWT.\n\nĐặt biến `orderCreationKey` thành một UUID cho mỗi lần mua mới, giữ nguyên khi retry cùng body. Header tùy chọn; nếu có phải là 1–128 ký tự ASCII hiển thị. Cùng client + key + body trả trạng thái hiện tại của Order đã tạo, kể cả sau restart; key dùng với body khác hoặc Order đã xóa trả 409/code3050; key sai trả 400/code3049.\n\n`serviceId` + `packageId` phải tồn tại và đang bán. `addonIds` có thể là `[]`. DIGITAL chỉ WALLET; ONSITE cho WALLET/CASH. WALLET tạo PENDING_PAYMENT và thanh toán qua `/payment/wallet/orders/{orderId}/pay`. CASH xác nhận ngay khi giữ/chốt slot thành công; cần `bookingSlotId` và `address`, giới hạn cash áp dụng theo Provider.\n\nScript lưu `result.orderId` vào `orderId`.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"serviceId\": \"{{serviceId}}\",\n  \"packageId\": \"{{packageId}}\",\n  \"addonIds\": [\n    \"{{addonId}}\"\n  ]\n}",

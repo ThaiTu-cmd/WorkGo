@@ -26,7 +26,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "orders", uniqueConstraints = {
     @UniqueConstraint(name = "orderId_orderNumber", columnNames = {"order_id", "order_number"}),
-    @UniqueConstraint(name = "uq_order_proposal_source", columnNames = {"source_type", "source_id", "proposal_slot"})
+    @UniqueConstraint(name = "uq_order_proposal_source", columnNames = {"source_type", "source_id", "proposal_slot"}),
+    @UniqueConstraint(name = "uq_order_client_creation_key", columnNames = {"client_id", "idempotency_key"})
 })
 @Check(name = "ck_order_proposal_slot", constraints =
         "(source_type = 'PROPOSAL' and source_id is not null and proposal_slot is not null and proposal_slot = 1) "
@@ -140,6 +141,12 @@ public class Order {
 
     @Column(name = "client_id")
     UUID clientId;
+
+    @Column(name = "idempotency_key", length = 128)
+    String idempotencyKey;
+
+    @Column(name = "creation_request_hash", length = 64)
+    String creationRequestHash;
 
     @Column(name = "provider_id")
     UUID providerId;

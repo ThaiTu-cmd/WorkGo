@@ -3,7 +3,11 @@
 import { KEYS } from "./keys";
 
 /**
- * Cycle 4 — single source of truth for the (mock) auth session.
+ * Cycle 4 — single source of truth for auth session helpers & unit-test storage.
+ *
+ * NOTE / ARCHITECTURE CONTRACT:
+ * - Runtime production authentication flows use `authApi` from `backend.ts` (real JWT tokens, backend session verification, Spring Security Gateway).
+ * - `saveAuth` and mock tokens (`mock-token-*`) defined here are strictly legacy/offline rollback unit test mocks and transactional storage resilience testing (e.g. TC-URL-04).
  *
  * Contract shared with the web-app AuthModal copy (which writes it inline
  * because it must stay byte-identical in both app trees):
@@ -45,7 +49,12 @@ export function readAuthUser(): AuthUser | null {
   }
 }
 
-/** Persist the mock session with 2-phase transactional write and rollback. Returns false when storage is blocked/quota-full. */
+/**
+ * Persist the session with 2-phase transactional write and rollback. Returns false when storage is blocked/quota-full.
+ *
+ * NOTE: Mock tokens generated here (`mock-token-${Date.now()}`) are strictly legacy/offline rollback unit test mocks.
+ * Runtime production code uses `authApi` from `backend.ts` for authentic JWT credentials.
+ */
 export function saveAuth(user: AuthUser): boolean {
   if (typeof window === "undefined") return false;
 

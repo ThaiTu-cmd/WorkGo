@@ -64,6 +64,7 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "jest --runInBand --forceExit",
+    "test:unit": "jest --runInBand --forceExit",
     "build:apk": "node scripts/build-apk.mjs",
     "icons": "node scripts/render-icons.mjs"
   },

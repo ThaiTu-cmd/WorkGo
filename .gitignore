@@ -1,6 +1,9 @@
 ### Java / Spring Boot ###
 HELP.md
 target/
+target-codex/
+.codex-verification-pom.xml
+.workgo-storage/
 !**/src/main/**/target/
 !**/src/test/**/target/
 build/
@@ -66,8 +69,6 @@ cookie.txt
 AGENTS.md
 CLAUDE.md
 /deepseek
-mvnw
-mvnw.cmd
 
 ### Node / Frontend build output ###
 node_modules/
@@ -93,49 +94,53 @@ Thumbs.db
 test-results/
 playwright-report/
 
-# Ignore tests in api-gateway
-api-gateway/src/test/
-api-gateway/test/
-
-# Local tests for job-service
-job-service/src/test/
-job-service/test/
-
-# Local inter-service verification
-identity-service/src/test/
-order-service/src/test/
 .worktrees/
 
-# Local tests for communication-service
-communication-service/src/test/
-communication-service/test/
+# Isolated Maven output and local verification scratch.
+/.superpowers/
+/*-service/target-verification/
+/api-gateway/target-verification/
+/*-service/.workgo-verification-pom.xml
+/api-gateway/.workgo-verification-pom.xml
 
-# Local tests for trust-service
-trust-service/src/test/
-trust-service/test/
+# Tests, fixtures and test runners stay local.
+test/
+tests/
+__tests__/
+test-utils/
+__mocks__/
+fixtures/
+*.test.*
+*.spec.*
+*Test.java
+*Tests.java
+/scripts/[Tt]est-*
+/scripts/backend-test-manifest.json
 
-# Local receiver verification for Trust integrations
-payment-service/src/test/
-catalog-service/src/test/
+# Local QA reports, screenshots and reference copies (not application assets).
+qa-screenshots/
+*_AUDIT_REPORT.md
+*QA_REPORT.md
+REPORT.md
+WEBSITE_FIX_REPORT.md
+/website-frontend/_webapp-reference/
+/android-frontend/_webapp-reference/
 
-# Version the focused PostgreSQL regressions while keeping other local tests ignored.
-!order-service/src/test/
-order-service/src/test/**
-!order-service/src/test/**/
-!order-service/src/test/**/OrderMonitoringQueryTest.java
-!order-service/src/test/**/OrderCreationRetryTest.java
-!identity-service/src/test/
-identity-service/src/test/**
-!identity-service/src/test/**/
-!identity-service/src/test/**/AdminAuditQueryTest.java
-!identity-service/src/test/**/PopulatedSchemaUpgradeTest.java
-!catalog-service/src/test/
-catalog-service/src/test/**
-!catalog-service/src/test/**/
-!catalog-service/src/test/**/AdminAuditQueryTest.java
-!catalog-service/src/test/**/CatalogSeedTest.java
-!catalog-service/src/test/**/PopulatedSchemaUpgradeTest.java
-!payment-service/src/test/
-payment-service/src/test/**
-!payment-service/src/test/**/
-!payment-service/src/test/**/PopulatedSchemaUpgradeTest.java
+# Local test configuration, API collections and QA utilities.
+jest.config.*
+jest.setup.*
+playwright.config.*
+vitest.config.*
+*.postman_collection.json
+*.postman_collection.json.bak*
+/scripts/qa-*.mjs
+/scripts/verify-api-parity.mjs
+/scripts/verify-registration.mjs
+/scripts/serve-mirrors.mjs
+/.github/workflows/tu-backend.yml
+
+# Editor backups and Python tool output.
+*.bak
+*.bak[0-9]*
+__pycache__/
+*.pyc

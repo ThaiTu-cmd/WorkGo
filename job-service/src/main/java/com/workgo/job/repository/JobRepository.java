@@ -29,6 +29,7 @@ public interface JobRepository extends JpaRepository<Job, UUID>, JpaSpecificatio
         return findAll((root, query, cb) -> {
             var predicates = new ArrayList<Predicate>();
             predicates.add(cb.equal(root.get("status"), JobStatus.OPEN));
+            predicates.add(cb.isFalse(root.get("moderationHidden")));
             predicates.add(cb.or(cb.isNull(root.get("deadlineAt")), cb.greaterThan(root.get("deadlineAt"), now)));
             if (keyword != null && !keyword.isBlank()) {
                 String literal = keyword.strip().toLowerCase(Locale.ROOT)

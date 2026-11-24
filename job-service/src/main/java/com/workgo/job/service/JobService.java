@@ -53,7 +53,7 @@ public class JobService {
         boolean owner = false;
         try { owner = job.getClientId().equals(token.getCurrentUserId()) && token.hasRole("ROLE_CLIENT"); }
         catch (AuthenticationException ignored) { /* Anonymous visitors can read public jobs. */ }
-        if (!owner && (job.getStatus() != JobStatus.OPEN ||
+        if (!owner && (job.isModerationHidden() || job.getStatus() != JobStatus.OPEN ||
                 job.getDeadlineAt() != null && !job.getDeadlineAt().isAfter(Instant.now()))) throw new JobNotFoundException();
         return detail(job);
     }

@@ -12,6 +12,15 @@ import java.util.*;
 public class DisputeController {
     private final DisputeService service;
     private final TokenUtils tokens;
+    private final com.workgo.trust.repository.DisputeDecisionRepository decisions;
+    public record DecisionProgress(UUID decisionId,String operation,java.time.Instant effectiveAt,String reason,
+            String paymentStatus,String orderStatus,String executionStatus) {}
+    @GetMapping("/{id}/decision")
+    public ApiResponse<DecisionProgress> decision(@PathVariable UUID id) {
+        service.get(id,tokens.getCurrentUserId(),tokens.getCurrentProviderIdOrNull());
+        var d=decisions.findByDisputeId(id).orElseThrow(()->new com.workgo.trust.exception.AppException(com.workgo.trust.exception.ErrorCode.TARGET_NOT_FOUND));
+        return ApiResponse.<DecisionProgress>builder().result(new DecisionProgress(d.getDecisionId(),d.getOperation(),d.getEffectiveAt(),d.getReason(),d.getPaymentStatus(),d.getOrderStatus(),d.getExecutionStatus())).build();
+    }
     @PostMapping
     public ApiResponse<DisputeDto> create(@Valid @RequestBody DisputeCreateReq req) {
         return ApiResponse.<DisputeDto>builder().result(service.create(req,tokens.getCurrentUserId(),tokens.getCurrentProviderIdOrNull())).build();

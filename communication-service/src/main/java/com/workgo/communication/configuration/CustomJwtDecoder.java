@@ -15,11 +15,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CustomJwtDecoder implements JwtDecoder {
     private final Clock clock;
-
-    // REST trusts Gateway introspection on the private network. This parser does not verify signatures.
-    // WebSocket must separately introspect with Identity before calling this decoder.
+    private final IdentityTokenIntrospector introspector;
     @Override
     public Jwt decode(String token) {
+        if (!introspector.isValid(token)) throw new BadJwtException("Invalid token");
         try {
             var signed = SignedJWT.parse(token);
             var claims = signed.getJWTClaimsSet();

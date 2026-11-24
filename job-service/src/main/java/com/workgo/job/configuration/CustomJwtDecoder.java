@@ -10,15 +10,18 @@ import org.springframework.stereotype.Component;
 import java.text.ParseException;
 
 @Component
+@lombok.RequiredArgsConstructor
 public class CustomJwtDecoder implements JwtDecoder {
-    // Match catalog/order/payment: Gateway introspects the token; the service
-    // parses its claims to build the authentication used for authorization.
+    private final IdentityTokenIntrospector introspector;
     @Override
     public Jwt decode(String token) throws JwtException {
+        if (!introspector.isValid(token)) throw new BadJwtException("Invalid Token");
         try {
             SignedJWT signedJwt = SignedJWT.parse(token);
             var claims = signedJwt.getJWTClaimsSet();
-            if (claims.getIssueTime() == null || claims.getExpirationTime() == null) {
+            if (claims.getIssueTime() == null || claims.getExpirationTime() == null
+                    || !claims.getExpirationTime().toInstant().isAfter(java.time.Instant.now())
+                    || claims.getIssueTime().after(claims.getExpirationTime())) {
                 throw new BadJwtException("Invalid Token");
             }
             return new Jwt(token, claims.getIssueTime().toInstant(), claims.getExpirationTime().toInstant(),

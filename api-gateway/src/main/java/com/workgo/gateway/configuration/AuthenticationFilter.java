@@ -99,23 +99,50 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             return unauthenticated(exchange.getResponse());
         }
 
-        String token = authHeader.getFirst().replace("Bearer ", "");
+        String authorization = authHeader.getFirst();
+        if (!authorization.startsWith("Bearer ") || authorization.substring(7).isBlank()) {
+            return unauthenticated(exchange.getResponse());
+        }
+        String token = authorization.substring(7);
 
         // Only a failed/invalid introspection means "unauthenticated". Errors from the
         // downstream service (e.g. it is down) must not become 401, or clients drop
         // a perfectly valid token and log the user out.
         return identityService.introspect(token)
-                .map(introspectResponse -> introspectResponse.getResult().isValid())
-                .onErrorReturn(false)
-                .flatMap(valid -> valid
-                        ? chain.filter(exchange)
-                        : unauthenticated(exchange.getResponse()));
+                .map(response -> java.util.Optional.ofNullable(response.getResult()))
+                .onErrorReturn(java.util.Optional.empty())
+                .defaultIfEmpty(java.util.Optional.empty())
+                .flatMap(result -> {
+                    if (result.isEmpty() || !result.get().isValid()) return unauthenticated(exchange.getResponse());
+                    if (!allowed(exchange.getRequest(), result.get().getScope())) {
+                        exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+                        return exchange.getResponse().setComplete();
+                    }
+                    return chain.filter(exchange);
+                });
 
     }
 
     @Override
     public int getOrder() {
         return -1;
+    }
+
+    private boolean allowed(ServerHttpRequest request, String scope) {
+        String path = StringUtils.cleanPath(request.getURI().getPath().replaceAll(";[^/]*", "").replaceAll("/{2,}", "/"));
+        String relative = path.startsWith(apiPrefix) ? path.substring(apiPrefix.length()) : path;
+        var roles = scope == null ? java.util.Set.<String>of() : new java.util.HashSet<>(Arrays.asList(scope.trim().split("\\s+")));
+        boolean read = HttpMethod.GET.equals(request.getMethod());
+        if (relative.matches("/(identity|catalog|payment|order)/admin(?:/.*)?")) return roles.contains("ROLE_SUPER_ADMIN");
+        if (relative.matches("/(job|trust|communication)/admin/audit-logs(?:/.*)?")) return read && roles.contains("ROLE_SUPER_ADMIN");
+        if (relative.startsWith("/job/admin/")) return roles.contains("ROLE_ADMIN") || read && roles.contains("ROLE_SUPER_ADMIN");
+        if (relative.startsWith("/trust/admin/") || relative.startsWith("/communication/admin/")) return roles.contains("ROLE_ADMIN");
+        if (relative.matches("/identity/users(?:/.*)?") && !relative.equals("/identity/users/myInfo")
+                || relative.equals("/identity/provider-verifications") && read
+                || relative.matches("/identity/provider-verifications/[^/]+/review")
+                || relative.matches("/identity/providers/[^/]+/verification")
+                || relative.matches("/catalog/categories(?:/.*)?") && !read) return roles.contains("ROLE_SUPER_ADMIN");
+        return true;
     }
 
     private boolean isInternalEndpoint(ServerHttpRequest request) {

@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.*;
 
 public interface TrustOutboxEventRepository extends JpaRepository<TrustOutboxEvent, UUID> {
+    Optional<TrustOutboxEvent> findByAggregateIdAndEventType(UUID aggregateId,String eventType);
     List<TrustOutboxEvent> findByStatusAndNextAttemptAtLessThanEqualOrderByNextAttemptAtAscCreatedAtAsc(
             OutboxStatus status, Instant now, Pageable limit);
 }

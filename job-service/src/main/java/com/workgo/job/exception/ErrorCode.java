@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatusCode;
 @Getter
 @RequiredArgsConstructor
 public enum ErrorCode {
+    MODERATION_RESTRICTED(3022, "Job is hidden by moderation", HttpStatus.CONFLICT),
     UNCATEGORIZED_EXCEPTION(9999, "Lỗi không xác định", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_KEY(1004, "Khóa thông báo lỗi không hợp lệ", HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(1006, "Chưa xác thực", HttpStatus.UNAUTHORIZED),

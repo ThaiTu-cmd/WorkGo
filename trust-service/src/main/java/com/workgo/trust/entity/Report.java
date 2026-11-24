@@ -54,6 +54,9 @@ public class Report {
 
     @Column(name = "resolved_at")
     private Instant resolvedAt;
+    private UUID handledBy;
+    private UUID resolvedBy;
+    @Column(length=1000) private String resolutionNote;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

@@ -30,6 +30,7 @@ public class JobAccess {
     }
 
     public void open(Job job) {
+        if (job.isModerationHidden()) throw new AppException(ErrorCode.MODERATION_RESTRICTED);
         if (job.getStatus() != JobStatus.OPEN) throw new JobNotOpenException();
         if (job.getDeadlineAt() != null && !job.getDeadlineAt().isAfter(Instant.now()))
             throw new AppException(ErrorCode.JOB_DEADLINE_PASSED);

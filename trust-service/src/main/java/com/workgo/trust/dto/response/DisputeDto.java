@@ -17,5 +17,12 @@ public record DisputeDto(
         DisputeStatus status,
         String resolution,
         Instant createdAt,
-        Instant resolvedAt) {
+        Instant resolvedAt,
+        UUID assignedAdminId,
+        String evidenceRequest,
+        Instant evidenceRequestedAt,
+        Instant clientEvidenceDeadline,
+        Instant providerEvidenceDeadline,
+        UUID decisionId,
+        Long version) {
 }

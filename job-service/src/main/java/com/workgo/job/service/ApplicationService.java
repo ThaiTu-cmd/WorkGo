@@ -27,6 +27,8 @@ public class ApplicationService {
     private final ApplicationMapper mapper;
     private final ProposalMapper proposalMapper;
     private final IdentityClient identity;
+    private final com.workgo.job.repository.client.PaymentClient payment;
+    private final ProviderRestrictionRepository restrictions;
     private final JobAccess access;
     private final TokenUtils token;
 
@@ -65,9 +67,16 @@ public class ApplicationService {
 
     @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
     public ProviderProfileResponse eligible(UUID providerId) {
+        if (restrictions.existsByProviderIdAndBlockedTrue(providerId)) throw new AppException(ErrorCode.PROVIDER_NOT_ACTIVE);
         ProviderProfileResponse profile = profile(providerId);
         if (!"ACTIVE".equals(profile.getUserStatus()) || !profile.isAcceptingOrders()) throw new AppException(ErrorCode.PROVIDER_NOT_ACTIVE);
         if (!"VERIFIED".equals(profile.getVerificationStatus())) throw new AppException(ErrorCode.PROVIDER_NOT_VERIFIED);
+        com.workgo.job.repository.client.PaymentClient.Eligibility eligibility;
+        try { eligibility=payment.eligibility(providerId); }
+        catch (FeignException e) { throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE); }
+        if (eligibility==null || !profile.getUserId().equals(eligibility.userId())) throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);
+        if (!eligibility.mayStartNewWork() || eligibility.balance()<0 || eligibility.outstandingFee()>0)
+            throw new AppException(ErrorCode.PROVIDER_NOT_ACTIVE);
         return profile;
     }
 

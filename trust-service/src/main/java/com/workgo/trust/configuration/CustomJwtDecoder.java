@@ -10,14 +10,18 @@ import org.springframework.stereotype.Component;
 import java.text.ParseException;
 
 @Component
+@lombok.RequiredArgsConstructor
 public class CustomJwtDecoder implements JwtDecoder {
-    // The Gateway introspects tokens before forwarding. Keep direct service access internal.
+    private final IdentityTokenIntrospector introspector;
     @Override
     public Jwt decode(String token) throws JwtException {
+        if (!introspector.isValid(token)) throw new BadJwtException("Invalid Token");
         try {
             SignedJWT signedJwt = SignedJWT.parse(token);
             var claims = signedJwt.getJWTClaimsSet();
-            if (claims.getIssueTime() == null || claims.getExpirationTime() == null) {
+            if (claims.getIssueTime() == null || claims.getExpirationTime() == null
+                    || !claims.getExpirationTime().toInstant().isAfter(java.time.Instant.now())
+                    || claims.getIssueTime().after(claims.getExpirationTime())) {
                 throw new BadJwtException("Invalid Token");
             }
             return new Jwt(token, claims.getIssueTime().toInstant(), claims.getExpirationTime().toInstant(),

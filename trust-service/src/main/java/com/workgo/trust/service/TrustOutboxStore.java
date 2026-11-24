@@ -13,6 +13,7 @@ import java.util.*;
 public class TrustOutboxStore {
     @PersistenceContext private EntityManager em;
     private final TrustTransactions transactions;
+    private final com.fasterxml.jackson.databind.ObjectMapper json;
     @Value("${app.outbox.max-attempts:5}") private int maxAttempts;
     @Value("${app.outbox.lease-seconds:60}") private int leaseSeconds;
     public record Delivery(UUID id, UUID token, String eventType, UUID aggregateId, String payload) {}
@@ -41,11 +42,25 @@ public class TrustOutboxStore {
             var e = owned(delivery);
             if (e == null) return null;
             e.setClaimToken(null); e.setLastError(error); e.setDeliveryResult(result);
-            if (error == null) { e.setStatus(OutboxStatus.COMPLETED); e.setProcessedAt(Instant.now()); }
+            if (error == null) { e.setStatus(OutboxStatus.COMPLETED); e.setProcessedAt(Instant.now()); evidenceAcknowledged(e); }
             else if (!retry || e.getAttempts() >= maxAttempts) e.setStatus(OutboxStatus.FAILED);
             else e.setNextAttemptAt(Instant.now().plusSeconds(Math.min(300, 5L << Math.min(e.getAttempts()-1,6))));
             return null;
         });
+    }
+    private void evidenceAcknowledged(TrustOutboxEvent event) {
+        if (!"notification.send".equals(event.getEventType())) return;
+        try {
+            var n=json.readValue(event.getPayload(),TrustOutbox.Notification.class);
+            if (!"DISPUTE_EVIDENCE_REQUESTED".equals(n.type())) return;
+            var d=em.find(Dispute.class,n.referenceId(),LockModeType.PESSIMISTIC_WRITE);
+            if(d==null||d.getStatus()!=DisputeStatus.UNDER_REVIEW||d.getEvidenceRequest()==null)return;
+            Instant now=Instant.now(),deadline=now.plusSeconds(72*3600);
+            if(n.providerId()!=null){if(d.getProviderEvidenceDeadline()==null)d.setProviderEvidenceDeadline(deadline);}
+            else if(d.getClientId().equals(n.recipientId())&&d.getClientEvidenceDeadline()==null)d.setClientEvidenceDeadline(deadline);
+            if(d.getEvidenceRequestedAt()==null)d.setEvidenceRequestedAt(now);
+            if(d.getEvidenceDeadline()==null||d.getEvidenceDeadline().isBefore(deadline))d.setEvidenceDeadline(deadline);
+        } catch(com.fasterxml.jackson.core.JsonProcessingException ex){throw new IllegalStateException("Invalid notification payload",ex);}
     }
     private TrustOutboxEvent owned(Delivery delivery) {
         var e = em.find(TrustOutboxEvent.class,delivery.id(),LockModeType.PESSIMISTIC_WRITE);

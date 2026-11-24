@@ -40,3 +40,4 @@ app:
     identity: ${IDENTITY_SERVICE_URL:http://localhost:8081/identity}
     catalog: ${CATALOG_SERVICE_URL:http://localhost:8082/catalog}
     order: ${ORDER_SERVICE_URL:http://localhost:8083/order}
+    payment: ${PAYMENT_SERVICE_URL:http://localhost:8084/payment}

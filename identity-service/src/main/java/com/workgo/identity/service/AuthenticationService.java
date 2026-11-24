@@ -78,15 +78,17 @@ public class AuthenticationService {
 
         var token = request.getToken();
         boolean isValid = true;
+        String scope = null;
 
         try{
-            verifyToken(token);
+            scope = verifyToken(token).getJWTClaimsSet().getStringClaim("scope");
         } catch (Exception e) {
             isValid = false;
         }
 
         return IntrospectResponse.builder()
                 .valid(isValid)
+                .scope(isValid ? scope : null)
                 .build();
     }
 

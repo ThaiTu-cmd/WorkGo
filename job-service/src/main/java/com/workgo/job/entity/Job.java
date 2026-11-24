@@ -71,6 +71,9 @@ public class Job {
     @Column(name = "status", nullable = false)
     JobStatus status = JobStatus.OPEN;
 
+    @Column(name = "moderation_hidden", nullable = false)
+    boolean moderationHidden;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     Instant createdAt;

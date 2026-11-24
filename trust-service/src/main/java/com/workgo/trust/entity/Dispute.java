@@ -63,6 +63,20 @@ public class Dispute {
     @Column(name = "resolution", columnDefinition = "TEXT")
     private String resolution;
 
+    @Column(name="assigned_admin_id")
+    private UUID assignedAdminId;
+    @Column(name="claimed_at")
+    private Instant claimedAt;
+    @Column(name="evidence_request",length=1000)
+    private String evidenceRequest;
+    @Column(name="evidence_requested_at")
+    private Instant evidenceRequestedAt;
+    @Column(name="evidence_deadline")
+    private Instant evidenceDeadline;
+    @Column(name="client_evidence_deadline") private Instant clientEvidenceDeadline;
+    @Column(name="provider_evidence_deadline") private Instant providerEvidenceDeadline;
+    @Column(name="decision_id") private UUID decisionId;
+
     @Column(name = "active_slot")
     private Integer activeSlot;
 

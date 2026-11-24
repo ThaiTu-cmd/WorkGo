@@ -14,5 +14,5 @@ public record ReportDto(
         String evidenceUrl,
         ReportStatus status,
         Instant createdAt,
-        Instant resolvedAt) {
+        Instant resolvedAt,UUID handledBy,UUID resolvedBy,String resolutionNote) {
 }

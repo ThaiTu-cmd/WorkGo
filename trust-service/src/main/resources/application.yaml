@@ -4,6 +4,10 @@ server:
     context-path: /trust
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
   application:
     name: trust-service
   datasource:
@@ -22,6 +26,12 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
 app:
+  storage:
+    local-dir: ${TRUST_STORAGE_LOCAL_DIR:./.workgo-storage/trust}
+    signing-key: ${TRUST_STORAGE_SIGNING_KEY:}
+    public-base-url: ${TRUST_STORAGE_PUBLIC_BASE_URL:/api/v1/trust}
+  decisions:
+    execution-enabled: ${TRUST_DECISION_EXECUTION_ENABLED:false}
   internal-api-key: ${INTERNAL_API_KEY:}
   review:
     window-days: ${TRUST_REVIEW_WINDOW_DAYS:14}

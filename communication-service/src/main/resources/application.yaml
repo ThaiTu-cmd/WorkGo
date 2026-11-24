@@ -24,7 +24,7 @@ app:
     allowed-origins: ${COMMUNICATION_WS_ALLOWED_ORIGINS:http://localhost:5173}
     connect-timeout-ms: ${COMMUNICATION_WS_CONNECT_TIMEOUT_MS:10000}
     heartbeat-ms: ${COMMUNICATION_WS_HEARTBEAT_MS:10000}
-    revalidate-interval-ms: ${COMMUNICATION_WS_REVALIDATE_INTERVAL_MS:60000}
+    revalidate-interval-ms: ${COMMUNICATION_WS_REVALIDATE_INTERVAL_MS:45000}
     maintenance-interval-ms: ${COMMUNICATION_WS_MAINTENANCE_INTERVAL_MS:1000}
     validation-timeout-ms: ${COMMUNICATION_WS_VALIDATION_TIMEOUT_MS:8000}
     validation-threads: ${COMMUNICATION_WS_VALIDATION_THREADS:4}

@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Lock, User, Mail, CheckCircle2, AlertCircle } from 'lucide-react';
 import styles from './AuthModal.module.css';
 import { useFocusTrap } from '../../../hooks/useFocusTrap';
-import axiosClient, { setAccessToken } from '../../../api/axiosClient';
 import { authApi } from '../../../api/authApi';
 export default function AuthModal({
   initialMode = 'login',
@@ -52,13 +51,8 @@ export default function AuthModal({
     const cleanLastName = (formData.lastName || '').trim();
     if (mode === 'login') {
       try {
-        const res = await axiosClient.post('/identity/auth/token', {
-          userName: cleanUserName,
-          password: formData.password
-        });
-        const token = res?.result?.token;
+        const token = await authApi.login(cleanUserName, formData.password);
         if (!token) throw new Error(tr("m9"));
-        setAccessToken(token);
         setFeedback({
           type: 'success',
           message: tr("m10", {

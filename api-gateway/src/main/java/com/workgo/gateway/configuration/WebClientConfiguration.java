@@ -19,6 +19,12 @@ public class WebClientConfiguration {
     WebClient webClient(){
         return WebClient.builder()
                 .baseUrl("http://localhost:8081/identity")
+                .clientConnector(new org.springframework.http.client.reactive.ReactorClientHttpConnector(
+                        reactor.netty.http.client.HttpClient.create().followRedirect(false)
+                                .option(io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS, 2000)
+                                .responseTimeout(java.time.Duration.ofSeconds(5))))
+                .defaultStatusHandler(status -> !status.is2xxSuccessful(), response ->
+                        response.createException())
                 .build();
     }
 

@@ -22,15 +22,23 @@ public class IdentityTokenIntrospector {
         client = RestClient.builder().baseUrl(url).requestFactory(factory).build();
     }
     public boolean isValid(String token) {
+        try { return verify(token); } catch (RuntimeException unavailable) { return false; }
+    }
+    public boolean verify(String token) {
         try {
             var response = client.post().uri("/auth/introspect").contentType(MediaType.APPLICATION_JSON)
-                    .body(new Request(token)).retrieve().body(Response.class);
-            return response != null && response.code() == 1000 && response.result() != null && response.result().valid();
+                    .body(new Request(token)).retrieve()
+                    .onStatus(status -> !status.is2xxSuccessful(), (request, reply) -> { throw new IdentityUnavailableException(); })
+                    .body(Response.class);
+            if (response == null || response.code() != 1000 || response.result() == null || response.result().valid() == null) {
+                throw new IdentityUnavailableException();
+            }
+            return response.result().valid();
         } catch (RuntimeException exception) {
-            return false;
+            throw new IdentityUnavailableException();
         }
     }
     private record Request(String token) {}
-    @JsonIgnoreProperties(ignoreUnknown = true) private record Response(int code, Result result) {}
-    @JsonIgnoreProperties(ignoreUnknown = true) private record Result(boolean valid) {}
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true) private record Response(int code, Result result) {}
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true) private record Result(Boolean valid) {}
 }

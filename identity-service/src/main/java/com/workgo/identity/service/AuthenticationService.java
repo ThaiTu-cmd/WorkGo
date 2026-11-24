@@ -1,226 +1,109 @@
 package com.workgo.identity.service;
 
 import com.nimbusds.jose.*;
-import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.crypto.MACVerifier;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
-import com.workgo.identity.Exception.AppException;
-import com.workgo.identity.Exception.ErrorCode;
-import com.workgo.identity.dto.request.AuthenticationRequest;
-import com.workgo.identity.dto.request.IntrospectRequest;
-import com.workgo.identity.dto.request.LogoutRequest;
-import com.workgo.identity.dto.request.RefreshRequest;
-import com.workgo.identity.dto.response.AuthenticationResponse;
-import com.workgo.identity.dto.response.IntrospectResponse;
-import com.workgo.identity.entity.InvalidatedToken;
-import com.workgo.identity.entity.ProviderProfile;
+import com.nimbusds.jose.crypto.*;
+import com.nimbusds.jwt.*;
+import com.workgo.identity.Exception.*;
+import com.workgo.identity.dto.request.*;
+import com.workgo.identity.dto.response.*;
 import com.workgo.identity.entity.User;
-import com.workgo.identity.repository.InvalidatedTokenRepository;
-import com.workgo.identity.repository.ProviderProfileRepository;
-import com.workgo.identity.repository.UserRepository;
-import lombok.AccessLevel;
+import com.workgo.identity.enumeration.UserStatus;
+import com.workgo.identity.repository.*;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
+import org.springframework.transaction.annotation.Transactional;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.StringJoiner;
-import java.util.UUID;
+import java.time.*;
+import java.util.*;
 
-@Service
-@Slf4j
-@RequiredArgsConstructor
-@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@Service @RequiredArgsConstructor
 public class AuthenticationService {
+    private final InvalidatedTokenRepository invalidatedTokenRepository;
+    private final UserRepository userRepository;
+    private final RefreshSessionService refreshSessions;
+    private final Clock clock;
+    @Value("${jwt.signerKey}") private String SIGNER_KEY;
 
-    InvalidatedTokenRepository invalidatedTokenRepository;
-    UserRepository userRepository;
-
-    @NonFinal
-    @Value("${jwt.signerKey}")
-    String SIGNER_KEY;
-
+    @Transactional(rollbackFor = Exception.class)
     public AuthenticationResponse authenticate(AuthenticationRequest request) throws JOSEException {
-        String identifier = request.getUserName() != null ? request.getUserName().trim() : "";
-        if (identifier.isEmpty()) {
-            throw new AppException(ErrorCode.USERNAME_INVALID);
-        }
-
-        var user = userRepository.findByIdentifierIgnoreCase(identifier)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
-
-        boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
-        if (!authenticated) {
+        String identifier = request.getUserName() == null ? "" : request.getUserName().trim();
+        if (identifier.isEmpty()) throw new AppException(ErrorCode.USERNAME_INVALID);
+        User user = userRepository.findByIdentifierIgnoreCase(identifier)
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+        if (request.getPassword() == null || user.getStatus() != UserStatus.ACTIVE
+                || !new BCryptPasswordEncoder(10).matches(request.getPassword(), user.getPassword())) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
-
-        var token = generateToken(user, Instant.now().getEpochSecond());
-
-        return AuthenticationResponse.builder()
-                .token(token)
-                .authenticated(authenticated)
-                .build();
+        return response(refreshSessions.start(user));
     }
 
-    public IntrospectResponse introspect(IntrospectRequest request){
-
-        var token = request.getToken();
-        boolean isValid = true;
-        String scope = null;
-
-        try{
-            scope = verifyToken(token).getJWTClaimsSet().getStringClaim("scope");
-        } catch (Exception e) {
-            isValid = false;
+    public IntrospectResponse introspect(IntrospectRequest request) {
+        try {
+            String scope = verifyToken(request.getToken(), true).getJWTClaimsSet().getStringClaim("scope");
+            return IntrospectResponse.builder().valid(true).scope(scope).build();
+        } catch (AppException | JOSEException | ParseException | IllegalArgumentException e) {
+            return IntrospectResponse.builder().valid(false).build();
         }
-
-        return IntrospectResponse.builder()
-                .valid(isValid)
-                .scope(isValid ? scope : null)
-                .build();
+        // Storage/dependency errors propagate as server errors, never as a false invalid-token ACK.
     }
 
-    public void logout(LogoutRequest request){
-        try{
-            var signToken = verifyToken(request.getToken());
-
-            String jit = signToken.getJWTClaimsSet().getJWTID();
-
-            Date expiredTime = signToken.getJWTClaimsSet().getExpirationTime();
-
-            InvalidatedToken invalidatedToken = InvalidatedToken.builder()
-                    .id(jit)
-                    .expiryTime(expiredTime.toInstant())
-                    .build();
-
-            invalidatedTokenRepository.save(invalidatedToken);
-
-        } catch (AppException e){
-            log.info("Token already expired !");
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        } catch (JOSEException e) {
-            throw new RuntimeException(e);
+    @Transactional
+    public void logout(LogoutRequest request) {
+        refreshSessions.revoke(request.getRefreshToken());
+        if (request.getToken() == null || request.getToken().isBlank()) return;
+        try {
+            // Signed expired access can revoke its family; authorization is never granted here.
+            var claims = verifyToken(request.getToken(), false).getJWTClaimsSet();
+            refreshSessions.revokeFamily(UUID.fromString(claims.getStringClaim("sessionId")), UUID.fromString(claims.getStringClaim("userId")));
+        } catch (AppException | JOSEException | ParseException | IllegalArgumentException ignored) {
+            // Logout is idempotent for already revoked or malformed credentials.
         }
     }
 
-    public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException {
-
-        var signedJwt = verifyToken(request.getToken());
-
-        String jwtId = signedJwt.getJWTClaimsSet().getJWTID();
-        Instant expiryTime = signedJwt.getJWTClaimsSet().getExpirationTime().toInstant();
-
-        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
-                .id(jwtId)
-                .expiryTime(expiryTime)
-                .build();
-
-        invalidatedTokenRepository.save(invalidatedToken);
-
-        String userName = signedJwt.getJWTClaimsSet().getSubject();
-
-        User user = userRepository.findByUserName(userName);
-
-        if(user == null){
-            throw new AppException(ErrorCode.USER_NOT_EXISTED);
-        }
-
-        String token = generateToken(user, signedJwt.getJWTClaimsSet().getLongClaim("authTime"));
-
-        return AuthenticationResponse.builder()
-                .token(token)
-                .authenticated(true)
-                .build();
+    // Commit replay revocation before returning 401. Other failures roll back issuance.
+    @Transactional(noRollbackFor = AppException.class, rollbackFor = JOSEException.class)
+    public AuthenticationResponse refreshToken(RefreshRequest request) throws JOSEException {
+        return response(refreshSessions.rotate(request.getRefreshToken(), request.getRequestId()));
     }
 
-    private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
-
-        JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
-
-        SignedJWT signedJWT = SignedJWT.parse(token);
-
-        Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
-
-        var verified = signedJWT.verify(verifier);
-
-        if(!verified || expiryTime.before(new Date())){
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
-        }
-
-        if(invalidatedTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())){
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
-        }
-
-        User user = userRepository.findByUserName(signedJWT.getJWTClaimsSet().getSubject());
-        Long tokenVersion = signedJWT.getJWTClaimsSet().getLongClaim("authorizationVersion");
-
-        if(user == null || tokenVersion == null || !tokenVersion.equals(user.getAuthorizationVersion())){
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
-        }
-
-        return signedJWT;
+    private SignedJWT verifyToken(String token, boolean requireActive) throws JOSEException, ParseException {
+        if (token == null || token.isBlank()) throw invalid();
+        SignedJWT jwt = SignedJWT.parse(token);
+        JWTClaimsSet claims = jwt.getJWTClaimsSet();
+        if (!JWSAlgorithm.HS512.equals(jwt.getHeader().getAlgorithm())
+                || !jwt.verify(new MACVerifier(SIGNER_KEY.getBytes(StandardCharsets.UTF_8)))
+                || !"workgoTeam.com".equals(claims.getIssuer()) || claims.getExpirationTime() == null
+                || claims.getStringClaim("sessionId") == null || claims.getStringClaim("userId") == null) throw invalid();
+        if (!requireActive) return jwt;
+        if (!clock.instant().isBefore(claims.getExpirationTime().toInstant())
+                || invalidatedTokenRepository.existsById(claims.getJWTID())) throw invalid();
+        User user = userRepository.findByUserName(claims.getSubject());
+        if (user == null || user.getStatus() != UserStatus.ACTIVE
+                || !Objects.equals(claims.getLongClaim("authorizationVersion"), user.getAuthorizationVersion())
+                || !user.getUserId().toString().equals(claims.getStringClaim("userId"))
+                || !refreshSessions.active(UUID.fromString(claims.getStringClaim("sessionId")), user.getUserId())) throw invalid();
+        return jwt;
     }
 
-    private String generateToken(User user, Long authTime) throws JOSEException {
-        String providerId = null;
-        if(user.getProviderProfile() != null && user.getProviderProfile().getProviderProfileId() != null){
-            providerId = user.getProviderProfile().getProviderProfileId().toString();
-        }
-
-        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
-
-        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(user.getUserName())
-                .issuer("workgoTeam.com")
-                .issueTime(new Date())
-                .expirationTime(new Date(
-                        Instant.now().plus(24, ChronoUnit.HOURS)
-                                .toEpochMilli()
-                ))
-                .jwtID(UUID.randomUUID().toString())
-                .claim("scope", buildScope(user))
-                .claim("userId", user.getUserId())
-                .claim("providerId", providerId)
-                .claim("authorizationVersion", user.getAuthorizationVersion())
-                .claim("authTime", authTime)
-                .build();
-
-        Payload payload = new Payload(jwtClaimsSet.toJSONObject());
-        JWSObject jwsObject = new JWSObject(jwsHeader, payload);
-
-        try{
-            jwsObject.sign(new MACSigner(SIGNER_KEY.getBytes()));
-            return jwsObject.serialize();
-        }catch (JOSEException e){
-            log.error("Cannot create token", e);
-            throw new RuntimeException(e);
-        }
-
+    private AuthenticationResponse response(RefreshSessionService.Grant grant) throws JOSEException {
+        User user = grant.user();
+        Instant now = clock.instant();
+        Instant expires = now.plusSeconds(900);
+        StringJoiner scope = new StringJoiner(" ");
+        user.getUserRoles().forEach(role -> scope.add("ROLE_" + role.getRole().getRoleName()));
+        var claims = new JWTClaimsSet.Builder().subject(user.getUserName()).issuer("workgoTeam.com")
+                .issueTime(Date.from(now)).expirationTime(Date.from(expires)).jwtID(UUID.randomUUID().toString())
+                .claim("scope", scope.toString()).claim("userId", user.getUserId().toString())
+                .claim("providerId", user.getProviderProfile() == null ? null : user.getProviderProfile().getProviderProfileId().toString())
+                .claim("authorizationVersion", user.getAuthorizationVersion()).claim("authTime", grant.session().getAuthTime())
+                .claim("sessionId", grant.session().getFamilyId().toString()).build();
+        var jwt = new SignedJWT(new JWSHeader(JWSAlgorithm.HS512), claims);
+        jwt.sign(new MACSigner(SIGNER_KEY.getBytes(StandardCharsets.UTF_8)));
+        return AuthenticationResponse.builder().token(jwt.serialize()).authenticated(true).expiresAt(expires)
+                .refreshToken(grant.refreshToken()).build();
     }
-
-    private String buildScope(User user){
-        StringJoiner stringJoiner = new StringJoiner(" ");
-
-        if(!CollectionUtils.isEmpty(user.getUserRoles()))
-            user.getUserRoles().forEach(userRole -> {
-                stringJoiner.add("ROLE_" + userRole.getRole().getRoleName());
-            });
-
-        return stringJoiner.toString();
-    }
-
-
+    private static AppException invalid() { return new AppException(ErrorCode.UNAUTHENTICATED); }
 }

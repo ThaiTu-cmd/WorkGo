@@ -11,9 +11,8 @@ export type JwtClaims = {
   providerId?: string | null;
 };
 
-// identity-service tokens live 24h and /auth/refresh only accepts a token that
-// has not expired yet, so the app refreshes ahead of time.
-export const REFRESH_WINDOW_MS = 2 * 60 * 60 * 1000;
+// Access lives 15 minutes; the separate refresh credential can renew expired access.
+export const REFRESH_WINDOW_MS = 60 * 1000;
 
 export function decodeToken(token: string | null): JwtClaims | null {
   if (!token) return null;

@@ -15,7 +15,7 @@ public class CustomJwtDecoder implements JwtDecoder {
     private final IdentityTokenIntrospector introspector;
     @Override
     public Jwt decode(String token) throws JwtException {
-        if (!introspector.isValid(token)) throw new BadJwtException("Invalid Token");
+        if (!introspector.verify(token)) throw new BadJwtException("Invalid Token");
         try {
             SignedJWT signedJwt = SignedJWT.parse(token);
             var claims = signedJwt.getJWTClaimsSet();

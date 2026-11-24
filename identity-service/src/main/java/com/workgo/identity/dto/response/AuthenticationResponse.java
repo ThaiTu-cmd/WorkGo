@@ -14,4 +14,7 @@ public class AuthenticationResponse {
     private String token;
 
     private boolean authenticated;
+    @com.fasterxml.jackson.annotation.JsonFormat(shape = com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING)
+    private java.time.Instant expiresAt;
+    private String refreshToken;
 }

@@ -20,11 +20,16 @@ public class WebSocketProperties {
     @Min(1) private int messageSizeLimit = 65536;
     @Min(1) private int connectTimeoutMs = 10000;
     @Min(1) private int heartbeatMs = 10000;
-    @Min(1) private int revalidateIntervalMs = 60000;
+    @Min(1) private int revalidateIntervalMs = 45000;
     @Min(1) private int maintenanceIntervalMs = 1000;
     @Min(1) private int validationTimeoutMs = 8000;
     @Min(1) private int validationThreads = 4;
     @Min(0) private int validationQueueCapacity = 100;
+
+    @AssertTrue(message = "Socket revalidation including maintenance and validation must fit within 60 seconds")
+    public boolean isRevocationBudgetBounded() {
+        return (long) revalidateIntervalMs + 2L * maintenanceIntervalMs + validationTimeoutMs <= 60000;
+    }
 
     @AssertTrue(message = "WebSocket origins must be explicit HTTP(S) origins without wildcard")
     public boolean isOriginAllowlistExplicit() {

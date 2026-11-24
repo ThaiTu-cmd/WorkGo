@@ -46,6 +46,10 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
         }
 
         var authentication = sessions.authentication(id);
+        if (command != null && !introspector.isValid(authentication.getToken().getTokenValue())) {
+            sessions.close(id);
+            throw new AccessDeniedException("Session authorization ended");
+        }
         accessor.setUser(authentication);
         if (command == StompCommand.SUBSCRIBE) {
             String destination = accessor.getDestination();

@@ -15,6 +15,12 @@ import java.io.IOException;
 public class JwtAuthenticationEntryPoint  implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+        if (IdentityUnavailableException.causedBy(authException)) {
+            response.setStatus(503);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"message\":\"Authentication unavailable\"}");
+            return;
+        }
         ErrorCode errorCode = ErrorCode.UNAUTHENTICATED;
 
         response.setStatus(errorCode.getStatusCode().value());

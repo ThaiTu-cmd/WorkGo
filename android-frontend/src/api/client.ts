@@ -7,6 +7,7 @@ type Params = Record<string, string | number | boolean | undefined | null>;
 type ClientHooks = {
   getToken: () => string | null;
   getSessionVersion?: () => number;
+  onRefresh?: () => Promise<boolean>;
   // Receives the token the failed request carried, which may already have
   // been replaced by a refresh.
   onUnauthorized: (sentToken: string) => void;
@@ -34,13 +35,15 @@ const DEFAULT_TIMEOUT_MS = 15_000;
 async function request<T>(
   method: string,
   path: string,
-  { params, data, headers: extra, timeoutMs = DEFAULT_TIMEOUT_MS, signal: callerSignal }: RequestOpts & { data?: unknown } = {}
+  { params, data, headers: extra, timeoutMs = DEFAULT_TIMEOUT_MS, signal: callerSignal }: RequestOpts & { data?: unknown } = {},
+  retried = false
 ): Promise<T> {
   const multipart = data instanceof FormData;
   const headers: Record<string, string> = multipart ? { ...extra } : { 'Content-Type': 'application/json', ...extra };
   const token = hooks.getToken();
   const session = hooks.getSessionVersion?.() ?? token;
-  if (token) headers.Authorization = `Bearer ${token}`;
+  const authEndpoint = path.startsWith('/identity/auth/');
+  if (token && !authEndpoint) headers.Authorization = `Bearer ${token}`;
 
   const controller = new AbortController();
   const abort = () => controller.abort();
@@ -49,6 +52,7 @@ async function request<T>(
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   let res: Response;
+  let body: ConstructorParameters<typeof ApiError>[1];
   try {
     res = await fetch(`${API_BASE_URL}${path}${queryString(params)}`, {
       method,
@@ -56,6 +60,8 @@ async function request<T>(
       body: multipart ? data : JSON.stringify(data),
       signal: controller.signal,
     });
+    body = await res.json().catch(() => null);
+    if (controller.signal.aborted) throw new ApiError(0, null);
   } catch {
     throw new ApiError(0, null);
   } finally {
@@ -63,11 +69,16 @@ async function request<T>(
     callerSignal?.removeEventListener('abort', abort);
   }
 
-  const body = await res.json().catch(() => null);
   if (session !== (hooks.getSessionVersion?.() ?? hooks.getToken())) throw new ApiError(401, { message: 'Session changed' });
   if (!res.ok) {
     const error = new ApiError(res.status, body);
-    if (error.status === 401 && token) hooks.onUnauthorized(token);
+    if (error.status === 401 && token && !authEndpoint) {
+      if (!retried && hooks.onRefresh) {
+        const renewed = hooks.getToken() !== token || await hooks.onRefresh();
+        if (session !== (hooks.getSessionVersion?.() ?? hooks.getToken())) throw new ApiError(401, {message:'Session changed'});
+        if (renewed) return request<T>(method, path, { params, data, headers: extra, timeoutMs, signal: callerSignal }, true);
+      } else hooks.onUnauthorized(token);
+    }
     throw error;
   }
   return body as T;

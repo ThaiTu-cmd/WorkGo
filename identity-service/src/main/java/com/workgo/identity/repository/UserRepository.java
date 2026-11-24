@@ -14,6 +14,10 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from User u where u.userId=:id")
+    Optional<User> lockActiveById(@Param("id") UUID id);
+
     User findByUserName(String userName);
 
     @Query("SELECT u FROM User u WHERE (LOWER(TRIM(u.userName)) = LOWER(TRIM(:identifier)) OR LOWER(TRIM(u.email)) = LOWER(TRIM(:identifier))) AND u.status = com.workgo.identity.enumeration.UserStatus.ACTIVE")

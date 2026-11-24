@@ -28,9 +28,13 @@ public class CustomJwtDecoder implements JwtDecoder {
 
         IntrospectResponse introspect;
         try {
-            introspect = identityClient.introspect(new IntrospectRequest(token)).getResult();
+            var response = identityClient.introspect(new IntrospectRequest(token));
+            if (response == null || response.getCode() != 1000 || response.getResult() == null) {
+                throw new IdentityUnavailableException();
+            }
+            introspect = response.getResult();
         } catch (FeignException e) {
-            throw new JwtException("Cannot verify token with identity-service");
+            throw new IdentityUnavailableException(e);
         }
 
         if (introspect == null || !introspect.isValid()) {
@@ -39,6 +43,10 @@ public class CustomJwtDecoder implements JwtDecoder {
 
         try {
             SignedJWT signedJWT = SignedJWT.parse(token);
+            var claims = signedJWT.getJWTClaimsSet();
+            if (claims.getIssueTime() == null || claims.getExpirationTime() == null
+                    || !claims.getExpirationTime().toInstant().isAfter(java.time.Instant.now())
+                    || claims.getIssueTime().after(claims.getExpirationTime())) throw new BadJwtException("Invalid Token");
 
             return new Jwt(token,
                     signedJWT.getJWTClaimsSet().getIssueTime().toInstant(),
@@ -46,7 +54,7 @@ public class CustomJwtDecoder implements JwtDecoder {
                     signedJWT.getHeader().toJSONObject(),
                     signedJWT.getJWTClaimsSet().getClaims()
             );
-        } catch (ParseException e) {
+        } catch (ParseException | IllegalArgumentException e) {
             throw new BadJwtException("Invalid Token");
         }
     }

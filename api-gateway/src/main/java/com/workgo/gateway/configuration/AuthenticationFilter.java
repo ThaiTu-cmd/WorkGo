@@ -109,11 +109,16 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         // downstream service (e.g. it is down) must not become 401, or clients drop
         // a perfectly valid token and log the user out.
         return identityService.introspect(token)
-                .map(response -> java.util.Optional.ofNullable(response.getResult()))
+                .timeout(java.time.Duration.ofSeconds(7))
+                .map(response -> response.getCode() == 1000 ? java.util.Optional.ofNullable(response.getResult()) : java.util.Optional.<com.workgo.gateway.dto.response.IntrospectResponse>empty())
                 .onErrorReturn(java.util.Optional.empty())
                 .defaultIfEmpty(java.util.Optional.empty())
                 .flatMap(result -> {
-                    if (result.isEmpty() || !result.get().isValid()) return unauthenticated(exchange.getResponse());
+                    if (result.isEmpty()) {
+                        exchange.getResponse().setStatusCode(HttpStatus.SERVICE_UNAVAILABLE);
+                        return exchange.getResponse().setComplete();
+                    }
+                    if (!result.get().isValid()) return unauthenticated(exchange.getResponse());
                     if (!allowed(exchange.getRequest(), result.get().getScope())) {
                         exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
                         return exchange.getResponse().setComplete();

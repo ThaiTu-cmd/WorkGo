@@ -7,7 +7,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "identity-service", contextId = "paymentIdentityClient", url = "${app.services.identity}")
+@FeignClient(configuration = com.workgo.payment.configuration.IdentityFeignConfig.class, name = "identity-service", contextId = "paymentIdentityClient", url = "${app.services.identity}")
 public interface IdentityClient {
 
     @PostMapping("/auth/introspect")

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.UUID;
 
-@FeignClient(name = "identity-service", url = "${app.service.identity.url}")
+@FeignClient(configuration = com.workgo.catalog.configuration.IdentityFeignConfig.class, name = "identity-service", url = "${app.service.identity.url}")
 public interface IdentityClient {
 
     @GetMapping("/internal/providerProfile/{providerId}")

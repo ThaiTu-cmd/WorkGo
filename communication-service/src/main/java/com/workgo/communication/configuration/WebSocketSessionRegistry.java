@@ -39,6 +39,7 @@ public class WebSocketSessionRegistry {
         JwtAuthenticationToken authentication;
         Instant nextValidation;
         Instant validationStarted;
+        Instant lastVerified;
         boolean validating;
         State(WebSocketSession socket, Instant opened) { this.socket = socket; this.opened = opened; }
     }
@@ -62,12 +63,14 @@ public class WebSocketSessionRegistry {
             throw new AccessDeniedException("CONNECT rejected");
         }
         state.authentication = authentication;
+        state.lastVerified = clock.instant();
         state.nextValidation = clock.instant().plusMillis(properties.getRevalidateIntervalMs());
     }
 
     public synchronized JwtAuthenticationToken authentication(String id) {
         State state = sessions.get(id);
         if (state == null || state.authentication == null
+                || !clock.instant().isBefore(state.lastVerified.plusMillis(60000L - properties.getMaintenanceIntervalMs()))
                 || !clock.instant().isBefore(state.authentication.getToken().getExpiresAt())) {
             throw new AccessDeniedException("Authenticated CONNECT required");
         }
@@ -113,6 +116,7 @@ public class WebSocketSessionRegistry {
                         ? !now.isBefore(state.opened.plusMillis(properties.getConnectTimeoutMs()))
                         : !now.isBefore(state.authentication.getToken().getExpiresAt());
                 expired |= state.validating && !now.isBefore(state.validationStarted.plusMillis(properties.getValidationTimeoutMs()));
+                expired |= state.authentication != null && !now.isBefore(state.lastVerified.plusMillis(60000L - properties.getMaintenanceIntervalMs()));
                 if (!expired && state.authentication != null && !state.validating && !now.isBefore(state.nextValidation)) {
                     state.validating = true;
                     state.validationStarted = now;
@@ -126,10 +130,13 @@ public class WebSocketSessionRegistry {
                 try {
                     validator.execute(() -> {
                         boolean valid = introspector.isValid(credential);
-                        if (!valid) close(id);
                         synchronized (this) {
+                            if (sessions.get(id) != state) return;
+                            valid &= clock.instant().isBefore(state.lastVerified.plusMillis(60000L - properties.getMaintenanceIntervalMs()));
+                            if (valid) state.lastVerified = state.validationStarted;
                             state.validating = false;
                         }
+                        if (!valid) close(id);
                     });
                 } catch (RuntimeException rejected) { close(id); }
             }

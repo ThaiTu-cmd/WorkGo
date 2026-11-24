@@ -4,6 +4,13 @@
 
 const BASE_URL = '/api/v1';
 const TOKEN_KEY = 'accessToken';
+const GENERATION_KEY = 'workgo.sessionGeneration';
+let memoryGeneration = null;
+export const getSessionGeneration = () => {
+  try { memoryGeneration = localStorage.getItem(GENERATION_KEY) || memoryGeneration; } catch { /* storage unavailable */ }
+  if (!memoryGeneration) memoryGeneration = crypto.randomUUID();
+  return memoryGeneration;
+};
 
 export const getAccessToken = () => {
   try {
@@ -27,13 +34,19 @@ const writeAccessToken = (token) => {
 };
 
 export const setAccessToken = (token) => {
-  if (getAccessToken() !== (token || null)) sessionVersion++;
+  if (!token || getAccessToken() !== token) {
+    sessionVersion++;
+    memoryGeneration = crypto.randomUUID();
+    try { localStorage.setItem(GENERATION_KEY, memoryGeneration); } catch { /* in-memory generation */ }
+  }
   writeAccessToken(token);
 };
+// Rotation/adoption keeps the generation whose HttpOnly cookie the BFF issued.
+export const adoptAccessToken = (token) => writeAccessToken(token);
 
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (event) => {
-    if (event.key === TOKEN_KEY || event.key === null) sessionVersion++;
+    if (event.key === TOKEN_KEY || event.key === GENERATION_KEY || event.key === null) sessionVersion++;
   });
 }
 
@@ -85,29 +98,52 @@ export function isAuthGuarded(url) {
 }
 
 let refreshFlight = null;
+const ROTATION_KEY = 'workgo.pendingRotation';
 
 async function tryRefreshToken(oldToken, version) {
   if (!refreshFlight || refreshFlight.version !== version) {
     const flight = { version, promise: null };
+    const generation = getSessionGeneration();
     refreshFlight = flight;
     flight.promise = (async () => {
       try {
-        const res = await fetch(`${BASE_URL}/identity/auth/refresh`, {
+        if (version !== sessionVersion || generation !== getSessionGeneration()) throw sessionChanged();
+        if (getAccessToken() !== oldToken) return { token: getAccessToken() };
+        try {
+          if (localStorage.getItem(ROTATION_KEY) === generation) throw new ApiError(503, { message: 'Refresh outcome unknown. Sign in again.' });
+          localStorage.setItem(ROTATION_KEY, generation);
+        } catch (error) { if (error instanceof ApiError) throw error; }
+        const res = await fetch('/api/auth/refresh', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: oldToken }),
+          headers: { 'Content-Type': 'application/json', 'X-WorkGo-Session': generation },
+          body: '{}', credentials: 'same-origin', cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15000),
         });
-        if (!res.ok) return null;
+        if (res.status === 401) return null;
+        if (!res.ok) throw new ApiError(res.status, null);
         const body = await res.json().catch(() => null);
-        return body?.result?.token || null;
-      } catch {
-        return null;
+        const renewed = body?.result?.token;
+        if (!renewed) throw new ApiError(503, null);
+        if (version !== sessionVersion || generation !== getSessionGeneration()) throw sessionChanged();
+        writeAccessToken(renewed);
+        try { if (localStorage.getItem(ROTATION_KEY) === generation) localStorage.removeItem(ROTATION_KEY); } catch { /* storage unavailable */ }
+        return body.result;
+      } catch (error) {
+        throw error instanceof ApiError ? error : new ApiError(0, null);
       } finally {
         if (refreshFlight === flight) refreshFlight = null;
       }
-    })();
+    });
+    const locks = globalThis.navigator?.locks;
+    flight.promise = locks ? locks.request(`workgo-refresh-${generation}`, flight.promise) : flight.promise();
+    return flight.promise;
   }
   return refreshFlight.promise;
+}
+
+export async function refreshSession() {
+  const result = await tryRefreshToken(getAccessToken(), sessionVersion);
+  if (!result) { setAccessToken(null); throw new ApiError(401, null); }
+  return { code: 1000, result };
 }
 
 const isAuthEndpoint = (url) =>
@@ -118,6 +154,7 @@ const isAuthEndpoint = (url) =>
 async function request(method, url, { params, data, headers: extraHeaders, responseType } = {}, isRetry = false) {
   const token = getAccessToken();
   const version = sessionVersion;
+  const generation = getSessionGeneration();
 
   // Guard: Avoid firing unauthenticated requests to protected identity endpoints
   if (!token && isAuthGuarded(url)) {
@@ -131,23 +168,26 @@ async function request(method, url, { params, data, headers: extraHeaders, respo
 
   let res;
   try {
-    res = await fetch(`${BASE_URL}${url}${query}`, {
+    const authRoute = { '/identity/auth/token': 'login', '/identity/auth/refresh': 'refresh', '/identity/auth/logout': 'logout' }[url];
+    if (authRoute) headers['X-WorkGo-Session'] = extraHeaders?.['X-WorkGo-Session'] || generation;
+    res = await fetch(authRoute ? `/api/auth/${authRoute}` : `${BASE_URL}${url}${query}`, {
       method,
       headers,
-      body: multipart || data === undefined ? data : JSON.stringify(data),
+      body: authRoute === 'refresh' ? '{}' : multipart || data === undefined ? data : JSON.stringify(data),
+      credentials: 'same-origin', cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15000),
     });
   } catch {
     throw new ApiError(0, null);
   }
   const contentType = res.headers.get('content-type') || '';
   const body = responseType === 'blob' && res.ok ? await res.blob() : await res.json().catch(() => null);
-  if (version !== sessionVersion) throw sessionChanged();
+  if (version !== sessionVersion || generation !== getSessionGeneration()) throw sessionChanged();
   if (!res.ok) {
     const error = new ApiError(res.status, body, contentType);
     if (error.status === 401) {
       if (token && !isRetry && !isAuthEndpoint(url)) {
-        const newToken = getAccessToken() !== token ? getAccessToken() : await tryRefreshToken(token, version);
-        if (version !== sessionVersion) throw sessionChanged();
+        const newToken = getAccessToken() !== token ? getAccessToken() : (await tryRefreshToken(token, version))?.token;
+        if (version !== sessionVersion || generation !== getSessionGeneration()) throw sessionChanged();
         if (newToken) {
           writeAccessToken(newToken);
           return request(method, url, { params, data, headers: extraHeaders, responseType }, true);

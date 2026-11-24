@@ -1,14 +1,15 @@
-import axiosClient, { getAccessToken, setAccessToken } from './axiosClient.js';
+import axiosClient, { getAccessToken, getSessionGeneration, setAccessToken, adoptAccessToken, refreshSession } from './axiosClient.js';
 
 export { splitFullName, joinFullName } from './adapters.js';
 
 // identity-service via gateway (/api/v1/identity/**). token/registration/logout are public.
 export const authApi = {
   login: async (userName, password) => {
+    setAccessToken(null);
     const res = await axiosClient.post('/identity/auth/token', { userName, password });
     const token = res?.result?.token;
     if (!token) throw new Error('Không nhận được token từ máy chủ.');
-    setAccessToken(token);
+    adoptAccessToken(token);
     return token;
   },
 
@@ -17,14 +18,14 @@ export const authApi = {
 
   introspect: (token) => axiosClient.post('/identity/auth/introspect', { token }),
 
-  refresh: (token) => axiosClient.post('/identity/auth/refresh', { token }),
+  refresh: refreshSession,
 
   logout: async () => {
     const token = getAccessToken();
+    const generation = getSessionGeneration();
     setAccessToken(null);
-    if (!token) return;
     try {
-      await axiosClient.post('/identity/auth/logout', { token });
+      await axiosClient.post('/identity/auth/logout', { token }, { headers: { 'X-WorkGo-Session': generation } });
     } catch {
       // token already dropped locally; server-side invalidation is best effort
     }

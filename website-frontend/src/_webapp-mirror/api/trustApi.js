@@ -1,5 +1,29 @@
 import axiosClient from './axiosClient.js';
 
+function reputationResult(response, providerId) {
+  const result = response?.result;
+  if (response?.code !== 1000 || result?.providerId !== providerId ||
+      !Number.isInteger(result.score) || result.score < 0 || result.score > 100 ||
+      result.policyVersion !== 'WG-POLICY-1.0') {
+    throw new Error('Invalid reputation contract');
+  }
+  return response;
+}
+
+function reputationLedger(response, providerId, requestedPage) {
+  const page = response?.result;
+  if (response?.code !== 1000 || !Array.isArray(page?.content) ||
+      !Number.isInteger(page.number) || page.number < 0 ||
+      page.number !== Math.max(0, requestedPage) || page.size !== 50 ||
+      !Number.isInteger(page.totalElements) || page.totalElements < page.content.length ||
+      page.content.some(entry => !entry?.id || entry.providerId !== providerId ||
+        entry.policyVersion !== 'WG-POLICY-1.0' || !Number.isInteger(entry.afterScore) ||
+        entry.afterScore < 0 || entry.afterScore > 100)) {
+    throw new Error('Invalid reputation ledger contract');
+  }
+  return response;
+}
+
 // trust-service endpoints via gateway (/api/v1/trust/**).
 export const trustApi = {
   // Reviews
@@ -46,10 +70,13 @@ export const trustApi = {
     })),
 
   getReputation: (providerId) =>
-    axiosClient.get(`/trust/reputation/${providerId}`).catch(() => null),
+    axiosClient.get(`/trust/providers/${encodeURIComponent(providerId)}/reputation`)
+      .then(response => reputationResult(response, providerId)),
 
-  getReputationLedger: (providerId) =>
-    axiosClient.get(`/trust/reputation/${providerId}/ledger`).catch(() => null),
+  // The owner derives this ledger from the authenticated provider, never a URL ID.
+  getReputationLedger: (providerId, { page = 0 } = {}) =>
+    axiosClient.get('/trust/reputation/me/ledger', { params: { page } })
+      .then(response => reputationLedger(response, providerId, page)),
 
   getSanctions: (providerId) =>
     axiosClient.get(`/identity/providers/${providerId}/sanctions`).catch(() => null),

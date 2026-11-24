@@ -588,8 +588,10 @@ export type ReputationLedgerEntry = {
 export type ReputationResponse = {
   providerId: string;
   score: number;
-  tier: string;
-  ledger: ReputationLedgerEntry[];
+  policyVersion: string;
+  // The score endpoint does not embed a ledger or admission tier.
+  tier?: string;
+  ledger?: ReputationLedgerEntry[];
 };
 
 export type AppealReq = {

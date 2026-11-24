@@ -14,6 +14,16 @@ import type {
   ReviewSubmitReq,
 } from './types';
 
+function reputationResult(response: ApiResponse<ReputationResponse>, providerId: string) {
+  const result = response?.result;
+  if (response?.code !== 1000 || result?.providerId !== providerId ||
+      !Number.isInteger(result.score) || result.score < 0 || result.score > 100 ||
+      result.policyVersion !== 'WG-POLICY-1.0') {
+    throw new Error('Invalid reputation contract');
+  }
+  return response;
+}
+
 // trust-service endpoints via gateway (/api/v1/trust/**)
 export const trustApi = {
   // Reviews
@@ -52,7 +62,8 @@ export const trustApi = {
 
   // Reputation & Appeals
   getProviderReputation: (providerId: string) =>
-    http.get<ApiResponse<ReputationResponse>>(`/trust/reputation/${providerId}`),
+    http.get<ApiResponse<ReputationResponse>>(`/trust/providers/${encodeURIComponent(providerId)}/reputation`)
+      .then(response => reputationResult(response, providerId)),
 
   submitAppeal: (body: AppealReq) =>
     http.post<ApiResponse<AppealResponse>>('/trust/sanctions/appeal', body),

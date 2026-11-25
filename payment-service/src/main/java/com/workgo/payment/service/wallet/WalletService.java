@@ -74,7 +74,12 @@ public class WalletService {
         Instant now = Instant.now();
         for (WalletPostingLeg leg : command.getLegs()) {
             WalletAccount account = locked.get(accountIds.get(leg.account()));
-            long balanceAfter = account.getBalance() + leg.amount();
+            long balanceAfter;
+            try {
+                balanceAfter = Math.addExact(account.getBalance(), leg.amount());
+            } catch (ArithmeticException e) {
+                throw new AppException(ErrorCode.WALLET_POSTING_INVALID);
+            }
 
             assertBalanceAllowed(command.getPostingType(), leg, balanceAfter);
 
@@ -113,6 +118,7 @@ public class WalletService {
 
     private void assertValid(WalletPostingCommand command) {
 
+        if (command == null) throw new AppException(ErrorCode.WALLET_POSTING_INVALID);
         List<WalletPostingLeg> legs = command.getLegs();
 
         if (command.getIdempotencyKey() == null || command.getIdempotencyKey().isBlank()
@@ -123,7 +129,8 @@ public class WalletService {
 
         long total = 0;
         for (WalletPostingLeg leg : legs) {
-            if (leg.account() == null || leg.amount() == 0) throw new AppException(ErrorCode.WALLET_POSTING_INVALID);
+            if (leg == null || leg.account() == null || leg.account().type() == null || leg.amount() == 0)
+                throw new AppException(ErrorCode.WALLET_POSTING_INVALID);
 
             WalletPostingType type = command.getPostingType();
             boolean allowed = leg.amount() < 0

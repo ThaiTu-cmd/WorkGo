@@ -110,6 +110,8 @@ public class SettlementService {
                 .escrowStatus(escrow.getStatus())
                 .settleTransactionId(escrow.getSettleTransactionId())
                 .feeAssessmentId(fee.getFeeAssessmentId())
+                .fundingSource(escrow.getFundingSource())
+                .policyVersionId(fee.getFeePolicyVersionId())
                 .build());
 
         log.info("Decision {} settled order {}: {} {} to {}", command.getDecisionId(), command.getOrderId(),
@@ -130,12 +132,14 @@ public class SettlementService {
 
     private void assertValid(SettlementCommand command) {
 
+        if (command == null) throw new AppException(ErrorCode.SETTLEMENT_INVALID);
         BigDecimal amount = command.getAmount();
 
         if (command.getDecisionId() == null || command.getOrderId() == null
                 || command.getOperation() == null || command.getDestination() == null
                 || command.getDestinationId() == null || !"VND".equals(command.getCurrency())
-                || amount == null || amount.signum() <= 0 || amount.stripTrailingZeros().scale() > 0) {
+                || amount == null || amount.signum() <= 0 || amount.stripTrailingZeros().scale() > 0
+                || amount.compareTo(BigDecimal.valueOf(Long.MAX_VALUE)) > 0) {
             throw new AppException(ErrorCode.SETTLEMENT_INVALID);
         }
     }

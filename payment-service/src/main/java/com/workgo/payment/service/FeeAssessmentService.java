@@ -36,6 +36,7 @@ public class FeeAssessmentService {
     FeePolicyService feePolicyService;
     WalletOrderSettlementService walletOrderSettlementService;
     FeeReceivableService feeReceivableService;
+    FeeReminderService feeReminderService;
     TokenUtils tokenUtils;
 
     //phi thanh cong da tru tu tien giu luc release
@@ -103,6 +104,10 @@ public class FeeAssessmentService {
                 : assessment.getCollectedAmount() == fee ? FeeAssessmentStatus.COLLECTED
                 : FeeAssessmentStatus.OUTSTANDING);
         feeAssessmentRepository.save(assessment);
+
+        if (assessment.getStatus() == FeeAssessmentStatus.OUTSTANDING) {
+            feeReminderService.enqueue(assessment);
+        }
 
         if (party == FeeChargedParty.PROVIDER) {
             feeReceivableService.refreshRestriction(escrow.getProviderUserId());

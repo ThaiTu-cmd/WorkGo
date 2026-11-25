@@ -43,7 +43,7 @@ public class PaymentSyncService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void release(UUID orderId) {
 
-        Order order = orderRepository.findById(orderId).orElse(null);
+        Order order = orderRepository.findByIdForUpdate(orderId).orElse(null);
 
         if (order == null
                 || order.getOrderStatus() != OrderStatus.COMPLETED
@@ -53,8 +53,9 @@ public class PaymentSyncService {
 
         if (!trustDisputeGuard.permitsPaymentSync(orderId)) return;
 
+        EscrowResponse escrow;
         try {
-            paymentClient.release(EscrowReleaseRequest.builder()
+            escrow = paymentClient.release(EscrowReleaseRequest.builder()
                     .orderId(orderId)
                     .build());
         } catch (FeignException e) {
@@ -63,6 +64,10 @@ public class PaymentSyncService {
             return;
         }
 
+        if (!matches(escrow, order, EscrowStatus.RELEASED)) {
+            log.warn("Invalid release ACK for order {}", orderId);
+            return;
+        }
         order.setPaymentStatus(PaymentStatus.RELEASED);
         log.info("Escrow of order {} released", orderId);
         orderRepository.save(order);
@@ -71,7 +76,7 @@ public class PaymentSyncService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void refund(UUID orderId) {
 
-        Order order = orderRepository.findById(orderId).orElse(null);
+        Order order = orderRepository.findByIdForUpdate(orderId).orElse(null);
 
         if (order == null
                 || order.getOrderStatus() != OrderStatus.CANCELLED
@@ -96,14 +101,21 @@ public class PaymentSyncService {
         }
 
         //gateway hoan tien loi -> escrow van HOLDING, admin xu ly ben payment
-        if (escrow.getStatus() != EscrowStatus.REFUNDED) {
-            log.warn("Escrow of order {} is {} after refund", orderId, escrow.getStatus());
+        if (!matches(escrow, order, EscrowStatus.REFUNDED)) {
+            log.warn("Invalid refund ACK for order {}", orderId);
             return;
         }
 
         order.setPaymentStatus(PaymentStatus.REFUNDED);
         log.info("Escrow of order {} refunded", orderId);
         orderRepository.save(order);
+    }
+
+    private boolean matches(EscrowResponse escrow, Order order, EscrowStatus status) {
+        return escrow != null && order.getOrderId().equals(escrow.getOrderId())
+                && escrow.getStatus() == status && "VND".equals(escrow.getCurrency())
+                && escrow.getHeldAmount() != null && order.getTotalAmount() != null
+                && order.getTotalAmount().compareTo(escrow.getHeldAmount()) == 0;
     }
 
     //cash khong co escrow: chi bao payment ghi phi thanh cong vao vi provider (thieu thi am)

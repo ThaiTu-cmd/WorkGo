@@ -26,6 +26,13 @@ import java.util.UUID;
 })
 public class SettlementReceipt {
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "funding_source")
+    com.workgo.payment.enumeration.EscrowFundingSource fundingSource;
+
+    @Column(name = "fee_policy_version_id")
+    UUID policyVersionId;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "settlement_receipt_id")

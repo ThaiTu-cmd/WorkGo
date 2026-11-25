@@ -18,6 +18,10 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SettlementResult {
 
+    com.workgo.payment.enumeration.EscrowFundingSource fundingSource;
+
+    UUID policyVersionId;
+
     UUID settlementReceiptId;
 
     UUID decisionId;

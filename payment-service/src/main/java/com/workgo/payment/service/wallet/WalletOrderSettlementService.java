@@ -43,6 +43,11 @@ public class WalletOrderSettlementService {
     public EscrowAccount hold(UUID orderId, UUID clientId, UUID providerId, UUID providerUserId,
                               UUID feePolicyVersionId, long total, long fee) {
 
+        if (orderId == null || clientId == null || providerId == null || providerUserId == null
+                || total <= 0 || fee < 0 || fee > total) {
+            throw new AppException(ErrorCode.WALLET_POSTING_INVALID);
+        }
+
         WalletPostingResult posting = walletService.post(WalletPostingCommand.builder()
                 .idempotencyKey("ORDER_HOLD:" + orderId)
                 .postingType(WalletPostingType.ORDER_HOLD)
@@ -92,7 +97,7 @@ public class WalletOrderSettlementService {
 
         List<WalletPostingLeg> legs = new ArrayList<>();
         legs.add(new WalletPostingLeg(orderHeld(escrow.getOrderId()), -held));
-        legs.add(new WalletPostingLeg(userAvailable(escrow.getProviderUserId()), held - fee));
+        if (held - fee > 0) legs.add(new WalletPostingLeg(userAvailable(escrow.getProviderUserId()), held - fee));
         if (fee > 0) legs.add(new WalletPostingLeg(platformRevenue(), fee));
 
         return walletService.post(WalletPostingCommand.builder()
@@ -112,7 +117,8 @@ public class WalletOrderSettlementService {
 
         List<WalletPostingLeg> legs = new ArrayList<>();
         legs.add(new WalletPostingLeg(orderHeld(escrow.getOrderId()), -held));
-        legs.add(new WalletPostingLeg(userAvailable(escrow.getClientId()), held - clientFee));
+        if (clientFee < 0 || clientFee > held) throw new AppException(ErrorCode.WALLET_POSTING_INVALID);
+        if (held - clientFee > 0) legs.add(new WalletPostingLeg(userAvailable(escrow.getClientId()), held - clientFee));
         if (clientFee > 0) legs.add(new WalletPostingLeg(platformRevenue(), clientFee));
 
         return walletService.post(WalletPostingCommand.builder()

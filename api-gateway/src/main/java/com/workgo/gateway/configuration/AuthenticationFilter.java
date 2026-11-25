@@ -140,8 +140,8 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         boolean read = HttpMethod.GET.equals(request.getMethod());
         if (relative.matches("/(identity|catalog|payment|order)/admin(?:/.*)?")) return roles.contains("ROLE_SUPER_ADMIN");
         if (relative.matches("/(job|trust|communication)/admin/audit-logs(?:/.*)?")) return read && roles.contains("ROLE_SUPER_ADMIN");
-        if (relative.startsWith("/job/admin/")) return roles.contains("ROLE_ADMIN") || read && roles.contains("ROLE_SUPER_ADMIN");
-        if (relative.startsWith("/trust/admin/") || relative.startsWith("/communication/admin/")) return roles.contains("ROLE_ADMIN");
+        if (relative.matches("/job/admin(?:/.*)?")) return roles.contains("ROLE_ADMIN") || read && roles.contains("ROLE_SUPER_ADMIN");
+        if (relative.matches("/(trust|communication)/admin(?:/.*)?")) return roles.contains("ROLE_ADMIN");
         if (relative.matches("/identity/users(?:/.*)?") && !relative.equals("/identity/users/myInfo")
                 || relative.equals("/identity/provider-verifications") && read
                 || relative.matches("/identity/provider-verifications/[^/]+/review")

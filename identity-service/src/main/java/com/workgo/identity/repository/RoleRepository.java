@@ -10,4 +10,9 @@ import java.util.UUID;
 @Repository
 public interface RoleRepository extends JpaRepository<Role, RoleName> {
 
+    // Serialize account administration before reading actors, targets or the last-admin count.
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select r from Role r where r.roleName = :name")
+    java.util.Optional<Role> lockByName(@org.springframework.data.repository.query.Param("name") RoleName name);
+
 }

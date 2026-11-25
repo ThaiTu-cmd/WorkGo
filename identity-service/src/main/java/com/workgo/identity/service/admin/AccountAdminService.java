@@ -207,7 +207,15 @@ public class AccountAdminService {
 
     private User loadUser(UUID userId, Long version) {
 
-        User user = userRepository.findById(userId)
+        roleRepository.lockByName(RoleName.SUPER_ADMIN)
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        User actor = userRepository.lockActiveById(UUID.fromString(currentJwt().getClaimAsString("userId")))
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED));
+        if (actor.getStatus() != UserStatus.ACTIVE || !hasRole(actor, RoleName.SUPER_ADMIN)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        User user = userRepository.lockActiveById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         if (version == null || !version.equals(user.getVersion())) {

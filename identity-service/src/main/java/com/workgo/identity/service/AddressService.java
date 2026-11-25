@@ -63,6 +63,8 @@ public class AddressService {
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new AppException(ErrorCode.ADDRESS_NOT_EXISTED));
 
+        assertOwner(address);
+
         return addressMapper.toAddressResponse(address);
     }
 
@@ -94,6 +96,8 @@ public class AddressService {
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new AppException(ErrorCode.ADDRESS_NOT_EXISTED));
 
+        assertOwner(address);
+
         addressMapper.updateAddress(address, request);
 
         return addressMapper.toAddressResponse(addressRepository.save(address));
@@ -104,7 +108,7 @@ public class AddressService {
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new AppException(ErrorCode.ADDRESS_NOT_EXISTED));
 
-        log.info(address.toString());
+        assertOwner(address);
 
         int mark = attributeUtil.createDeletedMark();
 
@@ -113,6 +117,14 @@ public class AddressService {
         address.setIsDeleted(mark);
 
         addressRepository.save(address);
+    }
+
+    private void assertOwner(Address address) {
+        User actor = attributeUtil.getCurrentUser();
+        if (actor == null || actor.getUserId() == null || address.getUser() == null
+                || !actor.getUserId().equals(address.getUser().getUserId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
     }
 
 }

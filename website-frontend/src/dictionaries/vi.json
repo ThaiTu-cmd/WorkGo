@@ -1,5 +1,12 @@
 {
-  "walletHistory": { "loginToView": "Đăng nhập để xem giao dịch ví.", "loadError": "Không thể tải dữ liệu ví. Hãy thử cập nhật lại.", "escrowDetails": "Xem số tiền ký quỹ theo từng đơn hàng.", "loading": "Đang tải dữ liệu ví…", "status": "Trạng thái", "resumeTopUp": "Tiếp tục giao dịch nạp ví" },
+  "walletHistory": {
+    "loginToView": "Đăng nhập để xem giao dịch ví.",
+    "loadError": "Không thể tải dữ liệu ví. Hãy thử cập nhật lại.",
+    "escrowDetails": "Xem số tiền ký quỹ theo từng đơn hàng.",
+    "loading": "Đang tải dữ liệu ví…",
+    "status": "Trạng thái",
+    "resumeTopUp": "Tiếp tục giao dịch nạp ví"
+  },
   "adminOperations": {
     "loading": "Đang tải…",
     "retry": "Thử lại",
@@ -105,7 +112,14 @@
     "failed": "Xác nhận thất bại",
     "unknown": "Ghi nhận chưa rõ kết quả"
   },
-  "catalogUpload": { "cover": "Tải ảnh bìa lên", "gallery": "Tải ảnh thư viện lên", "video": "Tải video MP4 lên", "openVideo": "Mở video đã tải lên", "removeVideo": "Xóa video", "fileSize": "Chọn tệp có dung lượng lớn hơn 0 và tối đa {p0} MB." },
+  "catalogUpload": {
+    "cover": "Tải ảnh bìa lên",
+    "gallery": "Tải ảnh thư viện lên",
+    "video": "Tải video MP4 lên",
+    "openVideo": "Mở video đã tải lên",
+    "removeVideo": "Xóa video",
+    "fileSize": "Chọn tệp có dung lượng lớn hơn 0 và tối đa {p0} MB."
+  },
   "orderWallet": {
     "creationKeyInvalid": "Mã yêu cầu đặt đơn không hợp lệ. Vui lòng quay lại dịch vụ và thử lại.",
     "creationKeyConflict": "Yêu cầu đặt đơn này không thể dùng lại. Vui lòng kiểm tra danh sách đơn trước khi tạo đơn mới.",
@@ -135,8 +149,26 @@
     "topUpLimits": "Số tiền nạp thấp hơn mức tối thiểu hoặc vượt hạn mức nạp trong ngày.",
     "topUpUnavailable": "Không nhận được thông tin giao dịch nạp ví."
   },
-  "adminPending": { "jobs": "Kiểm duyệt Job", "reviews": "Kiểm duyệt Review", "reports": "Xử lý Report", "disputes": "Hồ sơ Dispute", "fees": "Chính sách phí", "sanctions": "Chế tài", "monitoring": "Giám sát", "audit": "Lịch sử quản trị", "reconciliation": "Đối soát", "unavailable": "Chưa phát hành: chức năng này đang chờ API có phân quyền và audit. Chưa có thao tác thay đổi dữ liệu." },
-  "notifications": { "title": "Thông báo", "readAll": "Đã đọc hết", "error": "Không tải hoặc cập nhật được thông báo.", "retry": "Thử lại", "loading": "Đang tải", "empty": "Không có thông báo mới" },
+  "adminPending": {
+    "jobs": "Kiểm duyệt Job",
+    "reviews": "Kiểm duyệt Review",
+    "reports": "Xử lý Report",
+    "disputes": "Hồ sơ Dispute",
+    "fees": "Chính sách phí",
+    "sanctions": "Chế tài",
+    "monitoring": "Giám sát",
+    "audit": "Lịch sử quản trị",
+    "reconciliation": "Đối soát",
+    "unavailable": "Chưa phát hành: chức năng này đang chờ API có phân quyền và audit. Chưa có thao tác thay đổi dữ liệu."
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "readAll": "Đã đọc hết",
+    "error": "Không tải hoặc cập nhật được thông báo.",
+    "retry": "Thử lại",
+    "loading": "Đang tải",
+    "empty": "Không có thông báo mới"
+  },
   "orderWorkspace": {
     "agreement": "Cam kết của đơn",
     "version": "Phiên bản {p0}",
@@ -2663,5 +2695,22 @@
     "m1775": "Không tải được tin nhắn: {p0}",
     "m1776": "Đang mở cuộc trò chuyện...",
     "m1777": "Thử lại"
+  },
+  "orderInputs": {
+    "title": "Cam kết và đầu vào",
+    "proposal": "Yêu cầu đầu vào (mỗi dòng một mục)",
+    "none": "Không yêu cầu đầu vào",
+    "propose": "Gửi checklist để hai bên chốt",
+    "confirm": "Tôi chấp nhận cam kết và checklist này",
+    "values": "Nội dung đầu vào",
+    "submit": "Gửi Provider kiểm tra",
+    "accept": "Xác nhận đã đủ đầu vào",
+    "missing": "Phần còn thiếu (nêu rõ từng mục)",
+    "reject": "Yêu cầu bổ sung",
+    "waiting": "Đang chờ Provider kiểm tra. Hạn phản hồi 24 giờ; deadline chưa bắt đầu.",
+    "accepted": "Đầu vào đã được xác nhận.",
+    "retry": "Tải lại",
+    "pending": "Chưa chốt checklist; chưa bắt đầu công việc.",
+    "stored": "Đầu vào CLIENT đã gửi"
   }
 }

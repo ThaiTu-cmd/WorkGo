@@ -7,16 +7,10 @@ import com.workgo.order.reppository.OrderRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -25,29 +19,20 @@ import java.util.List;
 public class PaymentTimeoutJob {
 
     OrderRepository orderRepository;
-    CancellationService cancellationService;
-
-    @NonFinal
-    @Value("${order.payment-timeout-minutes}")
-    long paymentTimeoutMinutes;
+    OrderService orderService;
 
     @Scheduled(fixedDelay = 60_000)
     public void run() {
 
-        List<Order> orders = orderRepository
-                .findTop50ByOrderStatusAndCreatedAtLessThanEqualOrderByCreatedAtAsc(
-                        OrderStatus.PENDING_PAYMENT, Instant.now().minus(Duration.ofMinutes(paymentTimeoutMinutes)));
-
-        for (Order order : orders) {
-            try {
-                cancellationService.cancelUnpaid(order.getOrderId());
-            } catch (ObjectOptimisticLockingFailureException e) {
-                //tien vua ve cung luc, bo qua
-                log.info("Order {} was updated by another request, skip timeout cancel", order.getOrderId());
-            } catch (Exception e) {
-                log.warn("Timeout cancel failed for order {}", order.getOrderId(), e);
+        int page=0;
+        org.springframework.data.domain.Page<Order> orders;
+        do {
+            orders=orderRepository.findByOrderStatus(OrderStatus.PENDING_PAYMENT,
+                    org.springframework.data.domain.PageRequest.of(page++,100,org.springframework.data.domain.Sort.by("orderId")));
+            for (Order order:orders) {
+                try { orderService.expireIfDue(order.getOrderId()); }
+                catch (Exception e) { log.warn("Timeout cancel failed for order {}",order.getOrderId(),e); }
             }
-        }
+        } while (orders.hasNext());
     }
-
 }

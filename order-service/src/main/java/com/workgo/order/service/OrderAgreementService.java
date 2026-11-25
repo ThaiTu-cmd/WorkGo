@@ -57,6 +57,7 @@ public class OrderAgreementService {
     PaymentClient paymentClient;
     ObjectMapper objectMapper;
     TokenUtils tokenUtils;
+    java.time.Clock clock;
 
     @NonFinal
     @Value("${order.platform-fee-rate}")
@@ -77,7 +78,8 @@ public class OrderAgreementService {
     @Transactional(readOnly = true)
     public List<OrderAmendmentResponse> getAmendments(UUID orderId) {
 
-        tokenUtils.assertParticipant(loadOrder(orderId));
+        tokenUtils.assertParticipant(orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND)));
 
         return orderAmendmentRepository.findAllByOrderIdOrderByCreatedAtDesc(orderId).stream()
                 .map(orderAgreementMapper::toOrderAmendmentResponse)
@@ -100,15 +102,20 @@ public class OrderAgreementService {
         assertAmendable(order);
 
         OrderAgreementVersion current = currentVersion(order);
+        if (current.getInputRequirements()==null) throw new AppException(ErrorCode.ORDER_INPUTS_REQUIRED);
+        if (request==null || !Objects.equals(request.getBaseVersionNo(),current.getVersionNo()))
+            throw new AppException(ErrorCode.ORDER_AMENDMENT_STALE);
         assertRealChange(order, current, request);
 
-        if (orderAmendmentRepository.existsByOrderIdAndStatus(orderId, AmendmentStatus.PENDING.name())) {
+        if (orderAmendmentRepository.existsByOrderIdAndStatus(orderId, AmendmentStatus.PENDING.name())
+                || orderAmendmentRepository.existsByOrderIdAndStatus(orderId, AmendmentStatus.AWAITING_PAYMENT.name())) {
             throw new AppException(ErrorCode.ORDER_AMENDMENT_PENDING_EXISTS);
         }
 
         OrderAmendment amendment = orderAmendmentRepository.save(OrderAmendment.builder()
                 .orderId(orderId)
                 .baseVersionNo(current.getVersionNo())
+                .oldScope(current.getScope()).oldPrice(current.getPrice()).oldDurationDays(current.getDurationDays())
                 .proposedBy(tokenUtils.getCurrentUserId())
                 .proposedByRole(currentRole(order).name())
                 .newScope(request.getNewScope())
@@ -135,7 +142,10 @@ public class OrderAgreementService {
             throw new AppException(ErrorCode.ORDER_AMENDMENT_STALE);
         }
 
-        Instant now = Instant.now();
+        if (amendment.getNewPrice()!=null && order.getPaymentMethod()==OrderPaymentMethod.CASH
+                && amendment.getNewPrice().compareTo(new BigDecimal("2000000"))>0)
+            throw new AppException(ErrorCode.ORDER_CASH_LIMIT_EXCEEDED);
+        Instant now = clock.instant();
         amendment.setRespondedBy(tokenUtils.getCurrentUserId());
         amendment.setRespondedAt(now);
         amendment.setResponseNote(request == null ? null : request.getNote());
@@ -161,6 +171,9 @@ public class OrderAgreementService {
         OrderAmendment amendment = orderAmendmentRepository.findByAmendmentIdAndOrderId(amendmentId, orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_AMENDMENT_NOT_FOUND));
 
+        if (AmendmentStatus.APPLIED.name().equals(amendment.getStatus())) {
+            return orderAgreementMapper.toOrderAmendmentResponse(amendment);
+        }
         if (!AmendmentStatus.AWAITING_PAYMENT.name().equals(amendment.getStatus())) {
             throw new AppException(ErrorCode.ORDER_AMENDMENT_NOT_AWAITING_PAYMENT);
         }
@@ -192,7 +205,7 @@ public class OrderAgreementService {
         OrderAmendment amendment = loadPendingAmendmentOfOtherSide(order, amendmentId);
         amendment.setStatus(AmendmentStatus.REJECTED.name());
         amendment.setRespondedBy(tokenUtils.getCurrentUserId());
-        amendment.setRespondedAt(Instant.now());
+        amendment.setRespondedAt(clock.instant());
         amendment.setResponseNote(request == null ? null : request.getNote());
 
         return orderAgreementMapper.toOrderAmendmentResponse(orderAmendmentRepository.save(amendment));
@@ -211,9 +224,13 @@ public class OrderAgreementService {
                 .source("AMENDMENT")
                 .scope(amendment.getNewScope() != null ? amendment.getNewScope() : current.getScope())
                 .acceptanceCriteria(current.getAcceptanceCriteria())
+                .inputRequirements(current.getInputRequirements())
+                .paymentMethod(current.getPaymentMethod()).feePolicyVersionId(current.getFeePolicyVersionId())
+                .rewardQuoteRef(current.getRewardQuoteRef()).policyVersion(current.getPolicyVersion())
                 .price(price)
                 .currency(current.getCurrency())
                 .durationDays(amendment.getNewDurationDays() != null ? amendment.getNewDurationDays() : current.getDurationDays())
+                .address(current.getAddress())
                 .scheduleStart(current.getScheduleStart())
                 .scheduleEnd(current.getScheduleEnd())
                 .amendmentId(amendment.getAmendmentId())
@@ -229,9 +246,9 @@ public class OrderAgreementService {
             order.setTotalAmount(price);
             order.setPlatformFee(fee);
             order.setProviderNetAmount(price.subtract(fee));
-            order.setUpdatedAt(Instant.now());
-            orderRepository.save(order);
         }
+        order.setUpdatedAt(clock.instant());
+        orderRepository.save(order);
 
         amendment.setStatus(AmendmentStatus.APPLIED.name());
     }
@@ -239,12 +256,23 @@ public class OrderAgreementService {
     private void adjustEscrow(Order order, OrderAmendment amendment) {
 
         try {
-            paymentClient.adjust(EscrowAdjustRequest.builder()
+            var receipt = paymentClient.adjust(EscrowAdjustRequest.builder()
                     .orderId(order.getOrderId())
                     .amendmentId(amendment.getAmendmentId())
                     .newTotalAmount(amendment.getNewPrice())
                     .newPlatformFee(platformFeeOf(order, amendment.getNewPrice()))
                     .build());
+            if (receipt==null || !order.getOrderId().equals(receipt.getOrderId())
+                    || !amendment.getAmendmentId().equals(receipt.getAdjustmentId()) || receipt.getAdjustmentTransactionId()==null
+                    || receipt.getEscrowAccountId()==null
+                    || receipt.getStatus()!=com.workgo.order.enumeration.client.EscrowStatus.HOLDING
+                    || receipt.getHeldAmount()==null || receipt.getHeldAmount().compareTo(amendment.getNewPrice())!=0
+                    || receipt.getPlatformFeeAmount()==null || receipt.getPlatformFeeAmount().compareTo(platformFeeOf(order, amendment.getNewPrice()))!=0
+                    || !Objects.equals(receipt.getCurrency(),order.getCurrency())) {
+                throw new AppException(ErrorCode.PAYMENT_SERVICE_UNAVAILABLE);
+            }
+            amendment.setPaymentReceiptId(receipt.getAdjustmentTransactionId());
+            amendment.setPaymentAdjustedAt(clock.instant());
         } catch (FeignException e) {
             if (e.status() >= 400 && e.status() < 500) {
                 throw new AppException(paymentErrorCode(e) == WALLET_INSUFFICIENT_FUNDS
@@ -270,7 +298,7 @@ public class OrderAgreementService {
         BigDecimal rate = orderSnapshotRepository.findById(order.getOrderId())
                 .map(OrderSnapshot::getPricingSnapshot)
                 .map(PricingSnapshot::getPlatformFeeRate)
-                .orElse(platformFeeRate);
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_AMENDMENT_INVALID));
 
         return price.multiply(rate).setScale(0, RoundingMode.HALF_UP);
     }
@@ -283,6 +311,10 @@ public class OrderAgreementService {
         OrderAgreementVersion.OrderAgreementVersionBuilder builder = OrderAgreementVersion.builder()
                 .orderId(order.getOrderId())
                 .versionNo(1)
+                .paymentMethod(order.getPaymentMethod())
+                .feePolicyVersionId(snapshot==null || snapshot.getPricingSnapshot()==null?null:snapshot.getPricingSnapshot().getFeePolicyVersionId())
+                .policyVersion("WG-POLICY-1.0")
+                .rewardQuoteRef(snapshot==null?null:snapshot.getRewardQuoteRef())
                 .price(order.getSubtotal())
                 .currency(order.getCurrency())
                 .providerConfirmedAt(order.getPlacedAt())
@@ -304,14 +336,27 @@ public class OrderAgreementService {
                 .scope(join(service == null ? order.getTitle() : service.getTitle(), pkg == null ? null : pkg.getName()))
                 .acceptanceCriteria(pkg == null ? null : pkg.getDescription())
                 .durationDays(pkg == null ? null : pkg.getDeliveryDay())
+                .address(execution == null ? null : execution.getAddress())
                 .scheduleStart(execution == null ? null : execution.getScheduleStart())
                 .scheduleEnd(execution == null ? null : execution.getScheduleEnd())
                 .build();
     }
 
+    @Transactional
+    public OrderAgreementVersion confirmChecklist(Order order, OrderAgreementVersion current, String requirements,
+                                                   Instant providerAt, Instant clientAt) {
+        if (!current.getVersionNo().equals(currentVersion(order).getVersionNo()))
+            throw new AppException(ErrorCode.ORDER_INPUTS_STALE);
+        return orderAgreementVersionRepository.saveAndFlush(current.toBuilder()
+                .agreementVersionId(null).versionNo(current.getVersionNo()+1).source("INPUT_CHECKLIST")
+                .inputRequirements(requirements).providerConfirmedAt(providerAt).clientConfirmedAt(clientAt)
+                .createdAt(clientAt).build());
+    }
+
     private void assertAmendable(Order order) {
 
-        if (order.getOrderStatus() == OrderStatus.COMPLETED || order.getOrderStatus() == OrderStatus.CANCELLED) {
+        if (order.getOrderStatus() != OrderStatus.CONFIRMED && order.getOrderStatus()!=OrderStatus.IN_PROGRESS
+                && order.getOrderStatus()!=OrderStatus.PENDING_PAYMENT) {
             throw new AppException(ErrorCode.ORDER_AMENDMENT_NOT_ALLOWED);
         }
     }
@@ -322,6 +367,9 @@ public class OrderAgreementService {
             throw new AppException(ErrorCode.ORDER_AMENDMENT_INVALID);
         }
 
+        if (request.getNewScope()!=null && request.getNewScope().isBlank()) {
+            throw new AppException(ErrorCode.ORDER_AMENDMENT_INVALID);
+        }
         BigDecimal newPrice = request.getNewPrice();
         if (newPrice != null && (newPrice.signum() <= 0 || newPrice.stripTrailingZeros().scale() > 0)) {
             throw new AppException(ErrorCode.ORDER_AMENDMENT_INVALID);
@@ -331,6 +379,8 @@ public class OrderAgreementService {
             throw new AppException(ErrorCode.ORDER_AMENDMENT_PRICE_BEFORE_PAYMENT);
         }
 
+        if (newPrice!=null && order.getPaymentMethod()==OrderPaymentMethod.CASH
+                && newPrice.compareTo(new BigDecimal("2000000"))>0) throw new AppException(ErrorCode.ORDER_CASH_LIMIT_EXCEEDED);
         Integer newDays = request.getNewDurationDays();
         if (newDays != null && (newDays <= 0 || order.getExecutionType() != ExecutionType.DIGITAL)) {
             throw new AppException(ErrorCode.ORDER_AMENDMENT_INVALID);
@@ -383,7 +433,7 @@ public class OrderAgreementService {
 
     private Order loadOrder(UUID orderId) {
 
-        return orderRepository.findById(orderId)
+        return orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
     }
 

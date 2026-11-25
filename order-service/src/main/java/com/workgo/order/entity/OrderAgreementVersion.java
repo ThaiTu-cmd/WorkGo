@@ -10,7 +10,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -41,6 +41,14 @@ public class OrderAgreementVersion {
     @Column(name = "acceptance_criteria", columnDefinition = "TEXT")
     String acceptanceCriteria;
 
+    @Column(name="input_requirements", columnDefinition="TEXT")
+    String inputRequirements;
+    @Enumerated(EnumType.STRING)
+    com.workgo.order.enumeration.OrderPaymentMethod paymentMethod;
+    UUID feePolicyVersionId;
+    String rewardQuoteRef;
+    String policyVersion;
+
     @Column(name = "price", nullable = false)
     BigDecimal price;
 
@@ -49,6 +57,9 @@ public class OrderAgreementVersion {
 
     @Column(name = "duration_days")
     Integer durationDays;
+
+    @Column(columnDefinition="TEXT")
+    String address;
 
     @Column(name = "schedule_start")
     Instant scheduleStart;

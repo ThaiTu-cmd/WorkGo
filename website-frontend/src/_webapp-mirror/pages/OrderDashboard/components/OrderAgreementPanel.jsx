@@ -6,7 +6,7 @@ import OrderFlowDialog from './OrderFlowDialog';
 import buttons from './WorkEvidence.module.css';
 import styles from './OrderFlow.module.css';
 
-function AmendmentDialog({ order, onClose, onDone }) {
+function AmendmentDialog({ order, baseVersionNo, onClose, onDone }) {
   const t = useTranslations('orderWorkspace');
   const [scope, setScope] = useState('');
   const [price, setPrice] = useState('');
@@ -21,6 +21,7 @@ function AmendmentDialog({ order, onClose, onDone }) {
   const canSubmit = reason.trim() && (scope.trim() || newPrice || newDurationDays) && validPrice && validDuration;
   return <OrderFlowDialog title={t('propose')} submitLabel={t('propose')} canSubmit={!!canSubmit} onClose={onClose} onSubmit={async () => {
     await orderApi.proposeAmendment(order.orderId, {
+      baseVersionNo,
       newScope: scope.trim() || undefined,
       newPrice,
       newDurationDays,
@@ -68,7 +69,7 @@ export default function OrderAgreementPanel({ order, role, onUpdated }) {
   }, [orderId, retry]);
 
   const current = agreement?.versions.at(-1);
-  const amendable = !['COMPLETED', 'CANCELLED'].includes(orderStatus);
+  const amendable = ['PENDING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS'].includes(orderStatus) && current?.inputRequirements != null;
   const existingAmendment = agreement?.amendments.some(a => ['PENDING', 'AWAITING_PAYMENT'].includes(a.status));
   const price = amount => new Intl.NumberFormat(locale, { style: 'currency', currency: current?.currency || 'VND' }).format(amount);
   const date = iso => new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso));
@@ -97,6 +98,9 @@ export default function OrderAgreementPanel({ order, role, onUpdated }) {
       </div>
       {version.scope && <p className={styles.quote}>{version.scope}</p>}
       {version.acceptanceCriteria && <p className={styles.quote}>{t('criteria', { p0: version.acceptanceCriteria })}</p>}
+      {version.inputRequirements != null && <pre className={styles.quote}>{version.inputRequirements}</pre>}
+      {version.address && <p>{version.address}</p>}
+      {version.paymentMethod && <p>{version.paymentMethod} · {version.policyVersion}</p>}
       {version.price != null && <p className={styles.note}>{t('price', { p0: price(version.price) })}</p>}
       {version.durationDays != null && <p className={styles.note}>{t('days', { p0: version.durationDays })}</p>}
       {version.scheduleStart && version.scheduleEnd && <p className={styles.note}>{t('schedule', { p0: date(version.scheduleStart), p1: date(version.scheduleEnd) })}</p>}
@@ -119,6 +123,9 @@ export default function OrderAgreementPanel({ order, role, onUpdated }) {
           <span className={styles.chip}>{t.has(amendment.status) ? t(amendment.status) : amendment.status}</span>
         </div>
         <p className={styles.quote}>{amendment.reason}</p>
+        {amendment.oldScope && amendment.newScope && <p className={styles.text}>{amendment.oldScope} → {amendment.newScope}</p>}
+        {amendment.oldPrice != null && amendment.newPrice != null && <p className={styles.note}>{price(amendment.oldPrice)} → {price(amendment.newPrice)}</p>}
+        {amendment.oldDurationDays != null && amendment.newDurationDays != null && <p className={styles.note}>{t('days', { p0: amendment.oldDurationDays })} → {t('days', { p0: amendment.newDurationDays })}</p>}
         {amendment.newScope && <p className={styles.text}>{amendment.newScope}</p>}
         {amendment.newPrice != null && <p className={styles.note}>{t('price', { p0: price(amendment.newPrice) })}</p>}
         {amendment.newDurationDays != null && <p className={styles.note}>{t('days', { p0: amendment.newDurationDays })}</p>}
@@ -132,6 +139,6 @@ export default function OrderAgreementPanel({ order, role, onUpdated }) {
         {awaiting && !canSettle && <p className={styles.note}>{t('awaitingClient')}</p>}
       </article>;
     })}
-    {proposing && <AmendmentDialog order={order} onClose={() => setProposing(false)} onDone={onUpdated} />}
+    {proposing && <AmendmentDialog order={order} baseVersionNo={current.versionNo} onClose={() => setProposing(false)} onDone={onUpdated} />}
   </section>;
 }

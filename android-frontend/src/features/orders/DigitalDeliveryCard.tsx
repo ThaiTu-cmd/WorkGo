@@ -168,8 +168,7 @@ export function DigitalDeliveryCard({ order, role, execution }: {
 
   const canDeliver = role === 'PROVIDER' && order.orderStatus === 'IN_PROGRESS' &&
     (execution?.status === 'WORKING' || execution?.status === 'REVISING');
-  const canSendRequirements = role === 'CLIENT' && order.orderStatus === 'CONFIRMED' &&
-    execution?.status === 'AWAITING_REQUIREMENTS' && !execution.requirementSubmittedAt;
+  const canSendRequirements = false; // Input consent/submission/review is handled by OrderInputCard.
   const latest = deliveries.data?.[0];
   const canReview = role === 'CLIENT' && order.orderStatus === 'DELIVERED' &&
     execution?.status === 'SUBMITTED' && latest?.status === 'SUBMITTED';
@@ -208,7 +207,7 @@ export function DigitalDeliveryCard({ order, role, execution }: {
       ) : deliveries.data.length === 0 ? <Text style={styles.text}>{t('digitalDelivery.empty')}</Text> : (
         deliveries.data.map((item) => (
           <Card key={item.deliveryPackageId}>
-            <Text style={styles.title}>{t('digitalDelivery.version', { p0: item.versionNo })} · {formatDateTime(item.deliveredAt)}</Text>
+            <Text style={styles.title}>{t('digitalDelivery.version', { p0: item.versionNo })} Â· {formatDateTime(item.deliveredAt)}</Text>
             {item.message && <Text style={styles.text}>{item.message}</Text>}
             {item.files.map((asset) => (
               asset.storedFileId || asset.fileUrl?.startsWith('https://') ? (

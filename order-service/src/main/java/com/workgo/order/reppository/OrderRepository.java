@@ -32,6 +32,9 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     @Query(value = "SELECT EXISTS (SELECT 1 FROM orders WHERE source_type = 'PROPOSAL' AND source_id = :id)", nativeQuery = true)
     boolean existsProposalSourceIncludingDeleted(@Param("id") UUID proposalId);
 
+    Page<Order> findByOrderStatus(OrderStatus status, Pageable pageable);
+    Page<Order> findByInputSupportReasonIsNotNullAndOrderStatus(OrderStatus status, Pageable pageable);
+
     Page<Order> findAllByClientId(UUID clientId, Pageable pageable);
 
     Page<Order> findAllByProviderId(UUID providerId, Pageable pageable);

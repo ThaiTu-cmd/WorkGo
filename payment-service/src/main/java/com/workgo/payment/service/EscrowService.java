@@ -189,10 +189,14 @@ public class EscrowService {
                 .findFirstByEscrowAccount_EscrowAccountIdAndTxnTypeAndSagaId(
                         escrow.getEscrowAccountId(), EscrowTxnType.ADJUST, request.getAmendmentId());
         if (applied.isPresent()) {
-            if (applied.get().getBalanceAfter().compareTo(BigDecimal.valueOf(total)) != 0) {
+            if (applied.get().getBalanceAfter().compareTo(BigDecimal.valueOf(total)) != 0
+                    || applied.get().getCommandFee()==null || applied.get().getCommandFee().compareTo(BigDecimal.valueOf(fee))!=0) {
                 throw new AppException(ErrorCode.ESCROW_COMMAND_CONFLICT);
             }
-            return escrowMapper.toResponse(escrow);
+            var result=escrowMapper.toResponse(escrow);
+            result.setAdjustmentId(request.getAmendmentId());
+            result.setAdjustmentTransactionId(applied.get().getEscrowTransactionId());
+            return result;
         }
 
         if (escrow.getFundingSource() != EscrowFundingSource.WALLET) {
@@ -216,12 +220,18 @@ public class EscrowService {
         escrow.setProviderNetAmount(BigDecimal.valueOf(total - fee));
         escrow.setUpdatedAt(Instant.now());
 
-        addTransaction(escrow, EscrowTxnType.ADJUST, BigDecimal.valueOf(Math.abs(delta)), escrow.getHeldAmount(),
-                TriggeredBy.ORDER, delta >= 0 ? "AMENDMENT_INCREASE" : "AMENDMENT_DECREASE", request.getAmendmentId());
+        var receipt=escrowTransactionRepository.saveAndFlush(EscrowTransaction.builder().escrowAccount(escrow)
+                .txnType(EscrowTxnType.ADJUST).amount(BigDecimal.valueOf(Math.abs(delta))).balanceAfter(escrow.getHeldAmount())
+                .triggeredBy(TriggeredBy.ORDER).reasonCode(delta>=0?"AMENDMENT_INCREASE":"AMENDMENT_DECREASE")
+                .sagaId(request.getAmendmentId()).commandFee(BigDecimal.valueOf(fee)).build());
+        escrow.getTransactions().add(receipt);
 
         log.info("Escrow of order {} adjusted by {} for amendment {}", escrow.getOrderId(), delta, request.getAmendmentId());
 
-        return escrowMapper.toResponse(escrowAccountRepository.save(escrow));
+        var result=escrowMapper.toResponse(escrowAccountRepository.save(escrow));
+        result.setAdjustmentId(request.getAmendmentId());
+        result.setAdjustmentTransactionId(receipt.getEscrowTransactionId());
+        return result;
     }
 
     @Transactional

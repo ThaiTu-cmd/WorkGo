@@ -90,6 +90,9 @@ public class OrderService {
     TokenUtils tokenUtils;
     JdbcTemplate jdbcTemplate;
     ObjectMapper objectMapper;
+    OrderInputService orderInputService;
+    java.time.Clock clock;
+    OrderRewardQuoteService rewardQuotes;
 
     @NonFinal
     @Value("${order.payment-timeout-minutes}")
@@ -181,6 +184,9 @@ public class OrderService {
             assertCashAllowed(serviceResponse.getProviderId(), totalAmount);
         }
         BigDecimal providerNetAmount = subtotal.subtract(platformFee);
+        String rewardQuoteRef = rewardQuotes.quote(new OrderRewardQuoteService.Input(clientId, serviceResponse.getProviderId(),
+                "SERVICE", serviceResponse.getServiceId(), serviceResponse.getTitle()+" - "+packageResponse.getDescription(),
+                subtotal, Objects.requireNonNullElse(packageResponse.getCurrency(), "VND"), packageResponse.getDeliveryDay(), feePolicy.getFeePolicyVersionId()));
 
         //luu order -> lay id
         Order order = orderRepository.save(Order.builder()
@@ -204,7 +210,7 @@ public class OrderService {
                 .totalAmount(totalAmount)
                 .providerNetAmount(providerNetAmount)
                 .currency(packageResponse.getCurrency() == null ? "VND" : packageResponse.getCurrency())
-                .placedAt(Instant.now())
+                .placedAt(clock.instant())
                 .build());
 
         //luu OrderItem
@@ -218,7 +224,7 @@ public class OrderService {
         executionService.createFor(order, request, packageResponse);
 
         saveSnapshot(order, request, serviceResponse, packageResponse, addOns,
-                subtotal, platformFee, totalAmount, providerNetAmount, feePolicy);
+                subtotal, platformFee, totalAmount, providerNetAmount, feePolicy, rewardQuoteRef);
 
 
         //ghi lai order status history
@@ -262,7 +268,7 @@ public class OrderService {
             throw new AppException(ErrorCode.ORDER_PAYMENT_ID_REQUIRED);
         }
 
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
         //da confirm roi (SUCCEEDED / RELEASED) hoac don da huy -> tra trang thai hien tai, payment tu xu ly
@@ -275,6 +281,10 @@ public class OrderService {
             throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
         }
 
+        if (!clock.instant().isBefore(payableUntil(order))) {
+            cancellationService.cancelBySystem(order);
+            return toConfirmationResponse(order,null);
+        }
         Object executionStatus = null;
 
         //chi on site
@@ -296,6 +306,7 @@ public class OrderService {
         order.setPaymentId(request.getPaymentId());
 
         orderStatusService.transition(order, OrderStatus.CONFIRMED, null, RoleName.SYSTEM);
+        orderInputService.tryStart(orderId);
         log.info("Order {} confirmed by payment {}", orderId, request.getPaymentId());
 
         return toConfirmationResponse(order, executionStatus);
@@ -307,19 +318,7 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
-        Instant payableUntil = order.getCreatedAt().plus(Duration.ofMinutes(paymentTimeoutMinutes));
-
-        if (order.getExecutionType() == ExecutionType.ONSITE) {
-            Instant slotHoldExpiresAt = executionRepository.findByOrder_OrderId(orderId)
-                    .flatMap(execution -> onsiteExecutionRepository
-                            .findByExecution_ExecutionId(execution.getExecutionId()))
-                    .map(OnsiteExecution::getSlotHoldExpiresAt)
-                    .orElse(null);
-
-            if (slotHoldExpiresAt != null && slotHoldExpiresAt.isBefore(payableUntil)) {
-                payableUntil = slotHoldExpiresAt;
-            }
-        }
+        Instant payableUntil = payableUntil(order);
 
         return OrderPaymentInfoResponse.builder()
                 .orderId(order.getOrderId())
@@ -340,6 +339,25 @@ public class OrderService {
                         .orElse(null))
                 .payableUntil(payableUntil)
                 .build();
+    }
+
+    @Transactional
+    public void expireIfDue(UUID orderId) {
+        Order order=orderRepository.findByIdForUpdate(orderId).orElse(null);
+        if (order!=null && order.getOrderStatus()==OrderStatus.PENDING_PAYMENT
+                && order.getPaymentStatus()==PaymentStatus.PENDING && !clock.instant().isBefore(payableUntil(order)))
+            cancellationService.cancelUnpaid(orderId);
+    }
+
+    public Instant payableUntil(Order order) {
+        Instant until=order.getCreatedAt().plus(Duration.ofMinutes(paymentTimeoutMinutes));
+        if (order.getExecutionType()==ExecutionType.ONSITE) {
+            Instant slotExpiry=executionRepository.findByOrder_OrderId(order.getOrderId())
+                    .flatMap(e->onsiteExecutionRepository.findByExecution_ExecutionId(e.getExecutionId()))
+                    .map(OnsiteExecution::getSlotHoldExpiresAt).orElse(null);
+            if (slotExpiry!=null && slotExpiry.isBefore(until)) until=slotExpiry;
+        }
+        return until;
     }
 
     @Transactional(readOnly = true)
@@ -635,7 +653,7 @@ public class OrderService {
     }
 
     private String generateOrderNumber(){
-        String date = Instant.now().toString();
+        String date = clock.instant().toString();
         String random = UUID.randomUUID().toString();
 
         return "WG" + date + "-" + random;
@@ -650,7 +668,7 @@ public class OrderService {
                               BigDecimal platformFee,
                               BigDecimal totalAmount,
                               BigDecimal providerNetAmount,
-                              FeePolicyResponse feePolicy) {
+                              FeePolicyResponse feePolicy, String rewardQuoteRef) {
 
         ProviderProfileResponse provider =
                 identityClient.getProviderProfile(serviceResponse.getProviderId());
@@ -664,7 +682,11 @@ public class OrderService {
                         .build())
                 .toList();
 
+        OnsiteExecution scheduled=order.getExecutionType()==ExecutionType.ONSITE
+                ? executionRepository.findByOrder_OrderId(order.getOrderId())
+                    .flatMap(e->onsiteExecutionRepository.findByExecution_ExecutionId(e.getExecutionId())).orElse(null):null;
         orderSnapshotRepository.save(OrderSnapshot.builder()
+                .rewardQuoteRef(rewardQuoteRef)
                 .order(order)
                 .serviceSnapshot(ServiceSnapshot.builder()
                         .serviceId(serviceResponse.getServiceId())
@@ -702,6 +724,8 @@ public class OrderService {
                         .executionType(serviceResponse.getExecutionType())
                         .address(serviceResponse.getExecutionType() == ExecutionType.ONSITE
                                 ? request.getAddress() : null)
+                        .scheduleStart(scheduled==null?null:scheduled.getScheduledStart())
+                        .scheduleEnd(scheduled==null?null:scheduled.getScheduledEnd())
                         .autoCompleteHours(serviceResponse.getExecutionType() == ExecutionType.ONSITE
                                 ? 24 : 72)
                         .build())

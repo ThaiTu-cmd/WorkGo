@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AmendmentCreationRequest {
 
+    Integer baseVersionNo;
     String newScope;
 
     BigDecimal newPrice;

@@ -117,7 +117,12 @@ public enum ErrorCode {
     ORDER_DECISION_TERMINAL_CONFLICT(3047, "Order already ended in a way that conflicts with this decision", HttpStatus.CONFLICT),
     ORDER_DECISION_SETTLEMENT_MISMATCH(3048, "Settlement result does not match this order", HttpStatus.CONFLICT),
     ORDER_CREATION_KEY_INVALID(3049, "Idempotency key must contain 1 to 128 visible ASCII characters", HttpStatus.BAD_REQUEST),
-    ORDER_CREATION_KEY_CONFLICT(3050, "Idempotency key was already used for a different or deleted order", HttpStatus.CONFLICT);
+    ORDER_CREATION_KEY_CONFLICT(3050, "Idempotency key was already used for a different or deleted order", HttpStatus.CONFLICT),
+    ORDER_INPUTS_REQUIRED(3051, "Input checklist is required", HttpStatus.CONFLICT),
+    ORDER_INPUTS_STALE(3052, "Checklist or agreement version is stale", HttpStatus.CONFLICT),
+    ORDER_INPUTS_INVALID(3053, "Input submission or review is invalid", HttpStatus.BAD_REQUEST),
+    ORDER_START_BLOCKED(3054, "Agreement, payment hold and confirmed inputs are required", HttpStatus.CONFLICT),
+    ORDER_REWARD_QUOTE_UNAVAILABLE(3055, "An authoritative reward quote is required before accepting new work", HttpStatus.SERVICE_UNAVAILABLE);
 
     private int code;
     private String message;

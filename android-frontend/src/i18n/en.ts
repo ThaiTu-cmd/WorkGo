@@ -1,6 +1,21 @@
 import type { MessageKey } from './vi';
 
 export const en: Record<MessageKey, string> = {
+  "orderInputs.title": "Agreement and inputs",
+  "orderInputs.proposal": "Required inputs (one per line)",
+  "orderInputs.none": "No inputs required",
+  "orderInputs.propose": "Propose checklist",
+  "orderInputs.confirm": "Accept this agreement and checklist",
+  "orderInputs.values": "Input details",
+  "orderInputs.submit": "Submit for Provider review",
+  "orderInputs.accept": "Confirm inputs are sufficient",
+  "orderInputs.missing": "Missing inputs (specify each item)",
+  "orderInputs.reject": "Request missing inputs",
+  "orderInputs.waiting": "Awaiting Provider review within 24 hours. The deadline has not started.",
+  "orderInputs.accepted": "Inputs confirmed.",
+  "orderInputs.retry": "Reload",
+  "orderInputs.pending": "The checklist has not been agreed; work has not started.",
+  "orderInputs.stored": "Submitted client inputs",
   'errors.order_creation_key_invalid': 'The order request key is invalid. Please reopen checkout.',
   'errors.order_creation_key_conflict': 'This request key belongs to a different or deleted order. Check your orders before placing another one.',
   'wallet.resume_top_up': 'Continue top-up',

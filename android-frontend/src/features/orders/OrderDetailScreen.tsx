@@ -18,6 +18,7 @@ import { CancellationCard } from './CancellationCard';
 import { DigitalDeliveryCard } from './DigitalDeliveryCard';
 import { EvidenceGrid } from './EvidenceGrid';
 import { OrderAgreementCard } from './OrderAgreementCard';
+import { OrderInputCard } from './OrderInputCard';
 import { useOrderDetail } from './hooks';
 import { ONSITE_STATUS_LABEL, ORDER_STATUS_LABEL, ORDER_STATUS_TONE } from './orderStatus';
 import { OrderReviewCard } from '@/features/reviews/OrderReviewCard';
@@ -146,6 +147,7 @@ export function OrderDetailScreen({
       </Card>
 
       <OrderAgreementCard order={o} role={role} />
+      <OrderInputCard order={o} role={role} />
 
       {o.executionType === 'DIGITAL' ? <DigitalDeliveryCard key={o.orderId} order={o} role={role} execution={execution.data?.digital} /> : null}
 

@@ -159,7 +159,7 @@ public class CancellationService {
     @Transactional
     public void cancelUnpaid(UUID orderId) {
 
-        Order order = orderRepository.findById(orderId).orElse(null);
+        Order order = orderRepository.findByIdForUpdate(orderId).orElse(null);
 
         //nap lai order, co the tien vua ve
         if (order == null

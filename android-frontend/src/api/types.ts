@@ -160,12 +160,29 @@ export type OrderAgreementVersion = {
   acceptanceCriteria?: string | null;
   price: Num;
   durationDays?: number | null;
+  inputRequirements?: string | null;
+  address?: string | null;
+  scheduleStart?: string | null;
+  scheduleEnd?: string | null;
+  paymentMethod?: string | null;
+  feePolicyVersionId?: string | null;
+  rewardQuoteRef?: string | null;
+  policyVersion?: string | null;
 };
 
-export type OrderAmendmentDraft = { reason: string; newScope?: string; newPrice?: number; newDurationDays?: number };
+export type OrderInputChecklist = {
+  checklistVersion: number; version: number; agreementVersion: number; requirements: string;
+  clientConfirmedAt?: string | null; submittedValues?: string | null; responseDueAt?: string | null;
+  acceptedAt?: string | null; missingReason?: string | null;
+};
+export type OrderAmendmentDraft = { baseVersionNo: number; reason: string; newScope?: string; newPrice?: number; newDurationDays?: number };
 
 export type OrderAmendment = {
   amendmentId: string;
+  oldScope?: string | null;
+  oldPrice?: Num | null;
+  oldDurationDays?: number | null;
+  paymentReceiptId?: string | null;
   proposedByRole: OrderRole;
   status: 'PENDING' | 'AWAITING_PAYMENT' | 'APPLIED' | 'REJECTED';
   reason?: string | null;

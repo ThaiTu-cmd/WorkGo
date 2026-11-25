@@ -3,6 +3,11 @@ import type { ApiResponse, CancellationBody, CancellationDto, ExecutionDto, Orde
 
 // order-service endpoints via gateway (/api/v1/order/**).
 export const orderApi = {
+  getInputs: (id: string) => http.get<ApiResponse<import('./types').OrderInputChecklist>>(`/order/orders/${id}/inputs`),
+  proposeInputs: (id: string, body: { agreementVersion: number; requirements: string[] }) => http.post(`/order/orders/${id}/inputs`, body),
+  confirmInputs: (id: string, body: { checklistVersion: number; expectedVersion: number }) => http.post(`/order/orders/${id}/inputs/confirm`, body),
+  submitInputs: (id: string, body: { checklistVersion: number; expectedVersion: number; values: Record<string, string> }) => http.post(`/order/orders/${id}/inputs/submit`, body),
+  reviewInputs: (id: string, body: { checklistVersion: number; expectedVersion: number; sufficient: boolean; missingReason?: string }) => http.post(`/order/orders/${id}/inputs/review`, body),
   // roleName: which side of the order the caller is on.
   getMyOrders: (roleName: OrderRole, page = 0, size = 10) =>
     http.get<Paged<OrderDto>>('/order/orders', { params: { roleName, page, size } }),

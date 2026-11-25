@@ -25,12 +25,18 @@ public class OrderAgreementVersionResponse {
 
     String acceptanceCriteria;
 
+    String inputRequirements;
+    com.workgo.order.enumeration.OrderPaymentMethod paymentMethod;
+    UUID feePolicyVersionId;
+    String rewardQuoteRef;
+    String policyVersion;
     BigDecimal price;
 
     String currency;
 
     Integer durationDays;
 
+    String address;
     Instant scheduleStart;
 
     Instant scheduleEnd;

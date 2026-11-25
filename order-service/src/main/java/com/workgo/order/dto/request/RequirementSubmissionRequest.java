@@ -15,6 +15,8 @@ import java.util.Map;
 public class RequirementSubmissionRequest {
 
 
+    Integer checklistVersion;
+    Long expectedVersion;
     Map<String, Object> values;
 
 }

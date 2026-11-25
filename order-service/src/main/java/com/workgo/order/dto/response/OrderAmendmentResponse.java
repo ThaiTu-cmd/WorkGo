@@ -16,6 +16,8 @@ import java.util.UUID;
 public class OrderAmendmentResponse {
 
     UUID amendmentId;
+    UUID paymentReceiptId;
+    Instant paymentAdjustedAt;
 
     Integer baseVersionNo;
 
@@ -23,6 +25,9 @@ public class OrderAmendmentResponse {
 
     String proposedByRole;
 
+    String oldScope;
+    BigDecimal oldPrice;
+    Integer oldDurationDays;
     String newScope;
 
     BigDecimal newPrice;

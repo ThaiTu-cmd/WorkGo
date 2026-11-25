@@ -29,6 +29,11 @@ export const orderApi = {
     axiosClient.get(`/order/orders/${orderId}/history`, { params: { page, size } }),
 
   getAgreement: (orderId) => axiosClient.get(`/order/orders/${orderId}/agreement`),
+  getInputs: (orderId) => axiosClient.get(`/order/orders/${orderId}/inputs`),
+  proposeInputs: (orderId, body) => axiosClient.post(`/order/orders/${orderId}/inputs`, body),
+  confirmInputs: (orderId, body) => axiosClient.post(`/order/orders/${orderId}/inputs/confirm`, body),
+  submitInputs: (orderId, body) => axiosClient.post(`/order/orders/${orderId}/inputs/submit`, body),
+  reviewInputs: (orderId, body) => axiosClient.post(`/order/orders/${orderId}/inputs/review`, body),
   getAmendments: (orderId) => axiosClient.get(`/order/orders/${orderId}/amendments`),
   proposeAmendment: (orderId, body) => axiosClient.post(`/order/orders/${orderId}/amendments`, body),
   respondAmendment: (orderId, amendmentId, action) =>

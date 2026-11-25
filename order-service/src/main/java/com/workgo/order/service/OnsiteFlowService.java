@@ -41,11 +41,14 @@ public class OnsiteFlowService {
     TokenUtils tokenUtils;
     PasswordEncoder passwordEncoder;
     TextEncryptor checkinCodeEncryptor;
+    OrderInputService orderInputService;
+    java.time.Clock clock;
 
     @Transactional
     public OnsiteExecutionResponse checkin(UUID orderId, CheckinRequest request){
 
-        Order order = loadOrder(orderId);
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
         assertIsProvider(order);
         assertOnsite(order);
 
@@ -68,13 +71,15 @@ public class OnsiteFlowService {
             throw new AppException(ErrorCode.ORDER_CHECKIN_CODE_INVALID);
         }
 
-        Instant now = Instant.now();
+        Instant now = clock.instant();
 
         //neu da co lich hen thi chi cho checkin som 30 phut
         if (onsite.getScheduledStart() != null
                 && now.isBefore(onsite.getScheduledStart().minus(Duration.ofMinutes(30)))) {
             throw new AppException(ErrorCode.ORDER_CHECKIN_TIME_INVALID);
         }
+
+        if (orderInputService.blockingReason(order) != null) throw new AppException(ErrorCode.ORDER_START_BLOCKED);
 
         //onsite
         onsite.setArrivedAt(now);
@@ -87,6 +92,8 @@ public class OnsiteFlowService {
 
         orderStatusService.transition(order, OrderStatus.IN_PROGRESS,
                 tokenUtils.getCurrentProviderId(), RoleName.PROVIDER);
+        order.setStartedAt(now);
+        orderRepository.save(order);
 
         return executionMapper.toOnsiteExecutionResponse(onsite);
 
@@ -120,7 +127,7 @@ public class OnsiteFlowService {
             throw new AppException(ErrorCode.ORDER_EVIDENCE_AFTER_REQUIRED);
         }
 
-        Instant now = Instant.now();
+        Instant now = clock.instant();
 
         onsite.setServiceCompletedAt(now);
         onsite.setStatus(OnsiteExecutionStatus.SERVICE_DONE);
@@ -159,7 +166,7 @@ public class OnsiteFlowService {
         }
 
         onsite.setStatus(OnsiteExecutionStatus.ACCEPT);
-        onsite.setClientAcceptedAt(Instant.now());
+        onsite.setClientAcceptedAt(clock.instant());
         onsiteExecutionRepository.save(onsite);
 
         completeIfSettled(order, execution, onsite, tokenUtils.getCurrentUserId(), RoleName.CLIENT);
@@ -187,7 +194,7 @@ public class OnsiteFlowService {
         OnsiteExecution onsite = loadOnsite(execution.getExecutionId());
 
         if (onsite.getCashReceivedAt() == null) {
-            onsite.setCashReceivedAt(Instant.now());
+            onsite.setCashReceivedAt(clock.instant());
             onsiteExecutionRepository.save(onsite);
         }
 
@@ -207,7 +214,7 @@ public class OnsiteFlowService {
             return;
         }
 
-        execution.setCompletedAt(Instant.now());
+        execution.setCompletedAt(clock.instant());
         executionRepository.save(execution);
 
         orderStatusService.transition(order, OrderStatus.COMPLETED, actorId, roleName);

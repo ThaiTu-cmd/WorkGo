@@ -49,50 +49,12 @@ public class DigitalFlowService {
     TokenUtils tokenUtils;
     OrderFileService orderFileService;
     OrderAgreementService orderAgreementService;
+    OrderInputService orderInputService;
 
     @Transactional
     public void submitRequirements(UUID orderId, RequirementSubmissionRequest request) {
 
-        Order order = loadOrder(orderId);
-        assertIsClient(order);
-        assertDigital(order);
-
-        //dam bao order da duoc confirm de nop duoc package
-        if (order.getOrderStatus() != OrderStatus.CONFIRMED) {
-            throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
-        }
-
-        Execution execution = loadExecution(orderId);
-        DigitalExecution digital = loadDigital(execution.getExecutionId());
-
-        if (digital.getRequirementSubmittedAt() != null) {
-            throw new AppException(ErrorCode.ORDER_REQUIREMENTS_SUBMITTED);
-        }
-
-        OrderSnapshot snapshot = orderSnapshotRepository.findById(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
-
-        Instant now = Instant.now();
-
-        Integer durationDays = orderAgreementService.currentVersion(order).getDurationDays();
-        if (durationDays != null) {
-            digital.setDeadlineAt(now.plus(Duration.ofDays(durationDays)));
-        }
-
-
-        //tien hanh luu trang thai
-        snapshot.setRequirementValues(request.getValues());
-        orderSnapshotRepository.save(snapshot);
-
-        digital.setRequirementSubmittedAt(now);
-        digital.setStatus(DigitalExecutionStatus.WORKING);
-        digitalExecutionRepository.save(digital);
-
-        execution.setStartedAt(now);
-        executionRepository.save(execution);
-
-        orderStatusService.transition(order, OrderStatus.IN_PROGRESS,
-                tokenUtils.getCurrentUserId(), RoleName.CLIENT);
+        orderInputService.submitLegacy(orderId, request);
     }
 
     @Transactional

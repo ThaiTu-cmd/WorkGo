@@ -1,6 +1,21 @@
 // Vietnamese strings: the source of truth. Keys are "<area>.<name>";
 // placeholders are {p0}, {p1}… and must match in en.ts.
 export const vi = {
+  "orderInputs.title": "Cam k\u1ebft v\u00e0 \u0111\u1ea7u v\u00e0o",
+  "orderInputs.proposal": "Y\u00eau c\u1ea7u \u0111\u1ea7u v\u00e0o (m\u1ed7i d\u00f2ng m\u1ed9t m\u1ee5c)",
+  "orderInputs.none": "Kh\u00f4ng y\u00eau c\u1ea7u \u0111\u1ea7u v\u00e0o",
+  "orderInputs.propose": "G\u1eedi checklist \u0111\u1ec3 hai b\u00ean ch\u1ed1t",
+  "orderInputs.confirm": "T\u00f4i ch\u1ea5p nh\u1eadn cam k\u1ebft v\u00e0 checklist n\u00e0y",
+  "orderInputs.values": "N\u1ed9i dung \u0111\u1ea7u v\u00e0o",
+  "orderInputs.submit": "G\u1eedi Provider ki\u1ec3m tra",
+  "orderInputs.accept": "X\u00e1c nh\u1eadn \u0111\u00e3 \u0111\u1ee7 \u0111\u1ea7u v\u00e0o",
+  "orderInputs.missing": "Ph\u1ea7n c\u00f2n thi\u1ebfu (n\u00eau r\u00f5 t\u1eebng m\u1ee5c)",
+  "orderInputs.reject": "Y\u00eau c\u1ea7u b\u1ed5 sung",
+  "orderInputs.waiting": "\u0110ang ch\u1edd Provider ki\u1ec3m tra. H\u1ea1n ph\u1ea3n h\u1ed3i 24 gi\u1edd; deadline ch\u01b0a b\u1eaft \u0111\u1ea7u.",
+  "orderInputs.accepted": "\u0110\u1ea7u v\u00e0o \u0111\u00e3 \u0111\u01b0\u1ee3c x\u00e1c nh\u1eadn.",
+  "orderInputs.retry": "T\u1ea3i l\u1ea1i",
+  "orderInputs.pending": "Ch\u01b0a ch\u1ed1t checklist; ch\u01b0a b\u1eaft \u0111\u1ea7u c\u00f4ng vi\u1ec7c.",
+  "orderInputs.stored": "\u0110\u1ea7u v\u00e0o CLIENT \u0111\u00e3 g\u1eedi",
   'errors.order_creation_key_invalid': 'Mã tạo đơn không hợp lệ. Vui lòng mở lại màn hình đặt dịch vụ.',
   'errors.order_creation_key_conflict': 'Mã tạo đơn đã được dùng cho nội dung khác hoặc đơn đã xóa. Vui lòng kiểm tra danh sách đơn trước khi đặt lại.',
   'wallet.resume_top_up': 'Tiếp tục nạp tiền',

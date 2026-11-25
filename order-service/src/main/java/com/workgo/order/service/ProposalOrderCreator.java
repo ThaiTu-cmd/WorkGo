@@ -35,6 +35,7 @@ public class ProposalOrderCreator {
     private final DigitalExecutionHandler digitalHandler;
     private final OrderFeeService orderFeeService;
     private final ProviderFinancialEligibility providerFinancialEligibility;
+    private final OrderRewardQuoteService rewardQuotes;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ProposalOrderService.CreationResult create(CreateProposalOrderRequest request) {
@@ -64,6 +65,9 @@ public class ProposalOrderCreator {
         FeePolicyResponse feePolicy = orderFeeService.currentPolicy();
         BigDecimal fee = orderFeeService.successFee(request.price(), feePolicy.getSuccessFeeRate());
         BigDecimal net = request.price().subtract(fee);
+        String rewardQuoteRef = rewardQuotes.quote(new OrderRewardQuoteService.Input(request.clientId(), request.providerId(),
+                "PROPOSAL", request.proposalId(), request.jobTitle()+" - "+request.terms(), request.price(), request.currency(),
+                request.estimatedDays(), feePolicy.getFeePolicyVersionId()));
         Order order = orders.saveAndFlush(Order.builder()
                 .orderNumber("WG-P-" + UUID.randomUUID())
                 .sourceType(SourceType.PROPOSAL).sourceId(request.proposalId())
@@ -79,6 +83,7 @@ public class ProposalOrderCreator {
         // Reuse the existing DIGITAL lifecycle; no catalog package is purchased here.
         digitalHandler.create(order, new OrderCreationRequest(), PackageResponse.builder().revisionLimit(0).build());
         snapshots.save(OrderSnapshot.builder().order(order).proposalSnapshot(frozen)
+                .rewardQuoteRef(rewardQuoteRef)
                 .pricingSnapshot(orderFeeService.pricing(feePolicy).subtotal(request.price()).platformFee(fee)
                         .totalAmount(request.price()).providerNetAmount(net).currency(request.currency())
                         .paymentMethod(OrderPaymentMethod.WALLET).build())

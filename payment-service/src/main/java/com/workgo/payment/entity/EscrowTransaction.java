@@ -50,6 +50,8 @@ public class EscrowTransaction {
 
     @Column(name = "saga_id")
     UUID sagaId;
+    @Column(name="command_fee")
+    BigDecimal commandFee;
 
     @Builder.Default
     @Column(name = "created_at")

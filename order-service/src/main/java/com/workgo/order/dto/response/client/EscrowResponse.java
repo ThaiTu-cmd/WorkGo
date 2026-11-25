@@ -16,8 +16,14 @@ import java.util.UUID;
 public class EscrowResponse {
 
     UUID escrowAccountId;
+    UUID adjustmentId;
+    UUID adjustmentTransactionId;
 
     UUID orderId;
+
+    java.math.BigDecimal heldAmount;
+    java.math.BigDecimal platformFeeAmount;
+    String currency;
 
     EscrowStatus status;
 

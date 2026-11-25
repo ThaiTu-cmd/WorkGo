@@ -106,6 +106,10 @@ export function OrderAgreementCard({ order, role }: { order: OrderDto; role: Ord
           <Text style={styles.title}>{t('agreement.version', { p0: version.versionNo })} · {formatVnd(Number(version.price))}</Text>
           {version.scope ? <Text style={styles.text}>{version.scope}</Text> : null}
           {version.acceptanceCriteria ? <Text style={styles.text}>{version.acceptanceCriteria}</Text> : null}
+          {version.inputRequirements != null ? <Text selectable>{version.inputRequirements}</Text> : null}
+          {version.address ? <Text>{version.address}</Text> : null}
+          {version.scheduleStart ? <Text>{new Date(version.scheduleStart).toLocaleString()} — {version.scheduleEnd ? new Date(version.scheduleEnd).toLocaleString() : ''}</Text> : null}
+          {version.paymentMethod ? <Text>{version.paymentMethod} · {version.policyVersion}</Text> : null}
           {version.durationDays ? <Text style={styles.text}>{t('agreement.days', { p0: version.durationDays })}</Text> : null}
         </Card>
       ))}
@@ -117,6 +121,9 @@ export function OrderAgreementCard({ order, role }: { order: OrderDto; role: Ord
           <Card key={item.amendmentId}>
             <Text style={styles.title}>{t(statuses[item.status])}</Text>
             {item.reason ? <Text style={styles.text}>{item.reason}</Text> : null}
+            {item.oldScope && item.newScope ? <Text selectable>{item.oldScope} → {item.newScope}</Text> : null}
+            {item.oldPrice != null && item.newPrice != null ? <Text>{formatVnd(Number(item.oldPrice))} → {formatVnd(Number(item.newPrice))}</Text> : null}
+            {item.oldDurationDays != null && item.newDurationDays != null ? <Text>{t('agreement.days', { p0: item.oldDurationDays })} → {t('agreement.days', { p0: item.newDurationDays })}</Text> : null}
             {item.newScope ? <Text style={styles.text}>{item.newScope}</Text> : null}
             {item.newPrice != null ? <Text style={styles.text}>{t('agreement.new_price', { p0: formatVnd(Number(item.newPrice)) })}</Text> : null}
             {item.newDurationDays ? <Text style={styles.text}>{t('agreement.days', { p0: item.newDurationDays })}</Text> : null}
@@ -135,7 +142,7 @@ export function OrderAgreementCard({ order, role }: { order: OrderDto; role: Ord
           </Card>
         );
       })}
-      {!closed && current && amendments.isSuccess && !rows.some((item) => item.status === 'PENDING' || item.status === 'AWAITING_PAYMENT') && (
+      {!closed && current?.inputRequirements != null && ['PENDING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS'].includes(order.orderStatus) && amendments.isSuccess && !rows.some((item) => item.status === 'PENDING' || item.status === 'AWAITING_PAYMENT') && (
         editing ? (
           <>
             <TextField label={t('agreement.scope_label')} value={scope} onChangeText={setScope} />
@@ -144,6 +151,7 @@ export function OrderAgreementCard({ order, role }: { order: OrderDto; role: Ord
             <TextField label={t('agreement.reason')} value={reason} onChangeText={setReason} />
             <Button title={t('agreement.send')} disabled={!validDraft} loading={change.isPending}
               onPress={() => run(() => orderApi.proposeAmendment(orderId, {
+                baseVersionNo: current.versionNo,
                 reason: reason.trim(),
                 ...(newScope && { newScope }),
                 ...(canSetPrice && price && { newPrice: Number(price) }),

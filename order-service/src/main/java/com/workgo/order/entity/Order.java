@@ -130,6 +130,9 @@ public class Order {
     @Column(name = "is_deleted")
     int isDeleted = 0;
 
+    @Column(name="input_support_reason")
+    String inputSupportReason;
+
     //============FK===============
 
     @Builder.Default

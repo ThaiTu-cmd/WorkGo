@@ -20,6 +20,8 @@ import java.util.UUID;
 public class EscrowAccountResponse {
 
     UUID escrowAccountId;
+    UUID adjustmentId;
+    UUID adjustmentTransactionId;
 
     UUID orderId;
 

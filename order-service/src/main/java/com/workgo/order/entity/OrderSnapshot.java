@@ -18,9 +18,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@org.hibernate.annotations.Immutable
 @Entity
 @Table(name = "order_snapshots")
 public class OrderSnapshot {
+
+    @Column(name="reward_quote_ref", updatable=false)
+    String rewardQuoteRef;
 
     @Id
     @Column(name = "order_id")

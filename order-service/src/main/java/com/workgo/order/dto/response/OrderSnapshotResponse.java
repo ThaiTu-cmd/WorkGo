@@ -16,6 +16,8 @@ import java.util.Map;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderSnapshotResponse {
 
+    String rewardQuoteRef;
+
     ProposalSnapshot proposalSnapshot;
 
     ServiceSnapshot serviceSnapshot;

@@ -24,6 +24,8 @@ public class OrderAmendment {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "amendment_id")
     UUID amendmentId;
+    UUID paymentReceiptId;
+    Instant paymentAdjustedAt;
 
     @Column(name = "order_id", nullable = false)
     UUID orderId;
@@ -36,6 +38,11 @@ public class OrderAmendment {
 
     @Column(name = "proposed_by_role", nullable = false)
     String proposedByRole;
+
+    @Column(columnDefinition="TEXT")
+    String oldScope;
+    BigDecimal oldPrice;
+    Integer oldDurationDays;
 
     @Column(name = "new_scope", columnDefinition = "TEXT")
     String newScope;

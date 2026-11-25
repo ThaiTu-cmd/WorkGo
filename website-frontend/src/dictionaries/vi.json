@@ -1,13 +1,13 @@
 {
-  "walletHistory": {
-    "loginToView": "Đăng nhập để xem giao dịch ví.",
-    "loadError": "Không thể tải dữ liệu ví. Hãy thử cập nhật lại.",
-    "escrowDetails": "Xem số tiền ký quỹ theo từng đơn hàng.",
-    "loading": "Đang tải dữ liệu ví…",
-    "status": "Trạng thái",
-    "resumeTopUp": "Tiếp tục giao dịch nạp ví"
+  "walletHistory": { "loginToView": "Đăng nhập để xem giao dịch ví.", "loadError": "Không thể tải dữ liệu ví. Hãy thử cập nhật lại.", "escrowDetails": "Xem số tiền ký quỹ theo từng đơn hàng.", "loading": "Đang tải dữ liệu ví…", "status": "Trạng thái", "resumeTopUp": "Tiếp tục giao dịch nạp ví" },
+  "adminModeration": {
+    "faultType": "Loại lỗi", "faultNONE": "Không áp lỗi", "faultLATE": "Trễ hạn DIGITAL", "faultABANDONMENT": "Bỏ việc", "faultCAPABILITY": "Không đủ năng lực", "faultCORRECTION": "Sửa quyết định trước", "lateCycles": "Số chu kỳ trễ (1–6)", "supersedesDecisionId": "ID quyết định được sửa", "faultRules": "Trễ hạn chỉ áp dụng cho đơn DIGITAL. Bỏ việc/không đủ năng lực chỉ dùng khi hoàn tiền và Provider có lỗi. Sửa quyết định yêu cầu bác tranh chấp và ID quyết định cũ; server kiểm tra cùng đơn và người phán quyết độc lập.",
+    "jobs": "Kiểm duyệt Job", "reviews": "Kiểm duyệt đánh giá", "reports": "Xử lý báo cáo", "disputes": "Xử lý tranh chấp",
+    "item": "Hồ sơ", "status": "Trạng thái", "createdAt": "Ngày tạo", "actions": "Thao tác", "open": "Xem chi tiết", "detail": "Chi tiết", "loading": "Đang tải…", "retryLoad": "Tải lại", "id": "Mã", "version": "Phiên bản", "client": "Khách hàng", "budget": "Ngân sách", "order": "Đơn hàng", "comment": "Nội dung", "target": "Đối tượng", "assigned": "Người phụ trách", "evidenceRequest": "Yêu cầu chứng cứ", "evidence": "Chứng cứ", "noEvidence": "Chưa có chứng cứ.", "evidenceAssignedOnly": "Chỉ người được phân công mới xem được chứng cứ riêng tư.", "download": "Tải chứng cứ", "decision": "Quyết định và thực thi", "paymentStep": "Bước thanh toán", "orderStep": "Bước đơn hàng", "bytes": "byte", "history": "Lịch sử quản trị", "historyAll": "Lịch sử quản trị có thể xem theo quyền hiện tại.", "historyOwn": "Chỉ hiển thị thao tác quản trị của tài khoản này.", "action": "Hành động", "actor": "Người thực hiện", "correlationId": "Mã truy vết", "reason": "Lý do", "operation": "Kết luận", "faultParty": "Bên có lỗi", "evidenceSummary": "Tóm tắt chứng cứ", "confirm": "Xác nhận", "cancel": "Hủy", "saved": "Đã lưu trên server.",
+    "hide": "Ẩn Job", "show": "Hiện Job", "APPROVED": "Duyệt đánh giá", "REJECTED": "Từ chối", "HIDDEN": "Ẩn đánh giá", "REVIEWING": "Đang xử lý", "RESOLVED": "Đã xử lý", "takeOver": "Tiếp nhận", "requestEvidence": "Yêu cầu chứng cứ", "resolve": "Ra quyết định", "retry": "Thử lại bước thực thi", "rejectCase": "Bác tranh chấp", "release": "Giải ngân", "refund": "Hoàn tiền"
   },
   "adminOperations": {
+    "editUser": "Sửa hồ sơ", "firstName": "Tên", "lastName": "Họ và tên đệm", "email": "Email", "phone": "Số điện thoại", "noChanges": "Chưa có thông tin thay đổi.", "invalidProfile": "Cần có họ tên, email hợp lệ và số điện thoại 10 chữ số bắt đầu bằng 0 (nếu nhập).",
     "loading": "Đang tải…",
     "retry": "Thử lại",
     "empty": "Không có dữ liệu.",
@@ -112,14 +112,7 @@
     "failed": "Xác nhận thất bại",
     "unknown": "Ghi nhận chưa rõ kết quả"
   },
-  "catalogUpload": {
-    "cover": "Tải ảnh bìa lên",
-    "gallery": "Tải ảnh thư viện lên",
-    "video": "Tải video MP4 lên",
-    "openVideo": "Mở video đã tải lên",
-    "removeVideo": "Xóa video",
-    "fileSize": "Chọn tệp có dung lượng lớn hơn 0 và tối đa {p0} MB."
-  },
+  "catalogUpload": { "cover": "Tải ảnh bìa lên", "gallery": "Tải ảnh thư viện lên", "video": "Tải video MP4 lên", "openVideo": "Mở video đã tải lên", "removeVideo": "Xóa video", "fileSize": "Chọn tệp có dung lượng lớn hơn 0 và tối đa {p0} MB." },
   "orderWallet": {
     "creationKeyInvalid": "Mã yêu cầu đặt đơn không hợp lệ. Vui lòng quay lại dịch vụ và thử lại.",
     "creationKeyConflict": "Yêu cầu đặt đơn này không thể dùng lại. Vui lòng kiểm tra danh sách đơn trước khi tạo đơn mới.",
@@ -149,26 +142,8 @@
     "topUpLimits": "Số tiền nạp thấp hơn mức tối thiểu hoặc vượt hạn mức nạp trong ngày.",
     "topUpUnavailable": "Không nhận được thông tin giao dịch nạp ví."
   },
-  "adminPending": {
-    "jobs": "Kiểm duyệt Job",
-    "reviews": "Kiểm duyệt Review",
-    "reports": "Xử lý Report",
-    "disputes": "Hồ sơ Dispute",
-    "fees": "Chính sách phí",
-    "sanctions": "Chế tài",
-    "monitoring": "Giám sát",
-    "audit": "Lịch sử quản trị",
-    "reconciliation": "Đối soát",
-    "unavailable": "Chưa phát hành: chức năng này đang chờ API có phân quyền và audit. Chưa có thao tác thay đổi dữ liệu."
-  },
-  "notifications": {
-    "title": "Thông báo",
-    "readAll": "Đã đọc hết",
-    "error": "Không tải hoặc cập nhật được thông báo.",
-    "retry": "Thử lại",
-    "loading": "Đang tải",
-    "empty": "Không có thông báo mới"
-  },
+  "adminPending": { "jobs": "Kiểm duyệt Job", "reviews": "Kiểm duyệt Review", "reports": "Xử lý Report", "disputes": "Hồ sơ Dispute", "fees": "Chính sách phí", "sanctions": "Chế tài", "monitoring": "Giám sát", "audit": "Lịch sử quản trị", "reconciliation": "Đối soát", "unavailable": "Chưa phát hành: chức năng này đang chờ API có phân quyền và audit. Chưa có thao tác thay đổi dữ liệu." },
+  "notifications": { "title": "Thông báo", "readAll": "Đã đọc hết", "error": "Không tải hoặc cập nhật được thông báo.", "retry": "Thử lại", "loading": "Đang tải", "empty": "Không có thông báo mới" },
   "orderWorkspace": {
     "agreement": "Cam kết của đơn",
     "version": "Phiên bản {p0}",
@@ -2695,22 +2670,5 @@
     "m1775": "Không tải được tin nhắn: {p0}",
     "m1776": "Đang mở cuộc trò chuyện...",
     "m1777": "Thử lại"
-  },
-  "orderInputs": {
-    "title": "Cam kết và đầu vào",
-    "proposal": "Yêu cầu đầu vào (mỗi dòng một mục)",
-    "none": "Không yêu cầu đầu vào",
-    "propose": "Gửi checklist để hai bên chốt",
-    "confirm": "Tôi chấp nhận cam kết và checklist này",
-    "values": "Nội dung đầu vào",
-    "submit": "Gửi Provider kiểm tra",
-    "accept": "Xác nhận đã đủ đầu vào",
-    "missing": "Phần còn thiếu (nêu rõ từng mục)",
-    "reject": "Yêu cầu bổ sung",
-    "waiting": "Đang chờ Provider kiểm tra. Hạn phản hồi 24 giờ; deadline chưa bắt đầu.",
-    "accepted": "Đầu vào đã được xác nhận.",
-    "retry": "Tải lại",
-    "pending": "Chưa chốt checklist; chưa bắt đầu công việc.",
-    "stored": "Đầu vào CLIENT đã gửi"
   }
 }

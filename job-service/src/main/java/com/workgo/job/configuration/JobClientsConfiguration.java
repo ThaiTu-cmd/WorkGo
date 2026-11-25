@@ -8,6 +8,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration(proxyBeanMethods = false)
-@EnableFeignClients(clients = {CatalogClient.class, IdentityClient.class, OrderClient.class,PaymentClient.class})
+@EnableFeignClients(clients = {CatalogClient.class, IdentityClient.class, OrderClient.class, PaymentClient.class})
 public class JobClientsConfiguration {
 }

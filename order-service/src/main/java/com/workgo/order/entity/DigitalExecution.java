@@ -33,6 +33,7 @@ public class DigitalExecution {
     Instant deadlineAt;
 
     @Column(name = "revision_limit")
+    // Historical package metadata only; in-scope defect repair is unlimited.
     Integer revisionLimit;
 
     @Builder.Default

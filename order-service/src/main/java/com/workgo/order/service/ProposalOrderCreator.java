@@ -81,6 +81,8 @@ public class ProposalOrderCreator {
                 .name(request.jobTitle()).quantity(1).unitPrice(request.price()).amount(request.price()).sortOrder(0).build());
 
         // Reuse the existing DIGITAL lifecycle; no catalog package is purchased here.
+    // Historical package metadata only; in-scope defect repair is unlimited.
+        // Historical metadata; in-scope defect repair is unlimited.
         digitalHandler.create(order, new OrderCreationRequest(), PackageResponse.builder().revisionLimit(0).build());
         snapshots.save(OrderSnapshot.builder().order(order).proposalSnapshot(frozen)
                 .rewardQuoteRef(rewardQuoteRef)

@@ -43,6 +43,9 @@ export function DigitalDeliveryCard({ order, role, execution }: {
   const [description, setDescription] = useState('');
   const [links, setLinks] = useState('');
   const [reason, setReason] = useState('');
+  const [criterion, setCriterion] = useState('');
+  const [repairResponse, setRepairResponse] = useState('');
+  const [repairDeadline, setRepairDeadline] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
@@ -57,6 +60,10 @@ export function DigitalDeliveryCard({ order, role, execution }: {
   const revisions = useQuery({
     queryKey: [...qk.order(orderId), 'revisions'],
     queryFn: async () => (await orderApi.getRevisions(orderId)).result,
+  });
+  const agreement = useQuery({
+    queryKey: [...qk.order(orderId), 'agreement'],
+    queryFn: async () => (await orderApi.getAgreement(orderId)).result.at(-1),
   });
   const refresh = () => Promise.all(
     [qk.order(orderId), qk.orderHistory(orderId), qk.orderExecution(orderId), qk.orders('CLIENT'), qk.orders('PROVIDER'), qk.escrow(orderId), qk.wallet()].map(
@@ -172,7 +179,9 @@ export function DigitalDeliveryCard({ order, role, execution }: {
   const latest = deliveries.data?.[0];
   const canReview = role === 'CLIENT' && order.orderStatus === 'DELIVERED' &&
     execution?.status === 'SUBMITTED' && latest?.status === 'SUBMITTED';
-  const revisionAvailable = execution?.revisionLimit == null || (execution.revisionsUsed ?? 0) < execution.revisionLimit;
+  const revisionAvailable = true; // Unlimited in-scope repairs, including historical limit 0.
+  const parsedRepairDeadline = new Date(repairDeadline);
+  const validRepairDeadline = Number.isFinite(parsedRepairDeadline.getTime());
   const references = links.split(/\r?\n/).map((link) => link.trim()).filter(Boolean);
   const invalidReference = references.some((link) => !/^https?:\/\/\S+$/i.test(link));
   const storedDescription = brief.data?.description;
@@ -225,10 +234,15 @@ export function DigitalDeliveryCard({ order, role, execution }: {
             onPress={() => runResponse(() => orderApi.acceptDelivery(orderId))} />
           {revisionAvailable ? (
             <>
+              <Text>Sửa lỗi trong phạm vi không giới hạn lượt. Ngoài phạm vi cần phụ lục.</Text>
+              <Text>Bản bàn giao {latest?.versionNo} · Cam kết {agreement.data?.versionNo}</Text>
+              {agreement.isError && <ErrorState message={orderErrorMessage(agreement.error)} onRetry={() => void agreement.refetch()} />}
+              {agreement.data?.scope && <Button title={`Phạm vi: ${agreement.data.scope}`} variant={criterion === 'scope' ? 'primary' : 'secondary'} onPress={() => setCriterion('scope')} />}
+              {agreement.data?.acceptanceCriteria && <Button title={`Tiêu chí: ${agreement.data.acceptanceCriteria}`} variant={criterion === 'acceptanceCriteria' ? 'primary' : 'secondary'} onPress={() => setCriterion('acceptanceCriteria')} />}
               <TextField label={t('digitalDelivery.revision_reason')} multiline value={reason} onChangeText={setReason} />
               <Button title={t('digitalDelivery.request_revision')} variant="secondary" loading={respond.isPending}
-                disabled={!reason.trim() || !!downloading}
-                onPress={() => runResponse(() => orderApi.requestRevision(orderId, reason.trim()))} />
+                disabled={!reason.trim() || !criterion || !agreement.data || !!downloading}
+                onPress={() => runResponse(() => orderApi.requestRevision(orderId, { reason: reason.trim(), deliveryVersion: latest!.versionNo, agreementVersion: agreement.data!.versionNo, criterionRefs: [criterion], scopeChange: false }))} />
             </>
           ) : <Text style={styles.text}>{t('digitalDelivery.revision_limit_reached')}</Text>}
         </>
@@ -236,7 +250,27 @@ export function DigitalDeliveryCard({ order, role, execution }: {
       {revisions.isError && <ErrorState message={orderErrorMessage(revisions.error)} onRetry={() => void revisions.refetch()} />}
       {(revisions.data ?? []).map((revision) => (
         <Card key={revision.revisionRequestId}>
-          <Text style={styles.title}>{t(revision.status === 'OPEN' ? 'digitalDelivery.revision_open' : 'digitalDelivery.revision_resolved')}</Text>
+          <Text style={styles.title}>Bản {revision.deliveryVersion ?? 'cũ'} · {revision.status}</Text>
+          <Text>Cam kết {revision.agreementVersion ?? 'cũ'} · {revision.criterionRefs?.join(', ')}</Text>
+          <Text>{revision.scopeSnapshot}</Text><Text>{revision.criteriaSnapshot}</Text>
+          {revision.responseDueAt && <Text>Phản hồi trước: {formatDateTime(revision.responseDueAt)}</Text>}
+          {revision.deadlineAgreementDueAt && <Text>Chốt hạn trước: {formatDateTime(revision.deadlineAgreementDueAt)}</Text>}
+          {revision.adminSuggested && <Text>Đã 3 vòng hoặc 7 ngày: nên liên hệ ADMIN hỗ trợ, không giới hạn lượt sửa.</Text>}
+          {revision.supportRequired && <Text>Quá hạn phản hồi/chốt hạn: cần ADMIN hỗ trợ.</Text>}
+          {revision.providerResponse && <Text>Provider: {revision.providerResponse}</Text>}
+          {revision.proposedRepairDeadline && <Text>Đề xuất: {formatDateTime(revision.proposedRepairDeadline)}</Text>}
+          {revision.agreedRepairDeadline && <Text>Hạn đã chốt: {formatDateTime(revision.agreedRepairDeadline)}</Text>}
+          {order.orderStatus === 'IN_PROGRESS' && role === 'PROVIDER' && ['OPEN', 'RESPONDED'].includes(revision.status) && <>
+            <TextField label="Phản hồi sửa" multiline value={repairResponse} onChangeText={setRepairResponse} />
+            <TextField label="Hạn sửa (VD: 2026-11-28T17:00:00+07:00)" value={repairDeadline} onChangeText={setRepairDeadline} />
+            <Button title="Gửi phản hồi và hạn sửa" loading={respond.isPending} disabled={!repairResponse.trim() || !validRepairDeadline}
+              onPress={() => runResponse(() => orderApi.respondRevision(orderId, revision.revisionRequestId,
+                { response: repairResponse.trim(), proposedRepairDeadline: parsedRepairDeadline.toISOString() }))} />
+          </>}
+          {order.orderStatus === 'IN_PROGRESS' && role === 'CLIENT' && revision.status === 'RESPONDED' && revision.proposedRepairDeadline && <Button
+            title="Đồng ý hạn sửa đề xuất" loading={respond.isPending}
+            onPress={() => runResponse(() => orderApi.confirmRepairDeadline(orderId, revision.revisionRequestId, revision.proposedRepairDeadline!))} />}
+
           <Text selectable style={styles.text}>{revision.reason}</Text>
           <Text style={styles.text}>{formatDateTime(revision.createdAt)}</Text>
         </Card>

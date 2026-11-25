@@ -20,4 +20,13 @@ public interface RevisionRequestRepository extends JpaRepository<RevisionRequest
     Optional<RevisionRequest> findFirstByDeliveryPackage_Execution_ExecutionIdAndStatusOrderByCreatedAtDesc(
             UUID executionId, RevisionStatus status);
 
+    @org.springframework.data.jpa.repository.Query("""
+        select r from RevisionRequest r
+        where r.deliveryPackage.execution.order.orderStatus = com.workgo.order.enumeration.OrderStatus.IN_PROGRESS
+          and r.status in (com.workgo.order.enumeration.RevisionStatus.OPEN, com.workgo.order.enumeration.RevisionStatus.RESPONDED)
+          and ((r.respondedAt is null and r.responseDueAt <= :now)
+            or (r.agreedRepairDeadline is null and r.deadlineAgreementDueAt <= :now))
+        order by r.createdAt asc
+        """)
+    Page<RevisionRequest> findSupportQueue(@org.springframework.data.repository.query.Param("now") java.time.Instant now, Pageable pageable);
 }

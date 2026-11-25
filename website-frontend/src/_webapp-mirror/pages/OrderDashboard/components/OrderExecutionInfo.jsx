@@ -214,7 +214,7 @@ export default function OrderExecutionInfo({
                 <dt>{tr("m758")}</dt>
                 <dd>
                   {state.execution.digital.revisionsUsed ?? 0}
-                  {state.execution.digital.revisionLimit != null ? ` / ${state.execution.digital.revisionLimit}` : ''}
+                  {' · Sửa lỗi trong phạm vi không giới hạn'}
                 </dd>
               </div>
             </dl>}

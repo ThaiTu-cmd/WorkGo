@@ -57,7 +57,7 @@ public class OrderStatusService {
 
         switch (toStatus){
             case CONFIRMED -> order.setConfirmedAt(now);
-            case IN_PROGRESS -> order.setStartedAt(now);
+            case IN_PROGRESS -> { if (order.getStartedAt() == null) order.setStartedAt(now); }
             case DELIVERED -> order.setDeliveredAt(now);
             case COMPLETED -> order.setCompletedAt(now);
             case CANCELLED ->  order.setCancelledAt(now);

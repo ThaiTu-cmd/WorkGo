@@ -8,6 +8,9 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface RevisionRequestMapper {
 
+    @Mapping(target = "requestedAt", source = "createdAt")
+    @Mapping(target = "adminSuggested", ignore = true)
+    @Mapping(target = "supportRequired", ignore = true)
     @Mapping(target = "deliveryPackageId", source = "deliveryPackage.deliveryPackageId")
     RevisionRequestResponse toResponse(RevisionRequest revisionRequest);
 

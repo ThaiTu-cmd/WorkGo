@@ -122,7 +122,11 @@ public enum ErrorCode {
     ORDER_INPUTS_STALE(3052, "Checklist or agreement version is stale", HttpStatus.CONFLICT),
     ORDER_INPUTS_INVALID(3053, "Input submission or review is invalid", HttpStatus.BAD_REQUEST),
     ORDER_START_BLOCKED(3054, "Agreement, payment hold and confirmed inputs are required", HttpStatus.CONFLICT),
-    ORDER_REWARD_QUOTE_UNAVAILABLE(3055, "An authoritative reward quote is required before accepting new work", HttpStatus.SERVICE_UNAVAILABLE);
+    ORDER_REWARD_QUOTE_UNAVAILABLE(3055, "An authoritative reward quote is required before accepting new work", HttpStatus.SERVICE_UNAVAILABLE),
+    ORDER_REVISION_INVALID(3056, "Revision needs a reason and valid criteria from the agreed scope; scope changes require an addendum", HttpStatus.BAD_REQUEST),
+    ORDER_REVISION_STALE(3057, "Delivery, agreement or repair deadline changed; reload before responding", HttpStatus.CONFLICT),
+    ORDER_REVISION_NOT_FOUND(3058, "Open revision not found for this order", HttpStatus.NOT_FOUND),
+    ORDER_REVISION_DEADLINE_REQUIRED(3059, "Both parties must agree a future repair deadline before resubmission", HttpStatus.CONFLICT);
 
     private int code;
     private String message;

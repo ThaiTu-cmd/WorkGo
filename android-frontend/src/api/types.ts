@@ -212,7 +212,19 @@ export type OrderRevision = {
   revisionRequestId: string;
   deliveryPackageId: string;
   reason: string;
-  status: 'OPEN' | 'RESOLVED';
+  status: 'OPEN' | 'RESPONDED' | 'AGREED' | 'RESOLVED' | 'REJECTED';
+  deliveryVersion?: number;
+  agreementVersion?: number;
+  criterionRefs?: string[];
+  scopeSnapshot?: string;
+  criteriaSnapshot?: string;
+  responseDueAt?: string;
+  deadlineAgreementDueAt?: string;
+  providerResponse?: string;
+  proposedRepairDeadline?: string;
+  agreedRepairDeadline?: string;
+  adminSuggested?: boolean;
+  supportRequired?: boolean;
   createdAt: string;
 };
 

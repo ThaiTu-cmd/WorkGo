@@ -29,5 +29,21 @@ public class RevisionRequestResponse {
     Instant createdAt;
 
     Instant resolvedAt;
+    Integer deliveryVersion;
+    Integer agreementVersion;
+    java.util.List<String> criterionRefs;
+    String scopeSnapshot;
+    String criteriaSnapshot;
+    Instant requestedAt;
+    Instant responseDueAt;
+    Instant deadlineAgreementDueAt;
+    Instant respondedAt;
+    String providerResponse;
+    Instant proposedRepairDeadline;
+    Instant agreedRepairDeadline;
+    Instant deadlineAgreedAt;
+    boolean adminSuggested;
+    boolean supportRequired;
+
 
 }

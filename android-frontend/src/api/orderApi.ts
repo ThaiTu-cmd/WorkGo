@@ -36,8 +36,12 @@ export const orderApi = {
 
   getRevisions: (orderId: string) => http.get<ApiResponse<OrderRevision[]>>(`/order/orders/digital/${orderId}/revisions`),
 
-  requestRevision: (orderId: string, reason: string) =>
-    http.post<ApiResponse<OrderRevision>>(`/order/orders/digital/${orderId}/revisions`, { reason }),
+  requestRevision: (orderId: string, body: { reason: string; deliveryVersion: number; agreementVersion: number; criterionRefs: string[]; scopeChange: boolean }) =>
+    http.post<ApiResponse<OrderRevision>>(`/order/orders/digital/${orderId}/revisions`, body),
+  respondRevision: (orderId: string, revisionId: string, body: { response: string; proposedRepairDeadline: string }) =>
+    http.post<ApiResponse<OrderRevision>>(`/order/orders/digital/${orderId}/revisions/${revisionId}/respond`, body),
+  confirmRepairDeadline: (orderId: string, revisionId: string, proposedRepairDeadline: string) =>
+    http.post<ApiResponse<OrderRevision>>(`/order/orders/digital/${orderId}/revisions/${revisionId}/confirm-deadline`, { proposedRepairDeadline }),
 
   acceptDelivery: (orderId: string) =>
     http.post<ApiResponse<ExecutionDto['digital']>>(`/order/orders/digital/${orderId}/accept`),

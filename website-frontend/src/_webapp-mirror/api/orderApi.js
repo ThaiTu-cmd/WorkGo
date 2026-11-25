@@ -91,8 +91,12 @@ export const orderApi = {
   //   { deliveryPackageId, versionNo, message, status, deliveredAt, files: [...] }
   getDeliveries: (orderId) => axiosClient.get(`/order/orders/digital/${orderId}/submissions`),
 
-  requestRevision: (orderId, reason) =>
-    axiosClient.post(`/order/orders/digital/${orderId}/revisions`, { reason }),
+  requestRevision: (orderId, body) =>
+    axiosClient.post(`/order/orders/digital/${orderId}/revisions`, body),
+  respondRevision: (orderId, revisionId, body) =>
+    axiosClient.post(`/order/orders/digital/${orderId}/revisions/${revisionId}/respond`, body),
+  confirmRepairDeadline: (orderId, revisionId, proposedRepairDeadline) =>
+    axiosClient.post(`/order/orders/digital/${orderId}/revisions/${revisionId}/confirm-deadline`, { proposedRepairDeadline }),
 
   // RevisionRequestResponse[] newest first: { revisionRequestId, deliveryPackageId, reason, status, createdAt, resolvedAt }
   getRevisions: (orderId) => axiosClient.get(`/order/orders/digital/${orderId}/revisions`),

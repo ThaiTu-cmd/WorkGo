@@ -45,6 +45,8 @@ public class DigitalExecutionHandler implements ExecutionHandler{
         DigitalExecution digitalExecution = DigitalExecution.builder()
                 .status(DigitalExecutionStatus.AWAITING_REQUIREMENTS)
                 .execution(execution)
+    // Historical package metadata only; in-scope defect repair is unlimited.
+        // Historical metadata; in-scope defect repair is unlimited.
                 .revisionLimit(packageResponse.getRevisionLimit())
                 .revisionsUsed(0)
                 .deadlineAt(null)

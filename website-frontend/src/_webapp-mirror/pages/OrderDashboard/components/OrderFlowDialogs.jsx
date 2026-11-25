@@ -1,5 +1,5 @@
 import { useTranslations } from "next-intl";
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { FileUp, Paperclip, Trash2 } from 'lucide-react';
 import { orderApi } from '../../../api/orderApi';
 import OrderFlowDialog from './OrderFlowDialog';
@@ -75,24 +75,39 @@ export function RequirementsDialog({
     </OrderFlowDialog>;
 }
 
-// Client, DIGITAL + DELIVERED: reason → back to IN_PROGRESS (uses one revision).
-export function RevisionDialog({
-  order,
-  onClose,
-  onDone
-}) {
-  const tr = useTranslations("misc");
+// In-scope repairs are unlimited; new scope uses an agreement addendum.
+export function RevisionDialog({ order, onClose, onDone }) {
   const [reason, setReason] = useState('');
-  return <OrderFlowDialog title={tr("m1520")} submitLabel={tr("m1521")} canSubmit={reason.trim().length > 0} onSubmit={async () => {
-    await orderApi.requestRevision(order.orderId, reason.trim());
-    onDone(tr("m1522"));
-  }} onClose={onClose}>
-      <label className={evidenceStyles.field}>
-        <span className={evidenceStyles.label}>{tr("m788")}</span>
-        <textarea className={styles.input} rows={5} value={reason} onChange={e => setReason(e.target.value)} placeholder={tr("m1523")} />
-      </label>
-      <p className={styles.note}>{tr("m789")}</p>
-    </OrderFlowDialog>;
+  const [context, setContext] = useState(null);
+  const [criterion, setCriterion] = useState('');
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([orderApi.getDeliveries(order.orderId), orderApi.getAgreement(order.orderId)])
+      .then(([deliveries, versions]) => { if (!cancelled) setContext({ delivery: deliveries.result[0], agreement: versions.result.at(-1) }); })
+      .catch(e => { if (!cancelled) setError(e.message); });
+    return () => { cancelled = true; };
+  }, [order.orderId]);
+  return <OrderFlowDialog title="Yêu cầu sửa lỗi trong phạm vi" submitLabel="Gửi yêu cầu sửa"
+    canSubmit={!!context?.delivery && !!context?.agreement && !!criterion && !!reason.trim()}
+    onSubmit={async () => {
+      await orderApi.requestRevision(order.orderId, { reason: reason.trim(), deliveryVersion: context.delivery.versionNo,
+        agreementVersion: context.agreement.versionNo, criterionRefs: [criterion], scopeChange: false });
+      onDone('Đã gửi yêu cầu sửa');
+    }} onClose={onClose}>
+    {error && <p role="alert">{error}</p>}
+    <p>Sửa lỗi trong phạm vi không giới hạn lượt. Thay đổi phạm vi cần tạo phụ lục cam kết.</p>
+    {context && <p>Bản bàn giao {context.delivery?.versionNo} · Cam kết {context.agreement?.versionNo}</p>}
+    <label>Tiêu chí chưa đạt<select className={styles.input} value={criterion} onChange={e => setCriterion(e.target.value)}>
+      <option value="">Chọn tiêu chí cam kết</option>
+      {context?.agreement?.scope && <option value="scope">Phạm vi: {context.agreement.scope}</option>}
+      {context?.agreement?.acceptanceCriteria && <option value="acceptanceCriteria">Nghiệm thu: {context.agreement.acceptanceCriteria}</option>}
+    </select></label>
+    <label className={evidenceStyles.field}>Mô tả cụ thể lỗi so với tiêu chí
+      <textarea className={styles.input} rows={5} maxLength={10000} value={reason} onChange={e => setReason(e.target.value)} />
+    </label>
+    <p>Provider phản hồi trong 24 giờ; hai bên chốt hạn sửa trong 48 giờ.</p>
+  </OrderFlowDialog>;
 }
 
 // Provider, DIGITAL + IN_PROGRESS: message + files → DELIVERED.

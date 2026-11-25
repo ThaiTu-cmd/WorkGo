@@ -9,6 +9,7 @@ import DigitalDeliveryPanel from './components/DigitalDeliveryPanel';
 import OrderBriefPanel from './components/OrderBriefPanel';
 import OrderAgreementPanel from './components/OrderAgreementPanel';
 import OrderInputPanel from './components/OrderInputPanel';
+import RevisionPanel from './components/RevisionPanel';
 import EscrowPanel from './components/EscrowPanel';
 import { CheckinCode, CheckinDialog, DeliveryDialog, RequirementsDialog, RevisionDialog } from './components/OrderFlowDialogs';
 import flowStyles from './components/OrderFlow.module.css';
@@ -355,6 +356,7 @@ function OrderLiveDetails({
       <OrderBriefPanel order={order} role={role} />
       <OrderAgreementPanel order={order} role={role} onUpdated={onUpdated} />
       <OrderInputPanel order={order} role={role} onUpdated={onUpdated} />
+      {order.executionType === 'DIGITAL' && <RevisionPanel order={order} role={role} onUpdated={onUpdated} />}
       {cash ? <CashOrderPanel order={order} onsite={executionState.execution?.onsite} role={role} onUpdated={onUpdated} />
         : order.paymentStatus && order.paymentStatus !== 'PENDING' && <EscrowPanel orderId={order.orderId} role={role} />}
       {order.executionType === 'ONSITE' && role === 'CLIENT' && order.orderStatus === 'CONFIRMED' && <CheckinCodeCard orderId={order.orderId} />}

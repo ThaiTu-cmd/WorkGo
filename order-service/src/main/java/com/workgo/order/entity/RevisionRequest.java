@@ -41,6 +41,36 @@ public class RevisionRequest {
     @Column(name = "resolved_at")
     Instant resolvedAt;
 
+
+    @Column(name = "delivery_version")
+    Integer deliveryVersion;
+    @Column(name = "agreement_version")
+    Integer agreementVersion;
+    @ElementCollection
+    @CollectionTable(name = "revision_criterion_refs", joinColumns = @JoinColumn(name = "revision_request_id"))
+    @OrderColumn(name = "ref_index")
+    @Column(name = "criterion_ref")
+    @Builder.Default
+    java.util.List<String> criterionRefs = new java.util.ArrayList<>();
+    @Column(name = "scope_snapshot", columnDefinition = "TEXT")
+    String scopeSnapshot;
+    @Column(name = "criteria_snapshot", columnDefinition = "TEXT")
+    String criteriaSnapshot;
+    @Column(name = "response_due_at")
+    Instant responseDueAt;
+    @Column(name = "deadline_agreement_due_at")
+    Instant deadlineAgreementDueAt;
+    @Column(name = "responded_at")
+    Instant respondedAt;
+    @Column(name = "provider_response", columnDefinition = "TEXT")
+    String providerResponse;
+    @Column(name = "proposed_repair_deadline")
+    Instant proposedRepairDeadline;
+    @Column(name = "agreed_repair_deadline")
+    Instant agreedRepairDeadline;
+    @Column(name = "deadline_agreed_at")
+    Instant deadlineAgreedAt;
+
     //============FK===============
 
     @ManyToOne(fetch = FetchType.LAZY)

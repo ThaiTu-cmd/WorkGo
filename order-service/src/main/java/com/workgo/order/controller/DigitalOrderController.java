@@ -88,6 +88,20 @@ public class DigitalOrderController {
                 .build();
     }
 
+    @PostMapping("/{orderId}/revisions/{revisionId}/respond")
+    ApiResponse<RevisionRequestResponse> respondRevision(@PathVariable UUID orderId, @PathVariable UUID revisionId,
+            @RequestBody com.workgo.order.dto.request.RevisionResponseRequest request) {
+        return ApiResponse.<RevisionRequestResponse>builder().code(ErrorCode.SUCCESS.getCode())
+                .result(digitalFlowService.respondRevision(orderId, revisionId, request)).build();
+    }
+
+    @PostMapping("/{orderId}/revisions/{revisionId}/confirm-deadline")
+    ApiResponse<RevisionRequestResponse> confirmDeadline(@PathVariable UUID orderId, @PathVariable UUID revisionId,
+            @RequestBody com.workgo.order.dto.request.RevisionDeadlineConfirmationRequest request) {
+        return ApiResponse.<RevisionRequestResponse>builder().code(ErrorCode.SUCCESS.getCode())
+                .result(digitalFlowService.confirmRepairDeadline(orderId, revisionId, request)).build();
+    }
+
     //client chap nhan service provider gui
     @PostMapping("/{orderId}/accept")
     ApiResponse<DigitalExecutionResponse> acceptDelivery(@PathVariable UUID orderId) {

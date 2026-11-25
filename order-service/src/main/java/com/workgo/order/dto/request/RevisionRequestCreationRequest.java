@@ -13,5 +13,9 @@ import lombok.experimental.FieldDefaults;
 public class RevisionRequestCreationRequest {
 
     String reason;
+    Integer deliveryVersion;
+    Integer agreementVersion;
+    java.util.List<String> criterionRefs;
+    Boolean scopeChange;
 
 }

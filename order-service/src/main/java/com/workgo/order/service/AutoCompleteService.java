@@ -73,6 +73,12 @@ public class AutoCompleteService {
             return;
         }
 
+        if (order.getExecutionType() == ExecutionType.DIGITAL) {
+            var digital = digitalExecutionRepository.findByExecution_ExecutionId(execution.getExecutionId()).orElse(null);
+            var delivery = deliveryPackageRepository.findFirstByExecution_ExecutionIdOrderByVersionNoDesc(execution.getExecutionId()).orElse(null);
+            if (digital == null || digital.getStatus() != DigitalExecutionStatus.SUBMITTED
+                    || delivery == null || delivery.getStatus() != DeliveryPackageStatus.SUBMITTED) return;
+        }
         execution.setCompletedAt(now);
         executionRepository.save(execution);
 

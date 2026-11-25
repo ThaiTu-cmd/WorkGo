@@ -21,6 +21,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderResponse {
     UUID orderId;
+    Long version;
     String orderNumber;
     SourceType sourceType;
     UUID sourceId;

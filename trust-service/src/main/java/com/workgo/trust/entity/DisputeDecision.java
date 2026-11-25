@@ -24,6 +24,8 @@ public class DisputeDecision {
     @Column(columnDefinition="TEXT") private String paymentResult;
     @Column(nullable=false) private String paymentStatus="PENDING";
     @Column(nullable=false) private String orderStatus="PENDING";
+    @Column(nullable=false) private String timerStatus="PENDING";
+    @Column(columnDefinition="TEXT") private String timerResult;
     @Column(nullable=false) private String executionStatus="PENDING";
     @Column(nullable=false) private int attempts;
     @Column(nullable=false) private Instant nextAttemptAt=Instant.now();

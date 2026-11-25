@@ -57,7 +57,7 @@ public class TrustOutboxEvent {
     private UUID claimToken;
 
     /** Observed ACK only; never a claim about the current financial state. */
-    @Column(name = "delivery_result", length = 100)
+    @Column(name = "delivery_result", columnDefinition = "TEXT")
     private String deliveryResult;
 
     @Column(name = "created_at", nullable = false, updatable = false)

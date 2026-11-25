@@ -22,7 +22,19 @@ import java.util.UUID;
 public class InternalOrderController {
 
     OrderService orderService;
+    com.workgo.order.service.DeadlinePolicyService deadlinePolicyService;
     DisputeDecisionApplicationService disputeDecisionApplicationService;
+
+    @PostMapping("/{orderId}/timer/pause")
+    com.workgo.order.service.DeadlinePolicyService.TimerAck pause(@PathVariable UUID orderId,
+            @RequestBody com.workgo.order.service.DeadlinePolicyService.PauseCommand c) {
+        return deadlinePolicyService.pause(orderId,c.sourceType(),c.sourceId(),c.expectedVersion());
+    }
+    @PostMapping("/{orderId}/timer/resume")
+    com.workgo.order.service.DeadlinePolicyService.TimerAck resume(@PathVariable UUID orderId,
+            @RequestBody com.workgo.order.service.DeadlinePolicyService.ResumeCommand c) {
+        return deadlinePolicyService.resume(orderId,c.sourceType(),c.sourceId(),c.resumeCommandId(),c.requireNewDelivery(),c.expectedVersion());
+    }
 
     @GetMapping("/{orderId}")
     InternalOrderTrustSnapshot getTrustSnapshot(

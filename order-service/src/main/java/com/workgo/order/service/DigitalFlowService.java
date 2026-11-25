@@ -51,6 +51,9 @@ public class DigitalFlowService {
     OrderAgreementService orderAgreementService;
     OrderInputService orderInputService;
     java.time.Clock clock;
+    DeadlinePolicyService deadlinePolicyService;
+    TrustDisputeGuard trustDisputeGuard;
+    DeliveryReadinessService deliveryReadinessService;
 
     @Transactional
     public void submitRequirements(UUID orderId, RequirementSubmissionRequest request) {
@@ -66,7 +69,8 @@ public class DigitalFlowService {
         assertDigital(order);
 
         //dam bao order o trang thai dang trong tien trinh
-        if (order.getOrderStatus() != OrderStatus.IN_PROGRESS) {
+        boolean replacement = order.getOrderStatus() == OrderStatus.DELIVERED && deadlinePolicyService.requiresNewDelivery(order);
+        if (order.getOrderStatus() != OrderStatus.IN_PROGRESS && !replacement) {
             throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
         }
 
@@ -80,7 +84,8 @@ public class DigitalFlowService {
 
         //dam bao la khi nop delivery thi no khong duoc trong qua trinh lam hay xem xet
         if (digital.getStatus() != DigitalExecutionStatus.WORKING
-                && digital.getStatus() != DigitalExecutionStatus.REVISING) {
+                && digital.getStatus() != DigitalExecutionStatus.REVISING
+                && !(replacement && digital.getStatus() == DigitalExecutionStatus.SUBMITTED)) {
             throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
         }
 
@@ -132,9 +137,12 @@ public class DigitalFlowService {
         execution.setDeliveredAt(now);
         executionRepository.save(execution);
 
-        order.setAutoCompleteAt(now.plus(Duration.ofHours(72)));
+        deadlinePolicyService.submitted(order,"DIGITAL:"+versionNo);
 
-        orderStatusService.transition(order, OrderStatus.DELIVERED,
+        if (replacement) {
+            order.setDeliveredAt(now);
+            orderRepository.save(order);
+        } else orderStatusService.transition(order, OrderStatus.DELIVERED,
                 tokenUtils.getCurrentProviderId(), RoleName.PROVIDER);
 
         return deliveryPackageMapper.toResponse(deliveryPackage);
@@ -218,7 +226,7 @@ public class DigitalFlowService {
         digital.setStatus(DigitalExecutionStatus.REVISING);
         digitalExecutionRepository.save(digital);
 
-        order.setAutoCompleteAt(null);
+        deadlinePolicyService.pause(orderId,"REVISION",revision.getRevisionRequestId(),null);
 
         orderStatusService.transition(order, OrderStatus.IN_PROGRESS,
                 tokenUtils.getCurrentUserId(), RoleName.CLIENT);
@@ -252,6 +260,8 @@ public class DigitalFlowService {
         Order order = loadOrder(orderId);
         assertIsClient(order);
         assertDigital(order);
+        deadlinePolicyService.assertCanAccept(order);
+        if (!trustDisputeGuard.permitsPaymentSync(orderId)) throw new AppException(ErrorCode.ORDER_TIMER_CONFLICT);
 
         if (order.getOrderStatus() != OrderStatus.DELIVERED) {
             throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
@@ -259,6 +269,8 @@ public class DigitalFlowService {
 
         Execution execution = loadExecution(orderId);
         DigitalExecution digital = loadDigital(execution.getExecutionId());
+
+        if (!deliveryReadinessService.ready(order,execution)) throw new AppException(ErrorCode.ORDER_DELIVERY_FILE_REQUIRED);
 
         if (digital.getStatus() != DigitalExecutionStatus.SUBMITTED) {
             throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
@@ -277,6 +289,7 @@ public class DigitalFlowService {
 
         //luu lai tien do
         deliveryPackage.setStatus(DeliveryPackageStatus.ACCEPTED);
+        deadlinePolicyService.accepted(order);
         deliveryPackageRepository.save(deliveryPackage);
 
         digital.setStatus(DigitalExecutionStatus.ACCEPT);

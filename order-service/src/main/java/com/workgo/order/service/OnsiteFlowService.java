@@ -31,6 +31,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class OnsiteFlowService {
+    private final DeadlinePolicyService deadlinePolicyService;
+    private final TrustDisputeGuard trustDisputeGuard;
+    private final DeliveryReadinessService deliveryReadinessService;
 
     OrderRepository orderRepository;
     ExecutionRepository executionRepository;
@@ -107,14 +110,16 @@ public class OnsiteFlowService {
         assertIsProvider(order);
         assertOnsite(order);
 
-        if (order.getOrderStatus() != OrderStatus.IN_PROGRESS) {
+        boolean replacement = order.getOrderStatus() == OrderStatus.DELIVERED && deadlinePolicyService.requiresNewDelivery(order);
+        if (order.getOrderStatus() != OrderStatus.IN_PROGRESS && !replacement) {
             throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
         }
 
         Execution execution = loadExecution(orderId);
         OnsiteExecution onsite = loadOnsite(execution.getExecutionId());
 
-        if (onsite.getStatus() != OnsiteExecutionStatus.IN_SERVICE) {
+        if (onsite.getStatus() != OnsiteExecutionStatus.IN_SERVICE
+                && !(replacement && onsite.getStatus() == OnsiteExecutionStatus.SERVICE_DONE)) {
             throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
         }
 
@@ -137,10 +142,14 @@ public class OnsiteFlowService {
         executionRepository.save(execution);
 
         //24h sau tu dong hoan thanh neu client khong accept
-        order.setAutoCompleteAt(now.plus(Duration.ofHours(24)));
+        if (!deliveryReadinessService.ready(order,execution)) throw new AppException(ErrorCode.ORDER_EVIDENCE_AFTER_REQUIRED);
+        deadlinePolicyService.submitted(order,"ONSITE:"+UUID.randomUUID());
 
         //chuyen doi order sang trang thai da giao
-        orderStatusService.transition(order, OrderStatus.DELIVERED,
+        if (replacement) {
+            order.setDeliveredAt(now);
+            orderRepository.save(order);
+        } else orderStatusService.transition(order, OrderStatus.DELIVERED,
                 tokenUtils.getCurrentProviderId(), RoleName.PROVIDER);
 
         return executionMapper.toOnsiteExecutionResponse(onsite);
@@ -153,6 +162,8 @@ public class OnsiteFlowService {
         Order order = lockOrder(orderId);
         assertIsClient(order);
         assertOnsite(order);
+        deadlinePolicyService.assertCanAccept(order);
+        if (!trustDisputeGuard.permitsPaymentSync(orderId)) throw new AppException(ErrorCode.ORDER_TIMER_CONFLICT);
 
         if (order.getOrderStatus() != OrderStatus.DELIVERED) {
             throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
@@ -167,6 +178,7 @@ public class OnsiteFlowService {
 
         onsite.setStatus(OnsiteExecutionStatus.ACCEPT);
         onsite.setClientAcceptedAt(clock.instant());
+        deadlinePolicyService.accepted(order);
         onsiteExecutionRepository.save(onsite);
 
         completeIfSettled(order, execution, onsite, tokenUtils.getCurrentUserId(), RoleName.CLIENT);
@@ -197,6 +209,11 @@ public class OnsiteFlowService {
             onsite.setCashReceivedAt(clock.instant());
             onsiteExecutionRepository.save(onsite);
         }
+
+        // Keep the receipt even when completion must wait; repeating this command is safe.
+        if (!trustDisputeGuard.permitsPaymentSync(orderId)) return executionMapper.toOnsiteExecutionResponse(onsite);
+        try { deadlinePolicyService.assertCanAccept(order); }
+        catch (AppException e) { return executionMapper.toOnsiteExecutionResponse(onsite); }
 
         completeIfSettled(order, execution, onsite, tokenUtils.getCurrentProviderId(), RoleName.PROVIDER);
 
@@ -250,7 +267,7 @@ public class OnsiteFlowService {
     }
 
     private Order loadOrder(UUID orderId) {
-        return orderRepository.findById(orderId)
+        return orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
     }
 

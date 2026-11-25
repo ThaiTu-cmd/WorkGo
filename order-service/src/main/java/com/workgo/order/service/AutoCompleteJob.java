@@ -23,13 +23,14 @@ public class AutoCompleteJob {
 
     OrderRepository orderRepository;
     AutoCompleteService autoCompleteService;
+    java.time.Clock clock;
 
     @Scheduled(fixedDelay = 60_000)
     public void run() {
 
         List<Order> orders = orderRepository
                 .findTop50ByOrderStatusAndAutoCompleteAtLessThanEqualOrderByAutoCompleteAtAsc(
-                        OrderStatus.DELIVERED, Instant.now());
+                        OrderStatus.DELIVERED, clock.instant());
 
         for (Order order : orders) {
             try {

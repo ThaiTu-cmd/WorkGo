@@ -126,7 +126,12 @@ public enum ErrorCode {
     ORDER_REVISION_INVALID(3056, "Revision needs a reason and valid criteria from the agreed scope; scope changes require an addendum", HttpStatus.BAD_REQUEST),
     ORDER_REVISION_STALE(3057, "Delivery, agreement or repair deadline changed; reload before responding", HttpStatus.CONFLICT),
     ORDER_REVISION_NOT_FOUND(3058, "Open revision not found for this order", HttpStatus.NOT_FOUND),
-    ORDER_REVISION_DEADLINE_REQUIRED(3059, "Both parties must agree a future repair deadline before resubmission", HttpStatus.CONFLICT);
+    ORDER_REVISION_DEADLINE_REQUIRED(3059, "Both parties must agree a future repair deadline before resubmission", HttpStatus.CONFLICT),
+    ORDER_TIMER_CONFLICT(3060, "Timer or order state changed; reload and reconcile", HttpStatus.CONFLICT),
+    ORDER_TIMER_INVALID(3061, "Invalid timer source or command", HttpStatus.BAD_REQUEST),
+    PREVIEW_INVALID(3062, "Preview schedule, note or command is invalid", HttpStatus.BAD_REQUEST),
+    PREVIEW_CONFLICT(3063, "Preview or delivery changed; reload before continuing", HttpStatus.CONFLICT),
+    PREVIEW_MEET_UNAVAILABLE(3064, "Meet authorization or provider unavailable; retry authorization or reconcile the room", HttpStatus.SERVICE_UNAVAILABLE);
 
     private int code;
     private String message;

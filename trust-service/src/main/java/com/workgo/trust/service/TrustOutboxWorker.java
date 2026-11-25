@@ -25,6 +25,7 @@ public class TrustOutboxWorker {
     private final IdentityClient identity;
     private final CatalogClient catalog;
     private final CommunicationClient communication;
+    private final OrderClient orders;
     @Value("${app.workers.enabled:true}") private boolean enabled;
     @Scheduled(fixedDelayString="${app.outbox.poll-interval-ms:5000}",initialDelayString="${app.outbox.initial-delay-ms:10000}")
     public void scheduled() { if (enabled) poll(); }
@@ -54,6 +55,22 @@ public class TrustOutboxWorker {
     }
     private String dispatch(TrustOutboxStore.Delivery d) throws Exception {
         return switch (d.eventType()) {
+            case "dispute.timer.pause", "dispute.timer.resume" -> {
+                var req=json.readValue(d.payload(),EscrowFreezeRequest.class);
+                boolean resume="dispute.timer.resume".equals(d.eventType());
+                if(resume){
+                    var unfreeze=repository.findByAggregateIdAndEventType(req.disputeId(),"dispute.cancelled.unfreeze_escrow").orElse(null);
+                    if(unfreeze==null||unfreeze.getStatus()!=OutboxStatus.COMPLETED)
+                        throw new IllegalStateException("Unfreeze ACK pending");
+                }
+                var ack=resume?orders.resumeTimer(req.orderId(),new TimerResumeCommand("DISPUTE",req.disputeId(),d.id(),false))
+                        :orders.pauseTimer(req.orderId(),new TimerPauseCommand("DISPUTE",req.disputeId(),null));
+                if(ack==null||!req.orderId().equals(ack.orderId())||ack.timerVersion()==null||ack.timerVersion()<0
+                        ||ack.paused()==null||ack.requiresNewDelivery()==null||resume&&!d.id().equals(ack.commandId())
+                        ||ack.paused()&&ack.resumeAt()!=null||ack.requiresNewDelivery()&&!ack.paused())
+                    throw new IllegalStateException("Invalid timer ACK");
+                yield outbox.encode(ack);
+            }
             case "review.published.provider" -> {
                 var req = json.readValue(d.payload(),ProviderRatingStatsRequest.class);
                 var ack = identity.updateRatingStats(d.aggregateId(),req);

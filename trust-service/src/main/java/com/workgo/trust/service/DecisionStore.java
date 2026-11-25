@@ -28,8 +28,14 @@ public class DecisionStore {
         d.setPaymentResult(outbox.encode(result));d.setPaymentStatus("COMPLETED");d.setAttempts(0);d.setLeaseToken(null);d.setNextAttemptAt(Instant.now());d.setLastError(null);return null;});}
     public void complete(Claim c){transactions.execute(()->{var d=owned(c);if(d==null)return null;
         var dispute=em.find(Dispute.class,c.disputeId(),LockModeType.PESSIMISTIC_WRITE);
-        d.setOrderStatus("COMPLETED");d.setExecutionStatus("COMPLETED");d.setLeaseToken(null);d.setLastError(null);
+        d.setOrderStatus("COMPLETED");d.setTimerStatus("SKIPPED");d.setExecutionStatus("COMPLETED");d.setLeaseToken(null);d.setLastError(null);
         dispute.setStatus("RELEASE".equals(c.operation())?DisputeStatus.RESOLVED_PROVIDER:DisputeStatus.RESOLVED_CLIENT);dispute.setResolvedAt(Instant.now());return null;});}
+    public void unfreeze(Claim c){transactions.execute(()->{var d=owned(c);if(d==null)return null;
+        d.setPaymentStatus("COMPLETED");d.setPaymentResult("UNFROZEN");d.setAttempts(0);d.setLeaseToken(null);
+        d.setNextAttemptAt(Instant.now());d.setLastError(null);return null;});}
+    public void resumed(Claim c,com.workgo.trust.dto.response.client.TimerAck ack){transactions.execute(()->{var d=owned(c);if(d==null)return null;
+        d.setTimerResult(outbox.encode(ack));d.setTimerStatus("COMPLETED");d.setOrderStatus("COMPLETED");
+        d.setExecutionStatus("COMPLETED");d.setLeaseToken(null);d.setLastError(null);return null;});}
     public void failure(Claim c,String code,boolean retry,boolean terminal){transactions.execute(()->{var d=owned(c);if(d==null)return null;
         d.setLeaseToken(null);d.setLastError(code);d.setTerminalConflict(terminal);
         if(!retry||d.getAttempts()>=5)d.setExecutionStatus("NEEDS_RECONCILIATION");

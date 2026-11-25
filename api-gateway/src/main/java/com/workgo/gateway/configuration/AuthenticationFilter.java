@@ -143,6 +143,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             if (relative.endsWith("/export")) return roles.contains("ROLE_SUPER_ADMIN");
             return roles.contains("ROLE_SUPER_ADMIN") || roles.contains("ROLE_ADMIN");
         }
+        if (relative.matches("/order/admin/preview-support(?:/.*)?")) return roles.contains("ROLE_ADMIN");
         if (relative.matches("/order/admin/(?:input-support|revision-support)(?:/.*)?")) return read && roles.contains("ROLE_ADMIN");
         if (relative.matches("/(identity|catalog|payment|order)/admin(?:/.*)?")) return roles.contains("ROLE_SUPER_ADMIN");
         if (relative.matches("/(job|trust|communication)/admin/audit-logs(?:/.*)?")) return read && roles.contains("ROLE_SUPER_ADMIN");

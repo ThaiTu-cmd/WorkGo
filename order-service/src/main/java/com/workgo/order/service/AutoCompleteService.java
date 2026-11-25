@@ -31,6 +31,10 @@ public class AutoCompleteService {
     DeliveryPackageRepository deliveryPackageRepository;
     OrderStatusService orderStatusService;
     OnsiteFlowService onsiteFlowService;
+    DeadlinePolicyService deadlinePolicyService;
+    TrustDisputeGuard trustDisputeGuard;
+    DeliveryReadinessService deliveryReadinessService;
+    java.time.Clock clock;
 
     //moi order chay trong 1 transaction rieng
     @Transactional
@@ -43,7 +47,7 @@ public class AutoCompleteService {
             return;
         }
 
-        Instant now = Instant.now();
+        Instant now = clock.instant();
 
         if (order.getAutoCompleteAt() == null || order.getAutoCompleteAt().isAfter(now)) {
             return;
@@ -55,17 +59,27 @@ public class AutoCompleteService {
             return;
         }
 
+        if (!trustDisputeGuard.permitsPaymentSync(orderId)) {
+            deadlinePolicyService.pauseForError(order,"TIMER_ERROR");return;
+        }
+        if (!deliveryReadinessService.ready(order,execution)) {
+            deadlinePolicyService.pauseForError(order,"EVIDENCE");
+            return;
+        }
+        if (!deadlinePolicyService.eligible(order)) return;
+
         if (order.getExecutionType() == ExecutionType.ONSITE) {
 
             OnsiteExecution onsite = onsiteExecutionRepository.findByExecution_ExecutionId(execution.getExecutionId())
                     .orElse(null);
 
-            if (onsite == null) {
+            if (onsite == null || onsite.getStatus() != OnsiteExecutionStatus.SERVICE_DONE) {
                 return;
             }
 
             //im lang chi la nghiem thu, cash van cho provider xac nhan da nhan tien
             onsite.setStatus(OnsiteExecutionStatus.ACCEPT);
+            deadlinePolicyService.accepted(order);
             if (onsite.getClientAcceptedAt() == null) onsite.setClientAcceptedAt(now);
             onsiteExecutionRepository.save(onsite);
 
@@ -79,6 +93,7 @@ public class AutoCompleteService {
             if (digital == null || digital.getStatus() != DigitalExecutionStatus.SUBMITTED
                     || delivery == null || delivery.getStatus() != DeliveryPackageStatus.SUBMITTED) return;
         }
+        deadlinePolicyService.accepted(order);
         execution.setCompletedAt(now);
         executionRepository.save(execution);
 

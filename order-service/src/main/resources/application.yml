@@ -64,6 +64,14 @@ app:
     communication: ${COMMUNICATION_SERVICE_URL:http://localhost:8086/communication}
 
 order:
+  meet:
+    client-id: ${ORDER_MEET_CLIENT_ID:}
+    client-secret: ${ORDER_MEET_CLIENT_SECRET:}
+    # Frontend callback forwards code/state to the authenticated complete endpoint.
+    redirect-uri: ${ORDER_MEET_REDIRECT_URI:}
+    token-key: ${ORDER_MEET_TOKEN_KEY:}
+    token-salt: ${ORDER_MEET_TOKEN_SALT:}
+    poll-millis: ${ORDER_MEET_POLL_MS:60000}
   reward-quote:
     # Local demo only. Enable before opening admission in a release environment.
     required: ${ORDER_REWARD_QUOTE_REQUIRED:false}

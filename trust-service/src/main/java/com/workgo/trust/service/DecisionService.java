@@ -59,8 +59,8 @@ public class DecisionService {
             d.setDecisionId(decisionId);d.setResolution(reason.strip());
             if("REJECT".equals(operation)) {
                 d.setStatus(DisputeStatus.REJECTED);d.setResolvedAt(decision.getEffectiveAt());
-                decision.setPaymentStatus("SKIPPED");decision.setOrderStatus("SKIPPED");decision.setExecutionStatus("COMPLETED");
-                outbox.add("DISPUTE",id,"dispute.cancelled.unfreeze_escrow",new EscrowFreezeRequest(d.getOrderId(),id,"DISPUTE_REJECTED"));
+                // Conclusion is effective now; unfreeze and timer resume still need authoritative ACKs.
+                decision.setPaymentStatus("PENDING");decision.setOrderStatus("PENDING");decision.setTimerStatus("PENDING");
             }else{
                 boolean release="RELEASE".equals(operation);
                 decision.setSettlementPayload(outbox.encode(new SettlementCommand(decisionId,d.getOrderId(),id,operation,branch,

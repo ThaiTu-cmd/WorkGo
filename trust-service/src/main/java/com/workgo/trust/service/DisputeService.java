@@ -33,6 +33,7 @@ public class DisputeService {
                 var d = repository.saveAndFlush(Dispute.builder().orderId(req.orderId()).openedBy(user).openedByRole(client ? "CLIENT" : "PROVIDER")
                         .clientId(order.clientId()).providerId(order.providerId()).reason(req.reason()).description(req.description()).evidenceUrl(req.evidenceUrl()).build());
                 outbox.add("DISPUTE",d.getDisputeId(),"dispute.opened.freeze_escrow",new EscrowFreezeRequest(d.getOrderId(),d.getDisputeId(),"DISPUTE_OPENED"));
+                outbox.add("DISPUTE",d.getDisputeId(),"dispute.timer.pause",new EscrowFreezeRequest(d.getOrderId(),d.getDisputeId(),"DISPUTE_OPENED"));
                 outbox.notify(client ? null : order.clientId(),client ? order.providerId() : null,"DISPUTE_OPENED","DISPUTE",d.getDisputeId());
                 return mapper.toDto(d);
             });
@@ -50,6 +51,7 @@ public class DisputeService {
             d.setStatus(DisputeStatus.CANCELLED); d.setResolvedAt(Instant.now()); d.setResolution(req == null ? null : req.note());
             repository.saveAndFlush(d);
             outbox.add("DISPUTE",id,"dispute.cancelled.unfreeze_escrow",new EscrowFreezeRequest(d.getOrderId(),id,"DISPUTE_WITHDRAWN"));
+            outbox.add("DISPUTE",id,"dispute.timer.resume",new EscrowFreezeRequest(d.getOrderId(),id,"DISPUTE_WITHDRAWN"));
             return mapper.toDto(d);
         });
     }

@@ -33,6 +33,19 @@ public class DecisionWorker {
     @Transactional(propagation=Propagation.NOT_SUPPORTED)
     public void deliver(UUID id){var c=store.claim(id);if(c==null)return;
         try(var trace=com.workgo.trust.configuration.CorrelationTrace.use(c.correlationId())){
+            if("REJECT".equals(c.operation())){
+                if(c.receipt()==null){
+                    var ack=payment.unfreeze(new EscrowFreezeRequest(c.orderId(),c.disputeId(),"DISPUTE_REJECTED"));
+                    if(ack==null||!c.orderId().equals(ack.orderId())||ack.status()==null
+                            ||!Set.of("PENDING","HOLDING","FROZEN","RELEASED","REFUNDED","PARTIALLY_REFUNDED").contains(ack.status()))throw new InvalidAck();
+                    store.unfreeze(c);return;
+                }
+                var ack=orders.resumeTimer(c.orderId(),new TimerResumeCommand("DISPUTE",c.disputeId(),c.id(),false));
+                if(ack==null||!c.orderId().equals(ack.orderId())||!c.id().equals(ack.commandId())||ack.timerVersion()==null||ack.timerVersion()<0
+                        ||ack.paused()==null||ack.requiresNewDelivery()==null||ack.paused()&&ack.resumeAt()!=null
+                        ||ack.requiresNewDelivery()&&!ack.paused())throw new InvalidAck();
+                store.resumed(c,ack);return;
+            }
             var command=json.readValue(c.payload(),SettlementCommand.class);
             if(c.receipt()==null){
                 var freeze=outbox.findByAggregateIdAndEventType(c.disputeId(),"dispute.opened.freeze_escrow").orElse(null);

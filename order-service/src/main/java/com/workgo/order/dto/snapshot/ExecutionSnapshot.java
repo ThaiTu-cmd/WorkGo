@@ -22,5 +22,7 @@ public class ExecutionSnapshot {
     Instant scheduleEnd;
 
     Integer autoCompleteHours; //DIGITAL
+    @Builder.Default
+    String deadlinePolicyVersion = "ACCEPTANCE_V1";
 
 }

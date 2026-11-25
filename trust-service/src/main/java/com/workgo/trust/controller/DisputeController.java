@@ -14,12 +14,12 @@ public class DisputeController {
     private final TokenUtils tokens;
     private final com.workgo.trust.repository.DisputeDecisionRepository decisions;
     public record DecisionProgress(UUID decisionId,String operation,java.time.Instant effectiveAt,String reason,
-            String paymentStatus,String orderStatus,String executionStatus) {}
+            String paymentStatus,String orderStatus,String executionStatus,String timerStatus,String lastError,boolean terminalConflict) {}
     @GetMapping("/{id}/decision")
     public ApiResponse<DecisionProgress> decision(@PathVariable UUID id) {
         service.get(id,tokens.getCurrentUserId(),tokens.getCurrentProviderIdOrNull());
         var d=decisions.findByDisputeId(id).orElseThrow(()->new com.workgo.trust.exception.AppException(com.workgo.trust.exception.ErrorCode.TARGET_NOT_FOUND));
-        return ApiResponse.<DecisionProgress>builder().result(new DecisionProgress(d.getDecisionId(),d.getOperation(),d.getEffectiveAt(),d.getReason(),d.getPaymentStatus(),d.getOrderStatus(),d.getExecutionStatus())).build();
+        return ApiResponse.<DecisionProgress>builder().result(new DecisionProgress(d.getDecisionId(),d.getOperation(),d.getEffectiveAt(),d.getReason(),d.getPaymentStatus(),d.getOrderStatus(),d.getExecutionStatus(),d.getTimerStatus(),d.getLastError(),d.isTerminalConflict())).build();
     }
     @PostMapping
     public ApiResponse<DisputeDto> create(@Valid @RequestBody DisputeCreateReq req) {

@@ -37,6 +37,18 @@ public class CancellationRequestResponse {
 
     Instant respondedAt;
 
+    UUID caseId;
+
+    UUID decisionId;
+
+    String executionStatus;
+
+    Boolean counterpartAgreed;
+
+    Boolean feeExemptBefore24h;
+
+    Long projectedCancellationFee;
+
     Instant createdAt;
 
 }

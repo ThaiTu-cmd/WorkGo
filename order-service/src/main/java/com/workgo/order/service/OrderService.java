@@ -319,6 +319,11 @@ public class OrderService {
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
         Instant payableUntil = payableUntil(order);
+        OnsiteExecution onsite = order.getExecutionType() == ExecutionType.ONSITE
+                ? executionRepository.findByOrder_OrderId(orderId)
+                        .flatMap(e -> onsiteExecutionRepository.findByExecution_ExecutionId(e.getExecutionId()))
+                        .orElse(null)
+                : null;
 
         return OrderPaymentInfoResponse.builder()
                 .orderId(order.getOrderId())
@@ -338,6 +343,8 @@ public class OrderService {
                         .map(PricingSnapshot::getFeePolicyVersionId)
                         .orElse(null))
                 .payableUntil(payableUntil)
+                .scheduledStart(onsite == null ? null : onsite.getScheduledStart())
+                .startedAt(order.getStartedAt())
                 .build();
     }
 
@@ -365,6 +372,11 @@ public class OrderService {
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        OnsiteExecution onsite = order.getExecutionType() == ExecutionType.ONSITE
+                ? executionRepository.findByOrder_OrderId(orderId)
+                        .flatMap(e -> onsiteExecutionRepository.findByExecution_ExecutionId(e.getExecutionId()))
+                        .orElse(null)
+                : null;
 
         return InternalOrderTrustSnapshot.builder()
                 .orderId(order.getOrderId())
@@ -380,6 +392,9 @@ public class OrderService {
                 .deliveredAt(order.getDeliveredAt())
                 .completedAt(order.getCompletedAt())
                 .cancelledAt(order.getCancelledAt())
+                .scheduledStart(onsite == null ? null : onsite.getScheduledStart())
+                .scheduledEnd(onsite == null ? null : onsite.getScheduledEnd())
+                .startedAt(order.getStartedAt())
                 .build();
     }
 

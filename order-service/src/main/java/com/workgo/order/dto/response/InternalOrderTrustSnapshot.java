@@ -45,4 +45,10 @@ public class InternalOrderTrustSnapshot {
 
     Instant cancelledAt;
 
+    Instant scheduledStart;
+
+    Instant scheduledEnd;
+
+    Instant startedAt;
+
 }

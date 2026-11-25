@@ -1,0 +1,42 @@
+package com.workgo.trust.dto.response;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+public record OnsiteIncidentDto(
+        UUID incidentId,
+        UUID orderId,
+        UUID disputeId,
+        String incidentType,
+        String status,
+        boolean contactRequired,
+        int contactAttempts,
+        Instant firstContactAt,
+        Instant lastContactAt,
+        Instant originalScheduledStart,
+        Instant originalScheduledEnd,
+        Instant effectiveScheduledStart,
+        Instant effectiveScheduledEnd,
+        Instant proposedScheduledStart,
+        Instant proposedScheduledEnd,
+        String rescheduleProposedByRole,
+        boolean clientConfirmedReschedule,
+        boolean providerConfirmedReschedule,
+        String rescheduleStatus,
+        String allegedFaultParty,
+        boolean forceMajeure,
+        String allegationSummary,
+        String evidenceUrl,
+        String locationSignal,
+        Instant incidentReportedAt,
+        String conclusionStatus,
+        UUID decisionId,
+        String concludedFaultParty,
+        String concludedFaultType,
+        String financialStatus,
+        long applicableCancellationFee,
+        long arrivalFee,
+        List<ProgressNoticeDto> notices,
+        Long version
+) {}

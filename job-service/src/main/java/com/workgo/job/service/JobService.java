@@ -97,6 +97,7 @@ public class JobService {
         if (content) {
             if (proposals.existsByJob_JobId(id)) throw new AppException(ErrorCode.INVALID_STATUS_TRANSITION);
             if (job.getDeadlineAt() != null && !job.getDeadlineAt().isAfter(Instant.now())) throw new AppException(ErrorCode.JOB_DEADLINE_PASSED);
+            assertAttachmentsReady(id);
             mapper.updateContent(req, job);
         } else {
             JobStatus target = req.status();
@@ -105,10 +106,35 @@ public class JobService {
                 throw new AppException(ErrorCode.INVALID_STATUS_TRANSITION);
             if (target != JobStatus.CLOSED && job.getDeadlineAt() != null && !job.getDeadlineAt().isAfter(Instant.now()))
                 throw new AppException(ErrorCode.JOB_DEADLINE_PASSED);
+            if (target == JobStatus.OPEN) assertAttachmentsReady(id);
             job.setStatus(target);
         }
         jobs.flush();
         return detail(job);
+    }
+
+    @Transactional
+    public void delete(UUID id) {
+        Job job = access.lock(id);
+        access.owner(job);
+        if (job.getStatus() == JobStatus.CLOSED || proposals.existsByJob_JobIdAndStatus(id, ProposalStatus.ACCEPTED)) {
+            throw new AppException(ErrorCode.INVALID_STATUS_TRANSITION);
+        }
+        for (Proposal pending : proposals.findAllByJob_JobIdAndStatus(id, ProposalStatus.PENDING)) {
+            pending.setStatus(ProposalStatus.REJECTED);
+        }
+        proposals.flush();
+        job.setStatus(JobStatus.CLOSED);
+        jobs.delete(job);
+        jobs.flush();
+    }
+
+    public void assertAttachmentsReady(UUID jobId) {
+        for (JobAttachment attachment : attachments.findByJob_JobId(jobId)) {
+            if (attachment.getStatus() != null && !"READY".equals(attachment.getStatus())) {
+                throw new AppException(ErrorCode.INVALID_STATUS_TRANSITION);
+            }
+        }
     }
 
     private JobDetailDto detail(Job job) { return mapper.toDetail(job, new ClientBasicDto(job.getClientId(), null, null)); }

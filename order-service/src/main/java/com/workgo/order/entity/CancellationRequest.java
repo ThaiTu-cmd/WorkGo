@@ -51,6 +51,24 @@ public class CancellationRequest {
     @Column(name = "responded_at")
     Instant respondedAt;
 
+    @Column(name = "case_id")
+    UUID caseId;
+
+    @Column(name = "decision_id")
+    UUID decisionId;
+
+    @Column(name = "execution_status")
+    String executionStatus;
+
+    @Column(name = "counterpart_agreed")
+    Boolean counterpartAgreed;
+
+    @Column(name = "fee_exempt_before_24h")
+    Boolean feeExemptBefore24h;
+
+    @Column(name = "projected_cancellation_fee")
+    Long projectedCancellationFee;
+
     @Builder.Default
     @Column(name = "created_at")
     Instant createdAt = Instant.now();

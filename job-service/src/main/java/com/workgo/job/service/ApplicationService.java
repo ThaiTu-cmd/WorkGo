@@ -69,15 +69,47 @@ public class ApplicationService {
     public ProviderProfileResponse eligible(UUID providerId) {
         if (restrictions.existsByProviderIdAndBlockedTrue(providerId)) throw new AppException(ErrorCode.PROVIDER_NOT_ACTIVE);
         ProviderProfileResponse profile = profile(providerId);
-        if (!"ACTIVE".equals(profile.getUserStatus()) || !profile.isAcceptingOrders()) throw new AppException(ErrorCode.PROVIDER_NOT_ACTIVE);
+        if (!"ACTIVE".equals(profile.getUserStatus()) || !profile.isAcceptingOrders() || Boolean.TRUE.equals(profile.getSanctioned()))
+            throw new AppException(ErrorCode.PROVIDER_NOT_ACTIVE);
         if (!"VERIFIED".equals(profile.getVerificationStatus())) throw new AppException(ErrorCode.PROVIDER_NOT_VERIFIED);
+        assertAdmissionCapAllowed(profile);
         com.workgo.job.repository.client.PaymentClient.Eligibility eligibility;
-        try { eligibility=payment.eligibility(providerId); }
-        catch (FeignException e) { throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE); }
-        if (eligibility==null || !profile.getUserId().equals(eligibility.userId())) throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);
-        if (!eligibility.mayStartNewWork() || eligibility.balance()<0 || eligibility.outstandingFee()>0)
+        try { eligibility = payment.eligibility(providerId); }
+        catch (RuntimeException e) { throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE); }
+        if (eligibility == null || !profile.getUserId().equals(eligibility.userId())) throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);
+        if (!eligibility.mayStartNewWork() || eligibility.balance() < 0 || eligibility.outstandingFee() > 0)
             throw new AppException(ErrorCode.PROVIDER_NOT_ACTIVE);
         return profile;
+    }
+
+    private void assertAdmissionCapAllowed(ProviderProfileResponse profile) {
+        Integer score = profile.getReputationScore();
+        if (score != null) {
+            if (score < 20) throw new AppException(ErrorCode.PROVIDER_NOT_ACTIVE);
+            int cap = computeScoreCap(profile, score);
+            if (profile.getMaxConcurrentOrders() != null) {
+                cap = Math.min(cap, profile.getMaxConcurrentOrders());
+            }
+            if (cap <= 0 || (profile.getActiveOrderCount() != null && profile.getActiveOrderCount() >= cap)) {
+                throw new AppException(ErrorCode.PROVIDER_NOT_ACTIVE);
+            }
+        } else if (profile.getMaxConcurrentOrders() != null) {
+            if (profile.getMaxConcurrentOrders() <= 0
+                    || (profile.getActiveOrderCount() != null && profile.getActiveOrderCount() >= profile.getMaxConcurrentOrders())) {
+                throw new AppException(ErrorCode.PROVIDER_NOT_ACTIVE);
+            }
+        }
+    }
+
+    private int computeScoreCap(ProviderProfileResponse profile, int score) {
+        boolean isNewProvider = profile.getCompletedOrderCount() < 3
+                || (profile.getDistinctClientCount() != null && profile.getDistinctClientCount() < 3);
+        if (isNewProvider && score == 80) return 1;
+        if (score >= 80) return 5;
+        if (score >= 60) return 3;
+        if (score >= 40) return 2;
+        if (score >= 20) return 1;
+        return 0;
     }
 
     private ProviderProfileResponse profile(UUID id) {
@@ -88,6 +120,10 @@ public class ApplicationService {
             return profile;
         } catch (FeignException ex) {
             throw new AppException(ex.status() == 404 ? ErrorCode.PROVIDER_NOT_ACTIVE : ErrorCode.DEPENDENCY_UNAVAILABLE);
+        } catch (AppException ex) {
+            throw ex;
+        } catch (RuntimeException ex) {
+            throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);
         }
     }
 

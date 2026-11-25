@@ -53,19 +53,30 @@ public class ProposalOrderWorker {
         if (claim == null) return;
         ProposalOrderResponse response = null;
         String error = null;
+        boolean terminal = false;
         try (var trace=com.workgo.job.configuration.CorrelationTrace.use(claim.correlationId())) {
             var request = json.readValue(claim.payload(), CreateProposalOrderRequest.class);
             response = orders.createFromProposal(id, request);
             if (response == null || response.orderId() == null || !id.equals(response.proposalId()) ||
                     !request.jobId().equals(response.jobId()) || !"PROPOSAL".equals(response.sourceType()))
                 throw new IllegalStateException("Invalid order response");
+        } catch (feign.FeignException ex) {
+            String body = ex.contentUTF8();
+            if (ex.status() == 400 || (ex.status() == 409 && body != null && body.contains("3023"))) {
+                error = "PROPOSAL_ORDER_CONFLICT";
+                terminal = true;
+            } else {
+                error = "ORDER_DELIVERY_FAILED";
+            }
+            log.warn("Order delivery failed for proposal {} (status={})", id, ex.status());
         } catch (Exception ex) {
             error = "ORDER_DELIVERY_FAILED";
             log.warn("Order delivery failed for proposal {} ({})", id, ex.getClass().getSimpleName());
         }
         ProposalOrderResponse result = response;
         String failure = error;
-        tx.executeWithoutResult(status -> finish(id, claim.token(), result, failure));
+        boolean markTerminal = terminal;
+        tx.executeWithoutResult(status -> finish(id, claim.token(), result, failure, markTerminal));
     }
 
     private Claim claim(UUID id) {
@@ -89,7 +100,7 @@ public class ProposalOrderWorker {
         return new Claim(event.getPayload(), event.getLeaseToken(), event.getCorrelationId()==null?"legacy-"+id:event.getCorrelationId());
     }
 
-    private void finish(UUID id, UUID token, ProposalOrderResponse result, String failure) {
+    private void finish(UUID id, UUID token, ProposalOrderResponse result, String failure, boolean terminal) {
         var event = outbox.findLockedById(id).orElseThrow();
         // A newer worker may have recovered an expired lease. Ignore the stale worker's result.
         if (event.getStatus() != OrderSyncStatus.PROCESSING || !token.equals(event.getLeaseToken())) return;
@@ -100,7 +111,7 @@ public class ProposalOrderWorker {
             event.setOrderId(result.orderId());
             event.setLastError(null);
         } else {
-            event.setStatus(event.getAttempts() >= maxAttempts ? OrderSyncStatus.FAILED : OrderSyncStatus.RETRY);
+            event.setStatus((terminal || event.getAttempts() >= maxAttempts) ? OrderSyncStatus.FAILED : OrderSyncStatus.RETRY);
             event.setLastError(failure);
             long delay = Math.min(3600, 30L * (1L << Math.min(7, event.getAttempts() - 1)));
             event.setNextAttemptAt(Instant.now().plusSeconds(delay));

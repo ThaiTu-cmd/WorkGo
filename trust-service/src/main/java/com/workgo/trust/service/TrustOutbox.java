@@ -27,6 +27,7 @@ public class TrustOutbox {
             case "REVIEW_PUBLISHED" -> "Đánh giá đã được công bố";
             case "REVIEW_REMINDER" -> "Đơn hàng đã hoàn tất: mời bạn đánh giá";
             case "DISPUTE_OPENED" -> "Đơn hàng có tranh chấp mới";
+            case "ONSITE_CONTACT_REQUIRED" -> "Onsite schedule passed 15 minutes without check-in: please contact counterpart";
             default -> throw new IllegalArgumentException("Unknown notification type");
         };
         add(referenceType, referenceId, "notification.send", new Notification(UUID.randomUUID(), user, provider,

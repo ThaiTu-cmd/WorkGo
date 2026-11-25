@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class ProposalOrderCreator {
     private final OrderRepository orders;
     private final OrderSnapshotRepository snapshots;
@@ -36,9 +35,50 @@ public class ProposalOrderCreator {
     private final OrderFeeService orderFeeService;
     private final ProviderFinancialEligibility providerFinancialEligibility;
     private final OrderRewardQuoteService rewardQuotes;
+    private final OrderAgreementVersionRepository agreementVersions;
+
+    public ProposalOrderCreator(OrderRepository orders,
+                                OrderSnapshotRepository snapshots,
+                                OrderItemRepository items,
+                                JobClient jobClient,
+                                OrderStatusService statusService,
+                                DigitalExecutionHandler digitalHandler,
+                                OrderFeeService orderFeeService,
+                                ProviderFinancialEligibility providerFinancialEligibility,
+                                OrderRewardQuoteService rewardQuotes) {
+        this(orders, snapshots, items, jobClient, statusService, digitalHandler, orderFeeService,
+                providerFinancialEligibility, rewardQuotes, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public ProposalOrderCreator(OrderRepository orders,
+                                OrderSnapshotRepository snapshots,
+                                OrderItemRepository items,
+                                JobClient jobClient,
+                                OrderStatusService statusService,
+                                DigitalExecutionHandler digitalHandler,
+                                OrderFeeService orderFeeService,
+                                ProviderFinancialEligibility providerFinancialEligibility,
+                                OrderRewardQuoteService rewardQuotes,
+                                OrderAgreementVersionRepository agreementVersions) {
+        this.orders = orders;
+        this.snapshots = snapshots;
+        this.items = items;
+        this.jobClient = jobClient;
+        this.statusService = statusService;
+        this.digitalHandler = digitalHandler;
+        this.orderFeeService = orderFeeService;
+        this.providerFinancialEligibility = providerFinancialEligibility;
+        this.rewardQuotes = rewardQuotes;
+        this.agreementVersions = agreementVersions;
+    }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ProposalOrderService.CreationResult create(CreateProposalOrderRequest request) {
+        if ((request.currency() == null || "VND".equalsIgnoreCase(request.currency()))
+                && request.price() != null && request.price().stripTrailingZeros().scale() > 0) {
+            throw new AppException(ErrorCode.PROPOSAL_ORDER_INVALID_REQUEST);
+        }
         var existing = replay(request);
         if (existing != null) return existing;
         if (orders.existsProposalSourceIncludingDeleted(request.proposalId())) {
@@ -68,6 +108,7 @@ public class ProposalOrderCreator {
         String rewardQuoteRef = rewardQuotes.quote(new OrderRewardQuoteService.Input(request.clientId(), request.providerId(),
                 "PROPOSAL", request.proposalId(), request.jobTitle()+" - "+request.terms(), request.price(), request.currency(),
                 request.estimatedDays(), feePolicy.getFeePolicyVersionId()));
+        Instant placedAt = Instant.now();
         Order order = orders.saveAndFlush(Order.builder()
                 .orderNumber("WG-P-" + UUID.randomUUID())
                 .sourceType(SourceType.PROPOSAL).sourceId(request.proposalId())
@@ -76,12 +117,13 @@ public class ProposalOrderCreator {
                 .subtotal(request.price()).platformFee(fee).totalAmount(request.price()).providerNetAmount(net)
                 .currency(request.currency()).orderStatus(OrderStatus.PENDING_PAYMENT).paymentStatus(PaymentStatus.PENDING)
                 .paymentMethod(OrderPaymentMethod.WALLET)
-                .placedAt(Instant.now()).build());
+                .placedAt(placedAt).build());
         items.save(OrderItem.builder().order(order).referenceId(request.proposalId()).itemType(ItemType.PROPOSAL)
                 .name(request.jobTitle()).quantity(1).unitPrice(request.price()).amount(request.price()).sortOrder(0).build());
+        items.save(OrderItem.builder().order(order).itemType(ItemType.PLATFORM_FEE)
+                .name("Phi nen tang").quantity(1).unitPrice(fee).amount(fee).sortOrder(1).build());
 
         // Reuse the existing DIGITAL lifecycle; no catalog package is purchased here.
-    // Historical package metadata only; in-scope defect repair is unlimited.
         // Historical metadata; in-scope defect repair is unlimited.
         digitalHandler.create(order, new OrderCreationRequest(), PackageResponse.builder().revisionLimit(0).build());
         snapshots.save(OrderSnapshot.builder().order(order).proposalSnapshot(frozen)
@@ -93,6 +135,27 @@ public class ProposalOrderCreator {
                 .addOnSnapshot(List.of())
                 .executionSnapshot(ExecutionSnapshot.builder().executionType(ExecutionType.DIGITAL).autoCompleteHours(72).build())
                 .build());
+        if (agreementVersions != null && agreementVersions.findTopByOrderIdOrderByVersionNoDesc(order.getOrderId()).isEmpty()) {
+            String scope = request.jobTitle() + (request.jobDescription() == null || request.jobDescription().isBlank()
+                    ? "" : "\n" + request.jobDescription());
+            agreementVersions.save(OrderAgreementVersion.builder()
+                    .orderId(order.getOrderId())
+                    .versionNo(1)
+                    .source("PROPOSAL")
+                    .scope(scope)
+                    .acceptanceCriteria(request.terms())
+                    .paymentMethod(OrderPaymentMethod.WALLET)
+                    .feePolicyVersionId(feePolicy.getFeePolicyVersionId())
+                    .policyVersion("WG-POLICY-1.0")
+                    .rewardQuoteRef(rewardQuoteRef)
+                    .price(request.price())
+                    .currency(request.currency())
+                    .durationDays(request.estimatedDays())
+                    .providerConfirmedAt(placedAt)
+                    .clientConfirmedAt(placedAt)
+                    .createdAt(placedAt)
+                    .build());
+        }
         statusService.recordCreated(order, request.clientId());
         return result(order, frozen, true);
     }

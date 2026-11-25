@@ -55,6 +55,12 @@ public class JobController {
         return ApiResponse.<JobDetailDto>builder().result(service.update(id, req)).build();
     }
 
+    @DeleteMapping("/{id}") @PreAuthorize("hasAuthority('ROLE_CLIENT')")
+    public ApiResponse<Void> delete(@PathVariable UUID id) {
+        service.delete(id);
+        return ApiResponse.<Void>builder().build();
+    }
+
     @PostMapping(value = "/{id}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('ROLE_CLIENT')")
     public ApiResponse<JobAttachmentDto> uploadAttachment(

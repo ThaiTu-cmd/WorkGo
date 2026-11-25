@@ -7,6 +7,7 @@ import com.workgo.order.entity.OrderDisputeDecision;
 import com.workgo.order.enumeration.*;
 import com.workgo.order.exception.AppException;
 import com.workgo.order.exception.ErrorCode;
+import com.workgo.order.reppository.CancellationRequestRepository;
 import com.workgo.order.reppository.DigitalExecutionRepository;
 import com.workgo.order.reppository.ExecutionRepository;
 import com.workgo.order.reppository.OnsiteExecutionRepository;
@@ -41,6 +42,7 @@ public class DisputeDecisionApplicationService {
     ExecutionRepository executionRepository;
     DigitalExecutionRepository digitalExecutionRepository;
     OnsiteExecutionRepository onsiteExecutionRepository;
+    CancellationRequestRepository cancellationRequestRepository;
     OrderStatusService orderStatusService;
 
     //trust goi sau khi payment da chot tien (viec 27); cash thi khong co ket qua escrow
@@ -82,6 +84,7 @@ public class DisputeDecisionApplicationService {
 
         closeExecution(order, release);
         orderStatusService.applyDecision(order, target, command.getDecidedBy());
+        syncCancellationRequest(orderId, command, release);
 
         OrderDisputeDecision decision = orderDisputeDecisionRepository.saveAndFlush(OrderDisputeDecision.builder()
                 .decisionId(command.getDecisionId())
@@ -144,6 +147,25 @@ public class DisputeDecisionApplicationService {
                 || !(release ? order.getProviderId() : order.getClientId()).equals(command.getDestinationId())) {
             throw new AppException(ErrorCode.ORDER_DECISION_SETTLEMENT_MISMATCH);
         }
+    }
+
+    private void syncCancellationRequest(UUID orderId, ApplyDecisionCommand command, boolean release) {
+        if (cancellationRequestRepository == null) {
+            return;
+        }
+        cancellationRequestRepository.findByOrder_OrderId(orderId).ifPresent(cancellation -> {
+            cancellation.setCaseId(command.getDisputeId());
+            cancellation.setDecisionId(command.getDecisionId());
+            cancellation.setExecutionStatus("COMPLETED");
+            cancellation.setStatus(release ? CancellationStatus.REJECTED : CancellationStatus.DECISION_LINKED);
+            if (!release) {
+                cancellation.setRefundPercent(100);
+            }
+            if (cancellation.getRespondedAt() == null) {
+                cancellation.setRespondedAt(command.getEffectiveAt());
+            }
+            cancellationRequestRepository.save(cancellation);
+        });
     }
 
     private void closeExecution(Order order, boolean release) {

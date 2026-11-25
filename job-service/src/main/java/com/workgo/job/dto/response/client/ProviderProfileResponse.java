@@ -23,5 +23,10 @@ public class ProviderProfileResponse {
     private int completedOrderCount;
     @JsonAlias("isAcceptingOrders")
     private boolean acceptingOrders;
+    private Integer reputationScore;
+    private Boolean sanctioned;
+    private Integer activeOrderCount;
+    private Integer distinctClientCount;
+    private Integer maxConcurrentOrders;
     private Instant joinedAt;
 }

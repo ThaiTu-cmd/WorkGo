@@ -29,6 +29,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class ProposalService {
     private final ProposalRepository proposals;
     private final ApplicationRepository applications;
+    private final JobAttachmentRepository attachments;
     private final ProposalOrderOutboxRepository outbox;
     private final ApplicationService applicationService;
     private final ProposalMapper mapper;
@@ -47,6 +48,8 @@ public class ProposalService {
         if (!app.getProviderId().equals(token.getCurrentProviderId())) throw new AccessDeniedException("Application owner required");
         access.open(job);
         pendingApplication(app);
+        assertAttachmentsReady(jobId);
+        assertWholeVndPrice(job.getCurrency(), req.price());
         var profile = applicationService.eligible(app.getProviderId());
         if (!profile.getUserId().equals(token.getCurrentUserId()) || profile.getUserId().equals(job.getClientId()))
             throw new AccessDeniedException("Profile identity mismatch");
@@ -98,6 +101,8 @@ public class ProposalService {
         pendingProposal(p);
         access.open(source.job());
         pendingApplication(source.app());
+        assertAttachmentsReady(source.job().getJobId());
+        assertWholeVndPrice(p.getCurrency(), p.getPrice());
         if (p.getExpiresAt() != null && !p.getExpiresAt().isAfter(Instant.now())) throw new AppException(ErrorCode.PROPOSAL_EXPIRED);
         if (source.job().getExecutionType() != ExecutionType.DIGITAL) throw new AppException(ErrorCode.UNSUPPORTED_EXECUTION_TYPE);
         if (!providerId.equals(source.app().getProviderId()) || providerUserId == null)
@@ -118,6 +123,21 @@ public class ProposalService {
         catch (JsonProcessingException ex) { throw new IllegalStateException("Cannot serialize proposal order", ex); }
         outbox.saveAndFlush(event);
         return acceptance(p);
+    }
+
+    private void assertAttachmentsReady(UUID jobId) {
+        for (JobAttachment attachment : attachments.findByJob_JobId(jobId)) {
+            if (attachment.getStatus() != null && !"READY".equals(attachment.getStatus())) {
+                throw new AppException(ErrorCode.INVALID_STATUS_TRANSITION);
+            }
+        }
+    }
+
+    private void assertWholeVndPrice(String currency, java.math.BigDecimal price) {
+        if ((currency == null || "VND".equalsIgnoreCase(currency))
+                && price != null && price.stripTrailingZeros().scale() > 0) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
     }
 
     @Transactional

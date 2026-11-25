@@ -12,5 +12,7 @@ public interface OrderDisputeDecisionRepository extends JpaRepository<OrderDispu
 
     Optional<OrderDisputeDecision> findByDecisionId(UUID decisionId);
 
+    Optional<OrderDisputeDecision> findByOrderId(UUID orderId);
+
     boolean existsByOrderId(UUID orderId);
 }

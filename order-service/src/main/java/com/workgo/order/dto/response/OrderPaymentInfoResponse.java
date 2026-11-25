@@ -47,4 +47,8 @@ public class OrderPaymentInfoResponse {
 
     Instant payableUntil;
 
+    Instant scheduledStart;
+
+    Instant startedAt;
+
 }

@@ -16,4 +16,11 @@ public class CancellationCreationRequest {
 
     String note;
 
+    java.util.UUID caseId;
+
+    public CancellationCreationRequest(String reasonCode, String note) {
+        this.reasonCode = reasonCode;
+        this.note = note;
+    }
+
 }

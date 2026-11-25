@@ -131,7 +131,9 @@ public enum ErrorCode {
     ORDER_TIMER_INVALID(3061, "Invalid timer source or command", HttpStatus.BAD_REQUEST),
     PREVIEW_INVALID(3062, "Preview schedule, note or command is invalid", HttpStatus.BAD_REQUEST),
     PREVIEW_CONFLICT(3063, "Preview or delivery changed; reload before continuing", HttpStatus.CONFLICT),
-    PREVIEW_MEET_UNAVAILABLE(3064, "Meet authorization or provider unavailable; retry authorization or reconcile the room", HttpStatus.SERVICE_UNAVAILABLE);
+    PREVIEW_MEET_UNAVAILABLE(3064, "Meet authorization or provider unavailable; retry authorization or reconcile the room", HttpStatus.SERVICE_UNAVAILABLE),
+    ORDER_LATENESS_RESPONSE_INVALID(3065, "Official 24h lateness response requires meaningful progress, evidence and a future remedy proposal", HttpStatus.BAD_REQUEST),
+    ORDER_LATENESS_EXPLANATION_INVALID(3066, "Lateness explanation requires open verification and a valid statement within 48h of notification ACK", HttpStatus.BAD_REQUEST);
 
     private int code;
     private String message;

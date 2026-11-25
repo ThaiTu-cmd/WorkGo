@@ -15,6 +15,8 @@ import java.util.UUID;
 public interface ProposalRepository extends JpaRepository<Proposal, UUID> {
     boolean existsByJob_JobId(UUID jobId);
 
+    boolean existsByJob_JobIdAndStatus(UUID jobId, ProposalStatus status);
+
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Proposal p where p.proposalId = :id")
     Optional<Proposal> findLockedById(@Param("id") UUID id);

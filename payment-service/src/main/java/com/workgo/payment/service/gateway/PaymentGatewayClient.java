@@ -18,6 +18,12 @@ public interface PaymentGatewayClient {
 
     GatewayCallbackResult verifyCallback(Map<String, String> params);
 
+    // A reference is only a lookup key. Unsupported authoritative lookup fails closed.
+    default GatewayCallbackResult verifyExternalResult(String reference) {
+        throw new com.workgo.payment.exception.AppException(
+                com.workgo.payment.exception.ErrorCode.TOP_UP_RESOLVE_INVALID);
+    }
+
     GatewayRefundResult refund(Payment payment, Refund refund);
 
 }

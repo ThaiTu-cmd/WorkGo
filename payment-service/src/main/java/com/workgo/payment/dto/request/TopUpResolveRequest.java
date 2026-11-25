@@ -18,4 +18,7 @@ public class TopUpResolveRequest {
 
     String reason;
 
+    // Original gateway-signed evidence; a manually entered reference alone is insufficient.
+    java.util.Map<String, String> sourceEvidence;
+
 }

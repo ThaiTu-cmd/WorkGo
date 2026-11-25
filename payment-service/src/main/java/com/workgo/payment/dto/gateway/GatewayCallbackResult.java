@@ -13,6 +13,12 @@ import java.math.BigDecimal;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class GatewayCallbackResult {
 
+    boolean verified;
+
+    String currency;
+
+    String merchant;
+
     String paymentCode;
 
     boolean success;

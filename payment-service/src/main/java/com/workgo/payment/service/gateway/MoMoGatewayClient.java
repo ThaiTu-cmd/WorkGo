@@ -125,7 +125,12 @@ public class MoMoGatewayClient implements PaymentGatewayClient {
         String resultCode = value(params, "resultCode");
         boolean success = "0".equals(resultCode);
 
+        if (!properties.getPartnerCode().equals(params.get("partnerCode")) || !java.util.Objects.equals(params.get("orderId"), params.get("requestId")) || (params.containsKey("currency") && !"VND".equals(params.get("currency")))) {
+            throw new AppException(ErrorCode.TOP_UP_SOURCE_MISMATCH);
+        }
+
         return GatewayCallbackResult.builder()
+                .verified(true).currency("VND").merchant(properties.getPartnerCode())
                 .paymentCode(params.get("orderId"))
                 .success(success)
                 .amount(new BigDecimal(value(params, "amount")))

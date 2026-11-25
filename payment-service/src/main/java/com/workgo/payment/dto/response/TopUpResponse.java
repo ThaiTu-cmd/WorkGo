@@ -18,6 +18,8 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class TopUpResponse {
 
+    boolean simulated;
+
     UUID topUpId;
 
     String topUpCode;

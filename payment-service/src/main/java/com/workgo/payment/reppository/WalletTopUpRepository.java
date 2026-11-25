@@ -29,7 +29,7 @@ public interface WalletTopUpRepository extends JpaRepository<WalletTopUp, UUID> 
     List<WalletTopUp> findAllByStatusOrderByCreatedAtAsc(TopUpStatus status);
 
     @Query("select coalesce(sum(t.amount), 0) from WalletTopUp t where t.userId = :userId "
-            + "and t.createdAt >= :from and t.status <> :ignored")
+            + "and t.createdAt >= :from and t.currency = 'VND' and t.status <> :ignored")
     long sumAmountSince(UUID userId, Instant from, TopUpStatus ignored);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

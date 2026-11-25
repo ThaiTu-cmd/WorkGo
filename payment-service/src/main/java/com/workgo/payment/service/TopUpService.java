@@ -34,7 +34,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +65,7 @@ public class TopUpService {
     Map<PaymentGateway, PaymentGatewayClient> gatewayClients;
     PaymentCodeGenerator paymentCodeGenerator;
     TokenUtils tokenUtils;
+    org.springframework.transaction.support.TransactionTemplate transactions;
 
     @NonFinal
     @Value("${payment.expire-minutes}")
@@ -101,41 +101,41 @@ public class TopUpService {
 
         Optional<WalletTopUp> existed = walletTopUpRepository.findByIdempotencyKey(idempotencyKey);
         if (existed.isPresent()) {
-            return toExistedResponse(existed.get(), userId, amount, request.getGateway());
+            return toExistedResponse(existed.get(), userId, amount, request.getGateway(), paymentMethod);
         }
 
-        assertTopUpLimits(userId, amount);
-
         PaymentGatewayClient gatewayClient = gatewayClients.get(request.getGateway());
-
         if (gatewayClient == null) {
             throw new AppException(ErrorCode.PAYMENT_GATEWAY_NOT_SUPPORTED);
         }
-
-        Instant now = Instant.now();
-
-        WalletTopUp topUp = WalletTopUp.builder()
-                .topUpCode(paymentCodeGenerator.generateTopUp())
-                .userId(userId)
-                .amount(amount)
-                .gateway(request.getGateway())
-                .paymentMethod(paymentMethod)
-                .idempotencyKey(idempotencyKey)
-                .createdAt(now)
-                .expiresAt(now.plus(Duration.ofMinutes(expireMinutes)))
-                .build();
-
-        try {
-            topUp = walletTopUpRepository.saveAndFlush(topUp);
-        } catch (DataIntegrityViolationException e) {
-
-            WalletTopUp other = walletTopUpRepository.findByIdempotencyKey(idempotencyKey)
-                    .orElseThrow(() -> e);
-
-            return toExistedResponse(other, userId, amount, request.getGateway());
+        boolean[] reserved = {false};
+        WalletTopUp topUp = transactions.execute(tx -> {
+            walletService.lockedBalanceOf(WalletAccountRef.userAvailable(userId));
+            var replay = walletTopUpRepository.findByIdempotencyKey(idempotencyKey);
+            if (replay.isPresent()) {
+                toExistedResponse(replay.get(), userId, amount, request.getGateway(), paymentMethod);
+                return replay.get();
+            }
+            assertTopUpLimits(userId, amount);
+            Instant now = Instant.now();
+            reserved[0] = true;
+            return walletTopUpRepository.saveAndFlush(WalletTopUp.builder()
+                    .topUpCode(paymentCodeGenerator.generateTopUp()).userId(userId).amount(amount)
+                    .gateway(request.getGateway()).currency(request.getGateway() == PaymentGateway.MOCK ? "TEST_VND" : "VND")
+                    .paymentMethod(paymentMethod).idempotencyKey(idempotencyKey)
+                    .createdAt(now).expiresAt(now.plus(Duration.ofMinutes(expireMinutes)))
+                    .status(TopUpStatus.UNKNOWN).build());
+        });
+        // UNKNOWN is committed before external I/O. Replay only returns the reserved identity.
+        if (!reserved[0]) {
+            return topUpMapper.toResponse(topUp);
         }
-
-        //chua co link tra tien thi user khong the tra -> FAILED an toan, khong can doi soat
+        // Keep external I/O mutations off the entity retained by OpenEntityManagerInView.
+        topUp = WalletTopUp.builder().topUpId(topUp.getTopUpId()).topUpCode(topUp.getTopUpCode())
+                .userId(topUp.getUserId()).amount(topUp.getAmount()).currency(topUp.getCurrency())
+                .gateway(topUp.getGateway()).createdAt(topUp.getCreatedAt()).expiresAt(topUp.getExpiresAt())
+                .status(TopUpStatus.UNKNOWN).build();
+        // A failed local response cannot prove that the provider did not accept the request.
         try {
             GatewayCreateResult result = gatewayClient.createPayment(GatewayCharge.builder()
                     .code(topUp.getTopUpCode())
@@ -150,16 +150,16 @@ public class TopUpService {
             topUp.setPaymentUrl(result.getPaymentUrl());
             topUp.setQrCodeUrl(result.getQrCodeUrl());
             topUp.setDeeplink(result.getDeeplink());
-            transition(topUp, TopUpStatus.PENDING);
+            topUp.setStatus(TopUpStatus.PENDING);
             log.info("Top-up {} created for user {}, gateway {}, amount {}",
                     topUp.getTopUpCode(), userId, topUp.getGateway(), amount);
 
         } catch (Exception e) {
 
-            topUp.setFailureCode("GATEWAY_CREATE_FAILED");
+            topUp.setFailureCode("GATEWAY_CREATE_UNKNOWN");
             topUp.setFailureMessage(e.getMessage());
-            transition(topUp, TopUpStatus.FAILED);
-            walletTopUpRepository.save(topUp);
+            topUp.setStatus(TopUpStatus.UNKNOWN);
+            saveCreateResult(topUp);
             log.warn("Create top-up {} failed at gateway {}: {}", topUp.getTopUpCode(), topUp.getGateway(), e.getMessage());
 
             if (e instanceof AppException appException) {
@@ -169,7 +169,24 @@ public class TopUpService {
             throw new AppException(ErrorCode.GATEWAY_UNAVAILABLE);
         }
 
-        return topUpMapper.toResponse(walletTopUpRepository.save(topUp));
+        return saveCreateResult(topUp);
+    }
+
+    private TopUpResponse saveCreateResult(WalletTopUp result) {
+        return transactions.execute(tx -> {
+            WalletTopUp current = walletTopUpRepository.findByIdForUpdate(result.getTopUpId()).orElseThrow();
+            if (current.getStatus() == TopUpStatus.UNKNOWN) {
+                current.setPaymentUrl(result.getPaymentUrl());
+                current.setQrCodeUrl(result.getQrCodeUrl());
+                current.setDeeplink(result.getDeeplink());
+                current.setStatus(result.getStatus());
+                current.setFailureCode(result.getFailureCode());
+                current.setFailureMessage(result.getFailureMessage());
+                current.setUpdatedAt(Instant.now());
+                walletTopUpRepository.save(current);
+            }
+            return topUpMapper.toResponse(current);
+        });
     }
 
     //callback da kiem chu ky o adapter; khoa dong top-up de 2 callback cung luc chi 1 ben ghi co
@@ -179,6 +196,18 @@ public class TopUpService {
         WalletTopUp topUp = walletTopUpRepository.findByTopUpCodeForUpdate(result.getPaymentCode())
                 .orElseThrow(() -> new AppException(ErrorCode.TOP_UP_NOT_FOUND));
 
+        if (gateway == PaymentGateway.MOCK && topUp.getGateway() == PaymentGateway.MOCK
+                && "TEST_VND".equals(topUp.getCurrency())) {
+            if (result.getAmount() == null || result.getAmount().compareTo(BigDecimal.valueOf(topUp.getAmount())) != 0)
+                throw new AppException(ErrorCode.TOP_UP_SOURCE_MISMATCH);
+            if (topUp.getStatus() != TopUpStatus.SUCCEEDED
+                    && !(topUp.getStatus() == TopUpStatus.FAILED && !result.isSuccess())) {
+                transition(topUp, result.isSuccess() ? TopUpStatus.SUCCEEDED : TopUpStatus.FAILED);
+                topUp.setFailureMessage("SIMULATION_ONLY: no spendable wallet credit or partner confirmation");
+                walletTopUpRepository.save(topUp);
+            }
+            return topUpMapper.toResponse(topUp);
+        }
         assertSameSource(topUp, gateway, result);
 
         if (topUp.getStatus() == TopUpStatus.SUCCEEDED) {
@@ -224,11 +253,23 @@ public class TopUpService {
             throw new AppException(ErrorCode.TOP_UP_RESOLVE_INVALID);
         }
 
+        PaymentGatewayClient adapter = gatewayClients.get(topUp.getGateway());
+        if (adapter == null) throw new AppException(ErrorCode.TOP_UP_RESOLVE_INVALID);
+        GatewayCallbackResult verified = request.getSourceEvidence() == null
+                ? adapter.verifyExternalResult(request.getExternalReference())
+                : adapter.verifyCallback(request.getSourceEvidence());
+        assertSameSource(topUp, topUp.getGateway(), verified);
+        if (!Objects.equals(topUp.getTopUpCode(), verified.getPaymentCode())
+                || !Objects.equals(request.getExternalReference(), verified.getGatewayTxnId())
+                || verified.isSuccess() != (request.getResult() == TopUpStatus.SUCCEEDED)) {
+            throw new AppException(ErrorCode.TOP_UP_RESOLVE_INVALID);
+        }
+
         TopUpResponse before = topUpMapper.toResponse(topUp);
-        topUp.setRawResponse("RECONCILED: " + request.getReason());
+        topUp.setRawResponse(verified.getRawResponse());
 
         if (request.getResult() == TopUpStatus.SUCCEEDED) {
-            credit(topUp, request.getExternalReference());
+            credit(topUp, verified.getGatewayTxnId());
         } else {
             topUp.setFailureCode("RECONCILED_FAILED");
             topUp.setFailureMessage(request.getExternalReference());
@@ -253,7 +294,7 @@ public class TopUpService {
     @Transactional
     public void markUnknownIfExpired(UUID topUpId) {
 
-        WalletTopUp topUp = walletTopUpRepository.findById(topUpId)
+        WalletTopUp topUp = walletTopUpRepository.findByIdForUpdate(topUpId)
                 .orElseThrow(() -> new AppException(ErrorCode.TOP_UP_NOT_FOUND));
 
         if (topUp.getStatus() != TopUpStatus.PENDING || topUp.getExpiresAt().isAfter(Instant.now())) {
@@ -326,13 +367,13 @@ public class TopUpService {
         feeReceivableService.settleAfterCredit(topUp.getUserId());
     }
 
-    //D06: nap toi thieu 10.000d, toi da 5tr/user/ngay (lenh FAILED khong tinh)
+    // Keep failed reservations in the daily cap: a later signed success can still credit them.
     private void assertTopUpLimits(UUID userId, long amount) {
 
         Instant startOfDay = LocalDate.now(VIETNAM).atStartOfDay(VIETNAM).toInstant();
-        long usedToday = walletTopUpRepository.sumAmountSince(userId, startOfDay, TopUpStatus.FAILED);
+        long usedToday = walletTopUpRepository.sumAmountSince(userId, startOfDay, TopUpStatus.INITIATED);
 
-        if (amount < topUpMinAmount || usedToday + amount > topUpDailyLimit) {
+        if (amount < topUpMinAmount || amount > topUpDailyLimit || usedToday > topUpDailyLimit - amount) {
             throw new AppException(ErrorCode.TOP_UP_LIMIT_EXCEEDED);
         }
     }
@@ -356,7 +397,11 @@ public class TopUpService {
 
     private void assertSameSource(WalletTopUp topUp, PaymentGateway gateway, GatewayCallbackResult result) {
 
-        if (topUp.getGateway() != gateway
+        if (gateway == PaymentGateway.MOCK || result == null || !result.isVerified()
+                || !Objects.equals(topUp.getCurrency(), result.getCurrency())
+                || !Objects.equals(topUp.getTopUpCode(), result.getPaymentCode())
+                || (result.isSuccess() && isBlank(result.getGatewayTxnId()))
+                || topUp.getGateway() != gateway
                 || result.getAmount() == null
                 || result.getAmount().compareTo(BigDecimal.valueOf(topUp.getAmount())) != 0) {
             throw new AppException(ErrorCode.TOP_UP_SOURCE_MISMATCH);
@@ -373,9 +418,9 @@ public class TopUpService {
         topUp.setUpdatedAt(Instant.now());
     }
 
-    private TopUpResponse toExistedResponse(WalletTopUp topUp, UUID userId, long amount, PaymentGateway gateway) {
+    private TopUpResponse toExistedResponse(WalletTopUp topUp, UUID userId, long amount, PaymentGateway gateway, PaymentMethod method) {
 
-        if (!topUp.getUserId().equals(userId) || topUp.getAmount() != amount || topUp.getGateway() != gateway) {
+        if (!topUp.getUserId().equals(userId) || topUp.getAmount() != amount || topUp.getGateway() != gateway || topUp.getPaymentMethod() != method) {
             throw new AppException(ErrorCode.TOP_UP_IDEMPOTENCY_KEY_REUSED);
         }
 

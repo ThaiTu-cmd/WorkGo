@@ -103,7 +103,12 @@ public class VnPayGatewayClient implements PaymentGatewayClient {
         boolean success = SUCCESS_CODE.equals(responseCode)
                 && SUCCESS_CODE.equals(params.get("vnp_TransactionStatus"));
 
+        if (!properties.getTmnCode().equals(params.get("vnp_TmnCode")) || (params.containsKey("vnp_CurrCode") && !"VND".equals(params.get("vnp_CurrCode")))) {
+            throw new AppException(ErrorCode.TOP_UP_SOURCE_MISMATCH);
+        }
+
         return GatewayCallbackResult.builder()
+                .verified(true).currency("VND").merchant(properties.getTmnCode())
                 .paymentCode(params.get("vnp_TxnRef"))
                 .success(success)
                 .amount(new BigDecimal(params.get("vnp_Amount")).movePointLeft(2))

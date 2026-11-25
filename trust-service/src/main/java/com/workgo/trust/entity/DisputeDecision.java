@@ -30,5 +30,6 @@ public class DisputeDecision {
     private UUID leaseToken;
     @Column(length=255) private String lastError;
     @Column(nullable=false) private boolean terminalConflict;
+    @Column(length=64,updatable=false) private String correlationId=com.workgo.trust.configuration.CorrelationTrace.current();
     @Version private Long version;
 }

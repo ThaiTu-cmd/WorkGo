@@ -7,5 +7,6 @@ public enum AdminActionType {
     PAYOUT_FAILED,
     PAYOUT_UNKNOWN,
     TOP_UP_RESOLVED,
+    AUDIT_EXPORTED,
     ORDER_SYNC_RETRIED
 }

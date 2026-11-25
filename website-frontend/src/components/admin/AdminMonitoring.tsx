@@ -175,7 +175,7 @@ export function AdminAudit() {
   const locale = useLocale();
   const token = useAuthToken();
   const isSuperAdmin = hasRole(token, "SUPER_ADMIN");
-  const [source, setSource] = useState<"identity" | "catalog">("identity");
+  const [source, setSource] = useState<"identity" | "catalog" | "payment" | "communication" | "job" | "trust">("identity");
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -213,9 +213,13 @@ export function AdminAudit() {
       <form className={styles.filters} onSubmit={filterLogs}>
         <label className={styles.field}>
           {t("source")}
-          <select value={source} onChange={(e) => setSource(e.target.value === "catalog" ? "catalog" : "identity")}>
+          <select value={source} onChange={(e) => setSource(e.target.value as typeof source)}>
             <option value="identity">Identity</option>
             <option value="catalog">Catalog</option>
+            <option value="payment">Payment</option>
+            <option value="communication">Communication</option>
+            <option value="job">Job</option>
+            <option value="trust">Trust</option>
           </select>
         </label>
         {isSuperAdmin && <label className={styles.field}>{t("actorId")}<input name="actorId" /></label>}

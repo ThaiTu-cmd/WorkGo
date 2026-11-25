@@ -82,7 +82,7 @@ public class AdminAuditService {
 
         if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes) {
             HttpServletRequest request = attributes.getRequest();
-            String requestId = request.getHeader("X-Request-Id");
+            String requestId = request.getHeader("X-Correlation-Id");
 
             if (requestId != null && REQUEST_ID.matcher(requestId).matches()) return requestId;
         }
@@ -95,7 +95,7 @@ public class AdminAuditService {
         if (value == null) return null;
 
         try {
-            return objectMapper.writeValueAsString(value);
+            return objectMapper.writeValueAsString(AuditState.redact(objectMapper.valueToTree(value)));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Cannot write admin audit state", e);
         }

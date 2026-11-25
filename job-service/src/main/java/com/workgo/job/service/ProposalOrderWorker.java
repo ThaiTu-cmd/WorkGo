@@ -53,7 +53,7 @@ public class ProposalOrderWorker {
         if (claim == null) return;
         ProposalOrderResponse response = null;
         String error = null;
-        try {
+        try (var trace=com.workgo.job.configuration.CorrelationTrace.use(claim.correlationId())) {
             var request = json.readValue(claim.payload(), CreateProposalOrderRequest.class);
             response = orders.createFromProposal(id, request);
             if (response == null || response.orderId() == null || !id.equals(response.proposalId()) ||
@@ -86,7 +86,7 @@ public class ProposalOrderWorker {
         event.setLeaseToken(UUID.randomUUID());
         event.setNextAttemptAt(now.plusSeconds(leaseSeconds));
         event.setUpdatedAt(now);
-        return new Claim(event.getPayload(), event.getLeaseToken());
+        return new Claim(event.getPayload(), event.getLeaseToken(), event.getCorrelationId()==null?"legacy-"+id:event.getCorrelationId());
     }
 
     private void finish(UUID id, UUID token, ProposalOrderResponse result, String failure) {
@@ -107,5 +107,5 @@ public class ProposalOrderWorker {
         }
     }
 
-    private record Claim(String payload, UUID token) { }
+    private record Claim(String payload, UUID token, String correlationId) { }
 }

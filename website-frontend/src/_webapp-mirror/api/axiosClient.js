@@ -180,7 +180,7 @@ async function request(method, url, { params, data, headers: extraHeaders, respo
     throw new ApiError(0, null);
   }
   const contentType = res.headers.get('content-type') || '';
-  const body = responseType === 'blob' && res.ok ? await res.blob() : await res.json().catch(() => null);
+  const body = (responseType === 'blob' || responseType === 'audit-page') && res.ok ? await res.blob() : await res.json().catch(() => null);
   if (version !== sessionVersion || generation !== getSessionGeneration()) throw sessionChanged();
   if (!res.ok) {
     const error = new ApiError(res.status, body, contentType);
@@ -201,7 +201,7 @@ async function request(method, url, { params, data, headers: extraHeaders, respo
     }
     throw error;
   }
-  return body;
+  return responseType === 'audit-page' ? { blob: body, nextCursor: res.headers.get('X-Next-Cursor'), contentType } : body;
 }
 
 const axiosClient = {

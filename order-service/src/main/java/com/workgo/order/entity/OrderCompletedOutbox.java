@@ -23,6 +23,8 @@ public class OrderCompletedOutbox {
     @Column(name = "claim_token") private UUID claimToken;
     @Column(name = "last_error", length = 500) private String lastError;
 
+    @Column(name="correlation_id",length=64,updatable=false) private String correlationId = com.workgo.order.configuration.CorrelationTrace.current();
+
     public static OrderCompletedOutbox from(Order order) {
         OrderCompletedOutbox event = new OrderCompletedOutbox();
         event.eventId = UUID.randomUUID().toString();

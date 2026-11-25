@@ -20,7 +20,7 @@ public class OrderCompletedOutboxWorker {
         for (String id : store.due()) {
             var claim = store.claim(id);
             if (claim == null) continue;
-            try {
+            try (var trace=com.workgo.order.configuration.CorrelationTrace.use(claim.correlationId())) {
                 var ack = client.orderCompleted(claim.payload());
                 if (ack == null || ack.getCode() != 1000) {
                     store.finish(claim, false, false, "Invalid Trust acknowledgement");

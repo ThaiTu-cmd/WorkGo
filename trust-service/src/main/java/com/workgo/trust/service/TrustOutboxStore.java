@@ -16,7 +16,9 @@ public class TrustOutboxStore {
     private final com.fasterxml.jackson.databind.ObjectMapper json;
     @Value("${app.outbox.max-attempts:5}") private int maxAttempts;
     @Value("${app.outbox.lease-seconds:60}") private int leaseSeconds;
-    public record Delivery(UUID id, UUID token, String eventType, UUID aggregateId, String payload) {}
+    public record Delivery(UUID id, UUID token, String eventType, UUID aggregateId, String payload, String correlationId) {
+        public Delivery(UUID id, UUID token, String eventType, UUID aggregateId, String payload) {this(id,token,eventType,aggregateId,payload,"legacy-"+id);}
+    }
     public Delivery claim(UUID id) {
         return transactions.execute(() -> {
             var e = em.find(TrustOutboxEvent.class,id,LockModeType.PESSIMISTIC_WRITE);
@@ -26,7 +28,7 @@ public class TrustOutboxStore {
             }
             e.setAttempts(e.getAttempts()+1); e.setClaimToken(UUID.randomUUID());
             e.setNextAttemptAt(Instant.now().plusSeconds(leaseSeconds));
-            return new Delivery(id,e.getClaimToken(),e.getEventType(),e.getAggregateId(),e.getPayload());
+            return new Delivery(id,e.getClaimToken(),e.getEventType(),e.getAggregateId(),e.getPayload(),e.getCorrelationId()==null?"legacy-"+id:e.getCorrelationId());
         });
     }
     /** Persist recipient resolution before HTTP, retaining exact recipient on retries. */

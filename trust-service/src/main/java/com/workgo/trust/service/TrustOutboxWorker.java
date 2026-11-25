@@ -39,7 +39,7 @@ public class TrustOutboxWorker {
     public void deliver(java.util.UUID id) {
         var delivery = store.claim(id);
         if (delivery == null) return;
-        try {
+        try (var trace=com.workgo.trust.configuration.CorrelationTrace.use(delivery.correlationId())) {
             String result = dispatch(delivery);
             store.finish(delivery,result,null,false);
         } catch (TrustClientException e) {

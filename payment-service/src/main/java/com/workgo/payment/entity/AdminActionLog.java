@@ -54,6 +54,10 @@ public class AdminActionLog {
     String correlationId;
 
     @Builder.Default
+    @Column(name = "source", updatable = false)
+    String source = "PAYMENT";
+
+    @Builder.Default
     @Column(name = "created_at", nullable = false)
     Instant createdAt = Instant.now();
 }

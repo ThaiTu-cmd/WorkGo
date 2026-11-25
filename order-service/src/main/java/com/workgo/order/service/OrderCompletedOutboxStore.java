@@ -22,7 +22,9 @@ public class OrderCompletedOutboxStore {
         this.repository = repository; this.maxAttempts = maxAttempts; this.leaseSeconds = leaseSeconds;
     }
 
-    public record Claim(OrderCompletedEvent payload, UUID token, int attempts) {}
+    public record Claim(OrderCompletedEvent payload, UUID token, int attempts, String correlationId) {
+        public Claim(OrderCompletedEvent payload, UUID token, int attempts){this(payload,token,attempts,"legacy-"+payload.eventId());}
+    }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<String> due() {
@@ -36,7 +38,7 @@ public class OrderCompletedOutboxStore {
         Instant now = Instant.now(); UUID token = UUID.randomUUID();
         if (repository.claim(id, token, now, now.plusSeconds(leaseSeconds), maxAttempts) != 1) return null;
         var event = repository.findById(id).orElseThrow();
-        return new Claim(event.payload(), token, event.getAttempts());
+        return new Claim(event.payload(), token, event.getAttempts(), event.getCorrelationId()==null?"legacy-"+event.getEventId():event.getCorrelationId());
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

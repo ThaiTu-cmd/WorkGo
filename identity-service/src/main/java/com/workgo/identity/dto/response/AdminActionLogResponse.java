@@ -34,5 +34,7 @@ public class AdminActionLogResponse {
 
     String correlationId;
 
+    String source;
+
     Instant createdAt;
 }

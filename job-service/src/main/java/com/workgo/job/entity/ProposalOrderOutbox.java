@@ -26,6 +26,8 @@ public class ProposalOrderOutbox {
     private Instant nextAttemptAt = Instant.now();
     @Column(nullable = false)
     private Instant updatedAt = Instant.now();
+    @Column(length=64,updatable=false)
+    private String correlationId = com.workgo.job.configuration.CorrelationTrace.current();
     // Fixed error category only; never persist Feign body/credentials in user-visible state.
     private String lastError;
     @Version

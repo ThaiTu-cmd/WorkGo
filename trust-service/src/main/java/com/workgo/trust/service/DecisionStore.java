@@ -14,13 +14,15 @@ public class DecisionStore {
     @PersistenceContext private EntityManager em;
     private final TrustTransactions transactions;
     private final TrustOutbox outbox;
-    public record Claim(UUID id,UUID token,UUID orderId,UUID disputeId,UUID actor,String operation,Instant effectiveAt,String payload,String receipt){}
+    public record Claim(UUID id,UUID token,UUID orderId,UUID disputeId,UUID actor,String operation,Instant effectiveAt,String payload,String receipt,String correlationId){
+        public Claim(UUID id,UUID token,UUID orderId,UUID disputeId,UUID actor,String operation,Instant effectiveAt,String payload,String receipt){this(id,token,orderId,disputeId,actor,operation,effectiveAt,payload,receipt,"legacy-"+id);}
+    }
     public Claim claim(UUID id){return transactions.execute(()->{
         var d=em.find(DisputeDecision.class,id,LockModeType.PESSIMISTIC_WRITE);Instant now=Instant.now();
         if(d==null||!"PENDING".equals(d.getExecutionStatus())||d.getNextAttemptAt().isAfter(now))return null;
         if(d.getAttempts()>=5){d.setExecutionStatus("NEEDS_RECONCILIATION");d.setLastError("ATTEMPTS_EXHAUSTED");d.setLeaseToken(null);return null;}
         d.setLeaseToken(UUID.randomUUID());d.setAttempts(d.getAttempts()+1);d.setNextAttemptAt(now.plusSeconds(60));
-        return new Claim(id,d.getLeaseToken(),d.getOrderId(),d.getDisputeId(),d.getActorId(),d.getOperation(),d.getEffectiveAt(),d.getSettlementPayload(),d.getPaymentResult());
+        return new Claim(id,d.getLeaseToken(),d.getOrderId(),d.getDisputeId(),d.getActorId(),d.getOperation(),d.getEffectiveAt(),d.getSettlementPayload(),d.getPaymentResult(),d.getCorrelationId()==null?"legacy-"+id:d.getCorrelationId());
     });}
     public void payment(Claim c,SettlementResult result){transactions.execute(()->{var d=owned(c);if(d==null)return null;
         d.setPaymentResult(outbox.encode(result));d.setPaymentStatus("COMPLETED");d.setAttempts(0);d.setLeaseToken(null);d.setNextAttemptAt(Instant.now());d.setLastError(null);return null;});}

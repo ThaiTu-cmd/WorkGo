@@ -34,7 +34,7 @@ import java.util.UUID;
 public class AuditLogQueryService {
 
     static int MAX_PAGE_SIZE = 100;
-    static int MAX_EXPORT_ROWS = 10_000;
+    static int MAX_EXPORT_ROWS = 1000;
     static Duration MAX_EXPORT_RANGE = Duration.ofDays(92);
 
     AdminActionLogRepository adminActionLogRepository;
@@ -48,10 +48,13 @@ public class AuditLogQueryService {
                                                            String targetId, Instant from, Instant to,
                                                            int page, int size) {
 
+        if (page < 0 || size < 1 || from != null && to != null && !from.isBefore(to)) {
+            throw new AppException(ErrorCode.INVALID_EXPORT_RANGE);
+        }
         UUID scopedActorId = isSuperAdmin() ? actorId : currentUserId();
 
         Page<AdminActionLog> pageData = adminActionLogRepository.search(scopedActorId, action, targetType, targetId,
-                from, to, PageRequest.of(page, Math.min(size, MAX_PAGE_SIZE), Sort.by("createdAt").descending()));
+                from, to, PageRequest.of(page, Math.min(size, MAX_PAGE_SIZE), Sort.by("createdAt", "adminActionLogId").descending()));
 
         return PageResponse.<AdminActionLogResponse>builder()
                 .totalPages(pageData.getTotalPages())
@@ -59,7 +62,14 @@ public class AuditLogQueryService {
                 .totalElements(pageData.getTotalElements())
                 .currentPage(page)
                 .data(pageData.stream()
-                        .map(adminActionLogMapper::toAdminActionLogResponse)
+                        .map(log -> {
+                            var projection = adminActionLogMapper.toAdminActionLogResponse(log);
+                            // Free text and historical DTO snapshots may contain PII. Monitoring is metadata only.
+                            projection.setReason(null);
+                            projection.setBeforeState(null);
+                            projection.setAfterState(null);
+                            return projection;
+                        })
                         .toList())
                 .build();
     }
@@ -69,19 +79,32 @@ public class AuditLogQueryService {
     public String exportLogs(UUID actorId, String action, String targetType, String targetId,
                              Instant from, Instant to) {
 
+        return exportPage(actorId, action, targetType, targetId, from, to, 0, MAX_EXPORT_ROWS).csv();
+    }
+
+    public record ExportPage(String csv, Integer nextCursor) {}
+
+    @Transactional
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ExportPage exportPage(UUID actorId, String action, String targetType, String targetId,
+                                 Instant from, Instant to, int cursor, int limit) {
+        if (cursor < 0 || limit < 1 || limit > MAX_EXPORT_ROWS || (long) cursor * limit > 1_000_000L) {
+            throw new AppException(ErrorCode.INVALID_EXPORT_RANGE);
+        }
         if (from == null || to == null || !from.isBefore(to) || Duration.between(from, to).compareTo(MAX_EXPORT_RANGE) > 0) {
             throw new AppException(ErrorCode.INVALID_EXPORT_RANGE);
         }
 
-        List<AdminActionLog> logs = adminActionLogRepository.search(actorId, action, targetType, targetId, from, to,
-                PageRequest.of(0, MAX_EXPORT_ROWS, Sort.by("createdAt").ascending())).getContent();
+        Page<AdminActionLog> exportData = adminActionLogRepository.search(actorId, action, targetType, targetId, from, to,
+                PageRequest.of(cursor, limit, Sort.by("createdAt", "adminActionLogId").ascending()));
+        List<AdminActionLog> logs = exportData.getContent();
 
-        StringBuilder csv = new StringBuilder("createdAt,actorId,actorRole,action,targetType,targetId,reason,beforeState,afterState,correlationId\n");
+        StringBuilder csv = new StringBuilder("createdAt,actorId,actorRole,action,targetType,targetId,reason,beforeState,afterState,correlationId,source\n");
         for (AdminActionLog log : logs) {
             csv.append(String.join(",",
                     cell(log.getCreatedAt()), cell(log.getActorId()), cell(log.getActorRole()), cell(log.getAction()),
-                    cell(log.getTargetType()), cell(log.getTargetId()), cell(log.getReason()),
-                    cell(log.getBeforeState()), cell(log.getAfterState()), cell(log.getCorrelationId())))
+                    cell(log.getTargetType()), cell(log.getTargetId()), cell(null),
+                    cell(null), cell(null), cell(log.getCorrelationId()), cell(log.getSource())))
                     .append("\n");
         }
 
@@ -93,6 +116,8 @@ public class AuditLogQueryService {
         filter.put("from", from.toString());
         filter.put("to", to.toString());
         filter.put("rowCount", logs.size());
+        filter.put("cursor", cursor);
+        filter.put("limit", limit);
 
         adminAuditService.record(AdminAction.builder()
                 .action(AdminActionType.AUDIT_EXPORTED)
@@ -101,7 +126,7 @@ public class AuditLogQueryService {
                 .afterState(filter)
                 .build());
 
-        return csv.toString();
+        return new ExportPage(csv.toString(), exportData.hasNext() ? cursor + 1 : null);
     }
 
     //=====================================
@@ -127,7 +152,7 @@ public class AuditLogQueryService {
         if (value == null) return "";
 
         String text = value.toString();
-        if (!text.isEmpty() && "=+-@\t\r".indexOf(text.charAt(0)) >= 0) text = "'" + text;
+        if (!text.isEmpty() && "=+-@\t\r\n".indexOf(text.charAt(0)) >= 0) text = "'" + text;
 
         return "\"" + text.replace("\"", "\"\"") + "\"";
     }

@@ -32,7 +32,7 @@ public class DecisionWorker {
     }}
     @Transactional(propagation=Propagation.NOT_SUPPORTED)
     public void deliver(UUID id){var c=store.claim(id);if(c==null)return;
-        try{
+        try(var trace=com.workgo.trust.configuration.CorrelationTrace.use(c.correlationId())){
             var command=json.readValue(c.payload(),SettlementCommand.class);
             if(c.receipt()==null){
                 var freeze=outbox.findByAggregateIdAndEventType(c.disputeId(),"dispute.opened.freeze_escrow").orElse(null);

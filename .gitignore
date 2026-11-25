@@ -144,3 +144,6 @@ vitest.config.*
 *.bak[0-9]*
 __pycache__/
 *.pyc
+
+# Consolidated local database scripts.
+/WorkGo.sql

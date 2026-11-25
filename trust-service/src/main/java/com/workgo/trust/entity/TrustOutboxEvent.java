@@ -67,6 +67,10 @@ public class TrustOutboxEvent {
     @Column(name = "version", nullable = false)
     private Long version;
 
+    @Builder.Default
+    @Column(name="correlation_id",length=64,updatable=false)
+    private String correlationId = com.workgo.trust.configuration.CorrelationTrace.current();
+
     @PrePersist
     void onCreate() {
         Instant now = Instant.now();

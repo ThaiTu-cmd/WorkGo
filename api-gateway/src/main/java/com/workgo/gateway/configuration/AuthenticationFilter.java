@@ -138,6 +138,11 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         String relative = path.startsWith(apiPrefix) ? path.substring(apiPrefix.length()) : path;
         var roles = scope == null ? java.util.Set.<String>of() : new java.util.HashSet<>(Arrays.asList(scope.trim().split("\\s+")));
         boolean read = HttpMethod.GET.equals(request.getMethod());
+        if (relative.matches("/(identity|catalog|payment|job|trust|communication)/admin/audit-logs(?:/.*)?")) {
+            if (!read) return false;
+            if (relative.endsWith("/export")) return roles.contains("ROLE_SUPER_ADMIN");
+            return roles.contains("ROLE_SUPER_ADMIN") || roles.contains("ROLE_ADMIN");
+        }
         if (relative.matches("/(identity|catalog|payment|order)/admin(?:/.*)?")) return roles.contains("ROLE_SUPER_ADMIN");
         if (relative.matches("/(job|trust|communication)/admin/audit-logs(?:/.*)?")) return read && roles.contains("ROLE_SUPER_ADMIN");
         if (relative.matches("/job/admin(?:/.*)?")) return roles.contains("ROLE_ADMIN") || read && roles.contains("ROLE_SUPER_ADMIN");

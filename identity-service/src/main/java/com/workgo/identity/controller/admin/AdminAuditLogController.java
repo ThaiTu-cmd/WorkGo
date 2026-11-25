@@ -51,13 +51,17 @@ public class AdminAuditLogController {
             @RequestParam(value = "targetType", required = false) String targetType,
             @RequestParam(value = "targetId", required = false) String targetId,
             @RequestParam(value = "from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
-            @RequestParam(value = "to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to
+            @RequestParam(value = "to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
+            @RequestParam(value = "cursor", defaultValue = "0") int cursor,
+            @RequestParam(value = "limit", defaultValue = "1000") int limit
     ) {
-        String csv = auditLogQueryService.exportLogs(actorId, action, targetType, targetId, from, to);
+        var exported = auditLogQueryService.exportPage(actorId, action, targetType, targetId, from, to, cursor, limit);
 
         return ResponseEntity.ok()
+                .header("X-Next-Cursor", exported.nextCursor() == null ? "" : exported.nextCursor().toString())
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"identity-audit-logs.csv\"")
                 .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
-                .body(csv.getBytes(StandardCharsets.UTF_8));
+                .body(exported.csv().getBytes(StandardCharsets.UTF_8));
     }
 }

@@ -54,7 +54,29 @@ public class TrustAdminController {
     public ApiResponse<Page<Dispute>> disputes(@RequestParam(defaultValue="0") int page){return ApiResponse.<Page<Dispute>>builder().result(disputes.findAll(paging(page))).build();}
     @GetMapping("/disputes/{id}") @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<Dispute> dispute(@PathVariable UUID id){return ApiResponse.<Dispute>builder().result(disputes.findById(id).orElseThrow(DisputeNotFoundException::new)).build();}
-    @GetMapping("/audit-logs") @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ApiResponse<Page<TrustAdminAudit>> audit(@RequestParam UUID targetId,@RequestParam(defaultValue="0") int page){return ApiResponse.<Page<TrustAdminAudit>>builder().result(audits.findByTargetId(targetId,paging(page))).build();}
+    private final com.workgo.trust.service.AuditQueryService auditQuery;
+    @GetMapping("/audit-logs/export") @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public org.springframework.http.ResponseEntity<String> exportAudit(
+        @RequestParam(required=false) UUID targetId, @RequestParam(required=false) UUID actorId,
+        @RequestParam(required=false) String action, @RequestParam(required=false) String targetType,
+        @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso=org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.Instant from,
+        @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso=org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.Instant to,
+        @RequestParam(defaultValue="0") int cursor, @RequestParam(defaultValue="1000") int limit) {
+        var result=auditQuery.export(actorId,targetId,action,targetType,from,to,cursor,limit);
+        return org.springframework.http.ResponseEntity.ok().header("Content-Type","text/csv;charset=UTF-8")
+            .header("Content-Disposition","attachment; filename=\"trust-audit.csv\"")
+            .header("Cache-Control","no-store").header("X-Next-Cursor",result.nextCursor()==null?"":result.nextCursor().toString()).body(result.csv());
+    }
+    @GetMapping("/audit-logs") @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
+    public ApiResponse<Page<com.workgo.trust.service.AuditQueryService.AuditRecord>> audit(
+        @RequestParam(required=false) UUID targetId, @RequestParam(required=false) UUID actorId,
+        @RequestParam(required=false) String action, @RequestParam(required=false) String targetType,
+        @RequestParam(required=false) @org.springframework.format.annotation.DateTimeFormat(iso=org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.Instant from,
+        @RequestParam(required=false) @org.springframework.format.annotation.DateTimeFormat(iso=org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.Instant to,
+        @RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="50") int size, @RequestParam(defaultValue="createdAt,desc") String sort) {
+        return ApiResponse.<Page<com.workgo.trust.service.AuditQueryService.AuditRecord>>builder()
+            .result(auditQuery.search(actorId,targetId,action,targetType,from,to,page,size,sort)).build();
+    }
+
     private Pageable paging(int page){return PageRequest.of(Math.max(0,page),50,Sort.by("createdAt").descending());}
 }

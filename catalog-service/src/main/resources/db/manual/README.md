@@ -1,3 +1,0 @@
-Run `20261119_service_snapshot_default.sql` with `psql -v ON_ERROR_STOP=1 -f <script>` against Catalog's database before deployment; back up the database first. The script is manual, transactional and safe to run again. It includes the earlier local `docs/sql/catalog-service/001_rating_snapshot_version.sql`. Existing ratings and non-null aggregate versions are preserved; only missing versions start at 0.
-
-For application rollback, keep the additive column and default. Older binaries ignore it and can still insert services. Do not drop the version column or reset values because this loses replay protection. A failure before `COMMIT` rolls the SQL transaction back; no service rows are deleted.

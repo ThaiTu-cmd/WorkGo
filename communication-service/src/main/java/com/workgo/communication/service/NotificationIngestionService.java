@@ -16,6 +16,7 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class NotificationIngestionService {
+    private final org.springframework.data.mongodb.core.MongoTemplate mongo;
     private final NotificationRepository notifications;
     private final InboxEventRepository inbox;
     private final CommunicationTransactions transactions;
@@ -46,6 +47,7 @@ public class NotificationIngestionService {
             dto = transactions.execute(() -> {
                 var saved = notifications.insert(notification);
                 inbox.insert(event);
+                mongo.insert(com.workgo.communication.entity.CommunicationAudit.notification(saved.getId(), now), "communication_admin_audit");
                 return mapper.toDto(saved);
             });
         } catch (DuplicateKeyException duplicate) {

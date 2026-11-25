@@ -63,7 +63,7 @@ public class ServiceMediaService {
         tokenUtils.assertServiceOwner(service);
         assertHttpsUrl(request.getUrl());
 
-        if(serviceMediaRepository.existsByService_ServiceIdAndUrl(serviceId, request.getUrl())){
+        if (serviceMediaRepository.existsByService_ServiceIdAndUrl(serviceId, request.getUrl())) {
             throw new AppException(ErrorCode.MEDIA_EXISTED);
         }
 
@@ -71,6 +71,7 @@ public class ServiceMediaService {
                 .url(request.getUrl())
                 .mediaType(request.getMediaType())
                 .cover(request.isCover())
+                .status("READY")
                 .service(service)
                 .build();
 
@@ -85,7 +86,7 @@ public class ServiceMediaService {
 
         Sort sort = Sort.by("createdAt").descending();
 
-        Pageable pageable = PageRequest.of(page,size, sort);
+        Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<ServiceMedia> pageData = serviceMediaRepository.findAllByService_ServiceId(serviceId, pageable);
 
@@ -101,15 +102,20 @@ public class ServiceMediaService {
     @Transactional
     @PreAuthorize("hasAnyRole('PROVIDER')")
     public ServiceMediaResponse uploadServiceMedia(UUID serviceId, MultipartFile file, boolean cover) {
+        return uploadServiceMedia(serviceId, file, cover, null);
+    }
+
+    @Transactional
+    @PreAuthorize("hasAnyRole('PROVIDER')")
+    public ServiceMediaResponse uploadServiceMedia(UUID serviceId, MultipartFile file, boolean cover, String expectedSha256) {
         Service service = serviceRepository.findById(serviceId)
                 .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_EXISTED));
 
         tokenUtils.assertServiceOwner(service);
 
         if (file == null) throw new AppException(ErrorCode.FILE_REQUIRED);
-
-        if (serviceMediaRepository.countByService_ServiceId(serviceId) >= MAX_MEDIA) {
-            throw new AppException(ErrorCode.MEDIA_LIMIT);
+        if (!fileTypeDetector.isSafeFilename(file.getOriginalFilename())) {
+            throw new AppException(ErrorCode.FILE_TYPE_NOT_ALLOWED);
         }
 
         byte[] content = readContent(file);
@@ -117,37 +123,80 @@ public class ServiceMediaService {
 
         String mimeType = fileTypeDetector.detect(content);
         MediaType mediaType = mimeType == null ? null : ALLOWED_TYPES.get(mimeType);
-        if (mediaType == null) throw new AppException(ErrorCode.FILE_TYPE_NOT_ALLOWED);
+        if (mediaType == null || !fileTypeDetector.isDeclaredMimeCompatible(file.getContentType(), mimeType)) {
+            throw new AppException(ErrorCode.FILE_TYPE_NOT_ALLOWED);
+        }
         if (content.length > MAX_SIZE.get(mediaType)) throw new AppException(ErrorCode.FILE_TOO_LARGE);
 
+        String digest = sha256(content);
+        if (expectedSha256 != null && !expectedSha256.isBlank()
+                && !digest.equalsIgnoreCase(expectedSha256.trim())) {
+            throw new AppException(ErrorCode.FILE_TYPE_NOT_ALLOWED);
+        }
+
+        var existing = serviceMediaRepository.findFirstByService_ServiceIdAndSha256OrderByCreatedAtAsc(serviceId, digest);
+        if (existing != null && existing.isPresent()) {
+            ServiceMedia prev = existing.get();
+            if ("READY".equals(prev.getStatus()) && prev.getStorageKey() != null && fileStorage.exists(prev.getStorageKey())) {
+                return serviceMediaMapper.toServiceMediaResponse(prev);
+            }
+        }
+
+        if (serviceMediaRepository.countByService_ServiceId(serviceId) >= MAX_MEDIA) {
+            throw new AppException(ErrorCode.MEDIA_LIMIT);
+        }
+
         String storageKey = "services/" + serviceId + "/" + UUID.randomUUID();
-        fileStorage.put(storageKey, content);
+        boolean written = false;
 
-        ServiceMedia serviceMedia = serviceMediaRepository.save(ServiceMedia.builder()
-                .mediaType(mediaType)
-                .cover(cover)
-                .storageKey(storageKey)
-                .mimeType(mimeType)
-                .sizeBytes((long) content.length)
-                .sha256(sha256(content))
-                .service(service)
-                .build());
+        try {
+            fileStorage.put(storageKey, content);
+            written = true;
+            byte[] verified = fileStorage.get(storageKey);
+            if (verified == null || !sha256(verified).equals(digest)) {
+                fileStorage.delete(storageKey);
+                throw new AppException(ErrorCode.FILE_STORAGE_ERROR);
+            }
 
-        serviceMedia.setUrl("/medias/" + serviceMedia.getServiceMediaId() + "/content");
+            ServiceMedia serviceMedia = serviceMediaRepository.save(ServiceMedia.builder()
+                    .mediaType(mediaType)
+                    .cover(cover)
+                    .storageKey(storageKey)
+                    .mimeType(mimeType)
+                    .sizeBytes((long) content.length)
+                    .sha256(digest)
+                    .status("READY")
+                    .service(service)
+                    .build());
 
-        return serviceMediaMapper.toServiceMediaResponse(serviceMediaRepository.save(serviceMedia));
+            serviceMedia.setUrl("/medias/" + serviceMedia.getServiceMediaId() + "/content");
+
+            return serviceMediaMapper.toServiceMediaResponse(serviceMediaRepository.save(serviceMedia));
+        } catch (RuntimeException ex) {
+            if (written) {
+                fileStorage.delete(storageKey);
+            }
+            throw ex;
+        }
     }
 
     public ServiceMedia loadUploadedMedia(UUID mediaId) {
 
         return serviceMediaRepository.findById(mediaId)
                 .filter(media -> media.getStorageKey() != null)
+                .filter(media -> "READY".equals(media.getStatus()))
                 .orElseThrow(() -> new AppException(ErrorCode.MEDIA_NOT_EXISTED));
     }
 
     public byte[] readStoredContent(ServiceMedia serviceMedia) {
-
-        return fileStorage.get(serviceMedia.getStorageKey());
+        if (serviceMedia == null || !"READY".equals(serviceMedia.getStatus())) {
+            throw new AppException(ErrorCode.MEDIA_NOT_EXISTED);
+        }
+        byte[] content = fileStorage.get(serviceMedia.getStorageKey());
+        if (content == null || (serviceMedia.getSha256() != null && !sha256(content).equals(serviceMedia.getSha256()))) {
+            throw new AppException(ErrorCode.FILE_STORAGE_ERROR);
+        }
+        return content;
     }
 
     public ServiceMediaResponse getServiceMedia(UUID mediaId) {

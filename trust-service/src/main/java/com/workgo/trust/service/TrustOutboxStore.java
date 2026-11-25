@@ -56,13 +56,35 @@ public class TrustOutboxStore {
             var n=json.readValue(event.getPayload(),TrustOutbox.Notification.class);
             if (!"DISPUTE_EVIDENCE_REQUESTED".equals(n.type())) return;
             var d=em.find(Dispute.class,n.referenceId(),LockModeType.PESSIMISTIC_WRITE);
-            if(d==null||d.getStatus()!=DisputeStatus.UNDER_REVIEW||d.getEvidenceRequest()==null)return;
+            if(d==null||d.getStatus()!=DisputeStatus.UNDER_REVIEW||d.getEvidenceRequest()==null||d.getDecisionId()!=null)return;
             Instant now=Instant.now(),deadline=now.plusSeconds(72*3600);
-            if(n.providerId()!=null){if(d.getProviderEvidenceDeadline()==null)d.setProviderEvidenceDeadline(deadline);}
-            else if(d.getClientId().equals(n.recipientId())&&d.getClientEvidenceDeadline()==null)d.setClientEvidenceDeadline(deadline);
+            boolean updated=false;
+            if(n.providerId()!=null && d.getProviderId().equals(n.providerId())){
+                if(d.getProviderEvidenceAckAt()==null && d.getProviderEvidenceDeadline()==null){
+                    d.setProviderEvidenceAckAt(now);
+                    d.setProviderEvidenceDeadline(deadline);
+                    updated=true;
+                }
+            } else if(n.providerId()==null && d.getClientId().equals(n.recipientId())){
+                if(d.getClientEvidenceAckAt()==null && d.getClientEvidenceDeadline()==null){
+                    d.setClientEvidenceAckAt(now);
+                    d.setClientEvidenceDeadline(deadline);
+                    updated=true;
+                }
+            }
+            if(!updated)return;
             if(d.getEvidenceRequestedAt()==null)d.setEvidenceRequestedAt(now);
-            if(d.getEvidenceDeadline()==null||d.getEvidenceDeadline().isBefore(deadline))d.setEvidenceDeadline(deadline);
+            Instant maxDeadline=maxInstant(d.getClientEvidenceDeadline(),d.getProviderEvidenceDeadline());
+            d.setEvidenceDeadline(maxDeadline);
+            if(d.getClientEvidenceDeadline()!=null && d.getProviderEvidenceDeadline()!=null && maxDeadline!=null){
+                d.setDecisionSlaDueAt(maxDeadline.plusSeconds(72*3600));
+            }
         } catch(com.fasterxml.jackson.core.JsonProcessingException ex){throw new IllegalStateException("Invalid notification payload",ex);}
+    }
+    private static Instant maxInstant(Instant a, Instant b) {
+        if (a == null) return b;
+        if (b == null) return a;
+        return a.isAfter(b) ? a : b;
     }
     private TrustOutboxEvent owned(Delivery delivery) {
         var e = em.find(TrustOutboxEvent.class,delivery.id(),LockModeType.PESSIMISTIC_WRITE);

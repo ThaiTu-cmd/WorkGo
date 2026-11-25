@@ -71,8 +71,15 @@ public class VerificationDocumentService {
     }
 
     public VerificationDocumentResponse upload(UUID verificationId, MultipartFile file) {
+        return upload(verificationId, file, null);
+    }
+
+    public VerificationDocumentResponse upload(UUID verificationId, MultipartFile file, String expectedSha256) {
 
         if (file == null) throw new AppException(ErrorCode.FILE_REQUIRED);
+        if (!fileTypeDetector.isSafeFilename(file.getOriginalFilename())) {
+            throw new AppException(ErrorCode.FILE_TYPE_NOT_ALLOWED);
+        }
 
         ProviderVerification verification = loadVerification(verificationId);
         User owner = assertOwner(verification);
@@ -81,35 +88,66 @@ public class VerificationDocumentService {
             throw new AppException(ErrorCode.VERIFICATION_NOT_EDITABLE);
         }
 
-        if (verificationDocumentRepository.countByVerification_ProviderVerificationId(verificationId) >= MAX_DOCUMENTS) {
-            throw new AppException(ErrorCode.VERIFICATION_DOCUMENT_LIMIT);
-        }
-
         byte[] content = readContent(file);
 
         if (content.length == 0) throw new AppException(ErrorCode.FILE_EMPTY);
         if (content.length > MAX_SIZE) throw new AppException(ErrorCode.FILE_TOO_LARGE);
 
         String mimeType = fileTypeDetector.detect(content);
-        if (mimeType == null || !ALLOWED_TYPES.contains(mimeType)) {
+        if (mimeType == null || !ALLOWED_TYPES.contains(mimeType)
+                || !fileTypeDetector.isDeclaredMimeCompatible(file.getContentType(), mimeType)) {
             throw new AppException(ErrorCode.FILE_TYPE_NOT_ALLOWED);
         }
 
+        String digest = sha256(content);
+        if (expectedSha256 != null && !expectedSha256.isBlank()
+                && !digest.equalsIgnoreCase(expectedSha256.trim())) {
+            throw new AppException(ErrorCode.FILE_TYPE_NOT_ALLOWED);
+        }
+
+        var existing = verificationDocumentRepository
+                .findFirstByVerification_ProviderVerificationIdAndSha256OrderByCreatedAtAsc(verificationId, digest);
+        if (existing != null && existing.isPresent()) {
+            VerificationDocument prev = existing.get();
+            if ("READY".equals(prev.getStatus()) && fileStorage.exists(prev.getStorageKey())) {
+                return verificationDocumentMapper.toVerificationDocumentResponse(prev);
+            }
+        }
+
+        if (verificationDocumentRepository.countByVerification_ProviderVerificationId(verificationId) >= MAX_DOCUMENTS) {
+            throw new AppException(ErrorCode.VERIFICATION_DOCUMENT_LIMIT);
+        }
+
         String storageKey = "verifications/" + verificationId + "/" + UUID.randomUUID();
+        boolean written = false;
 
-        fileStorage.put(storageKey, content);
+        try {
+            fileStorage.put(storageKey, content);
+            written = true;
+            byte[] verified = fileStorage.get(storageKey);
+            if (verified == null || !sha256(verified).equals(digest)) {
+                fileStorage.delete(storageKey);
+                throw new AppException(ErrorCode.FILE_STORAGE_ERROR);
+            }
 
-        VerificationDocument document = verificationDocumentRepository.save(VerificationDocument.builder()
-                .verification(verification)
-                .uploadedBy(owner.getUserId())
-                .originalName(cleanName(file.getOriginalFilename()))
-                .mimeType(mimeType)
-                .sizeBytes((long) content.length)
-                .sha256(sha256(content))
-                .storageKey(storageKey)
-                .build());
+            VerificationDocument document = verificationDocumentRepository.save(VerificationDocument.builder()
+                    .verification(verification)
+                    .uploadedBy(owner.getUserId())
+                    .originalName(cleanName(file.getOriginalFilename()))
+                    .mimeType(mimeType)
+                    .sizeBytes((long) content.length)
+                    .sha256(digest)
+                    .storageKey(storageKey)
+                    .status("READY")
+                    .build());
 
-        return verificationDocumentMapper.toVerificationDocumentResponse(document);
+            return verificationDocumentMapper.toVerificationDocumentResponse(document);
+        } catch (RuntimeException ex) {
+            if (written) {
+                fileStorage.delete(storageKey);
+            }
+            throw ex;
+        }
     }
 
     public List<VerificationDocumentResponse> getDocuments(UUID verificationId) {
@@ -118,6 +156,7 @@ public class VerificationDocumentService {
 
         return verificationDocumentRepository.findAllByVerification_ProviderVerificationIdOrderByCreatedAtAsc(verificationId)
                 .stream()
+                .filter(doc -> "READY".equals(doc.getStatus()))
                 .map(verificationDocumentMapper::toVerificationDocumentResponse)
                 .toList();
     }
@@ -128,6 +167,8 @@ public class VerificationDocumentService {
 
         VerificationDocument document = verificationDocumentRepository.findById(documentId)
                 .filter(doc -> doc.getVerification().getProviderVerificationId().equals(verificationId))
+                .filter(doc -> "READY".equals(doc.getStatus()))
+                .filter(doc -> fileStorage.exists(doc.getStorageKey()))
                 .orElseThrow(() -> new AppException(ErrorCode.FILE_NOT_FOUND));
 
         Instant expiresAt = Instant.now().plus(LINK_TTL);
@@ -143,21 +184,34 @@ public class VerificationDocumentService {
     //link co chu ky la bearer trong 5 phut, khong can token
     public VerificationDocument loadSignedDocument(UUID documentId, long expires, String signature) {
 
+        long now = Instant.now().getEpochSecond();
         boolean validSignature = signature != null && MessageDigest.isEqual(
                 sign(documentId, expires).getBytes(StandardCharsets.US_ASCII),
                 signature.getBytes(StandardCharsets.US_ASCII));
 
-        if (!validSignature || Instant.now().getEpochSecond() > expires) {
+        if (!validSignature || now > expires || expires > now + LINK_TTL.toSeconds()) {
             throw new AppException(ErrorCode.FILE_LINK_INVALID);
         }
 
         return verificationDocumentRepository.findById(documentId)
+                .filter(doc -> "READY".equals(doc.getStatus()))
                 .orElseThrow(() -> new AppException(ErrorCode.FILE_NOT_FOUND));
     }
 
     public byte[] readStoredContent(VerificationDocument document) {
+        if (document == null || !"READY".equals(document.getStatus())) {
+            throw new AppException(ErrorCode.FILE_NOT_FOUND);
+        }
+        byte[] content = fileStorage.get(document.getStorageKey());
+        if (content == null || !sha256(content).equals(document.getSha256())) {
+            throw new AppException(ErrorCode.FILE_STORAGE_ERROR);
+        }
+        return content;
+    }
 
-        return fileStorage.get(document.getStorageKey());
+    /** KYC documents are subject to separate mandatory identity retention and never purged under the 90-day order/case rule (DEV-07). */
+    public boolean canPurgeUnderCaseRetention(VerificationDocument document) {
+        return false;
     }
 
     //=====================================

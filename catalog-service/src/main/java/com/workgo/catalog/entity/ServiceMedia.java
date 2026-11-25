@@ -40,6 +40,10 @@ public class ServiceMedia {
     @Column(name = "sha256")
     String sha256;
 
+    @Builder.Default
+    @Column(name = "status", length = 32)
+    String status = "READY";
+
     @Enumerated(EnumType.STRING)
     @Column(name = "media_type")
     MediaType mediaType;

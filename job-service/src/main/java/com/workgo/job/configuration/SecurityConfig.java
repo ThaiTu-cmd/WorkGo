@@ -40,7 +40,7 @@ public class SecurityConfig {
                 .requestCache(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/jobs/my-jobs").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/jobs", "/jobs/{id}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/jobs", "/jobs/{id}", "/jobs/attachments/*/content").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(errors -> errors.authenticationEntryPoint(entryPoint))
                 .oauth2ResourceServer(oauth -> oauth.authenticationEntryPoint(entryPoint)

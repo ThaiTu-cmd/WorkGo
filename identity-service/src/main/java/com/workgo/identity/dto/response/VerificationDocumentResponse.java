@@ -1,5 +1,6 @@
 package com.workgo.identity.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -24,5 +25,23 @@ public class VerificationDocumentResponse {
 
     String sha256;
 
+    @Builder.Default
+    String status = "READY";
+
     Instant createdAt;
+
+    @JsonProperty("id")
+    public UUID getId() {
+        return verificationDocumentId;
+    }
+
+    @JsonProperty("mime")
+    public String getMime() {
+        return mimeType;
+    }
+
+    @JsonProperty("size")
+    public Long getSize() {
+        return sizeBytes;
+    }
 }

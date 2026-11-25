@@ -98,12 +98,15 @@ public class ServiceMediaController {
     ApiResponse<ServiceMediaResponse> uploadServiceMedia(
             @PathVariable UUID serviceId,
             @RequestPart("file") MultipartFile file,
-            @RequestParam(value = "cover", defaultValue = "false") boolean cover
+            @RequestParam(value = "cover", defaultValue = "false") boolean cover,
+            @RequestParam(value = "sha256", required = false) String querySha256,
+            @RequestHeader(value = "X-Content-Sha256", required = false) String headerSha256
     ) {
+        String expectedSha = querySha256 != null && !querySha256.isBlank() ? querySha256 : headerSha256;
         return ApiResponse.<ServiceMediaResponse>builder()
                 .code(ErrorCode.SUCCESS.getCode())
                 .message(ErrorCode.SUCCESS.getMessage())
-                .result(serviceMediaService.uploadServiceMedia(serviceId, file, cover))
+                .result(serviceMediaService.uploadServiceMedia(serviceId, file, cover, expectedSha))
                 .build();
     }
 

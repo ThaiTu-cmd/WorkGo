@@ -33,12 +33,15 @@ public class OrderFileController {
     ApiResponse<StoredFileResponse> upload(
             @PathVariable UUID orderId,
             @RequestParam("context") FileContext context,
-            @RequestPart("file") MultipartFile file
+            @RequestPart("file") MultipartFile file,
+            @RequestParam(value = "sha256", required = false) String querySha256,
+            @RequestHeader(value = "X-Content-Sha256", required = false) String headerSha256
     ) {
+        String expectedSha = querySha256 != null && !querySha256.isBlank() ? querySha256 : headerSha256;
         return ApiResponse.<StoredFileResponse>builder()
                 .code(ErrorCode.SUCCESS.getCode())
                 .message(ErrorCode.SUCCESS.getMessage())
-                .result(orderFileService.upload(orderId, context, file))
+                .result(orderFileService.upload(orderId, context, file, expectedSha))
                 .build();
     }
 

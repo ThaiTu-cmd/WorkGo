@@ -45,6 +45,19 @@ public class JobAttachment {
     @Column(name = "size_bytes")
     Long sizeBytes;
 
+    @Column(name = "sha256", length = 64)
+    String sha256;
+
+    @Column(name = "storage_key")
+    String storageKey;
+
+    @Column(name = "uploaded_by")
+    UUID uploadedBy;
+
+    @Builder.Default
+    @Column(name = "status", length = 32)
+    String status = "READY";
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     Instant createdAt;

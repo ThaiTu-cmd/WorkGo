@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import java.util.*;
 
-public interface ReportRepository extends JpaRepository<Report, UUID> {
+public interface ReportRepository extends JpaRepository<Report, UUID>, JpaSpecificationExecutor<Report> {
     boolean existsByReporterIdAndTargetTypeAndTargetIdAndStatusIn(UUID reporterId, ReportTargetType targetType,
             UUID targetId, Collection<ReportStatus> activeStatuses);
 

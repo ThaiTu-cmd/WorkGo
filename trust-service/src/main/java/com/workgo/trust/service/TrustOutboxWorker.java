@@ -91,7 +91,12 @@ public class TrustOutboxWorker {
                 }
                 var ack = communication.createNotification(new InternalNotificationCreateReq(notification.eventId(),notification.recipientId(),
                         notification.type(),notification.title(),notification.content(),notification.referenceType(),notification.referenceId()));
-                if (ack == null || ack.code() != 1000 || ack.result() == null || !notification.recipientId().equals(ack.result().recipientId()))
+                if (ack == null || ack.code() != 1000 || ack.result() == null
+                        || ack.result().id() == null
+                        || !notification.recipientId().equals(ack.result().recipientId())
+                        || (notification.type() != null && !notification.type().equals(ack.result().type()))
+                        || (notification.referenceType() != null && !notification.referenceType().equals(ack.result().referenceType()))
+                        || (notification.referenceId() != null && !notification.referenceId().equals(ack.result().referenceId())))
                     throw new IllegalStateException("Invalid notification ACK");
                 yield "NOTIFICATION_ACCEPTED";
             }

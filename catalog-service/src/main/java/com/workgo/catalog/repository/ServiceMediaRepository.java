@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -16,5 +17,7 @@ public interface ServiceMediaRepository extends JpaRepository<ServiceMedia, UUID
     Page<ServiceMedia> findAllByService_ServiceId(UUID serviceId, Pageable pageable);
 
     boolean existsByService_ServiceIdAndUrl(UUID serviceId, String url);
+
+    Optional<ServiceMedia> findFirstByService_ServiceIdAndSha256OrderByCreatedAtAsc(UUID serviceId, String sha256);
 
 }

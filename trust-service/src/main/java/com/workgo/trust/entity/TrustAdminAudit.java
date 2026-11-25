@@ -32,4 +32,20 @@ public class TrustAdminAudit {
         log.action="AUDIT_EXPORTED"; log.targetType="AUDIT_LOG"; log.beforeState=null; log.afterState=state;
         return log;
     }
+    public static TrustAdminAudit system(UUID target, String action, String reason, String before, String after) {
+        var log = new TrustAdminAudit();
+        log.id = UUID.randomUUID();
+        log.actorId = new UUID(0L, 0L);
+        log.targetId = target;
+        log.action = action;
+        log.reason = reason;
+        log.beforeState = before;
+        log.afterState = after;
+        log.createdAt = Instant.now();
+        log.actorRole = "SYSTEM";
+        log.correlationId = com.workgo.trust.service.AuditContext.correlationId();
+        log.source = "TRUST";
+        log.targetType = action.startsWith("REVIEW_") ? "REVIEW" : action.startsWith("REPORT_") ? "REPORT" : "DISPUTE";
+        return log;
+    }
 }

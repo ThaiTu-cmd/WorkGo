@@ -20,6 +20,9 @@ public class TrustOutbox {
     public void notify(UUID user, UUID provider, String type, String referenceType, UUID referenceId) {
         String title = switch (type) {
             case "DISPUTE_EVIDENCE_REQUESTED" -> "Please provide additional dispute evidence";
+            case "DISPUTE_EVIDENCE_EXTENDED" -> "Dispute evidence deadline has been extended";
+            case "DISPUTE_SLA_INTAKE_OVERDUE" -> "Dispute intake SLA (24h) exceeded";
+            case "DISPUTE_SLA_DECISION_OVERDUE" -> "Dispute decision SLA (72h) exceeded";
             case "DISPUTE_DECIDED" -> "A dispute decision is available";
             case "REVIEW_PUBLISHED" -> "Đánh giá đã được công bố";
             case "REVIEW_REMINDER" -> "Đơn hàng đã hoàn tất: mời bạn đánh giá";

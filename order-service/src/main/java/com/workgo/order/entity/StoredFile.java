@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -47,6 +48,18 @@ public class StoredFile {
 
     @Column(name = "storage_key", nullable = false)
     String storageKey;
+
+    @Builder.Default
+    @Column(name = "status", length = 32)
+    String status = "READY";
+
+    @Builder.Default
+    @Column(name = "evidence_hold")
+    boolean evidenceHold = false;
+
+    @Builder.Default
+    @Column(name = "retention_until")
+    Instant retentionUntil = Instant.now().plus(Duration.ofDays(90));
 
     @Builder.Default
     @Column(name = "created_at", nullable = false)

@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.Instant;
 import java.util.*;
 
-public interface ReviewRepository extends JpaRepository<Review, UUID> {
+public interface ReviewRepository extends JpaRepository<Review, UUID>, JpaSpecificationExecutor<Review> {
     Optional<Review> findByOrderIdAndDirection(UUID orderId, ReviewDirection direction);
 
     // Locks existing rows only. The first pair of inserts needs an order-scoped

@@ -32,12 +32,15 @@ public class VerificationDocumentController {
     @PostMapping(value = "/{verificationId}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ApiResponse<VerificationDocumentResponse> upload(
             @PathVariable UUID verificationId,
-            @RequestPart("file") MultipartFile file
+            @RequestPart("file") MultipartFile file,
+            @RequestParam(value = "sha256", required = false) String querySha256,
+            @RequestHeader(value = "X-Content-Sha256", required = false) String headerSha256
     ) {
+        String expectedSha = querySha256 != null && !querySha256.isBlank() ? querySha256 : headerSha256;
         return ApiResponse.<VerificationDocumentResponse>builder()
                 .code(ErrorCode.SUCCESS.getCode())
                 .message(ErrorCode.SUCCESS.getMessage())
-                .result(verificationDocumentService.upload(verificationId, file))
+                .result(verificationDocumentService.upload(verificationId, file, expectedSha))
                 .build();
     }
 

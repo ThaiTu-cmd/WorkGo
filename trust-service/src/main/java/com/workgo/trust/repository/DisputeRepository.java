@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import java.util.*;
 
-public interface DisputeRepository extends JpaRepository<Dispute, UUID> {
+public interface DisputeRepository extends JpaRepository<Dispute, UUID>, JpaSpecificationExecutor<Dispute> {
     Optional<Dispute> findByOrderIdAndActiveSlot(UUID orderId, Integer activeSlot);
     List<Dispute> findByOrderIdOrderByCreatedAtDesc(UUID orderId);
 

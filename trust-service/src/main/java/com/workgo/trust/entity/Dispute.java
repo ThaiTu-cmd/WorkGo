@@ -73,8 +73,24 @@ public class Dispute {
     private Instant evidenceRequestedAt;
     @Column(name="evidence_deadline")
     private Instant evidenceDeadline;
+    @Column(name="client_evidence_ack_at")
+    private Instant clientEvidenceAckAt;
+    @Column(name="provider_evidence_ack_at")
+    private Instant providerEvidenceAckAt;
     @Column(name="client_evidence_deadline") private Instant clientEvidenceDeadline;
     @Column(name="provider_evidence_deadline") private Instant providerEvidenceDeadline;
+    @Column(name="client_evidence_extended_until") private Instant clientEvidenceExtendedUntil;
+    @Column(name="provider_evidence_extended_until") private Instant providerEvidenceExtendedUntil;
+    @Column(name="client_extension_used", nullable = false) private boolean clientExtensionUsed;
+    @Column(name="provider_extension_used", nullable = false) private boolean providerExtensionUsed;
+    @Column(name="client_extension_reason", length = 1000) private String clientExtensionReason;
+    @Column(name="provider_extension_reason", length = 1000) private String providerExtensionReason;
+    @Column(name="client_extension_base_version") private Long clientExtensionBaseVersion;
+    @Column(name="provider_extension_base_version") private Long providerExtensionBaseVersion;
+    @Column(name="intake_sla_due_at") private Instant intakeSlaDueAt;
+    @Column(name="intake_escalated_at") private Instant intakeEscalatedAt;
+    @Column(name="decision_sla_due_at") private Instant decisionSlaDueAt;
+    @Column(name="decision_escalated_at") private Instant decisionEscalatedAt;
     @Column(name="decision_id") private UUID decisionId;
 
     @Column(name = "active_slot")
@@ -100,6 +116,7 @@ public class Dispute {
     void onCreate() {
         Instant now = Instant.now();
         if (createdAt == null) createdAt = now;
+        if (intakeSlaDueAt == null) intakeSlaDueAt = createdAt.plusSeconds(24 * 3600);
         updatedAt = now;
         synchronizeActiveSlot();
     }

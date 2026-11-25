@@ -41,6 +41,10 @@ public class VerificationDocument {
     String storageKey;
 
     @Builder.Default
+    @Column(name = "status", length = 32)
+    String status = "READY";
+
+    @Builder.Default
     @Column(name = "created_at", nullable = false)
     Instant createdAt = Instant.now();
 

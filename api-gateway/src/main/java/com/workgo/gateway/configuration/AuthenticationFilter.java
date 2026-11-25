@@ -185,6 +185,12 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         String path = request.getURI().getPath();
         String protectedPath = path.replaceAll(";[^/]*", "");
 
+        if (HttpMethod.GET.equals(request.getMethod())
+                && path.matches(java.util.regex.Pattern.quote(apiPrefix)
+                    + "/identity/providers/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")) {
+            return true;
+        }
+
         if (Arrays.stream(PUBLIC_ENDPOINTS)
                 .anyMatch(publicEndpoint -> path.equals(apiPrefix + publicEndpoint))) {
             return true;

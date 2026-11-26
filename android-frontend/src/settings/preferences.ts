@@ -40,7 +40,10 @@ export function usePreferences(): Preferences {
 function applyTheme(next: ThemePreference) {
   theme = next;
   // 'unspecified' hands the scheme back to the Android setting.
-  Appearance.setColorScheme(next === 'system' ? 'unspecified' : next);
+  // React Native Web exposes the current scheme but has no native setter.
+  if (typeof Appearance.setColorScheme === 'function') {
+    Appearance.setColorScheme(next === 'system' ? 'unspecified' : next);
+  }
   emit();
 }
 

@@ -33,6 +33,8 @@ public class DecisionService {
     private final ReputationService reputation;
     private final ReputationLedgerRepository reputationLedger;
 
+    public record CashEvidence(boolean workAccepted,boolean paymentReceived,BigDecimal actualReceivedAmount) {}
+
     public static long calculateCancellationFee(BigDecimal totalAmount) {
         if (totalAmount == null || totalAmount.signum() <= 0) {
             return 0L;
@@ -53,25 +55,36 @@ public class DecisionService {
             String fault,
             Integer cycles,
             UUID supersedes) {
+        return decide(id,operation,branch,reason,evidence,version,fault,cycles,supersedes,null);
+    }
+
+    public DisputeDecision decide(UUID id,String operation,String branch,String reason,String evidence,long version,
+            String fault,Integer cycles,UUID supersedes,CashEvidence cash) {
+        return decide(id,operation,branch,reason,evidence,version,fault,cycles,supersedes,cash,false);
+    }
+    public DisputeDecision decide(UUID id,String operation,String branch,String reason,String evidence,long version,
+            String fault,Integer cycles,UUID supersedes,CashEvidence cash,boolean seriousEvidenceError) {
         role();
+        var sample = disputes.findById(id).orElseThrow(DisputeNotFoundException::new);
+        boolean support=Set.of("POST_PAYMENT","CASH_PAYMENT").contains(sample.getCaseType());
         String faultType = fault == null ? "NONE" : fault;
         int lateCycles = cycles == null ? 0 : cycles;
         if (!Set.of("NONE", "LATE", "ABANDONMENT", "CAPABILITY", "CORRECTION").contains(faultType)
                 || lateCycles < 0 || lateCycles > 6
                 || "LATE".equals(faultType) && lateCycles < 1
+                || "LATE".equals(faultType) && "CLIENT".equals(branch)
                 || !"LATE".equals(faultType) && lateCycles != 0
-                || Set.of("ABANDONMENT", "CAPABILITY").contains(faultType) && (!"REFUND".equals(operation) || !"PROVIDER".equals(branch))
+                || Set.of("ABANDONMENT", "CAPABILITY").contains(faultType) && (!("REFUND".equals(operation)||support&&"SUPPORT".equals(operation)) || !"PROVIDER".equals(branch))
                 || "CORRECTION".equals(faultType) && (!"REJECT".equals(operation) || supersedes == null)
                 || !"CORRECTION".equals(faultType) && supersedes != null)
             throw new AppException(ErrorCode.INVALID_REQUEST);
-        if (!Set.of("RELEASE", "REFUND", "REJECT").contains(operation)
+        if (!(support?Set.of("SUPPORT","REJECT"):Set.of("RELEASE", "REFUND", "REJECT")).contains(operation)
                 || !Set.of("NONE", "CLIENT", "PROVIDER").contains(branch)
                 || reason == null || reason.isBlank() || reason.length() > 1000
                 || evidence == null || evidence.isBlank() || evidence.length() > 2000
                 || "RELEASE".equals(operation) && !"NONE".equals(branch))
             throw new AppException(ErrorCode.INVALID_REQUEST);
 
-        var sample = disputes.findById(id).orElseThrow(DisputeNotFoundException::new);
         admin.independent(sample);
 
         InternalOrderTrustSnapshot orderSnapshot = orders.getOrderSnapshot(sample.getOrderId());
@@ -86,21 +99,31 @@ public class DecisionService {
             var original = decisions.findById(supersedes).orElseThrow(() -> new AppException(ErrorCode.TARGET_NOT_FOUND));
             if (!sample.getOrderId().equals(original.getOrderId())
                     || original.getActorId().equals(token.getCurrentUserId())
+                    || original.getEffectiveAt()==null
+                    || original.getEffectiveAt().isBefore(Instant.now().minus(Duration.ofDays(7)))&&!seriousEvidenceError
                     || decisions.existsBySupersedesDecisionId(supersedes))
                 throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
         OrderPaymentInfo info;
         try {
-            info = "REJECT".equals(operation) ? null : orders.paymentInfo(sample.getOrderId());
+            info = support||"REJECT".equals(operation) ? null : orders.paymentInfo(sample.getOrderId());
         } catch (RuntimeException ex) {
             throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);
         }
-        if (!"REJECT".equals(operation) && (info == null || !sample.getOrderId().equals(info.orderId())
+        if (!support&&!"REJECT".equals(operation) && (info == null || !sample.getOrderId().equals(info.orderId())
                 || !sample.getClientId().equals(info.clientId()) || !sample.getProviderId().equals(info.providerId())
-                || !"WALLET".equals(info.paymentMethod()) || !"VND".equals(info.currency())
+                || !Set.of("WALLET","CASH").contains(info.paymentMethod()) || !"VND".equals(info.currency())
                 || info.totalAmount() == null || info.totalAmount().signum() <= 0 || info.totalAmount().stripTrailingZeros().scale() > 0
                 || !Set.of("CONFIRMED", "IN_PROGRESS", "DELIVERED").contains(info.orderStatus())))
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+
+        boolean cashPayment=info!=null && "CASH".equals(info.paymentMethod());
+        if(cashPayment && (cash==null || !"ONSITE".equals(info.executionType()) || cash.actualReceivedAmount()==null
+                ||cash.actualReceivedAmount().signum()<0 ||cash.actualReceivedAmount().stripTrailingZeros().scale()>0
+                ||cash.actualReceivedAmount().compareTo(info.totalAmount())>0
+                ||"RELEASE".equals(operation)!=cash.workAccepted()
+                ||cash.paymentReceived() && cash.actualReceivedAmount().compareTo(info.totalAmount())!=0))
             throw new AppException(ErrorCode.INVALID_REQUEST);
 
         return transactions.locked(List.of("order:" + sample.getOrderId()), () -> {
@@ -127,13 +150,20 @@ public class DecisionService {
             d.setDecisionId(decisionId);
             d.setResolution(reason.strip());
 
-            if ("REJECT".equals(operation)) {
+            if(support){
+                d.setStatus("REJECT".equals(operation)?DisputeStatus.REJECTED:DisputeStatus.CLOSED);d.setResolvedAt(decision.getEffectiveAt());
+                decision.setPaymentStatus("NO_TRANSFER");decision.setOrderStatus("UNCHANGED");decision.setTimerStatus("NOT_APPLICABLE");decision.setExecutionStatus("COMPLETED");
+            } else if ("REJECT".equals(operation)) {
                 d.setStatus(DisputeStatus.REJECTED);
                 d.setResolvedAt(decision.getEffectiveAt());
                 // Conclusion is effective now; unfreeze and timer resume still need authoritative ACKs.
                 decision.setPaymentStatus("PENDING");
                 decision.setOrderStatus("PENDING");
                 decision.setTimerStatus("PENDING");
+            } else if(cashPayment) {
+                decision.setSettlementPayload(outbox.encode(new CashDecisionCommand("CASH",decisionId,id,operation,
+                        token.getCurrentUserId(),decision.getEffectiveAt(),decisionId,cash.workAccepted(),cash.paymentReceived(),cash.actualReceivedAmount(),
+                        branch,d.getClientId(),d.getProviderId(),info.totalAmount(),info.currency(),info.feePolicyVersionId(),d.getOrderId())));
             } else {
                 boolean release = "RELEASE".equals(operation);
                 decision.setSettlementPayload(outbox.encode(new SettlementCommand(
@@ -153,6 +183,8 @@ public class DecisionService {
                     reputation.reverse(entry.getId(), decisionId, reason);
                 }
             }
+            if(Set.of("LATE","ABANDONMENT","CAPABILITY").contains(faultType))
+                outbox.add("DECISION",decisionId,"decision.penalty",new ReputationService.Penalty("decision:"+decisionId,d.getOrderId(),d.getProviderId(),decisionId,faultType,lateCycles,reason.strip()));
             audits.save(new TrustAdminAudit(token.getCurrentUserId(), id, "DISPUTE_DECISION", reason, "UNDER_REVIEW", operation));
             outbox.notify(d.getClientId(), null, "DISPUTE_DECIDED", "DISPUTE", id);
             outbox.notify(null, d.getProviderId(), "DISPUTE_DECIDED", "DISPUTE", id);

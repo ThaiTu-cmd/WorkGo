@@ -19,6 +19,11 @@ import java.util.UUID;
 public class InternalProviderProfileController {
     private final InternalProviderProfileService providerProfileService;
 
+    @PutMapping("/by-user/{userId}/financial-restriction/receipt")
+    InternalProviderProfileService.RestrictionAck financialReceipt(@PathVariable UUID userId, @RequestBody FinancialRestrictionRequest request) {
+        return providerProfileService.applyFinancialRestriction(userId,request);
+    }
+
     @GetMapping("/{providerId}")
     InternalProviderProfileResponse getProviderProfile(@PathVariable UUID providerId) {
         return providerProfileService.getProviderProfile(providerId);

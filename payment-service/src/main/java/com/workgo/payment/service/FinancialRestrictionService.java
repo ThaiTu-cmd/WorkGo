@@ -27,6 +27,7 @@ public class FinancialRestrictionService {
     FinancialRestrictionRepository financialRestrictionRepository;
     IdentityInternalClient identityInternalClient;
     CatalogInternalClient catalogInternalClient;
+    com.workgo.payment.reppository.client.JobInternalClient jobInternalClient;
 
     //ghi cung transaction voi but toan; chi tang version khi trang thai doi
     @Transactional(propagation = Propagation.MANDATORY)
@@ -63,15 +64,36 @@ public class FinancialRestrictionService {
 
         UUID providerId = state.getProviderId();
 
-        if (state.getIdentitySyncedVersion() < state.getVersion()) {
-            ProviderProfileResponse provider = identityInternalClient.updateFinancialRestriction(userId, request);
-            providerId = provider.getProviderProfileId();
+        String error = null;
+        if (state.getIdentitySyncedVersion() < state.getVersion()) try {
+            var provider = identityInternalClient.updateWithReceipt(userId, request);
+            if (provider == null || provider.providerId() == null || !userId.equals(provider.userId())
+                    || !"FINANCIAL".equals(provider.source()) || provider.sourceVersion() != state.getVersion()
+                    || provider.blocked() != state.isRestricted())
+                throw new IllegalStateException("INVALID_IDENTITY_ACK");
+            providerId = provider.providerId();
             financialRestrictionRepository.markIdentitySynced(userId, state.getVersion(), providerId, Instant.now());
-        }
+        } catch (RuntimeException e) { error = "IDENTITY:" + e.getClass().getSimpleName(); }
 
-        if (state.getCatalogSyncedVersion() < state.getVersion()) {
-            catalogInternalClient.updateFinancialRestriction(providerId, request);
-            financialRestrictionRepository.markCatalogSynced(userId, state.getVersion(), Instant.now());
+        if (providerId == null) {
+            financialRestrictionRepository.markError(userId,state.getVersion(),error == null ? "PROVIDER_MAPPING_PENDING" : error);
+            return;
         }
+        if (state.getCatalogSyncedVersion() < state.getVersion()) try {
+            var ack = catalogInternalClient.updateWithReceipt(providerId, request);
+            if (ack == null || !providerId.equals(ack.providerId()) || !"FINANCIAL".equals(ack.source())
+                    || ack.sourceVersion() != state.getVersion() || ack.blocked() != state.isRestricted())
+                throw new IllegalStateException("INVALID_CATALOG_ACK");
+            financialRestrictionRepository.markCatalogSynced(userId, state.getVersion(), Instant.now());
+        } catch (RuntimeException e) { error = "CATALOG:" + e.getClass().getSimpleName(); }
+        if (state.getJobSyncedVersion() < state.getVersion()) try {
+            var response = jobInternalClient.update(providerId, new com.workgo.payment.reppository.client.JobInternalClient.Change("FINANCIAL",state.getVersion(),state.isRestricted()));
+            var ack = response == null ? null : response.getResult();
+            if (ack == null || !providerId.equals(ack.providerId()) || !"FINANCIAL".equals(ack.source())
+                    || ack.sourceVersion() != state.getVersion() || ack.blocked() != state.isRestricted())
+                throw new IllegalStateException("INVALID_JOB_ACK");
+            financialRestrictionRepository.markJobSynced(userId,state.getVersion(),Instant.now());
+        } catch (RuntimeException e) { error = "JOB:" + e.getClass().getSimpleName(); }
+        financialRestrictionRepository.markError(userId,state.getVersion(),error);
     }
 }

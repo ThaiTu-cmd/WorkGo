@@ -30,6 +30,14 @@ public class DecisionStore {
         var dispute=em.find(Dispute.class,c.disputeId(),LockModeType.PESSIMISTIC_WRITE);
         d.setOrderStatus("COMPLETED");d.setTimerStatus("SKIPPED");d.setExecutionStatus("COMPLETED");d.setLeaseToken(null);d.setLastError(null);
         dispute.setStatus("RELEASE".equals(c.operation())?DisputeStatus.RESOLVED_PROVIDER:DisputeStatus.RESOLVED_CLIENT);dispute.setResolvedAt(Instant.now());return null;});}
+    public void cash(Claim c,boolean settled,String receipt){transactions.execute(()->{var d=owned(c);if(d==null)return null;
+        d.setOrderStatus("COMPLETED");d.setTimerStatus("COMPLETED");d.setPaymentResult(receipt);
+        d.setPaymentStatus(settled?"COMPLETED":"PENDING");d.setLeaseToken(null);
+        if(settled){d.setExecutionStatus("COMPLETED");d.setLastError(null);
+            var dispute=em.find(Dispute.class,c.disputeId(),LockModeType.PESSIMISTIC_WRITE);
+            dispute.setStatus("RELEASE".equals(c.operation())?DisputeStatus.RESOLVED_PROVIDER:DisputeStatus.RESOLVED_CLIENT);dispute.setResolvedAt(Instant.now());
+        }else{d.setExecutionStatus("NEEDS_RECONCILIATION");d.setLastError("CASH_RECEIPT_OR_OBLIGATION_PENDING");}
+        return null;});}
     public void unfreeze(Claim c){transactions.execute(()->{var d=owned(c);if(d==null)return null;
         d.setPaymentStatus("COMPLETED");d.setPaymentResult("UNFROZEN");d.setAttempts(0);d.setLeaseToken(null);
         d.setNextAttemptAt(Instant.now());d.setLastError(null);return null;});}

@@ -29,9 +29,10 @@ public class TrustAdminController {
             @NotBlank @Size(max=1000) String reason, @NotNull @PositiveOrZero Long expectedVersion) {}
     public record Resolve(@NotNull String operation,@NotNull String branch,@NotBlank @Size(max=1000) String reason,
             @NotBlank @Size(max=2000) String evidenceSummary,@NotNull @PositiveOrZero Long expectedVersion,
-            String faultType,@Min(0) @Max(6) Integer lateCycles,UUID supersedesDecisionId) {}
+            String faultType,@Min(0) @Max(6) Integer lateCycles,UUID supersedesDecisionId,
+            com.workgo.trust.service.DecisionService.CashEvidence cash,boolean seriousEvidenceError) {}
     @PostMapping("/disputes/{id}/resolve") @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<DisputeDecision> resolve(@PathVariable UUID id,@Valid @RequestBody Resolve req){return ApiResponse.<DisputeDecision>builder().result(decisionService.decide(id,req.operation(),req.branch(),req.reason(),req.evidenceSummary(),req.expectedVersion(),req.faultType(),req.lateCycles(),req.supersedesDecisionId())).build();}
+    public ApiResponse<DisputeDecision> resolve(@PathVariable UUID id,@Valid @RequestBody Resolve req){return ApiResponse.<DisputeDecision>builder().result(decisionService.decide(id,req.operation(),req.branch(),req.reason(),req.evidenceSummary(),req.expectedVersion(),req.faultType(),req.lateCycles(),req.supersedesDecisionId(),req.cash(),req.seriousEvidenceError())).build();}
     @GetMapping("/disputes/{id}/decision") @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<DisputeDecision> decision(@PathVariable UUID id){return ApiResponse.<DisputeDecision>builder().result(decisions.findByDisputeId(id).orElseThrow(()->new AppException(ErrorCode.TARGET_NOT_FOUND))).build();}
     @PostMapping("/decisions/{id}/retry") @PreAuthorize("hasRole('ADMIN')")

@@ -41,7 +41,10 @@ export function CheckoutScreen() {
   const [addressId, setAddressId] = React.useState<string | null>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = React.useState<OrderPaymentMethod>('WALLET');
-  const attempt = React.useRef<{ payload: string; key: string } | null>(null);
+  const [attempt,setAttempt] = React.useState<{ base:string;payload: string; key: string } | null>(null);
+
+  const quote=useQuery({queryKey:['rewardQuote',params.serviceId,packageId,addonIds],enabled:signedIn&&Boolean(packageId),retry:false,
+    queryFn:async()=>(await orderApi.getRewardQuote({serviceId:params.serviceId,packageId:packageId!,addonIds})).result});
 
   const slots = useQuery({
     queryKey: qk.slots(params.serviceId),
@@ -57,9 +60,12 @@ export function CheckoutScreen() {
   const create = useMutation({
     networkMode: 'always',
     mutationFn: (body: OrderCreationRequest) => {
-      const payload = JSON.stringify(body);
-      if (attempt.current?.payload !== payload) attempt.current = { payload, key: newIdempotencyKey() };
-      return orderApi.createOrder(body, attempt.current.key);
+      const base=JSON.stringify(body);
+      if(attempt?.base===base)return orderApi.createOrder(JSON.parse(attempt.payload),attempt.key);
+      const q=quote.data;if(!q?.reference||Date.parse(q.expiresAt)<=Date.now())throw new Error('Quote chưa sẵn sàng hoặc hết hạn; hãy làm mới.');
+      const outgoing={...body,rewardQuoteRef:q.reference};
+      const next={base,payload:JSON.stringify(outgoing),key:newIdempotencyKey()};setAttempt(next);
+      return orderApi.createOrder(outgoing,next.key);
     },
     onSuccess: (res) => {
       void queryClient.invalidateQueries({ queryKey: qk.orders('CLIENT') });
@@ -176,12 +182,13 @@ export function CheckoutScreen() {
         <Text style={styles.note}>{t(onsite && paymentMethod === 'CASH' ? 'checkoutScreen.cash_price_note' : 'checkoutScreen.gia_cuoi_cung_do_he')}</Text>
       </Card>
 
+      <Card><Text style={styles.section}>Thưởng dự kiến</Text>{quote.data?<Text>{quote.data.points} điểm · Còn cap cặp {quote.data.remainingPairCap}, Provider {quote.data.remainingProviderCap} · Model {quote.data.modelVersion}. Chỉ ghi thưởng khi hoàn tất đủ điều kiện.</Text>:<Text>{quote.error?.message??'Đang lấy quote từ server…'}</Text>}<Button title="Làm mới quote" variant="secondary" onPress={()=>void quote.refetch()}/></Card>
       {!check.ok ? <Text style={styles.error}>{check.error}</Text> : null}
       {submitError ? <Text style={styles.error}>{submitError}</Text> : null}
       <Button
         title={t('checkoutScreen.dat_dich_vu')}
         loading={create.isPending}
-        disabled={!check.ok}
+        disabled={!check.ok||(!quote.data&&attempt?.base!==JSON.stringify(check.ok?check.body:null))}
         onPress={() => {
           if (!check.ok) return;
           setSubmitError(null);

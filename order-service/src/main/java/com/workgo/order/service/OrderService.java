@@ -106,6 +106,18 @@ public class OrderService {
     @Value("${order.cash.max-open-per-provider:1}")
     long cashMaxOpenPerProvider;
 
+    @Transactional(readOnly=true)
+    public OrderRewardQuoteService.Quote previewReward(OrderCreationRequest request){
+        if(!tokenUtils.hasRole("ROLE_CLIENT"))throw new AppException(ErrorCode.FORBIDDEN);
+        if(request==null||request.getServiceId()==null||request.getPackageId()==null)throw new AppException(ErrorCode.INVALID_REQUEST_BODY);
+        var listing=catalogClient.getService(request.getServiceId());var pkg=catalogClient.getPackage(request.getPackageId());
+        if(listing==null||listing.getStatus()!=ServiceStatus.PUBLISHED||pkg==null||!request.getServiceId().equals(pkg.getServiceId())||pkg.getPackageStatus()!=PackageStatus.ACTIVE)throw new AppException(ErrorCode.SERVICE_NOT_AVAILABLE);
+        BigDecimal price=pkg.getPrice();for(var addOn:collectAddons(request.getServiceId(),request.getAddonIds()))price=price.add(addOn.getPrice());
+        var policy=orderFeeService.currentPolicy();
+        return rewardQuotes.preview(new OrderRewardQuoteService.Input(tokenUtils.getCurrentUserId(),listing.getProviderId(),"SERVICE",listing.getServiceId(),
+                listing.getTitle()+(pkg.getName()==null||pkg.getName().isBlank()?"":"\n"+pkg.getName()),price,Objects.requireNonNullElse(pkg.getCurrency(),"VND"),OrderRewardQuoteService.durationDays(listing.getExecutionType(),pkg.getDeliveryDay(),pkg.getDurationMinute()),policy.getFeePolicyVersionId()));
+    }
+
     @Transactional
     public OrderResponse createOrder(OrderCreationRequest request){
         return createOrder(request, null);
@@ -184,12 +196,14 @@ public class OrderService {
             assertCashAllowed(serviceResponse.getProviderId(), totalAmount);
         }
         BigDecimal providerNetAmount = subtotal.subtract(platformFee);
-        String rewardQuoteRef = rewardQuotes.quote(new OrderRewardQuoteService.Input(clientId, serviceResponse.getProviderId(),
-                "SERVICE", serviceResponse.getServiceId(), serviceResponse.getTitle()+" - "+packageResponse.getDescription(),
-                subtotal, Objects.requireNonNullElse(packageResponse.getCurrency(), "VND"), packageResponse.getDeliveryDay(), feePolicy.getFeePolicyVersionId()));
+        var quoteInput = new OrderRewardQuoteService.Input(clientId, serviceResponse.getProviderId(),
+                "SERVICE", serviceResponse.getServiceId(), serviceResponse.getTitle()+(packageResponse.getName()==null||packageResponse.getName().isBlank()?"":"\n"+packageResponse.getName()),
+                subtotal, Objects.requireNonNullElse(packageResponse.getCurrency(), "VND"), OrderRewardQuoteService.durationDays(serviceResponse.getExecutionType(),packageResponse.getDeliveryDay(),packageResponse.getDurationMinute()), feePolicy.getFeePolicyVersionId());
+        String rewardQuoteRef=request.getRewardQuoteRef()==null?rewardQuotes.quote(quoteInput):rewardQuotes.reference(quoteInput,request.getRewardQuoteRef());
 
         //luu order -> lay id
         Order order = orderRepository.save(Order.builder()
+                .recoveryGrantId(providerFinancialEligibility.recoveryGrant(serviceResponse.getProviderId()))
                 .orderNumber(generateOrderNumber())
                 .orderStatus(OrderStatus.PENDING_PAYMENT)
                 .paymentStatus(paymentMethod == OrderPaymentMethod.CASH
@@ -247,9 +261,11 @@ public class OrderService {
         List<UUID> addons = request.getAddonIds() == null ? List.of()
                 : request.getAddonIds().stream().distinct().sorted(Comparator.nullsFirst(Comparator.naturalOrder())).toList();
         try {
-            byte[] payload = objectMapper.writeValueAsBytes(new Object[]{request.getServiceId(), request.getPackageId(),
+            Object[] canonical=new Object[]{request.getServiceId(), request.getPackageId(),
                     addons, request.getBookingSlotId(), request.getAddress(),
-                    request.getPaymentMethod() == null ? OrderPaymentMethod.WALLET : request.getPaymentMethod()});
+                    request.getPaymentMethod() == null ? OrderPaymentMethod.WALLET : request.getPaymentMethod()};
+            if(request.getRewardQuoteRef()!=null){canonical=java.util.Arrays.copyOf(canonical,canonical.length+1);canonical[canonical.length-1]=request.getRewardQuoteRef();}
+            byte[] payload = objectMapper.writeValueAsBytes(canonical);
             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(payload));
         } catch (JsonProcessingException | NoSuchAlgorithmException e) {
             throw new IllegalStateException("Cannot fingerprint order creation", e);

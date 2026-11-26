@@ -3,10 +3,10 @@
 // Chế độ Thử Nghiệm Sàn Việc Làm
 // Đăng việc làm mới - Create Job with DTO & Input Checklist
 import { useTranslations } from "next-intl";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { FilePlus2, CheckCircle2, Circle, AlertCircle } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
-import { jobApi, catalogApi, useAuthToken } from "../../webapp-bridge/backend";
+import { jobApi, catalogApi, pageItems, useAuthToken, decodeToken } from "../../webapp-bridge/backend";
 import { JOB_TYPES, type JobType } from "./types";
 import styles from "./JobPostPage.module.css";
 
@@ -60,12 +60,25 @@ interface CategoryOption {
   name: string;
 }
 
-export default function JobPostPage({
+type JobBody={title:string;description:string;categoryId:string;budgetMin:number;budgetMax:number;currency:string;executionType:JobType;locationSnapshot?:string;deadlineAt?:string};
+type JobCommand={key:string;identity:string;body:JobBody;hasFiles:boolean};
+
+export default function JobPostPage(props:TrungPageProps){const token=useAuthToken();return <JobPostContent key={String(decodeToken(token)?.userId??'guest')} {...props}/>;}
+
+function JobPostContent({
   onNavigate,
   onShowToast
 }: TrungPageProps) {
   const tr = useTranslations("misc");
   const token = useAuthToken();
+  const storageKey=`workgo-job-create:${decodeToken(token)?.userId??'guest'}`;
+  const command=useRef<JobCommand|null>(null);
+  const [files,setFiles]=useState<File[]>([]);
+  const draft=useRef<string|null>(null);
+  const draftPayload=useRef<string|null>(null);
+  const flight=useRef(false);
+  const mounted=useRef(true);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
   const [submitting, setSubmitting] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -87,6 +100,21 @@ export default function JobPostPage({
     form?: string;
   }>({});
 
+  useEffect(()=>{
+    const timer=setTimeout(()=>{
+      try{
+        const saved=JSON.parse(sessionStorage.getItem(storageKey)??'null') as JobCommand|null;
+        if(!saved||!saved.key?.match(/^[A-Za-z0-9_-]{8,128}$/)||typeof saved.identity!=='string'||!saved.body?.title||!JOB_TYPES.includes(saved.body.executionType))return;
+        command.current=saved;
+        const b=saved.body;setTitle(b.title);setDescription(b.description);setCategoryId(b.categoryId);
+        setBudgetMinRaw(String(b.budgetMin));setBudgetMaxRaw(String(b.budgetMax));setType(b.executionType);
+        setLocation(b.locationSnapshot??'');setDeadline(b.deadlineAt?.slice(0,10)??'');
+        setErrors({form:saved.hasFiles?'Đã khôi phục lệnh đang chờ. Chọn lại các tệp gốc rồi thử lại; trạng thái tin lấy từ server.':'Đã khôi phục lệnh đang chờ. Thử lại để kiểm tra kết quả từ server.'});
+      }catch{/* A stored command is only retry input; it is never a server receipt. */}
+    },0);
+    return()=>clearTimeout(timer);
+  },[storageKey]);
+
   // Initialize minDateStr asynchronously on mount
   useEffect(() => {
     const t = setTimeout(() => {
@@ -100,17 +128,13 @@ export default function JobPostPage({
     let cancelled = false;
     catalogApi.getRootCategories().then((res: unknown) => {
       if (cancelled) return;
-      const r = res as { result?: unknown[] } | unknown[];
-      const list = (r && typeof r === "object" && "result" in r ? r.result : r) as Array<{
-        categoryId: string;
-        name: string;
-      }>;
+      const list=pageItems(res) as CategoryOption[];
       if (Array.isArray(list) && list.length > 0) {
         setCategories(list.map(c => ({ categoryId: c.categoryId, name: c.name })));
-        setCategoryId(list[0].categoryId);
+        setCategoryId(current=>current||list[0].categoryId);
       }
     }).catch(() => {
-      // Non-blocking fallback
+      if(!cancelled)setErrors(current=>({...current,category:"Không tải được danh mục. Tải lại trang để thử lại."}));
     });
     return () => {
       cancelled = true;
@@ -146,6 +170,7 @@ export default function JobPostPage({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if(flight.current)return;
 
     const minBudgetVal = Number(String(budgetMinRaw).replace(/[^\d]/g, ""));
     const maxBudgetVal = budgetMaxRaw ? Number(String(budgetMaxRaw).replace(/[^\d]/g, "")) : minBudgetVal;
@@ -189,7 +214,7 @@ export default function JobPostPage({
       const cleanTitle = sanitizeText(title);
       const cleanDesc = sanitizeText(description);
 
-      await jobApi.createJob({
+      const body:JobBody={
         title: cleanTitle,
         description: cleanDesc,
         categoryId: categoryId,
@@ -199,17 +224,47 @@ export default function JobPostPage({
         executionType: type,
         locationSnapshot: (type === "ONSITE" || type === "DELIVERY") ? sanitizeText(location) : undefined,
         deadlineAt: deadline ? new Date(deadline).toISOString() : undefined,
-        attachments: []
-      });
+      };
+      const identity=JSON.stringify({body,files:files.map(f=>({name:f.name,size:f.size,type:f.type,lastModified:f.lastModified}))});
+      if(command.current&&JSON.stringify(command.current.body)!==JSON.stringify(body))throw new Error('Lệnh đang chờ có nội dung khác. Khôi phục đúng nội dung trước khi thử lại.');
 
+      if(files.length>10||files.some(f=>f.size>20*1024*1024)||files.reduce((n,f)=>n+f.size,0)>100*1024*1024)throw new Error('Attachments exceed upload limits');
+      flight.current=true;
+      if(!command.current){
+        command.current={key:crypto.randomUUID(),identity,body,hasFiles:files.length>0};
+        try{sessionStorage.setItem(storageKey,JSON.stringify(command.current));}catch{/* In-memory key still prevents duplicate retries in this page. */}
+      }
+      const key=command.current.key;
+      let receipt;
+      try{receipt=await jobApi.getCreationReceipt(key);}catch(error){if((error as {status?:number}).status!==404)throw error;}
+      if(!mounted.current)return;
+      if(receipt?.result?.status!=='OPEN'&&(command.current.identity!==identity||draft.current&&draftPayload.current!==identity))throw new Error('Chọn lại đúng các tệp gốc để tiếp tục bản nháp.');
+      if(files.length){
+        const created=receipt??await jobApi.createDraft(body,key);if(!created?.result?.jobId)throw new Error('Missing draft receipt');
+        draft.current=created.result.jobId;draftPayload.current=identity;
+        if(created.result.status!=='OPEN'){
+          if(created.result.status!=='PAUSED')throw new Error('Draft is no longer publishable; reload the server job.');
+          for(const file of files){if(!mounted.current)return;await jobApi.uploadAttachment(draft.current,file);}
+          if(!mounted.current)return;
+          const published=await jobApi.updateJob(draft.current,{status:'OPEN'});
+          if(published?.result?.status!=='OPEN')throw new Error('Publish not acknowledged');
+        }
+      }else{
+        const created=receipt??await jobApi.createJob(body,key);if(!created?.result?.jobId||created.result.status!=='OPEN')throw new Error('Missing published job receipt');
+      }
+
+      if(!mounted.current)return;
+      command.current=null;
+      try{sessionStorage.removeItem(storageKey);}catch{/* Server receipt remains authoritative. */}
       onShowToast(tr("m1176"));
       onNavigate("job-list");
     } catch (err: unknown) {
-      const msg = (err as Error)?.message || tr("m1140");
+      if(!mounted.current)return;
+      const msg = ((err as Error)?.message || tr("m1140"))+(draft.current?` — Draft ${draft.current} remains paused; retry uploads to this draft.`:"");
       onShowToast(msg);
       setErrors(prev => ({ ...prev, form: msg }));
     } finally {
-      setSubmitting(false);
+      flight.current=false;if(mounted.current)setSubmitting(false);
     }
   };
 
@@ -260,9 +315,10 @@ export default function JobPostPage({
         </div>
 
         <form onSubmit={submit} noValidate className={styles.form}>
+          <label>Files (maximum 10, 20 MiB each)<input type="file" multiple disabled={submitting} onChange={e=>setFiles(Array.from(e.target.files??[]))}/></label>
           <label className={styles.field}>
             <span>{tr("m1184")} *</span>
-            <input
+            <input disabled={submitting}
               type="text"
               autoFocus
               value={title}
@@ -294,7 +350,7 @@ export default function JobPostPage({
 
           <label className={styles.field}>
             <span>{tr("m1185")} *</span>
-            <textarea
+            <textarea disabled={submitting}
               value={description}
               onChange={e => {
                 setDescription(e.target.value);
@@ -326,7 +382,7 @@ export default function JobPostPage({
           <div className={styles.row}>
             <label className={styles.field}>
               <span>Danh mục ngành nghề *</span>
-              <select
+              <select disabled={submitting}
                 value={categoryId}
                 onChange={e => {
                   setCategoryId(e.target.value);
@@ -350,7 +406,7 @@ export default function JobPostPage({
 
             <label className={styles.field}>
               <span>{tr("m1187")}</span>
-              <select value={type} onChange={e => setType(e.target.value as JobType)}>
+              <select disabled={submitting} value={type} onChange={e => setType(e.target.value as JobType)}>
                 {JOB_TYPES.map(t => (
                   <option key={t} value={t}>
                     {t}
@@ -363,7 +419,7 @@ export default function JobPostPage({
           <div className={styles.row}>
             <label className={styles.field}>
               <span>{tr("m1186")} (tối thiểu) *</span>
-              <input
+              <input disabled={submitting}
                 type="text"
                 value={budgetMinRaw}
                 onChange={e => {
@@ -390,7 +446,7 @@ export default function JobPostPage({
 
             <label className={styles.field}>
               <span>Ngân sách tối đa (tùy chọn)</span>
-              <input
+              <input disabled={submitting}
                 type="text"
                 value={budgetMaxRaw}
                 onChange={e => setBudgetMaxRaw(e.target.value)}
@@ -408,7 +464,7 @@ export default function JobPostPage({
           {(type === "ONSITE" || type === "DELIVERY") && (
             <label className={styles.field}>
               <span>Địa điểm thực hiện ({type === "ONSITE" ? "Tại nhà / cơ sở" : "Địa chỉ giao nhận"}) *</span>
-              <input
+              <input disabled={submitting}
                 type="text"
                 value={location}
                 onChange={e => {
@@ -425,7 +481,7 @@ export default function JobPostPage({
 
           <label className={styles.field}>
             <span>Thời hạn hoàn thành mong muốn (tùy chọn)</span>
-            <input
+            <input disabled={submitting}
               type="date"
               min={minDateStr}
               value={deadline}

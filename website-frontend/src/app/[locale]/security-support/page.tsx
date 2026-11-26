@@ -1,0 +1,7 @@
+"use client";
+import {useRef,useState} from 'react';
+export default function SecuritySupport(){const [contact,setContact]=useState(''),[description,setDescription]=useState(''),[receipt,setReceipt]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);const flight=useRef(false);
+ return <main style={{maxWidth:640,margin:'48px auto',padding:24}}><h1>Hỗ trợ truy cập tài khoản</h1><p>Bạn có thể gửi yêu cầu khi không đăng nhập được. Yêu cầu hỗ trợ không tự mở khóa tài khoản.</p>
+ {receipt?<p role="status">Đã tiếp nhận hồ sơ {receipt}. Giữ mã này để trao đổi với bộ phận hỗ trợ.</p>:<form onSubmit={async e=>{e.preventDefault();if(flight.current)return;flight.current=true;setBusy(true);setError('');try{const r=await fetch('/api/v1/identity/support/security-access',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contact,description}),credentials:'omit'});const body=await r.json();if(!r.ok||!body?.result?.id)throw new Error(body?.message??'Không gửi được yêu cầu');setReceipt(body.result.id);}catch(err){setError((err as Error).message);}finally{flight.current=false;setBusy(false);}}}>
+ <label>Email liên hệ <input type="email" required maxLength={254} value={contact} onChange={e=>setContact(e.target.value)}/></label><label>Mô tả vấn đề <textarea required maxLength={2000} value={description} onChange={e=>setDescription(e.target.value)}/></label><p>Không gửi mật khẩu hoặc mã OTP.</p><button disabled={busy}>Gửi yêu cầu hỗ trợ</button></form>}{error&&<p role="alert">{error}</p>}</main>;
+}

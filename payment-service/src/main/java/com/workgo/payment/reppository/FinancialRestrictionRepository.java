@@ -15,7 +15,7 @@ import java.util.UUID;
 public interface FinancialRestrictionRepository extends JpaRepository<FinancialRestriction, UUID> {
 
     @Query("select r from FinancialRestriction r where r.identitySyncedVersion < r.version "
-            + "or r.catalogSyncedVersion < r.version order by r.updatedAt asc")
+            + "or r.catalogSyncedVersion < r.version or r.jobSyncedVersion < r.version order by r.updatedAt asc")
     List<FinancialRestriction> findAllPendingSync();
 
     //chi danh dau dung version da gui: trong luc gui ma doi tiep thi van con cho gui
@@ -30,4 +30,12 @@ public interface FinancialRestrictionRepository extends JpaRepository<FinancialR
     @Query("update FinancialRestriction r set r.catalogSyncedVersion = :version, r.syncedAt = :now "
             + "where r.userId = :userId and r.catalogSyncedVersion < :version")
     int markCatalogSynced(UUID userId, long version, Instant now);
+
+    @Transactional @Modifying
+    @Query("update FinancialRestriction r set r.jobSyncedVersion = :version, r.syncedAt = :now where r.userId = :userId and r.jobSyncedVersion < :version")
+    int markJobSynced(UUID userId, long version, Instant now);
+
+    @Transactional @Modifying
+    @Query("update FinancialRestriction r set r.lastError = :error where r.userId = :userId and r.version = :version")
+    int markError(UUID userId, long version, String error);
 }

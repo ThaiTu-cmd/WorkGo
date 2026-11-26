@@ -13,6 +13,8 @@ public enum ErrorCode {
     //=============SYSTEM====================
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorize Exception", HttpStatus.INTERNAL_SERVER_ERROR),
     SUCCESS(1000, "Success", HttpStatus.ACCEPTED),
+    PROVIDER_ADMISSION_UNAVAILABLE(3070, "Provider admission authority is unavailable", HttpStatus.SERVICE_UNAVAILABLE),
+    PROVIDER_ADMISSION_BLOCKED(3071, "Provider has reached admission capacity or is restricted", HttpStatus.CONFLICT),
 
     //===============USER====================
     USER_EXISTED(1001, "User existed", HttpStatus.BAD_REQUEST),

@@ -16,8 +16,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class ProviderFinancialEligibility {
+    public UUID recoveryGrant(UUID provider){return admission.reservationGrant(provider);}
 
     PaymentClient paymentClient;
+    ProviderAdmissionService admission;
 
     //chi chan viec moi; viec cu (giao, sua, nhan tien, dispute) van lam tiep. Payment loi -> chan luon, khong mo khe ho
     public void assertMayStartNewWork(UUID providerId) {
@@ -36,5 +38,6 @@ public class ProviderFinancialEligibility {
         if (!eligibility.isMayStartNewWork()) {
             throw new AppException(ErrorCode.ORDER_PROVIDER_FINANCIALLY_RESTRICTED);
         }
+        admission.reserve(providerId);
     }
 }

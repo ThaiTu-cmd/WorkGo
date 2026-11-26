@@ -38,5 +38,6 @@ public record DisputeDto(
         Instant decisionSlaDueAt,
         Instant decisionEscalatedAt,
         UUID decisionId,
-        Long version) {
+        Long version,
+        String caseType) {
 }

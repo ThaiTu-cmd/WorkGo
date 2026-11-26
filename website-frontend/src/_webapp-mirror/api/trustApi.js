@@ -64,10 +64,22 @@ export const trustApi = {
   // Reports
   submitReport: (body) => axiosClient.post('/trust/reports', body),
   // Evidence & Appeals
-  supplementEvidence: (disputeId, body) =>
-    axiosClient.post(`/trust/disputes/${disputeId}/evidence`, body).catch(() => ({
-      result: { disputeId, ...body, submittedAt: new Date().toISOString() },
-    })),
+  supplementEvidence: async (disputeId, file) => {
+    if (!(file instanceof Blob)) throw new Error('Select an evidence file');
+    const body = new FormData(); body.append('file', file);
+    const response = await axiosClient.post(`/trust/disputes/${encodeURIComponent(disputeId)}/evidence`, body);
+    if (!response?.result?.id || response.result.status !== 'READY') throw new Error('Invalid evidence receipt');
+    return response;
+  },
+  listEvidence: (id) => axiosClient.get(`/trust/disputes/${encodeURIComponent(id)}/evidence`),
+  getDecisionProgress: (id) => axiosClient.get(`/trust/disputes/${encodeURIComponent(id)}/decision`),
+  downloadEvidence: async (id) => {
+    const response = await axiosClient.get(`/trust/evidence/${encodeURIComponent(id)}/download-url`);
+    const raw = response?.result?.url;
+    const url = typeof raw === 'string' ? raw.replace(/^\/api\/v1\/trust(?=\/)/,'').replace(/^\/trust(?=\/)/,'') : null;
+    if (typeof url !== 'string' || !url.startsWith(`/evidence/${id}/content?`)) throw new Error('Invalid evidence link');
+    return axiosClient.get('/trust' + url, { responseType: 'blob' });
+  },
 
   getReputation: (providerId) =>
     axiosClient.get(`/trust/providers/${encodeURIComponent(providerId)}/reputation`)
@@ -79,12 +91,16 @@ export const trustApi = {
       .then(response => reputationLedger(response, providerId, page)),
 
   getSanctions: (providerId) =>
-    axiosClient.get(`/identity/providers/${providerId}/sanctions`).catch(() => null),
+    axiosClient.get(`/identity/providers/${encodeURIComponent(providerId)}/sanctions`),
+  getMyAppeals: () => axiosClient.get('/identity/sanction-appeals/me'),
 
-  submitAppeal: (body) =>
-    axiosClient.post('/trust/sanctions/appeal', body).catch(() => ({
-      result: { appealId: `APP-${Date.now()}`, ...body, status: 'PENDING', submittedAt: new Date().toISOString() },
-    })),
+  submitAppeal: async ({ sanctionId, reason, explanation }) => {
+    if (!sanctionId) throw new Error('Select a sanction');
+    const response = await axiosClient.post(`/identity/sanctions/${encodeURIComponent(sanctionId)}/appeals`,
+      { explanation: [reason, explanation].filter(Boolean).join('\n') });
+    if (!response?.result?.id) throw new Error('Invalid appeal receipt');
+    return response;
+  },
 };
 
 export default trustApi;

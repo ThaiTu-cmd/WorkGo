@@ -13,6 +13,8 @@ public enum ErrorCode {
     //=============SYSTEM====================
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorize Exception", HttpStatus.INTERNAL_SERVER_ERROR),
     SUCCESS(1000, "Success", HttpStatus.ACCEPTED),
+    PROVIDER_ELIGIBILITY_UNAVAILABLE(2901,"Provider eligibility is unavailable",HttpStatus.SERVICE_UNAVAILABLE),
+    PROVIDER_RECEIVING_RESTRICTED(2902,"Provider is restricted from new work",HttpStatus.CONFLICT),
 
     //===============AUDIT====================
     INVALID_EXPORT_RANGE(1050, "Export needs from and to, from before to, at most 92 days", HttpStatus.BAD_REQUEST),

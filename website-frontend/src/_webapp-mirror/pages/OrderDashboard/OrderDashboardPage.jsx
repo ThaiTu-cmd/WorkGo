@@ -18,7 +18,7 @@ import OrderCancelPage from '../OrderCancel/OrderCancelPage';
 import { getAccessToken, NOT_PROVIDER_MESSAGE } from '../../api/axiosClient';
 import { decodeToken } from '../../utils/jwt';
 import { orderApi, orderErrorMessage } from '../../api/orderApi';
-import { ORDER_PAYMENT_TIMEOUT_MINUTES } from '../../api/paymentApi';
+import { ORDER_PAYMENT_TIMEOUT_MINUTES, paymentApi } from '../../api/paymentApi';
 import styles from './OrderDashboardPage.module.css';
 import { orderLabel } from '../../utils/orderNumber';
 // Labels below are keys of the "misc" dictionary, translated with tr() at render.
@@ -304,20 +304,24 @@ function CheckinCodeCard({
 }
 
 function CashOrderPanel({ order, onsite, role, onUpdated }) {
+  const [cashReturn,setCashReturn]=useState(null);
+  const [cashAmount,setCashAmount]=useState('');const [returnError,setReturnError]=useState('');
+  const cashAmountValid=/^\d+$/.test(cashAmount.trim())&&Number.isSafeInteger(Number(cashAmount))&&Number(cashAmount)>=0&&Number(cashAmount)<=Number(order.totalAmount);
+  useEffect(()=>{let alive=true;paymentApi.getCashReturn(order.orderId).then(r=>{if(alive){setCashReturn(r);setReturnError('');}}).catch(e=>{if(alive){setCashReturn(null);setReturnError(e?.status===404?'':orderErrorMessage(e));}});return()=>{alive=false;};},[order.orderId,order.orderStatus]);
   const tr = useTranslations('misc');
   const t = useTranslations('orderWorkspace');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const orderActive = ['IN_PROGRESS', 'DELIVERED'].includes(order.orderStatus);
+  const orderActive = ['IN_PROGRESS', 'DELIVERED'].includes(order.orderStatus) || order.orderStatus==='COMPLETED'&&order.paymentStatus==='CASH_ON_SITE';
   const mayConfirm = onsite && orderActive && role === 'PROVIDER' && !onsite.cashReceivedAt;
   const mayAccept = onsite && order.orderStatus === 'DELIVERED' && role === 'CLIENT' && onsite.status === 'SERVICE_DONE';
   const submit = async () => {
-    if (busy || !window.confirm(mayConfirm ? t('confirmCash') : tr('m841'))) return;
+    if (busy || mayConfirm&&!cashAmountValid || !window.confirm(mayConfirm ? `Xác nhận thực nhận ${formatMoney(Number(cashAmount))}?` : tr('m841'))) return;
     setBusy(true);
     setError('');
     try {
       if (mayConfirm) {
-        await orderApi.confirmCashReceived(order.orderId);
+        await orderApi.confirmCashReceived(order.orderId,Number(cashAmount));
       } else {
         await orderApi.acceptOnsite(order.orderId);
       }
@@ -330,11 +334,18 @@ function CashOrderPanel({ order, onsite, role, onUpdated }) {
   };
   return <section className={flowStyles.panel} aria-label={t('cashOnSite')}>
     <strong className={flowStyles.panelTitle}>{t('cashOnSite')}</strong>
+    {cashReturn&&<div><p>Phí hủy đã ghi sổ: {cashReturn.feeAmount} VND · Tiền mặt cần hoàn trực tiếp: {cashReturn.cashReturnDue} VND · {cashReturn.status}</p>
+      {role==='CLIENT'&&cashReturn.status==='AWAITING_CASH_RETURN'&&<button disabled={busy} onClick={async()=>{if(busy)return;setBusy(true);try{const r=await paymentApi.confirmCashReturn(cashReturn.decisionId,cashReturn.cashReturnDue);if(r?.decisionId!==cashReturn.decisionId||r?.status!=='COMPLETED'||Number(r.cashReturnDue)!==Number(cashReturn.cashReturnDue))throw new Error('Cash return acknowledgement mismatch');setCashReturn(r);setError('');onUpdated();}catch(e){setError(orderErrorMessage(e));}finally{setBusy(false);}}}>Tôi xác nhận đã nhận đủ tiền mặt hoàn lại</button>}</div>}
+    <p className={flowStyles.note}>Nghiệm thu công việc: {onsite?.clientAcceptedAt?'Đã nghiệm thu':'Đang chờ'} · Khách khai đã trả: {onsite?.clientCashPaidAt?'Đã ghi nhận':'Chưa ghi nhận'} · Phí: {order.paymentStatus==='CASH_SETTLED'?'Đã ghi sổ':'Chờ receipt'}</p>
+    {(mayConfirm||role==='CLIENT'&&orderActive&&!onsite?.clientCashPaidAt)&&<label>{role==='PROVIDER'?'Số tiền thực nhận (VND)':'Số tiền khách khai đã trả (VND)'}<input inputMode="numeric" value={cashAmount} onChange={e=>setCashAmount(e.target.value)} /></label>}
+    <p>Khách khai đã trả: {onsite?.clientCashPaidAmount!=null?formatMoney(Number(onsite.clientCashPaidAmount)):'Chưa ghi nhận'} · Provider thực nhận: {onsite?.actualReceivedAmount!=null?formatMoney(Number(onsite.actualReceivedAmount)):'Chưa ghi nhận'}</p>
+    {returnError&&<p role="alert">{returnError}</p>}
+    {role==='CLIENT'&&orderActive&&!onsite?.clientCashPaidAt&&<button type="button" disabled={busy||!cashAmountValid} onClick={async()=>{if(busy)return;setBusy(true);try{await orderApi.recordCashPaid(order.orderId,Number(cashAmount));onUpdated();}catch(err){setError(orderErrorMessage(err));}finally{setBusy(false);}}}>Ghi nhận số tiền tôi đã trả</button>}
     {onsite && <p className={flowStyles.note}>{t(onsite.cashReceivedAt ? 'cashReceived' : 'cashWaiting')}
       {onsite.cashReceivedAt && ` · ${formatDateTime(onsite.cashReceivedAt)}`}
     </p>}
-    {(mayConfirm || mayAccept) && <button type="button" className={styles.btn + ' ' + styles.btn_primary} disabled={busy} onClick={submit}>
-      {mayConfirm ? t('confirmCash') : tr('m1584')}
+    {(mayConfirm || mayAccept) && <button type="button" className={styles.btn + ' ' + styles.btn_primary} disabled={busy||mayConfirm&&!cashAmountValid} onClick={submit}>
+      {mayConfirm ? 'Ghi nhận số tiền thực nhận' : tr('m1584')}
     </button>}
     {error && <p className={flowStyles.warn} role="alert">{error}</p>}
   </section>;

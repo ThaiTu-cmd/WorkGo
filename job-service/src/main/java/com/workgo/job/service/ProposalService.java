@@ -38,6 +38,20 @@ public class ProposalService {
     private final TokenUtils token;
     private final PlatformTransactionManager transactions;
     @Value("${app.proposals.accept-enabled:false}") private boolean acceptEnabled;
+    @Value("${app.proposals.reward-quote-required:true}") private boolean quoteRequired;
+    @org.springframework.beans.factory.annotation.Autowired private com.workgo.job.repository.client.OrderClient quoteOrders;
+    @Transactional
+    public com.fasterxml.jackson.databind.JsonNode previewReward(UUID id){
+        var source=lock(id);var p=source.proposal();
+        if(!source.job().getClientId().equals(token.getCurrentUserId())&&!source.app().getProviderId().equals(token.getCurrentProviderIdOrNull()))throw new AccessDeniedException("Proposal participant required");
+        pendingProposal(p);
+        com.workgo.job.dto.response.ApiResponse<com.fasterxml.jackson.databind.JsonNode> response=null;
+        if(p.getRewardQuoteRef()!=null)try{p.setAcceptedAt(Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS));response=quoteOrders.checkRewardQuote(orderRequest(p));}catch(RuntimeException expired){response=null;}finally{p.setAcceptedAt(null);}
+        if(response==null)response=quoteOrders.rewardQuote(orderRequest(p));
+        var q=response==null?null:response.getResult();
+        if(response==null||response.getCode()!=1000||q==null||!q.path("reference").isTextual()||!q.path("points").isInt()||q.path("points").asInt()<2||q.path("points").asInt()>5||!"WG-POLICY-1.0".equals(q.path("policyVersion").asText())||!source.job().getClientId().toString().equals(q.path("input").path("clientId").asText())||!source.app().getProviderId().toString().equals(q.path("input").path("providerId").asText())||!id.toString().equals(q.path("input").path("sourceId").asText()))throw new AppException(ErrorCode.INVALID_STATUS_TRANSITION);
+        p.setRewardQuoteRef(q.path("reference").asText());proposals.save(p);return q;
+    }
 
     @Transactional
     public ProposalDto submit(UUID applicationId, ProposalSubmitReq req) {
@@ -108,6 +122,12 @@ public class ProposalService {
         if (!providerId.equals(source.app().getProviderId()) || providerUserId == null)
             throw new AppException(ErrorCode.APPLICATION_NOT_VALID);
         if (providerUserId.equals(source.job().getClientId())) throw new AppException(ErrorCode.CANNOT_APPLY_OWN_JOB);
+        p.setAcceptedAt((quoteRequired||p.getRewardQuoteRef()!=null)?Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS):null);
+        if(quoteRequired||p.getRewardQuoteRef()!=null){
+            if(p.getRewardQuoteRef()==null)throw new AppException(ErrorCode.PROPOSAL_REWARD_QUOTE_REQUIRED);
+            var quote=quoteOrders.checkRewardQuote(orderRequest(p));
+            if(quote==null||quote.getCode()!=1000||quote.getResult()==null||!p.getRewardQuoteRef().equals(quote.getResult().path("reference").asText()))throw new AppException(ErrorCode.INVALID_STATUS_TRANSITION);
+        }
         p.setStatus(ProposalStatus.ACCEPTED);
         source.app().setStatus(ApplicationStatus.ACCEPTED);
         source.job().setStatus(JobStatus.CLOSED);
@@ -205,6 +225,6 @@ public class ProposalService {
         Job j = p.getJob();
         return new CreateProposalOrderRequest(p.getProposalId(), j.getJobId(), j.getClientId(), p.getApplication().getProviderId(),
                 j.getExecutionType().name(), p.getPrice(), p.getCurrency(), p.getEstimatedDays(), j.getTitle(),
-                j.getDescription(), j.getLocationSnapshot(), p.getTerms());
+                j.getDescription(), j.getLocationSnapshot(), p.getTerms(),p.getRewardQuoteRef(),p.getAcceptedAt());
     }
 }

@@ -24,6 +24,10 @@ import java.util.UUID;
         @UniqueConstraint(name = "uk_order_dispute_decision_order", columnNames = {"order_id"})
 })
 public class OrderDisputeDecision {
+    UUID cashOutcomeId;
+    Boolean workAccepted;
+    Boolean paymentReceived;
+    java.math.BigDecimal actualReceivedAmount;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

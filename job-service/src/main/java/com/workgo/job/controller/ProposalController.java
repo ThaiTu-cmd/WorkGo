@@ -18,6 +18,8 @@ public class ProposalController {
         return ApiResponse.<ProposalDto>builder().result(service.submit(id, req)).build();
     }
 
+    @PostMapping("/proposals/{id}/reward-quote") @PreAuthorize("hasAnyAuthority('ROLE_CLIENT','ROLE_PROVIDER')")
+    public ApiResponse<com.fasterxml.jackson.databind.JsonNode> preview(@PathVariable UUID id){return ApiResponse.<com.fasterxml.jackson.databind.JsonNode>builder().result(service.previewReward(id)).build();}
     @PostMapping("/proposals/{id}/accept") @PreAuthorize("hasAuthority('ROLE_CLIENT')")
     public ApiResponse<ProposalAcceptanceDto> accept(@PathVariable UUID id) {
         return ApiResponse.<ProposalAcceptanceDto>builder().result(service.accept(id)).build();

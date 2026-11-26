@@ -23,6 +23,7 @@ public class WebSocketSessionRegistry {
     private final Clock clock;
     private final IdentityTokenIntrospector introspector;
     private final Executor validator;
+    @org.springframework.beans.factory.annotation.Autowired private ConversationMembershipChecker membership;
 
     public WebSocketSessionRegistry(WebSocketProperties properties, Clock clock,
             IdentityTokenIntrospector introspector, @Qualifier("webSocketValidationExecutor") Executor validator) {
@@ -129,7 +130,17 @@ public class WebSocketSessionRegistry {
                 String credential = token;
                 try {
                     validator.execute(() -> {
-                        boolean valid = introspector.isValid(credential);
+                        boolean valid;
+                        try {
+                            valid=introspector.isValid(credential);
+                            Map<String,String> subscriptions;
+                            java.util.UUID actor;
+                            synchronized(this){subscriptions=new HashMap<>(state.subscriptions);actor=membership==null?null:java.util.UUID.fromString(state.authentication.getName());}
+                            if(valid&&membership!=null)for(String destination:subscriptions.values()){
+                                String prefix="/topic/conversations/";
+                                if(destination.startsWith(prefix)&&!membership.isParticipant(java.util.UUID.fromString(destination.substring(prefix.length())),actor)){valid=false;break;}
+                            }
+                        }catch(RuntimeException unavailable){valid=false;}
                         synchronized (this) {
                             if (sessions.get(id) != state) return;
                             valid &= clock.instant().isBefore(state.lastVerified.plusMillis(60000L - properties.getMaintenanceIntervalMs()));

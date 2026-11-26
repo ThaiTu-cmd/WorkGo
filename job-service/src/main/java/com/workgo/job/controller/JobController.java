@@ -22,7 +22,13 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController @RequestMapping("/jobs") @RequiredArgsConstructor
 public class JobController {
     private final JobService service;
+    private final com.workgo.job.service.JobCreationService creation;
     private final JobAttachmentService attachments;
+    @PostMapping("/drafts") @PreAuthorize("hasRole('CLIENT')")
+    public ApiResponse<JobDetailDto> draft(@Valid @RequestBody JobCreateReq req,@RequestHeader(value="Idempotency-Key",required=false) String key){return ApiResponse.<JobDetailDto>builder().result(creation.create(req,key,true)).build();}
+
+    @GetMapping("/receipt") @PreAuthorize("hasRole('CLIENT')")
+    public ApiResponse<JobDetailDto> receipt(@RequestParam String key){return ApiResponse.<JobDetailDto>builder().result(creation.receipt(key)).build();}
 
     @GetMapping
     public ApiResponse<PageResponse<JobSummaryDto>> search(@RequestParam(required = false) String keyword,
@@ -46,8 +52,8 @@ public class JobController {
     }
 
     @PostMapping @PreAuthorize("hasAuthority('ROLE_CLIENT')")
-    public ApiResponse<JobDetailDto> create(@Valid @RequestBody JobCreateReq req) {
-        return ApiResponse.<JobDetailDto>builder().result(service.create(req)).build();
+    public ApiResponse<JobDetailDto> create(@Valid @RequestBody JobCreateReq req,@RequestHeader(value="Idempotency-Key",required=false) String key) {
+        return ApiResponse.<JobDetailDto>builder().result(creation.create(req,key,false)).build();
     }
 
     @PutMapping("/{id}") @PreAuthorize("hasAuthority('ROLE_CLIENT')")

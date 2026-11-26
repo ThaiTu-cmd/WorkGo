@@ -71,6 +71,8 @@ public class AttachmentVerificationService {
 
     private final Map<UUID, StoredAttachmentRecord> recordsById = new ConcurrentHashMap<>();
     private final Map<String, UUID> readyByConvUserSha = new ConcurrentHashMap<>();
+    @Autowired private org.springframework.data.mongodb.core.MongoTemplate mongo;
+    @Autowired private com.workgo.communication.repository.CommunicationTransactions attachmentTransactions;
 
     public AttachmentVerificationService(ConversationService conversations) {
         this(conversations, new LocalFileStorage("./.workgo-storage/communication"), Clock.systemUTC(), "", "http://localhost:8086/communication");
@@ -117,8 +119,10 @@ public class AttachmentVerificationService {
         }
     }
 
+    @org.springframework.data.mongodb.core.mapping.Document("chat_attachments")
+    @org.springframework.data.mongodb.core.index.CompoundIndex(name="uq_chat_attachment_source",def="{'conversationId':1,'uploaderId':1,'sha256':1}",unique=true)
     public record StoredAttachmentRecord(
-            UUID id,
+            @org.springframework.data.annotation.Id UUID id,
             UUID conversationId,
             UUID uploaderId,
             String storageKey,
@@ -164,12 +168,15 @@ public class AttachmentVerificationService {
         }
 
         String dedupKey = conversationId + ":" + actorId + ":" + sha;
-        UUID existingId = readyByConvUserSha.get(dedupKey);
+        StoredAttachmentRecord persisted = mongo == null ? null : mongo.findOne(
+                org.springframework.data.mongodb.core.query.Query.query(org.springframework.data.mongodb.core.query.Criteria.where("conversationId").is(conversationId).and("uploaderId").is(actorId).and("sha256").is(sha)),StoredAttachmentRecord.class);
+        UUID existingId = persisted == null ? readyByConvUserSha.get(dedupKey) : persisted.id();
         if (existingId != null) {
-            StoredAttachmentRecord prev = recordsById.get(existingId);
+            StoredAttachmentRecord prev = record(existingId);
             if (prev != null && "READY".equals(prev.status()) && storage.exists(prev.storageKey())) {
                 return toDescriptor(prev);
             }
+            if(prev!=null && "UPLOADING".equals(prev.status()))throw new DataAccessResourceFailureException("Attachment upload pending; retry same file");
         }
 
         long userCount = recordsById.values().stream()
@@ -182,9 +189,21 @@ public class AttachmentVerificationService {
         UUID fileId = UUID.randomUUID();
         String storageKey = "conversations/" + conversationId + "/" + fileId;
         Instant now = clock.instant().truncatedTo(ChronoUnit.MILLIS);
+        if(mongo!=null){
+            attachmentTransactions.execute(()->{
+                String counter="attachmentUploadCounts."+actorId;
+                var filter=org.springframework.data.mongodb.core.query.Criteria.where("_id").is(conversationId).orOperator(
+                        org.springframework.data.mongodb.core.query.Criteria.where(counter).exists(false),org.springframework.data.mongodb.core.query.Criteria.where(counter).lt(MAX_UPLOADED_PER_CONVERSATION_USER));
+                if(mongo.updateFirst(org.springframework.data.mongodb.core.query.Query.query(filter),new org.springframework.data.mongodb.core.query.Update().inc(counter,1),Conversation.class).getMatchedCount()!=1)
+                    throw new AppException(ErrorCode.INVALID_ATTACHMENT_METADATA);
+                mongo.insert(new StoredAttachmentRecord(fileId,conversationId,actorId,storageKey,cleanFileName,mime,content.length,sha,"UPLOADING",now));
+                return true;
+            });
+        }
+
         boolean written = false;
         try {
-            storage.put(storageKey, content);
+            storage.put(storageKey, content, mime);
             written = true;
             byte[] verified = storage.get(storageKey);
             if (verified == null || !digest(verified).equals(sha)) {
@@ -194,13 +213,14 @@ public class AttachmentVerificationService {
             StoredAttachmentRecord record = new StoredAttachmentRecord(
                     fileId, conversationId, actorId, storageKey, cleanFileName, mime, content.length, sha, "READY", now
             );
-            recordsById.put(fileId, record);
-            readyByConvUserSha.put(dedupKey, fileId);
+            saveRecord(record);
+            if(mongo==null)readyByConvUserSha.put(dedupKey, fileId);
             return toDescriptor(record);
         } catch (RuntimeException ex) {
             if (written) {
                 storage.delete(storageKey);
             }
+            if(mongo!=null)removePending(fileId,conversationId,actorId);
             throw ex;
         }
     }
@@ -229,7 +249,7 @@ public class AttachmentVerificationService {
                 // External arbitrary URLs are never fetched or trusted; fail closed as untrusted/unavailable verification.
                 throw new DataAccessResourceFailureException("Attachment verification unavailable for external or untrusted URL");
             }
-            StoredAttachmentRecord record = recordsById.get(fileId);
+            StoredAttachmentRecord record = record(fileId);
             if (record == null) {
                 throw new AppException(ErrorCode.INVALID_ATTACHMENT_METADATA);
             }
@@ -269,7 +289,7 @@ public class AttachmentVerificationService {
 
     public Download download(UUID actorId, UUID conversationId, UUID attachmentId) {
         conversations.requireParticipant(actorId, conversationId);
-        StoredAttachmentRecord record = recordsById.get(attachmentId);
+        StoredAttachmentRecord record = record(attachmentId);
         if (record == null || !conversationId.equals(record.conversationId())) {
             throw new AppException(ErrorCode.INVALID_ATTACHMENT_METADATA);
         }
@@ -289,7 +309,7 @@ public class AttachmentVerificationService {
                 || !MessageDigest.isEqual(sign(attachmentId, expires).getBytes(StandardCharsets.US_ASCII), signature.getBytes(StandardCharsets.US_ASCII))) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
-        StoredAttachmentRecord record = recordsById.get(attachmentId);
+        StoredAttachmentRecord record = record(attachmentId);
         if (record == null) {
             throw new AppException(ErrorCode.INVALID_ATTACHMENT_METADATA);
         }
@@ -327,6 +347,26 @@ public class AttachmentVerificationService {
                 record.status(),
                 record.createdAt()
         );
+    }
+
+    private StoredAttachmentRecord record(UUID id){return mongo==null?recordsById.get(id):mongo.findById(id,StoredAttachmentRecord.class);}
+    private void saveRecord(StoredAttachmentRecord record){if(mongo==null)recordsById.put(record.id(),record);else mongo.save(record);}
+    private void releaseQuota(UUID conversation,UUID actor){mongo.updateFirst(org.springframework.data.mongodb.core.query.Query.query(org.springframework.data.mongodb.core.query.Criteria.where("_id").is(conversation)),new org.springframework.data.mongodb.core.query.Update().inc("attachmentUploadCounts."+actor,-1),Conversation.class);}
+    private void removePending(UUID id,UUID room,UUID actor){
+        attachmentTransactions.execute(()->{
+            var removed=mongo.remove(org.springframework.data.mongodb.core.query.Query.query(org.springframework.data.mongodb.core.query.Criteria.where("_id").is(id).and("status").is("UPLOADING")),StoredAttachmentRecord.class);
+            if(removed.getDeletedCount()==1)releaseQuota(room,actor);
+            return true;
+        });
+    }
+    @org.springframework.scheduling.annotation.Scheduled(fixedDelay=60000,initialDelay=60000)
+    public void recoverUploads(){if(mongo==null)return;
+        var query=org.springframework.data.mongodb.core.query.Query.query(org.springframework.data.mongodb.core.query.Criteria.where("status").is("UPLOADING").and("createdAt").lt(clock.instant().minusSeconds(600))).limit(50);
+        for(var row:mongo.find(query,StoredAttachmentRecord.class)){
+            if(storage.exists(row.storageKey())&&digest(storage.get(row.storageKey())).equals(row.sha256()))
+                mongo.updateFirst(org.springframework.data.mongodb.core.query.Query.query(org.springframework.data.mongodb.core.query.Criteria.where("_id").is(row.id()).and("status").is("UPLOADING")),new org.springframework.data.mongodb.core.query.Update().set("status","READY"),StoredAttachmentRecord.class);
+            else removePending(row.id(),row.conversationId(),row.uploaderId());
+        }
     }
 
     private String canonicalFileUrl(UUID id) {

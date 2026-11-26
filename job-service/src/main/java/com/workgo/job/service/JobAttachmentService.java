@@ -165,7 +165,7 @@ public class JobAttachmentService {
         String storageKey = "jobs/" + jobId + "/" + objectId;
         boolean written = false;
         try {
-            storage.put(storageKey, content);
+            storage.put(storageKey, content, mime);
             written = true;
             byte[] verified = storage.get(storageKey);
             if (verified == null || !digest(verified).equals(sha)) {

@@ -12,6 +12,10 @@ import java.util.UUID;
 @FeignClient(name = "order-service", contextId = "jobOrderClient", url = "${app.services.order}",
         configuration = {JobFeignConfiguration.class, InternalKeyFeignConfiguration.class})
 public interface OrderClient {
+    @PostMapping("/internal/orders/from-proposal/reward-quote")
+    com.workgo.job.dto.response.ApiResponse<com.fasterxml.jackson.databind.JsonNode> rewardQuote(@RequestBody CreateProposalOrderRequest request);
+    @PostMapping("/internal/orders/from-proposal/reward-quote/check")
+    com.workgo.job.dto.response.ApiResponse<com.fasterxml.jackson.databind.JsonNode> checkRewardQuote(@RequestBody CreateProposalOrderRequest request);
     @PostMapping("/internal/orders/from-proposal")
     ProposalOrderResponse createFromProposal(@RequestHeader("Idempotency-Key") UUID proposalId,
                                             @RequestBody CreateProposalOrderRequest request);

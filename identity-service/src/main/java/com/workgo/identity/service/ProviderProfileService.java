@@ -39,6 +39,7 @@ public class ProviderProfileService {
 
     ProviderProfileRepository providerProfileRepository;
     ProviderVerificationRepository providerVerificationRepository;
+    ProviderTrustEventRepository providerTrustEvents;
     ProviderProfileMapper providerProfileMapper;
     UserRepository userRepository;
     RoleRepository roleRepository;
@@ -62,6 +63,7 @@ public class ProviderProfileService {
                 .build();
 
         ProviderProfile savedProfile = providerProfileRepository.save(providerProfile);
+
 
         return providerProfileMapper.toProviderProfileResponse(savedProfile);
     }
@@ -167,6 +169,9 @@ public class ProviderProfileService {
         providerProfile.setUpdatedAt(Instant.now());
 
         ProviderProfile savedProfile = providerProfileRepository.save(providerProfile);
+
+        if(status==VerificationStatus.VERIFIED && !providerTrustEvents.existsById(providerId))
+            providerTrustEvents.save(new com.workgo.identity.entity.ProviderTrustEvent(providerId,user.getUserId()));
 
         adminAuditService.record(AdminAction.builder()
                 .action(AdminActionType.PROVIDER_STATUS_UPDATED)

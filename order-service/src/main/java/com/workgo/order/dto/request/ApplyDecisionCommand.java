@@ -41,4 +41,9 @@ public class ApplyDecisionCommand {
 
     String escrowStatus;
 
+    UUID cashOutcomeId;
+    Boolean workAccepted;
+    Boolean paymentReceived;
+    java.math.BigDecimal actualReceivedAmount;
+
 }

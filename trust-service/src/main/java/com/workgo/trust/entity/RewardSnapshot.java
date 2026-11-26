@@ -20,4 +20,8 @@ public class RewardSnapshot {
         // Match TIMESTAMP(6): rounding up during persistence can otherwise make a later completion appear earlier.
         lockedAt=Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
     }
+    public RewardSnapshot(UUID order,RewardQuote quote,Instant confirmedAt) {
+        orderId=order;providerId=quote.getProviderId();clientId=quote.getClientId();points=quote.getPoints();needsReview=quote.isNeedsReview();
+        modelVersion=quote.getModelVersion();ruleVersion=quote.getRuleVersion();inputHash=quote.getInputHash();lockedAt=confirmedAt.truncatedTo(java.time.temporal.ChronoUnit.MICROS);
+    }
 }

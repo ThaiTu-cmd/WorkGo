@@ -5,6 +5,10 @@ server:
     context-path: /communication
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 21MB
   application:
     name: communication-service
   data:
@@ -13,6 +17,17 @@ spring:
       auto-index-creation: ${COMMUNICATION_AUTO_INDEX_CREATION:false}
 
 app:
+  storage:
+    type: ${COMMUNICATION_STORAGE_TYPE:local}
+    s3:
+      endpoint: ${COMMUNICATION_S3_ENDPOINT:https://s3.amazonaws.com}
+      bucket: ${COMMUNICATION_S3_BUCKET:}
+      region: ${COMMUNICATION_S3_REGION:ap-southeast-1}
+      access-key: ${COMMUNICATION_S3_ACCESS_KEY:}
+      secret-key: ${COMMUNICATION_S3_SECRET_KEY:}
+      prefix: communication
+    local-dir: ${COMMUNICATION_STORAGE_DIR:./.workgo-storage/communication}
+    signing-key: ${COMMUNICATION_STORAGE_SIGNING_KEY:}
   internal-api-key: ${INTERNAL_API_KEY:}
   http:
     max-json-body-bytes: ${COMMUNICATION_MAX_JSON_BODY_BYTES:65536}
@@ -41,6 +56,7 @@ app:
     connect-timeout-millis: ${COMMUNICATION_CLIENT_CONNECT_TIMEOUT_MS:2000}
     read-timeout-millis: ${COMMUNICATION_CLIENT_READ_TIMEOUT_MS:5000}
   services:
+    trust: ${TRUST_SERVICE_URL:http://localhost:8087/trust}
     identity: ${IDENTITY_SERVICE_URL:http://localhost:8081/identity}
     catalog: ${CATALOG_SERVICE_URL:http://localhost:8082/catalog}
     order: ${ORDER_SERVICE_URL:http://localhost:8083/order}

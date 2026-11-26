@@ -36,6 +36,11 @@ public class OrderStatusService {
     PaymentSyncService paymentSyncService;
     OrderCompletedOutboxRepository orderCompletedOutboxRepository;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    com.workgo.order.reppository.OrderSnapshotRepository rewardSnapshots;
+    @org.springframework.beans.factory.annotation.Autowired
+    com.workgo.order.reppository.RewardCommitOutboxRepository rewardCommits;
+
     @Transactional(propagation = Propagation.MANDATORY )
     public void recordCreated(Order order, UUID clientId){
         saveHistory(order, null, order.getOrderStatus(), clientId, RoleName.CLIENT);
@@ -70,6 +75,10 @@ public class OrderStatusService {
         orderRepository.save(order);
 
         saveHistory(order, fromStatus, toStatus, actorId, roleName);
+        if(toStatus == OrderStatus.CONFIRMED && rewardSnapshots != null && rewardCommits != null) {
+            rewardSnapshots.findById(order.getOrderId()).map(com.workgo.order.entity.OrderSnapshot::getRewardQuoteRef)
+                    .filter(ref -> !ref.isBlank()).ifPresent(ref -> rewardCommits.save(com.workgo.order.entity.RewardCommitOutbox.from(order,ref)));
+        }
 
         if (toStatus == OrderStatus.COMPLETED) {
             orderCompletedOutboxRepository.save(OrderCompletedOutbox.from(order));

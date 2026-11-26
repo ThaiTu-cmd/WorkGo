@@ -54,6 +54,8 @@ public class PayoutService {
     AdminAuditService adminAuditService;
     PaymentCodeGenerator paymentCodeGenerator;
     TokenUtils tokenUtils;
+    PayoutSourceVerifier sourceVerifier;
+    com.workgo.payment.reppository.client.IdentityInternalClient identity;
 
     @NonFinal
     @Value("${payment.payout.min-amount:50000}")
@@ -71,6 +73,7 @@ public class PayoutService {
             throw new AppException(ErrorCode.PAYMENT_IDEMPOTENCY_KEY_REQUIRED);
         }
 
+        if (request == null || idempotencyKey.length() > 255) throw new AppException(ErrorCode.PAYOUT_INVALID);
         long amount = toWholeVnd(request.getAmount());
 
         if (amount < minAmount || isBlank(request.getBankCode()) || isBlank(request.getAccountNumber())
@@ -79,23 +82,28 @@ public class PayoutService {
         }
 
         UUID userId = tokenUtils.getCurrentUserId();
+        String hash = sourceVerifier.hash(userId, amount, request);
+
+        // Serialize both replay and daily-cap checks before reading the command identity.
+        walletService.lockedBalanceOf(WalletAccountRef.userAvailable(userId));
 
         Optional<WalletPayout> existed = walletPayoutRepository.findByIdempotencyKey(idempotencyKey);
         if (existed.isPresent()) {
-            if (!existed.get().getUserId().equals(userId) || existed.get().getAmount() != amount) {
+            if (!existed.get().getUserId().equals(userId) || !hash.equals(existed.get().getPayloadHash())) {
                 throw new AppException(ErrorCode.PAYOUT_IDEMPOTENCY_KEY_REUSED);
             }
             return payoutMapper.toResponse(existed.get());
         }
 
         //khoa vi truoc khi cong han muc ngay: 2 lenh rut cung luc khong vuot han muc
-        walletService.lockedBalanceOf(WalletAccountRef.userAvailable(userId));
+        sourceVerifier.verifyBeneficiary(userId, request);
+        assertPayoutAllowed(userId);
 
         Instant startOfDay = LocalDate.now(VIETNAM).atStartOfDay(VIETNAM).toInstant();
         long usedToday = walletPayoutRepository.sumAmountSince(userId, startOfDay,
-                List.of(PayoutStatus.FAILED, PayoutStatus.CANCELLED));
+                List.of(PayoutStatus.CANCELLED));
 
-        if (usedToday + amount > dailyLimit) {
+        if (amount > dailyLimit || usedToday > dailyLimit - amount) {
             throw new AppException(ErrorCode.PAYOUT_LIMIT_EXCEEDED);
         }
 
@@ -111,6 +119,8 @@ public class PayoutService {
                 .accountNumber(request.getAccountNumber().trim())
                 .accountName(request.getAccountName().trim())
                 .idempotencyKey(idempotencyKey)
+                .payloadHash(hash)
+                .verifiedBeneficiaryId(request.getVerifiedBeneficiaryId())
                 .build());
 
         payout.setHoldTransactionId(post("PAYOUT_HOLD:", WalletPostingType.PAYOUT_HOLD, payout,
@@ -128,6 +138,7 @@ public class PayoutService {
                 .filter(found -> found.getUserId().equals(tokenUtils.getCurrentUserId()))
                 .orElseThrow(() -> new AppException(ErrorCode.PAYOUT_NOT_FOUND));
 
+        if (payout.getStatus() == PayoutStatus.CANCELLED) return payoutMapper.toResponse(payout);
         transition(payout, PayoutStatus.CANCELLED);
         payout.setSettleTransactionId(returnToWallet(payout));
         payout.setFinishedAt(Instant.now());
@@ -141,6 +152,19 @@ public class PayoutService {
         return walletPayoutRepository.findAllByUserIdOrderByCreatedAtDesc(tokenUtils.getCurrentUserId()).stream()
                 .map(payoutMapper::toResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PayoutResponse getMyPayout(UUID id) {
+        return payoutMapper.toResponse(walletPayoutRepository.findByPayoutIdAndUserId(id, tokenUtils.getCurrentUserId())
+                .orElseThrow(() -> new AppException(ErrorCode.PAYOUT_NOT_FOUND)));
+    }
+
+    @Transactional(readOnly = true)
+    public PayoutResponse getMyPayoutByKey(String key) {
+        return payoutMapper.toResponse(walletPayoutRepository.findByIdempotencyKey(key)
+                .filter(p -> p.getUserId().equals(tokenUtils.getCurrentUserId()))
+                .orElseThrow(() -> new AppException(ErrorCode.PAYOUT_NOT_FOUND)));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -161,6 +185,8 @@ public class PayoutService {
         WalletPayout payout = lockPayout(payoutId);
         Map<String, Object> before = state(payout);
 
+        assertPayoutAllowed(payout.getUserId());
+        if (payout.getStatus() == PayoutStatus.PROCESSING) return payoutMapper.toResponse(payout);
         transition(payout, PayoutStatus.PROCESSING);
         payout.setProcessingAt(Instant.now());
 
@@ -179,6 +205,8 @@ public class PayoutService {
 
         WalletPayout payout = lockPayout(payoutId);
 
+        sourceVerifier.verifyResult(payout, request.getSourceEvidence(), request.getExternalReference(), true);
+
         //bam lai cung ma xac nhan sau timeout: tra ket qua cu, khong ghi but toan lan 2
         if (payout.getStatus() == PayoutStatus.PAID && request.getExternalReference().equals(payout.getExternalReference())) {
             return payoutMapper.toResponse(payout);
@@ -187,6 +215,8 @@ public class PayoutService {
         Map<String, Object> before = state(payout);
 
         transition(payout, PayoutStatus.PAID);
+        payout.setSourceEvidenceHash(sourceVerifier.evidenceHash(request.getSourceEvidence()));
+        payout.setSourceVerifiedAt(Instant.parse(request.getSourceEvidence().get("verifiedAt")));
         payout.setExternalReference(request.getExternalReference());
         payout.setSettleTransactionId(post("PAYOUT_PAID:", WalletPostingType.PAYOUT_PAID, payout,
                 WalletAccountRef.payoutPending(payout.getUserId()), WalletAccountRef.externalClearing()));
@@ -203,14 +233,16 @@ public class PayoutService {
         assertReason(request);
         WalletPayout payout = lockPayout(payoutId);
 
-        //UNKNOWN chi duoc tra tien lai khi co bang chung ngan hang khong chi
-        if (payout.getStatus() == PayoutStatus.UNKNOWN && isBlank(request.getExternalReference())) {
-            throw new AppException(ErrorCode.PAYOUT_REFERENCE_REQUIRED);
-        }
+        // A reference entered by an operator is not evidence that the bank did not pay.
+        sourceVerifier.verifyResult(payout, request.getSourceEvidence(), request.getExternalReference(), false);
+        if (payout.getStatus() == PayoutStatus.FAILED
+                && request.getExternalReference().equals(payout.getExternalReference())) return payoutMapper.toResponse(payout);
 
         Map<String, Object> before = state(payout);
 
         transition(payout, PayoutStatus.FAILED);
+        payout.setSourceEvidenceHash(sourceVerifier.evidenceHash(request.getSourceEvidence()));
+        payout.setSourceVerifiedAt(Instant.parse(request.getSourceEvidence().get("verifiedAt")));
         payout.setFailureReason(request.getReason());
         payout.setExternalReference(request.getExternalReference());
         payout.setSettleTransactionId(returnToWallet(payout));
@@ -251,6 +283,13 @@ public class PayoutService {
 
         return post("PAYOUT_RETURN:", WalletPostingType.PAYOUT_RETURN, payout,
                 WalletAccountRef.payoutPending(payout.getUserId()), WalletAccountRef.userAvailable(payout.getUserId()));
+    }
+
+    private void assertPayoutAllowed(UUID user) {
+        com.workgo.payment.reppository.client.IdentityInternalClient.PayoutEligibility result;
+        try{result=identity.payoutEligibility(user);}catch(RuntimeException e){throw new AppException(ErrorCode.IDENTITY_SERVICE_UNAVAILABLE);}
+        if(result==null||!user.equals(result.userId()))throw new AppException(ErrorCode.IDENTITY_SERVICE_UNAVAILABLE);
+        if(!result.allowed())throw new AppException(ErrorCode.PAYOUT_RESTRICTED);
     }
 
     private UUID post(String keyPrefix, WalletPostingType type, WalletPayout payout,

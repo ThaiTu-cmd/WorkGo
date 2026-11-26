@@ -34,6 +34,15 @@ jwt:
 app:
   internal-key: ${INTERNAL_API_KEY:}
   storage:
+    signing-key: ${CATALOG_STORAGE_SIGNING_KEY:}
+    type: ${CATALOG_STORAGE_TYPE:local}
+    s3:
+      endpoint: ${CATALOG_S3_ENDPOINT:https://s3.amazonaws.com}
+      bucket: ${CATALOG_S3_BUCKET:}
+      region: ${CATALOG_S3_REGION:ap-southeast-1}
+      access-key: ${CATALOG_S3_ACCESS_KEY:}
+      secret-key: ${CATALOG_S3_SECRET_KEY:}
+      prefix: catalog
     local-dir: ${CATALOG_STORAGE_DIR:${user.home}/.workgo/catalog-files}
   service:
     identity:

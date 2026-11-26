@@ -1,3 +1,4 @@
+import {RewardQuoteCard} from './RewardQuoteCard';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -92,6 +93,7 @@ export function OrderAgreementCard({ order, role }: { order: OrderDto; role: Ord
 
   return (
     <Card>
+      <RewardQuoteCard orderId={orderId} revision={current?.rewardQuoteRef}/>
       <Text style={styles.title}>{t('agreement.title')}</Text>
       {agreement.isPending || amendments.isPending ? <Text>{t('agreement.loading')}</Text> : null}
       {(agreement.error || amendments.error) ? (
@@ -119,6 +121,7 @@ export function OrderAgreementCard({ order, role }: { order: OrderDto; role: Ord
           (role === 'CLIENT' || Number(item.newPrice) <= Number(current.price));
         return (
           <Card key={item.amendmentId}>
+            <RewardQuoteCard orderId={orderId} amendmentId={item.amendmentId}/>
             <Text style={styles.title}>{t(statuses[item.status])}</Text>
             {item.reason ? <Text style={styles.text}>{item.reason}</Text> : null}
             {item.oldScope && item.newScope ? <Text selectable>{item.oldScope} → {item.newScope}</Text> : null}

@@ -24,4 +24,9 @@ public class CashFeeRequest {
 
     UUID feePolicyVersionId;
 
+    UUID outcomeId;
+    Boolean workAccepted;
+    Boolean paymentReceived;
+    BigDecimal actualReceivedAmount;
+
 }

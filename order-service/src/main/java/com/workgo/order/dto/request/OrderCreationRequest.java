@@ -16,6 +16,8 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderCreationRequest {
 
+    String rewardQuoteRef;
+
     UUID serviceId;
 
     UUID packageId;

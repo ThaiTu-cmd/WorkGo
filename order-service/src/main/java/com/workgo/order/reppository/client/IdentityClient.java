@@ -15,6 +15,9 @@ import java.util.UUID;
 @FeignClient(name = "identity-service", contextId = "orderIdentityClient", url = "${app.services.identity}",
         configuration = InternalFeignConfiguration.class)
 public interface IdentityClient {
+    record Admission(UUID providerId,boolean mayReceiveNewOrders,boolean payoutAllowed,long sourceVersion,UUID recoveryGrantId) {}
+    @GetMapping("/internal/providers/{id}/admission")
+    Admission admission(@PathVariable UUID id);
 
     @GetMapping("/internal/providers/{providerId}")
     ProviderProfileResponse getProviderProfile(@PathVariable UUID providerId);

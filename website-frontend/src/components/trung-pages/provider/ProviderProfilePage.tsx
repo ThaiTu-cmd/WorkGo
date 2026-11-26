@@ -6,6 +6,7 @@ import { BadgeCheck, CalendarDays, MessageCircle, Edit3, Check, ShieldCheck, Shi
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import { providerApi, verificationApi, catalogApi, trustApi, toProvider, useAuthToken } from "../../webapp-bridge/backend";
 import styles from "./ProviderProfilePage.module.css";
+import ScoreReviewHistory from "./ScoreReviewHistory";
 
 export type TrungPageProps = {
   onNavigate: (page: TrungPageKey, params?: CatalogFilterParams) => void;
@@ -60,7 +61,7 @@ export default function ProviderProfilePage({
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
-  const [editAccepting, setEditAccepting] = useState(true);
+  const [editAccepting, setEditAccepting] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -77,6 +78,7 @@ export default function ProviderProfilePage({
         if (p) {
           setEditName(p.name || "");
           setEditBio(p.bio || "");
+          setEditAccepting(p.acceptingOrders === true);
         }
       }
     };
@@ -126,7 +128,8 @@ export default function ProviderProfilePage({
         bio: editBio.trim(),
         isAcceptingOrders: editAccepting
       });
-      if (res?.result) {
+      if (!res?.result?.providerProfileId) throw new Error('Thiếu xác nhận hồ sơ từ server.');
+      if (res.result) {
         const updated = toProvider(res.result);
         setResult({
           key: requestKey,
@@ -360,6 +363,7 @@ export default function ProviderProfilePage({
             </div>
           </form>
         )}
+      {isOwnProfile && <ScoreReviewHistory providerId={provider.providerId} />}
       <div style={{ marginTop: "16px" }}>
         <h2 style={{ fontSize: "1rem", fontWeight: 700 }}>Dịch vụ đang cung cấp</h2>
         {providerServices.length === 0 ? (

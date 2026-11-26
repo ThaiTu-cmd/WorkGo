@@ -16,6 +16,7 @@ import java.util.UUID;
 public class OrderAmendmentResponse {
 
     UUID amendmentId;
+    String rewardQuoteRef;
     UUID paymentReceiptId;
     Instant paymentAdjustedAt;
 

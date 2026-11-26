@@ -129,7 +129,7 @@ public class OrderFileService {
         boolean written = false;
 
         try {
-            fileStorage.put(storageKey, content);
+            fileStorage.put(storageKey, content, mimeType);
             written = true;
             byte[] verified = fileStorage.get(storageKey);
             if (verified == null || !sha256(verified).equals(digest)) {

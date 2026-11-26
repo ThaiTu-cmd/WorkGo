@@ -1,3 +1,4 @@
+import RewardQuoteBox from './RewardQuoteBox';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { ScrollText } from 'lucide-react';
@@ -87,7 +88,7 @@ export default function OrderAgreementPanel({ order, role, onUpdated }) {
   };
 
   return <section className={styles.panel} aria-label={t('agreement')}>
-    <strong className={styles.panelTitle}><ScrollText size={16} aria-hidden="true" />{t('agreement')}</strong>
+    <RewardQuoteBox orderId={orderId} revision={current?.rewardQuoteRef}/><strong className={styles.panelTitle}><ScrollText size={16} aria-hidden="true" />{t('agreement')}</strong>
     {loadFailed ? <p className={styles.warn} role="alert">{t('loadError')}{' '}
         <button type="button" className={buttons.linkBtn} onClick={() => { setLoadFailed(false); setRetry(x => x + 1); }}>{t('retry')}</button>
       </p> : !agreement && <p role="status" className={styles.note}>{t('loading')}</p>}
@@ -118,6 +119,7 @@ export default function OrderAgreementPanel({ order, role, onUpdated }) {
       const canSettle = awaiting && (delta <= 0 || role === 'CLIENT');
       const paymentLabel = delta > 0 ? 'chargeDifference' : 'refundDifference';
       return <article className={styles.version} key={amendment.amendmentId}>
+        {amendment.rewardQuoteRef&&<RewardQuoteBox orderId={orderId} amendmentId={amendment.amendmentId}/>}
         <div className={styles.versionHead}>
           <strong>{t(amendment.proposedByRole === 'CLIENT' ? 'clientProposal' : 'providerProposal')}</strong>
           <span className={styles.chip}>{t.has(amendment.status) ? t(amendment.status) : amendment.status}</span>

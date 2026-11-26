@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useAuth} from '@/auth/AuthProvider';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -32,11 +34,18 @@ const PRESET_AMOUNTS = [50000, 100000, 200000, 500000, 1000000, 2000000];
 const MIN_TOP_UP_AMOUNT = 10000;
 
 export function TopUpScreen() {
+  const {claims,status}=useAuth();
+  const params=useLocalSearchParams<{topUpId?:string}>();
+  return <TopUpSession key={status+':'+(claims?.userId??'')+':'+(params.topUpId??'')} />;
+}
+
+function TopUpSession() {
   const t = useT();
   const styles = useStyles();
   const colors = useColors();
   const router = useRouter();
   const signedIn = useRequireAuth();
+  const {claims}=useAuth();const storageKey='workgo.topup.pending:'+(claims?.userId??'');
   const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ amount?: string; orderId?: string; topUpId?: string; fromAmendment?: string }>();
   const once = useSingleFlight();
@@ -60,13 +69,22 @@ export function TopUpScreen() {
     },
   });
   const topUpStatus = topUp.data?.status;
+  React.useEffect(()=>{let active=true;
+    AsyncStorage.getItem(storageKey).then(raw=>{if(!active||!raw)return;const saved=JSON.parse(raw);
+      if(saved?.key&&Number.isSafeInteger(saved.amount)&&['VNPAY','MOMO','MOCK'].includes(saved.gateway)){
+        attempt.current={amount:saved.amount,gateway:saved.gateway,key:saved.key};setAmountRaw(String(saved.amount));setGateway(saved.gateway);if(saved.topUpId)setActiveTopUpId(saved.topUpId);
+      }
+    }).catch(()=>undefined);return()=>{active=false;};
+  },[storageKey,params.topUpId]);
+
 
   React.useEffect(() => {
     if (topUpStatus === 'SUCCEEDED') {
+      void AsyncStorage.removeItem(storageKey);
       void queryClient.invalidateQueries({ queryKey: qk.wallet() });
       void queryClient.invalidateQueries({ queryKey: qk.walletLedger() });
     }
-  }, [topUpStatus, queryClient]);
+  }, [topUpStatus, queryClient, storageKey]);
 
   const openGateway = async (item: TopUpDto) => {
     if (!item.paymentUrl) return;
@@ -91,6 +109,7 @@ export function TopUpScreen() {
       if (attempt.current?.amount !== amt || attempt.current.gateway !== gateway) {
         attempt.current = { amount: amt, gateway, key: newIdempotencyKey() };
       }
+      await AsyncStorage.setItem(storageKey,JSON.stringify(attempt.current));
       const res = await paymentApi.createTopUp(
         {
           amount: amt,
@@ -99,6 +118,8 @@ export function TopUpScreen() {
         },
         attempt.current.key
       );
+      if(!res.result?.topUpId)throw new Error('Missing top-up receipt');
+      await AsyncStorage.setItem(storageKey,JSON.stringify({...attempt.current,topUpId:res.result.topUpId}));
       return res.result;
     },
     onSuccess: async (data) => {
@@ -137,6 +158,7 @@ export function TopUpScreen() {
 
   return (
     <Screen>
+      {topUp.data?.gateway==='MOCK'&&<Text>Sandbox TEST_VND: no spendable wallet credit.</Text>}
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Nạp tiền vào ví</Text>

@@ -25,6 +25,9 @@ public class OrderController {
 
     OrderService orderService;
 
+    @PostMapping("/reward-quote")
+    public ApiResponse<com.workgo.order.service.OrderRewardQuoteService.Quote> preview(@RequestBody OrderCreationRequest request){return ApiResponse.<com.workgo.order.service.OrderRewardQuoteService.Quote>builder().code(1000).result(orderService.previewReward(request)).build();}
+
     //client tao mot order tu service co san cua provider
     @PostMapping
     ApiResponse<OrderResponse> createOrder(

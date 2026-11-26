@@ -21,6 +21,11 @@ public interface JobRepository extends JpaRepository<Job, UUID>, JpaSpecificatio
     @org.springframework.data.jpa.repository.Query("select j from Job j where j.jobId = :id")
     java.util.Optional<Job> findLockedById(@org.springframework.data.repository.query.Param("id") UUID id);
     Page<Job> findByClientId(UUID clientId, Pageable pageable);
+    java.util.Optional<Job> findByClientIdAndCreationKey(UUID clientId,String creationKey);
+
+    @org.springframework.data.jpa.repository.Query(value="select count(*) from jobs where client_id=:client and creation_key=:key",nativeQuery=true)
+    long countCreationKeyIncludingDeleted(@org.springframework.data.repository.query.Param("client") UUID client,
+                                         @org.springframework.data.repository.query.Param("key") String key);
 
     /** Public jobs at the caller's clock instant; budget filters use inclusive interval overlap. */
     default Page<Job> searchOpenJobs(String keyword, UUID categoryId, ExecutionType executionType,

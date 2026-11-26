@@ -86,6 +86,14 @@ public class JobService {
     }
 
     @Transactional
+    public JobDetailDto createDraft(JobCreateReq req) {
+        var created=create(req);
+        var job=jobs.findById(created.jobId()).orElseThrow();
+        job.setStatus(JobStatus.PAUSED);jobs.flush();
+        return detail(job);
+    }
+
+    @Transactional
     public JobDetailDto update(UUID id, JobUpdateReq req) {
         Job job = access.lock(id);
         access.owner(job);

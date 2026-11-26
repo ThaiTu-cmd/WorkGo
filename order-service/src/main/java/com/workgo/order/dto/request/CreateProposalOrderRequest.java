@@ -20,5 +20,8 @@ public record CreateProposalOrderRequest(
         @Max(value = 36500, message = "PROPOSAL_ORDER_INVALID_REQUEST") Integer estimatedDays,
         @NotBlank(message = "PROPOSAL_ORDER_INVALID_REQUEST")
         @Size(max = 255, message = "PROPOSAL_ORDER_INVALID_REQUEST") String jobTitle,
-        String jobDescription, String locationSnapshot, String terms, String paymentMethod) {
+        String jobDescription, String locationSnapshot, String terms, String paymentMethod,
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL) String rewardQuoteRef,
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL) java.time.Instant acceptedAt) {
+    public CreateProposalOrderRequest(UUID proposalId,UUID jobId,UUID clientId,UUID providerId,String executionType,BigDecimal price,String currency,Integer estimatedDays,String jobTitle,String jobDescription,String locationSnapshot,String terms,String paymentMethod){this(proposalId,jobId,clientId,providerId,executionType,price,currency,estimatedDays,jobTitle,jobDescription,locationSnapshot,terms,paymentMethod,null,null);}
 }

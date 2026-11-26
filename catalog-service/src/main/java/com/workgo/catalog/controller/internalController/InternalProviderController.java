@@ -17,6 +17,11 @@ public class InternalProviderController {
 
     ProviderRestrictionService providerRestrictionService;
 
+    @PutMapping("/{providerId}/financial-restriction/receipt")
+    ProviderRestrictionService.RestrictionAck financialReceipt(@PathVariable UUID providerId, @RequestBody FinancialRestrictionRequest request) {
+        return providerRestrictionService.applyWithReceipt(providerId,request);
+    }
+
     @PutMapping("/{providerId}/financial-restriction")
     void updateFinancialRestriction(
             @PathVariable UUID providerId,

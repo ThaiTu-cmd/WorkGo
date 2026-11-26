@@ -21,4 +21,9 @@ public class PayoutCreationRequest {
 
     String accountName;
 
+    java.util.UUID verifiedBeneficiaryId;
+
+    // Original proof issued by the beneficiary verification adapter, never browser assertions.
+    java.util.Map<String, String> beneficiaryEvidence;
+
 }

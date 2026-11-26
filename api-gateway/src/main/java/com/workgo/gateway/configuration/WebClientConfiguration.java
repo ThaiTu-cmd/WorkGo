@@ -16,9 +16,9 @@ import java.util.List;
 public class WebClientConfiguration {
 
     @Bean
-    WebClient webClient(){
+    WebClient webClient(@org.springframework.beans.factory.annotation.Value("${IDENTITY_SERVICE_URL:http://localhost:8081/identity}") String identityUrl){
         return WebClient.builder()
-                .baseUrl("http://localhost:8081/identity")
+                .baseUrl(identityUrl)
                 .clientConnector(new org.springframework.http.client.reactive.ReactorClientHttpConnector(
                         reactor.netty.http.client.HttpClient.create().followRedirect(false)
                                 .option(io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS, 2000)

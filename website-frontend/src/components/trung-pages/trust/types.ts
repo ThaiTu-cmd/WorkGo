@@ -19,7 +19,7 @@ export type ReportTargetType =
   | "ORDER"
   | "REVIEW";
 
-export type DisputeDecisionType = "RELEASE" | "REFUND" | "SPLIT";
+export type DisputeDecisionType = "RELEASE" | "REFUND" | "REJECT" | "SUPPORT" | "SPLIT";
 
 export type SettlementStatus =
   | "FROZEN"
@@ -37,12 +37,14 @@ export type DisputeTimelineEvent = {
 };
 
 export type SupplementaryEvidence = {
+  fileId?: string;
   evidenceUrl: string;
   note?: string;
   submittedAt: string;
 };
 
 export type Dispute = {
+  progress?: {operation:string;paymentStatus:string;orderStatus:string;timerStatus:string;executionStatus:string;lastError?:string};
   id: string;
   ticketId: string;
   kind: DisputeKind;

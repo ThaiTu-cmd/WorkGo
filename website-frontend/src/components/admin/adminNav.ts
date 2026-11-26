@@ -32,6 +32,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     items: [
       { path: "providers", label: "Quản lý Provider", icon: BadgeCheck },
       { path: "verifications", label: "Giấy tờ xác minh", icon: FileCheck2 },
+      { path: "score-reviews", label: "Xét điểm 0–4", icon: FileCheck2 },
     ],
   },
   {
@@ -44,19 +45,19 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     title: "Kiểm duyệt",
     items: [
-      { path: "jobs", label: "Job", icon: FileCheck2, badge: "soon" },
-      { path: "reviews", label: "Review", icon: FileCheck2, badge: "soon" },
-      { path: "reports", label: "Report", icon: FileCheck2, badge: "soon" },
-      { path: "disputes", label: "Dispute", icon: FileCheck2, badge: "soon" },
+      { path: "jobs", label: "Job", icon: FileCheck2 },
+      { path: "reviews", label: "Review", icon: FileCheck2 },
+      { path: "reports", label: "Report", icon: FileCheck2 },
+      { path: "disputes", label: "Dispute", icon: FileCheck2 },
     ],
   },
   {
     title: "Tài chính",
     items: [
-      { path: "escrow", label: "Ký quỹ", icon: Vault, badge: "soon" },
+      { path: "escrow", label: "Ký quỹ", icon: Vault },
       { path: "fees", label: "Phí", labelKey: "fees", icon: Vault },
       { path: "payouts", label: "Lệnh rút tiền", labelKey: "payouts", icon: Vault },
-      { path: "sanctions", label: "Chế tài", icon: Users, badge: "soon" },
+      { path: "sanctions", label: "Chế tài", icon: Users },
       { path: "monitoring", label: "Giám sát", labelKey: "monitoring", icon: LayoutDashboard },
       { path: "audit", label: "Audit", labelKey: "audit", icon: FileCheck2 },
       { path: "reconciliation", label: "Đối soát", labelKey: "reconciliation", icon: Vault },

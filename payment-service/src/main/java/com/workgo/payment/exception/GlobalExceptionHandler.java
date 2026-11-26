@@ -17,7 +17,7 @@ public class GlobalExceptionHandler {
                 .status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode())
                 .body(ApiResponse.builder()
                         .code(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode())
-                        .message(exception.getMessage())
+                        .message(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage())
                         .build());
     }
 
@@ -27,7 +27,7 @@ public class GlobalExceptionHandler {
                 .status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode())
                 .body(ApiResponse.builder()
                         .code(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode())
-                        .message(exception.getMessage())
+                        .message(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage())
                         .build());
     }
 

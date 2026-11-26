@@ -25,6 +25,7 @@ public class AuthenticationService {
     private final UserRepository userRepository;
     private final RefreshSessionService refreshSessions;
     private final Clock clock;
+    private final ProviderSanctionRepository sanctions;
     @Value("${jwt.signerKey}") private String SIGNER_KEY;
 
     @Transactional(rollbackFor = Exception.class)
@@ -85,11 +86,13 @@ public class AuthenticationService {
                 || !Objects.equals(claims.getLongClaim("authorizationVersion"), user.getAuthorizationVersion())
                 || !user.getUserId().toString().equals(claims.getStringClaim("userId"))
                 || !refreshSessions.active(UUID.fromString(claims.getStringClaim("sessionId")), user.getUserId())) throw invalid();
+        if(sanctions.active(user.getUserId(),Set.of("ACCOUNT","SECURITY"),clock.instant())>0)throw invalid();
         return jwt;
     }
 
     private AuthenticationResponse response(RefreshSessionService.Grant grant) throws JOSEException {
         User user = grant.user();
+        if(sanctions.active(user.getUserId(),Set.of("ACCOUNT","SECURITY"),clock.instant())>0)throw invalid();
         Instant now = clock.instant();
         Instant expires = now.plusSeconds(900);
         StringJoiner scope = new StringJoiner(" ");

@@ -67,7 +67,11 @@ public class ApplicationService {
 
     @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
     public ProviderProfileResponse eligible(UUID providerId) {
-        if (restrictions.existsByProviderIdAndBlockedTrue(providerId)) throw new AppException(ErrorCode.PROVIDER_NOT_ACTIVE);
+        var restricted=restrictions.findByProviderIdAndBlockedTrue(providerId);
+        com.workgo.job.repository.client.IdentityClient.Admission admission;
+        try{admission=identity.admission(providerId);}catch(RuntimeException e){throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);}
+        if(admission==null||!providerId.equals(admission.providerId()))throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);
+        if(!admission.mayReceiveNewOrders() || restricted.stream().anyMatch(r->!"REPUTATION".equals(r.getSource())||admission.recoveryGrantId()==null))throw new AppException(ErrorCode.PROVIDER_NOT_ACTIVE);
         ProviderProfileResponse profile = profile(providerId);
         if (!"ACTIVE".equals(profile.getUserStatus()) || !profile.isAcceptingOrders() || Boolean.TRUE.equals(profile.getSanctioned()))
             throw new AppException(ErrorCode.PROVIDER_NOT_ACTIVE);

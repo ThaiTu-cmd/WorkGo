@@ -10,6 +10,12 @@ import java.util.UUID;
 @FeignClient(name = "trust-service", contextId = "orderTrustClient", url = "${app.services.trust}",
         configuration = InternalFeignConfiguration.class)
 public interface TrustClient {
+    record RewardCommit(UUID orderId,UUID providerId,UUID clientId,String quoteRef,java.time.Instant confirmedAt){}
+    record RewardCommitAck(UUID orderId,String quoteRef){}
+    @PostMapping("/internal/rewards/commit") ApiResponse<RewardCommitAck> commitReward(@RequestBody RewardCommit command);
+    record Score(UUID providerId,int score,String policyVersion) {}
+    @GetMapping("/internal/providers/{id}/reputation")
+    ApiResponse<Score> reputation(@PathVariable UUID id);
     @PostMapping("/internal/events/order-completed")
     ApiResponse<Void> orderCompleted(@RequestBody OrderCompletedEvent event);
 

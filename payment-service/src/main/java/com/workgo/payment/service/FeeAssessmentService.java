@@ -123,6 +123,10 @@ public class FeeAssessmentService {
     public FeeAssessmentResponse recordCashSuccessFee(UUID orderId, UUID providerUserId, UUID feePolicyVersionId,
                                                       long orderAmount, long fee) {
 
+        var policy = feePolicyService.loadForOrder(feePolicyVersionId);
+        if (orderAmount <= 0 || orderAmount > 2000000 || fee != feePolicyService.successFee(policy,orderAmount))
+            throw new AppException(ErrorCode.CASH_FEE_INVALID);
+
         FeeAssessment assessment = FeeAssessment.builder()
                 .orderId(orderId)
                 .feeType(FeeType.SUCCESS)

@@ -58,13 +58,20 @@ public class OnsiteOrderController {
 
     //provider xac nhan da nhan du tien mat (chi don CASH)
     @PostMapping("/{orderId}/cash-received")
-    ApiResponse<OnsiteExecutionResponse> confirmCashReceived(@PathVariable UUID orderId) {
+    ApiResponse<OnsiteExecutionResponse> confirmCashReceived(@PathVariable UUID orderId, @RequestBody(required=false) CashReceipt request) {
 
         return ApiResponse.<OnsiteExecutionResponse>builder()
                 .code(ErrorCode.SUCCESS.getCode())
                 .message(ErrorCode.SUCCESS.getMessage())
-                .result(onsiteFlowService.confirmCashReceived(orderId))
+                .result(onsiteFlowService.confirmCashReceived(orderId,request==null?null:request.amount()))
                 .build();
+    }
+
+    public record CashReceipt(java.math.BigDecimal amount) {}
+
+    @PostMapping("/{orderId}/cash-paid")
+    ApiResponse<OnsiteExecutionResponse> cashPaid(@PathVariable UUID orderId,@RequestBody CashReceipt request) {
+        return ApiResponse.<OnsiteExecutionResponse>builder().result(onsiteFlowService.recordClientCashPaid(orderId,request.amount())).build();
     }
 
     //client duyet complete cua provider

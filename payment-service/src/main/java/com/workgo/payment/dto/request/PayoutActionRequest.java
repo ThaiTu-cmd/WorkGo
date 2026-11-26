@@ -15,4 +15,6 @@ public class PayoutActionRequest {
 
     String externalReference;
 
+    java.util.Map<String, String> sourceEvidence;
+
 }

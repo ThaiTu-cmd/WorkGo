@@ -266,6 +266,10 @@ public class ServiceService {
             restrictedProviders.select(restriction.get("providerId"))
                     .where(cb.isTrue(restriction.get("restricted")));
             predicates.add(cb.not(root.get("providerId").in(restrictedProviders)));
+            Subquery<UUID> policyBlocked=query.subquery(UUID.class);
+            var policy=policyBlocked.from(com.workgo.catalog.entity.ProviderRestrictionProjection.class);
+            policyBlocked.select(policy.get("providerId")).where(cb.isTrue(policy.get("blocked")));
+            predicates.add(cb.not(root.get("providerId").in(policyBlocked)));
 
             if (keyword != null && !keyword.isBlank()) {
                 String pattern = "%" + keyword.trim().toLowerCase() + "%";

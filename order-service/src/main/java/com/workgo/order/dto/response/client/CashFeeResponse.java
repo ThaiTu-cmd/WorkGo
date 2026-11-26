@@ -15,6 +15,11 @@ public class CashFeeResponse {
 
     UUID feeAssessmentId;
 
+    UUID orderId;
+    UUID feePolicyVersionId;
+    Long baseAmount;
+    Long outstandingAmount;
+
     Long amount;
 
     Long collectedAmount;

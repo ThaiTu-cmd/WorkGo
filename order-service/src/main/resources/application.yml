@@ -50,8 +50,16 @@ logging:
 app:
   internal-key: ${INTERNAL_API_KEY:}
   storage:
+    type: ${ORDER_STORAGE_TYPE:local}
+    s3:
+      endpoint: ${ORDER_S3_ENDPOINT:https://s3.amazonaws.com}
+      bucket: ${ORDER_S3_BUCKET:}
+      region: ${ORDER_S3_REGION:ap-southeast-1}
+      access-key: ${ORDER_S3_ACCESS_KEY:}
+      secret-key: ${ORDER_S3_SECRET_KEY:}
+      prefix: order
     local-dir: ${ORDER_STORAGE_DIR:${user.home}/.workgo/order-files}
-    signing-key: ${ORDER_FILE_SIGNING_KEY:}
+    signing-key: ${ORDER_STORAGE_SIGNING_KEY:${ORDER_FILE_SIGNING_KEY:}}
   clients:
     connect-timeout-millis: ${ORDER_CLIENT_CONNECT_TIMEOUT_MS:2000}
     read-timeout-millis: ${ORDER_CLIENT_READ_TIMEOUT_MS:5000}
@@ -73,8 +81,8 @@ order:
     token-salt: ${ORDER_MEET_TOKEN_SALT:}
     poll-millis: ${ORDER_MEET_POLL_MS:60000}
   reward-quote:
-    # Local demo only. Enable before opening admission in a release environment.
-    required: ${ORDER_REWARD_QUOTE_REQUIRED:false}
+    # Trust server quote is required; unrelated release gates remain closed.
+    required: ${ORDER_REWARD_QUOTE_REQUIRED:true}
   trust-outbox:
     max-attempts: ${ORDER_TRUST_OUTBOX_MAX_ATTEMPTS:8}
     lease-seconds: ${ORDER_TRUST_OUTBOX_LEASE_SECONDS:60}

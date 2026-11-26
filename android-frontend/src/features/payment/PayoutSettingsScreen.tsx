@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useAuth} from '@/auth/AuthProvider';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as React from 'react';
@@ -26,8 +28,7 @@ import {
 import { newIdempotencyKey } from './payment';
 
 const MIN_PAYOUT_AMOUNT = 50000;
-const POPULAR_BANKS = [{ name: 'Vietcombank', code: 'VCB' }, { name: 'MB Bank', code: 'MB' },
-  { name: 'Techcombank', code: 'TCB' }, { name: 'BIDV', code: 'BIDV' }, { name: 'ACB', code: 'ACB' }, { name: 'VietinBank', code: 'CTG' }];
+
 
 export function maskAccount(n: string): string {
   const digits = n.replace(/\D/g, '');
@@ -36,14 +37,26 @@ export function maskAccount(n: string): string {
 }
 
 export function PayoutSettingsScreen() {
+  const {claims,status}=useAuth();
+  return <PayoutSettingsSession key={status+':'+(claims?.userId??'')} />;
+}
+
+function PayoutSettingsSession() {
   const t = useT();
   const styles = useStyles();
   const colors = useColors();
   const signedIn = useRequireAuth();
+  const {claims}=useAuth();const userId=claims?.userId??'';const storageKey='workgo.payout.pending:'+userId;
+  const [restoring,setRestoring]=React.useState(true);
+  const [restoreError,setRestoreError]=React.useState<string|null>(null);
+  const [restoreRetry,setRestoreRetry]=React.useState(0);
+  const [receipt,setReceipt]=React.useState<{payoutId:string;status:string}|null>(null);
   const queryClient = useQueryClient();
   const once = useSingleFlight();
   const [attempt, setAttempt] = React.useState<{ payload: string; key: string } | null>(null);
 
+  const [beneficiaryId,setBeneficiaryId]=React.useState('');
+  const verifiedQuery=useQuery({queryKey:['verifiedBeneficiaries',userId],enabled:signedIn,queryFn:async()=>(await paymentApi.getBeneficiaries()).result});
   const [bankName, setBankName] = React.useState('');
   const [accountName, setAccountName] = React.useState('');
   const [accountNumber, setAccountNumber] = React.useState('');
@@ -55,10 +68,35 @@ export function PayoutSettingsScreen() {
   const [withdrawAmount, setWithdrawAmount] = React.useState('');
   const [withdrawError, setWithdrawError] = React.useState<string | null>(null);
   const body: PayoutRequest = {
-    amount: Number(withdrawAmount.trim()), bankCode: bankName.trim(),
+    verifiedBeneficiaryId:beneficiaryId, amount: Number(withdrawAmount.trim()), bankCode: bankName.trim(),
     accountName: accountName.trim().toUpperCase(), accountNumber: accountNumber.trim(),
   };
   const payload = JSON.stringify(body);
+  React.useEffect(()=>{let active=true;
+    AsyncStorage.getItem(storageKey).then(async raw=>{
+      if(!active)return;setRestoring(true);setRestoreError(null);
+      if(!raw)return;const saved=JSON.parse(raw);
+      if(typeof saved?.key!=='string'||!Number.isSafeInteger(saved.amount))throw new Error('Không đọc được lệnh rút đang chờ.');
+      let result;
+      try{const response=await paymentApi.getPayoutReceipt(saved.key);if(!response?.result?.payoutId)throw new Error('Invalid payout receipt');result=response.result;}
+      catch(error){if((error as {status?:number}).status!==404)throw error;}
+      if(!active)return;
+      if(result){
+        if(!result.payoutId)throw new Error('Server chưa xác nhận receipt của lệnh rút.');
+        setReceipt(result);setAttempt(null);setWithdrawAmount('');await AsyncStorage.removeItem(storageKey).catch(()=>{});return;
+      }
+      const b=verifiedQuery.data?.find(v=>v.id===saved.verifiedBeneficiaryId);
+      if(!b){
+        if(verifiedQuery.isSuccess){await AsyncStorage.removeItem(storageKey).catch(()=>{});setAttempt(null);setWithdrawError('Tài khoản nhận tiền cần xác minh lại trước khi tạo lệnh mới.');}
+        return;
+      }
+      setBeneficiaryId(b.id);setBankName(b.bankCode);setAccountName(b.accountName);setAccountNumber(b.accountNumber);setWithdrawAmount(String(saved.amount));
+      setAttempt({key:saved.key,payload:JSON.stringify({verifiedBeneficiaryId:b.id,amount:saved.amount,bankCode:b.bankCode,accountName:b.accountName,accountNumber:b.accountNumber})});
+    }).catch(error=>{if(active)setRestoreError(error instanceof Error?error.message:'Chưa kiểm tra được lệnh rút đang chờ.');})
+      .finally(()=>{if(active)setRestoring(false);});
+    return()=>{active=false;};
+  },[storageKey,verifiedQuery.data,verifiedQuery.isSuccess,restoreRetry]);
+
   const isReplay = attempt?.payload === payload;
 
   const walletQuery = useQuery({
@@ -73,6 +111,8 @@ export function PayoutSettingsScreen() {
   const withdrawMutation = useMutation({
     networkMode: 'always',
     mutationFn: async () => {
+      if(restoring||restoreError)throw new Error('Cần kiểm tra lệnh rút đang chờ trước khi tạo lệnh mới.');
+      if(!beneficiaryId)throw new Error('Chọn tài khoản đã xác minh');
       let hasErr = false;
       if (!bankName.trim()) {
         setBankError('Vui lòng nhập tên ngân hàng');
@@ -107,9 +147,12 @@ export function PayoutSettingsScreen() {
       }
       const currentAttempt = attempt?.payload === payload ? attempt : { payload, key: newIdempotencyKey() };
       setAttempt(currentAttempt);
-      return (await paymentApi.requestPayout(body, currentAttempt.key)).result;
+      await AsyncStorage.setItem(storageKey,JSON.stringify({key:currentAttempt.key,amount:amt,verifiedBeneficiaryId:beneficiaryId}));
+      const result=(await paymentApi.requestPayout(body, currentAttempt.key)).result;
+      if(!result?.payoutId)throw new Error('Missing payout receipt');return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      setReceipt(data);void AsyncStorage.removeItem(storageKey);
       void queryClient.invalidateQueries({ queryKey: qk.wallet() });
       void queryClient.invalidateQueries({ queryKey: qk.walletLedger() });
       setWithdrawAmount('');
@@ -142,11 +185,14 @@ export function PayoutSettingsScreen() {
           </Text>
         </View>
 
+        {receipt&&<Text>Receipt {receipt.payoutId}: {receipt.status}</Text>}
+        {restoreError&&<><Text>{restoreError}</Text><Button title="Kiểm tra lệnh đang chờ" onPress={()=>setRestoreRetry(v=>v+1)}/></>}
         <Card style={styles.formCard}>
           <Text style={styles.cardTitle}>Thông tin tài khoản ngân hàng</Text>
 
           <TextField
             label={t('payout.bank_code')}
+            editable={false}
             value={bankName}
             onChangeText={(val) => {
               setBankName(val);
@@ -157,21 +203,13 @@ export function PayoutSettingsScreen() {
           />
 
           <View style={styles.quickBanks}>
-            {POPULAR_BANKS.map((b) => (
-              <Chip
-                key={b.code}
-                label={b.name}
-                selected={bankName === b.code}
-                onPress={() => {
-                  setBankName(b.code);
-                  setBankError(null);
-                }}
-              />
-            ))}
+            {(verifiedQuery.data??[]).map(b=><Chip key={b.id} label={`${b.bankCode} ? ${maskAccount(b.accountNumber)}`} selected={beneficiaryId===b.id} onPress={()=>{setBeneficiaryId(b.id);setBankName(b.bankCode);setAccountName(b.accountName);setAccountNumber(b.accountNumber);}}/>)}
+            {!verifiedQuery.data?.length&&<Text>Cần xác minh tài khoản ngân hàng trước khi rút tiền.</Text>}
           </View>
 
           <TextField
             label="Tên chủ tài khoản (viết hoa không dấu)"
+            editable={false}
             value={accountName}
             onChangeText={(val) => {
               setAccountName(val.toUpperCase());
@@ -184,6 +222,7 @@ export function PayoutSettingsScreen() {
 
           <TextField
             label="Số tài khoản ngân hàng"
+            editable={false}
             value={accountNumber}
             onChangeText={(val) => {
               setAccountNumber(val);
@@ -229,7 +268,7 @@ export function PayoutSettingsScreen() {
             <Button
               title="Tạo lệnh rút tiền"
               variant="secondary"
-              disabled={!isReplay && (!walletQuery.data || avail < MIN_PAYOUT_AMOUNT || debt > 0)}
+              disabled={restoring || Boolean(restoreError) || !beneficiaryId || (!isReplay && (!walletQuery.data || avail < MIN_PAYOUT_AMOUNT || debt > 0))}
               loading={withdrawMutation.isPending}
               onPress={() => { void once(() => withdrawMutation.mutateAsync().catch(() => undefined)); }}
             />

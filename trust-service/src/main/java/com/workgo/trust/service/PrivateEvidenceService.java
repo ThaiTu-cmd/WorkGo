@@ -128,7 +128,7 @@ public class PrivateEvidenceService {
             String storageKey = fileId.toString();
             boolean stored = false;
             try {
-                storage.put(storageKey, content);
+                storage.put(storageKey, content, mime);
                 stored = true;
                 byte[] verified = storage.get(storageKey);
                 if (verified == null || !digest(verified).equals(sha)) {

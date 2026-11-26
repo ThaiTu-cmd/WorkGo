@@ -14,6 +14,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class InternalProviderProfileRepository {
     private final JdbcTemplate jdbcTemplate;
+    public Optional<InternalProviderProfileResponse> findByUserId(UUID user){
+        return jdbcTemplate.query("select provider_profile_id from provider_profiles where user_id=? and is_deleted=0",
+                (rs,row)->rs.getObject(1,UUID.class),user).stream().findFirst().flatMap(this::findById);
+    }
 
     public Optional<InternalProviderProfileResponse> findById(UUID providerId) {
         return jdbcTemplate.query("""

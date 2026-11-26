@@ -16,6 +16,7 @@ import java.time.Instant;
 
 @Component @RequiredArgsConstructor @Slf4j
 public class TrustOutboxWorker {
+    private final ReputationService reputation;
     private final TrustOutboxEventRepository repository;
     private final DisputeRepository disputes;
     private final TrustOutboxStore store;
@@ -55,6 +56,13 @@ public class TrustOutboxWorker {
     }
     private String dispatch(TrustOutboxStore.Delivery d) throws Exception {
         return switch (d.eventType()) {
+            case "decision.penalty" -> {
+                var req=json.readValue(d.payload(),ReputationService.Penalty.class);
+                if(reputation.superseded(req.decisionId()))yield "SUPERSEDED";
+                var ack=reputation.penalize(req);
+                if(ack==null||!req.providerId().equals(ack.getProviderId()))throw new IllegalStateException("Invalid reputation ACK");
+                yield "REPUTATION_APPLIED";
+            }
             case "dispute.timer.pause", "dispute.timer.resume" -> {
                 var req=json.readValue(d.payload(),EscrowFreezeRequest.class);
                 boolean resume="dispute.timer.resume".equals(d.eventType());
@@ -86,6 +94,10 @@ public class TrustOutboxWorker {
             case "dispute.opened.freeze_escrow", "dispute.cancelled.unfreeze_escrow" -> {
                 var req = json.readValue(d.payload(),EscrowFreezeRequest.class);
                 boolean freeze = d.eventType().equals("dispute.opened.freeze_escrow");
+                var snapshot = orders.getOrderSnapshot(req.orderId());
+                if(snapshot==null || !req.orderId().equals(snapshot.orderId())) throw new IllegalStateException("Invalid Order ACK");
+                if("ONSITE".equals(snapshot.executionType()) && java.util.Set.of("CASH_ON_SITE","CASH_SETTLED").contains(snapshot.paymentStatus()))
+                    yield "NO_ESCROW_CASH";
                 EscrowAccountResponse ack = freeze ? payment.freeze(req) : payment.unfreeze(req);
                 if (ack == null || !req.orderId().equals(ack.orderId()) || ack.status() == null
                         || !java.util.Set.of("PENDING","HOLDING","FROZEN","RELEASED","REFUNDED","PARTIALLY_REFUNDED").contains(ack.status()))

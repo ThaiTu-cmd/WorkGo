@@ -6,6 +6,7 @@ import { ActivityIndicator, Alert, FlatList, RefreshControl, Text, View } from '
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { jobApi, type OrderSyncStatus, type ProposalDto } from '@/api/jobApi';
+import type {RewardQuoteDto} from '@/api/types';
 import { qk } from '@/api/queryKeys';
 import { formatDate, formatVnd } from '@/lib/format';
 import { Badge, Button, Card, EmptyState, ErrorState, font, makeStyles, radius, SkeletonList, spacing } from '@/ui';
@@ -24,6 +25,7 @@ export function ProposalReviewScreen({
   const activeJobId = propJobId || params.id || '';
 
   // Concurrency Lock
+  const [rewardQuotes,setRewardQuotes]=React.useState<Record<string,RewardQuoteDto>>({});
   const [processingId, setProcessingId] = React.useState<string | null>(null);
 
   // Sync state tracking per proposal: { status, orderId }
@@ -40,6 +42,10 @@ export function ProposalReviewScreen({
 
   const proposals: ProposalDto[] = proposalsQuery.data ?? [];
   const hasAccepted = proposals.some((p) => p.status === 'ACCEPTED');
+
+  const preview=useMutation({mutationFn:async(id:string)=>({id,quote:(await jobApi.getProposalRewardQuote(id)).result}),
+    onSuccess:({id,quote})=>{if(!quote?.reference||!Number.isInteger(quote.points)){Alert.alert('Lỗi','Invalid reward quote');return;}setRewardQuotes(old=>({...old,[id]:quote}));},
+    onError:(e:Error)=>Alert.alert('Lỗi',e.message)});
 
   // Accept Mutation
   const acceptMutation = useMutation({
@@ -264,12 +270,13 @@ export function ProposalReviewScreen({
                 {item.status === 'PENDING' && !hasAccepted ? (
                   <View style={styles.actionsRow}>
                     <View style={{ flex: 1 }}>
+                      {rewardQuotes[item.proposalId]&&<Text>Thưởng dự kiến {rewardQuotes[item.proposalId].points} điểm · Còn cap cặp {rewardQuotes[item.proposalId].remainingPairCap}, Provider {rewardQuotes[item.proposalId].remainingProviderCap}.</Text>}
                       <Button
-                        title="Chấp nhận"
+                        title={rewardQuotes[item.proposalId]?"Chấp nhận":"Xem quote trước khi chấp nhận"}
                         variant="primary"
                         loading={acceptMutation.isPending && isItemProcessing}
                         disabled={Boolean(processingId)}
-                        onPress={() => acceptMutation.mutate(item.proposalId)}
+                        onPress={() => {const q=rewardQuotes[item.proposalId];if(!q||Date.parse(q.expiresAt)<=Date.now())preview.mutate(item.proposalId);else acceptMutation.mutate(item.proposalId);}}
                       />
                     </View>
                     <View style={{ flex: 1 }}>

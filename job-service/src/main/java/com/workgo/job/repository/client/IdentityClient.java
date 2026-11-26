@@ -10,6 +10,10 @@ import java.util.UUID;
 @FeignClient(name = "identity-service", contextId = "jobIdentityClient", url = "${app.services.identity}",
         configuration = {JobFeignConfiguration.class, InternalKeyFeignConfiguration.class})
 public interface IdentityClient {
+    record Admission(UUID providerId,boolean mayReceiveNewOrders,boolean payoutAllowed,long sourceVersion,UUID recoveryGrantId){}
+    @GetMapping("/internal/providers/{id}/admission") Admission admission(@PathVariable UUID id);
+    @GetMapping("/internal/providers/by-user/{id}")
+    ProviderProfileResponse byUser(@PathVariable UUID id);
     @GetMapping("/internal/providers/{providerId}")
     ProviderProfileResponse getProviderProfile(@PathVariable("providerId") UUID providerId);
 }

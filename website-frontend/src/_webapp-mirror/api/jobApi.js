@@ -2,6 +2,7 @@ import axiosClient from './axiosClient.js';
 
 // job-service endpoints via gateway (/api/v1/job/**).
 export const jobApi = {
+  getProposalRewardQuote: (id) => axiosClient.post(`/job/proposals/${encodeURIComponent(id)}/reward-quote`),
   // Public / client job search
   /**
    * @param {{ keyword?: string, categoryId?: string, executionType?: string, minBudget?: number, maxBudget?: number, page?: number, size?: number, sort?: string }} [params]
@@ -28,7 +29,15 @@ export const jobApi = {
   getJob: (jobId) => axiosClient.get(`/job/jobs/${jobId}`),
 
   // Create job (ROLE_CLIENT)
-  createJob: (body) => axiosClient.post('/job/jobs', body),
+  createJob: (body, key) => axiosClient.post('/job/jobs', body, key ? {headers:{'Idempotency-Key':key}} : undefined),
+  createDraft: (body, key) => axiosClient.post('/job/jobs/drafts', body, key ? {headers:{'Idempotency-Key':key}} : undefined),
+  getCreationReceipt: (key) => axiosClient.get('/job/jobs/receipt',{params:{key}}),
+  uploadAttachment: async (id, file) => {
+    const form=new FormData();form.append('file',file);
+    const response=await axiosClient.post(`/job/jobs/${encodeURIComponent(id)}/attachments`,form);
+    if(!response?.result?.id || response.result.status!=='READY')throw new Error('Invalid attachment receipt');
+    return response;
+  },
 
   // Update job (ROLE_CLIENT)
   updateJob: (jobId, body) => axiosClient.put(`/job/jobs/${jobId}`, body),

@@ -189,6 +189,11 @@ public class OnsiteFlowService {
     //provider xac nhan da nhan du tien mat; client tu khai da tra khong du de ghi phi
     @Transactional
     public OnsiteExecutionResponse confirmCashReceived(UUID orderId) {
+        return confirmCashReceived(orderId,null);
+    }
+
+    @Transactional
+    public OnsiteExecutionResponse confirmCashReceived(UUID orderId,java.math.BigDecimal received) {
 
         Order order = lockOrder(orderId);
         assertIsProvider(order);
@@ -198,15 +203,28 @@ public class OnsiteFlowService {
             throw new AppException(ErrorCode.ORDER_PAYMENT_METHOD_NOT_ALLOWED);
         }
 
-        if (order.getOrderStatus() != OrderStatus.IN_PROGRESS && order.getOrderStatus() != OrderStatus.DELIVERED) {
+        if (order.getOrderStatus() == OrderStatus.COMPLETED) {
+            var old=loadOnsite(loadExecution(orderId).getExecutionId());
+            if (old.getCashReceivedAt()!=null && (received==null || received.compareTo(old.getActualReceivedAmount())==0))
+                return executionMapper.toOnsiteExecutionResponse(old);
+            if (old.getCashReceivedAt()!=null) throw new AppException(ErrorCode.ORDER_TIMER_CONFLICT);
+        }
+        if (order.getOrderStatus() != OrderStatus.IN_PROGRESS && order.getOrderStatus() != OrderStatus.DELIVERED
+                && !(order.getOrderStatus()==OrderStatus.COMPLETED && order.getPaymentStatus()==PaymentStatus.CASH_ON_SITE)) {
             throw new AppException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION);
         }
 
         Execution execution = loadExecution(orderId);
         OnsiteExecution onsite = loadOnsite(execution.getExecutionId());
 
+        var amount=received==null?order.getTotalAmount():received;
+        if(amount==null || order.getTotalAmount()==null || amount.signum()<0 || amount.stripTrailingZeros().scale()>0 || amount.compareTo(order.getTotalAmount())>0)
+            throw new AppException(ErrorCode.ORDER_PAYMENT_METHOD_NOT_ALLOWED);
+        if(onsite.getCashReceivedAt()!=null && onsite.getActualReceivedAmount()!=null
+                && amount.compareTo(onsite.getActualReceivedAmount())!=0) throw new AppException(ErrorCode.ORDER_TIMER_CONFLICT);
+        onsite.setActualReceivedAmount(amount);
         if (onsite.getCashReceivedAt() == null) {
-            onsite.setCashReceivedAt(clock.instant());
+            if(amount.compareTo(order.getTotalAmount())==0) onsite.setCashReceivedAt(clock.instant());
             onsiteExecutionRepository.save(onsite);
         }
 
@@ -237,6 +255,22 @@ public class OnsiteFlowService {
         orderStatusService.transition(order, OrderStatus.COMPLETED, actorId, roleName);
     }
 
+    @Transactional
+    public OnsiteExecutionResponse recordClientCashPaid(UUID orderId,java.math.BigDecimal amount) {
+        var order=lockOrder(orderId);assertIsClient(order);assertOnsite(order);
+        if(order.getPaymentMethod()!=OrderPaymentMethod.CASH || amount==null || amount.signum()<0
+                ||amount.stripTrailingZeros().scale()>0||amount.compareTo(order.getTotalAmount())>0)
+            throw new AppException(ErrorCode.ORDER_PAYMENT_METHOD_NOT_ALLOWED);
+        var onsite=loadOnsite(loadExecution(orderId).getExecutionId());
+        if(onsite.getClientCashPaidAt()!=null && amount.compareTo(onsite.getClientCashPaidAmount())!=0)
+            throw new AppException(ErrorCode.ORDER_TIMER_CONFLICT);
+        if(onsite.getClientCashPaidAt()==null) {
+            onsite.setClientCashPaidAt(clock.instant());onsite.setClientCashPaidAmount(amount);onsiteExecutionRepository.save(onsite);
+        }
+        return executionMapper.toOnsiteExecutionResponse(onsite);
+    }
+
+    @Transactional
     public CheckinCodeResponse getCheckinCode(UUID orderId) {
 
         Order order = loadOrder(orderId);

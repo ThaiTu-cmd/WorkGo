@@ -1,3 +1,4 @@
+import * as DocumentPicker from 'expo-document-picker';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as React from 'react';
 import { Text, View } from 'react-native';
@@ -5,7 +6,7 @@ import { Text, View } from 'react-native';
 import { qk } from '@/api/queryKeys';
 import { trustApi } from '@/api/trustApi';
 import type { DisputeDto } from '@/api/types';
-import { Badge, Button, Card, font, makeStyles, Screen, spacing, TextField, useColors } from '@/ui';
+import { Badge, Button, Card, font, makeStyles, Screen, spacing, useColors } from '@/ui';
 
 type Props = {
   disputeId: string;
@@ -18,8 +19,8 @@ export function DisputeDetailScreen({ disputeId, initialDispute, onBack }: Props
   const colors = useColors();
   const queryClient = useQueryClient();
 
-  const [supplementUrl, setSupplementUrl] = React.useState('');
-  const [supplementNote, setSupplementNote] = React.useState('');
+  const [evidenceFile,setEvidenceFile]=React.useState<{uri:string;name:string;type:string}|null>(null);
+  const progressQuery=useQuery({queryKey:['decisionProgress',disputeId],queryFn:async()=>(await trustApi.getDecisionProgress(disputeId)).result,retry:false});
   const [showSupplementForm, setShowSupplementForm] = React.useState(false);
   const [supplementError, setSupplementError] = React.useState<string | null>(null);
 
@@ -42,17 +43,13 @@ export function DisputeDetailScreen({ disputeId, initialDispute, onBack }: Props
   const supplementMutation = useMutation({
     mutationFn: async () => {
       return (
-        await trustApi.supplementEvidence(disputeId, {
-          evidenceUrl: supplementUrl.trim() || undefined,
-          note: supplementNote.trim() || undefined,
-        })
+        await trustApi.supplementEvidence(disputeId, evidenceFile ?? (()=>{throw new Error('Select an evidence file');})())
       ).result;
     },
     onSuccess: (res) => {
       void queryClient.invalidateQueries({ queryKey: qk.dispute(disputeId) });
       setShowSupplementForm(false);
-      setSupplementUrl('');
-      setSupplementNote('');
+      setEvidenceFile(null);
       setSupplementError(null);
     },
     onError: (err: Error) => {
@@ -61,8 +58,8 @@ export function DisputeDetailScreen({ disputeId, initialDispute, onBack }: Props
   });
 
   const handleSupplementSubmit = () => {
-    if (!supplementUrl.trim() && !supplementNote.trim()) {
-      setSupplementError('Vui lòng nhập link chứng cứ hoặc lời giải trình bổ sung.');
+    if (!evidenceFile) {
+      setSupplementError('Vui lòng chọn file chứng cứ bổ sung.');
       return;
     }
     setSupplementError(null);
@@ -82,13 +79,7 @@ export function DisputeDetailScreen({ disputeId, initialDispute, onBack }: Props
     dispute.status === 'RESOLVED_CLIENT' ||
     dispute.status === 'RESOLVED_PROVIDER';
 
-  const settlementStatus =
-    dispute.decision?.settlementStatus ??
-    (isResolved
-      ? dispute.status === 'RESOLVED_PROVIDER'
-        ? 'SETTLED'
-        : 'REFUNDED'
-      : 'FROZEN');
+  const settlementStatus=progressQuery.data?.paymentStatus??'RECONCILIATION_PENDING';
 
   return (
     <Screen refreshing={disputeQuery.isRefetching} onRefresh={() => void disputeQuery.refetch()}>
@@ -153,7 +144,7 @@ export function DisputeDetailScreen({ disputeId, initialDispute, onBack }: Props
             <View style={[styles.stepDot, styles.stepDotDone]} />
             <Text style={styles.stepTitle}>1. Mở hồ sơ & Đóng băng Escrow</Text>
             <Text style={styles.stepDesc}>
-              Tiền bảo chứng được đóng băng (FROZEN) để bảo vệ quyền lợi các bên.
+              Trạng thái phong tỏa và thanh toán được xác nhận riêng theo tiến độ từ server.
             </Text>
           </View>
 
@@ -196,7 +187,7 @@ export function DisputeDetailScreen({ disputeId, initialDispute, onBack }: Props
             />
             <Text style={styles.stepTitle}>4. Phán quyết & Giải ngân</Text>
             <Text style={styles.stepDesc}>
-              Ban quản trị ban hành 1 trong 3 kết luận và thực thi tài chính.
+              Kết luận, thanh toán và trạng thái Order có tiến độ xử lý riêng.
             </Text>
           </View>
         </View>
@@ -205,7 +196,7 @@ export function DisputeDetailScreen({ disputeId, initialDispute, onBack }: Props
       {/* 3-Way Admin Decision & Financial Settlement */}
       <Card style={styles.decisionCard}>
         <View style={styles.row}>
-          <Text style={styles.cardTitle}>Phán quyết giải quyết 3 chiều</Text>
+          <Text style={styles.cardTitle}>Kết luận giải quyết</Text>
           <Badge
             label={`Tài chính: ${settlementStatus}`}
             tone={
@@ -230,7 +221,7 @@ export function DisputeDetailScreen({ disputeId, initialDispute, onBack }: Props
             ]}>
             <Text style={[styles.decisionTitle, { color: colors.success }]}>1. RELEASE</Text>
             <Text style={styles.decisionDesc}>
-              Thanh toán 100% cho Bên cung cấp (Provider) khi hoàn tất cam kết.
+              Thực hiện nghĩa vụ thanh toán theo kết luận và phương thức thanh toán của Order.
             </Text>
           </View>
 
@@ -243,21 +234,23 @@ export function DisputeDetailScreen({ disputeId, initialDispute, onBack }: Props
             ]}>
             <Text style={[styles.decisionTitle, { color: colors.primary }]}>2. REFUND</Text>
             <Text style={styles.decisionDesc}>
-              Hoàn tiền 100% cho Khách hàng khi bên cung cấp vi phạm.
+              Hoàn trả theo kết luận. Tiền mặt chỉ hoàn tất khi bên nhận xác nhận đã nhận lại tiền.
             </Text>
           </View>
 
           <View
             style={[
               styles.decisionBox,
-              dispute.decision?.type === 'SPLIT' ? styles.decisionBoxSelected : null,
+              dispute.decision?.type === 'REJECT' ? styles.decisionBoxSelected : null,
             ]}>
-            <Text style={[styles.decisionTitle, { color: colors.warning }]}>3. SPLIT</Text>
+            <Text style={[styles.decisionTitle, { color: colors.warning }]}>3. REJECT</Text>
             <Text style={styles.decisionDesc}>
-              Phân chia tỷ lệ hòa giải theo khối lượng công việc thực tế (50/50).
+              Bác yêu cầu; tiến độ gỡ phong tỏa và tiếp tục Order được xác nhận riêng.
             </Text>
           </View>
         </View>
+
+        {dispute.decision?.type === 'SPLIT' ? <Text style={styles.muted}>Kết luận SPLIT lịch sử; xem tiến độ thực thi đã ghi nhận.</Text> : null}
 
         {dispute.resolution || dispute.decision?.reason ? (
           <View style={styles.resolutionBox}>
@@ -296,26 +289,12 @@ export function DisputeDetailScreen({ disputeId, initialDispute, onBack }: Props
         />
       ) : null}
 
+
       {showSupplementForm ? (
         <Card style={styles.formCard}>
           <Text style={styles.cardTitle}>Bổ sung chứng cứ theo yêu cầu Admin</Text>
 
-          <TextField
-            label="Link tài liệu hoặc ảnh đối chất (URL)"
-            placeholder="https://..."
-            value={supplementUrl}
-            onChangeText={setSupplementUrl}
-            autoCapitalize="none"
-          />
-
-          <TextField
-            label="Lời giải trình bổ sung"
-            placeholder="Cung cấp diễn biến thực tế, nguyên nhân khách quan..."
-            value={supplementNote}
-            onChangeText={setSupplementNote}
-            multiline
-            numberOfLines={3}
-          />
+      <Button title={evidenceFile?.name??'Chọn file chứng cứ'} onPress={async()=>{const result=await DocumentPicker.getDocumentAsync({copyToCacheDirectory:true,multiple:false});if(!result.canceled){const f=result.assets[0];setEvidenceFile({uri:f.uri,name:f.name,type:f.mimeType??'application/octet-stream'});}}}/>
 
           {supplementError ? <Text style={styles.errorText}>{supplementError}</Text> : null}
 

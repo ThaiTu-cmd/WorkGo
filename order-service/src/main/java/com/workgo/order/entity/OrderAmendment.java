@@ -24,6 +24,7 @@ public class OrderAmendment {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "amendment_id")
     UUID amendmentId;
+    String rewardQuoteRef;
     UUID paymentReceiptId;
     Instant paymentAdjustedAt;
 

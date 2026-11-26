@@ -147,3 +147,4 @@ __pycache__/
 
 # Consolidated local database scripts.
 /WorkGo.sql
+/android-frontend/dist-local-test/

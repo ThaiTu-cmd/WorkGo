@@ -58,6 +58,8 @@ public class OrderAgreementService {
     ObjectMapper objectMapper;
     TokenUtils tokenUtils;
     java.time.Clock clock;
+    @NonFinal @org.springframework.beans.factory.annotation.Autowired OrderRewardQuoteService rewardQuotes;
+    @NonFinal @org.springframework.beans.factory.annotation.Autowired RewardCommitOutboxRepository rewardCommits;
 
     @NonFinal
     @Value("${order.platform-fee-rate}")
@@ -112,7 +114,9 @@ public class OrderAgreementService {
             throw new AppException(ErrorCode.ORDER_AMENDMENT_PENDING_EXISTS);
         }
 
+        String quoteRef=current.getRewardQuoteRef()==null?null:rewardQuotes.quote(amendmentInput(order,current,request.getNewScope(),request.getNewPrice(),request.getNewDurationDays()));
         OrderAmendment amendment = orderAmendmentRepository.save(OrderAmendment.builder()
+                .rewardQuoteRef(quoteRef)
                 .orderId(orderId)
                 .baseVersionNo(current.getVersionNo())
                 .oldScope(current.getScope()).oldPrice(current.getPrice()).oldDurationDays(current.getDurationDays())
@@ -146,6 +150,7 @@ public class OrderAgreementService {
                 && amendment.getNewPrice().compareTo(new BigDecimal("2000000"))>0)
             throw new AppException(ErrorCode.ORDER_CASH_LIMIT_EXCEEDED);
         Instant now = clock.instant();
+        validateAmendmentQuote(order,current,amendment,now);
         amendment.setRespondedBy(tokenUtils.getCurrentUserId());
         amendment.setRespondedAt(now);
         amendment.setResponseNote(request == null ? null : request.getNote());
@@ -189,6 +194,8 @@ public class OrderAgreementService {
             throw new AppException(ErrorCode.FORBIDDEN);
         }
 
+        validateAmendmentQuote(order,current,amendment,amendment.getRespondedAt());
+
         //payment idempotent theo amendmentId: loi sau buoc nay thi bam lai khong tru / hoan 2 lan
         adjustEscrow(order, amendment);
         applyAmendment(order, amendment, current);
@@ -226,7 +233,7 @@ public class OrderAgreementService {
                 .acceptanceCriteria(current.getAcceptanceCriteria())
                 .inputRequirements(current.getInputRequirements())
                 .paymentMethod(current.getPaymentMethod()).feePolicyVersionId(current.getFeePolicyVersionId())
-                .rewardQuoteRef(current.getRewardQuoteRef()).policyVersion(current.getPolicyVersion())
+                .rewardQuoteRef(amendment.getRewardQuoteRef()!=null?amendment.getRewardQuoteRef():current.getRewardQuoteRef()).policyVersion(current.getPolicyVersion())
                 .price(price)
                 .currency(current.getCurrency())
                 .durationDays(amendment.getNewDurationDays() != null ? amendment.getNewDurationDays() : current.getDurationDays())
@@ -238,6 +245,9 @@ public class OrderAgreementService {
                 .clientConfirmedAt(providerProposed ? amendment.getRespondedAt() : amendment.getCreatedAt())
                 .build());
 
+        if(amendment.getRewardQuoteRef()!=null){
+            var event=RewardCommitOutbox.from(order,amendment.getRewardQuoteRef());event.setConfirmedAt(amendment.getRespondedAt());rewardCommits.save(event);
+        }
         if (amendment.getNewDurationDays() != null) moveDigitalDeadline(order, next.getDurationDays());
 
         if (amendment.getNewPrice() != null) {
@@ -335,7 +345,7 @@ public class OrderAgreementService {
         return builder.source("SERVICE_LISTING")
                 .scope(join(service == null ? order.getTitle() : service.getTitle(), pkg == null ? null : pkg.getName()))
                 .acceptanceCriteria(pkg == null ? null : pkg.getDescription())
-                .durationDays(pkg == null ? null : pkg.getDeliveryDay())
+                .durationDays(pkg == null ? null : OrderRewardQuoteService.durationDays(order.getExecutionType(),pkg.getDeliveryDay(),pkg.getDurationMinute()))
                 .address(execution == null ? null : execution.getAddress())
                 .scheduleStart(execution == null ? null : execution.getScheduleStart())
                 .scheduleEnd(execution == null ? null : execution.getScheduleEnd())
@@ -435,6 +445,16 @@ public class OrderAgreementService {
 
         return orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+    }
+
+    private OrderRewardQuoteService.Input amendmentInput(Order o,OrderAgreementVersion current,String scope,BigDecimal price,Integer days){
+        return new OrderRewardQuoteService.Input(o.getClientId(),o.getProviderId(),"AMENDMENT",o.getOrderId(),scope==null?current.getScope():scope,
+                price==null?current.getPrice():price,current.getCurrency(),days==null?current.getDurationDays():days,current.getFeePolicyVersionId());
+    }
+    private void validateAmendmentQuote(Order o,OrderAgreementVersion current,OrderAmendment amendment,Instant at){
+        if(current.getRewardQuoteRef()==null)return; // Legacy agreement never receives a retrospective invented grant.
+        if(amendment.getRewardQuoteRef()==null)throw new AppException(ErrorCode.ORDER_REWARD_QUOTE_UNAVAILABLE);
+        rewardQuotes.referenceAt(amendmentInput(o,current,amendment.getNewScope(),amendment.getNewPrice(),amendment.getNewDurationDays()),amendment.getRewardQuoteRef(),at);
     }
 
     private String join(String first, String second) {

@@ -27,9 +27,12 @@ public class ConversationService {
     private final CommunicationTransactions transactions;
     private final PayloadSupport payloads;
     private final Clock clock;
+    @org.springframework.beans.factory.annotation.Autowired private ConversationContextVerifier contexts;
 
     public PageResponse<ConversationDto> list(UUID actorId, int page, int size, String sort) {
         var result = conversations.findByParticipants_UserId(actorId, PageSupport.request(page, size, sort, "lastActivityAt"));
+        // Revalidate scoped rooms before exposing their metadata or unread counts.
+        result.forEach(room -> verifyContext(room, actorId));
         Map<UUID, Long> unread = new HashMap<>();
         if (!result.isEmpty()) {
             var query = Aggregation.newAggregation(Message.class,
@@ -49,8 +52,11 @@ public class ConversationService {
         if (actorId.equals(request.participantId())) throw new AppException(ErrorCode.CANNOT_CHAT_WITH_SELF);
         if (request.conversationType() != ConversationType.DIRECT_MESSAGE) throw new AppException(ErrorCode.INVALID_REQUEST);
         ContextType context = normalize(request.contextType());
-        // Owner-service lookup contracts are not available yet. UUID syntax cannot authorize scoped chat.
-        if (context != ContextType.GENERAL) throw new DataAccessResourceFailureException("Conversation context verification unavailable");
+        if (context != ContextType.GENERAL) {
+            if(contexts==null)throw new DataAccessResourceFailureException("Conversation context verification unavailable");
+            var verified=contexts.verify(context,request.contextId(),List.of(actorId,request.participantId()),actorId);
+            if(terminal(verified.lifecycle()))throw new AppException(ErrorCode.CONVERSATION_NOT_ACTIVE);
+        }
         String key = directKey(actorId, request.participantId(), context, request.contextId());
         var existing = conversations.findByDirectKeyAndConversationType(key, ConversationType.DIRECT_MESSAGE);
         if (existing.isPresent()) return toDto(existing.get(), actorId);
@@ -70,8 +76,19 @@ public class ConversationService {
         var room = conversations.findById(id).orElseThrow(ChatNotFoundException::new);
         if (room.getParticipants().stream().noneMatch(p -> actorId.equals(p.getUserId())))
             throw new AppException(ErrorCode.NOT_CONVERSATION_PARTICIPANT);
+        verifyContext(room, actorId);
         return room;
     }
+
+    private void verifyContext(Conversation room, UUID actorId) {
+        if (normalize(room.getContextType()) == ContextType.GENERAL) return;
+        if (contexts == null) throw new DataAccessResourceFailureException("Context owner unavailable");
+        var verified=contexts.verify(room.getContextType(), room.getContextId(),
+                room.getParticipants().stream().map(ConversationParticipant::getUserId).toList(), actorId);
+        if(terminal(verified.lifecycle()))room.setStatus(ConversationStatus.CLOSED);
+    }
+
+    private boolean terminal(String lifecycle){return Set.of("COMPLETED","CANCELLED","CLOSED","REJECTED","RESOLVED_CLIENT","RESOLVED_PROVIDER").contains(lifecycle);}
 
     private ConversationDto toDto(Conversation room, UUID actor) {
         long unread = mongo.count(org.springframework.data.mongodb.core.query.Query.query(where("conversationId").is(room.getId())
@@ -85,5 +102,5 @@ public class ConversationService {
         return users.getFirst() + ":" + users.getLast() + ":" + normalize(type) + ":" + (contextId == null ? "null" : contextId);
     }
 
-    private static ContextType normalize(ContextType type) { return type == ContextType.JOB ? ContextType.POST : type; }
+    private static ContextType normalize(ContextType type) { return type == null ? ContextType.GENERAL : type == ContextType.JOB ? ContextType.POST : type; }
 }

@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .requestCache(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/jobs/my-jobs").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/jobs/my-jobs", "/jobs/receipt").authenticated()
                         .requestMatchers(HttpMethod.GET, "/jobs", "/jobs/{id}", "/jobs/attachments/*/content").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(errors -> errors.authenticationEntryPoint(entryPoint))

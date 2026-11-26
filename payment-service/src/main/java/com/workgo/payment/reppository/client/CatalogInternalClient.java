@@ -13,6 +13,10 @@ import java.util.UUID;
         url = "${app.services.catalog}", configuration = FeignInternalConfig.class)
 public interface CatalogInternalClient {
 
+    record RestrictionAck(UUID providerId,String source,long sourceVersion,boolean blocked) {}
+    @PutMapping("/internal/providers/{providerId}/financial-restriction/receipt")
+    RestrictionAck updateWithReceipt(@PathVariable UUID providerId,@RequestBody FinancialRestrictionSyncRequest request);
+
     @PutMapping("/internal/providers/{providerId}/financial-restriction")
     void updateFinancialRestriction(@PathVariable UUID providerId,
                                     @RequestBody FinancialRestrictionSyncRequest request);

@@ -193,7 +193,8 @@ export function AdminPayouts() {
       {pending && <PaymentOperation
         title={t(pending.action)}
         description={pending.payout.payoutCode + " · " + formatMoney(locale, pending.payout.amount, pending.payout.currency)}
-        requireReference={pending.action === "paid" || (pending.payout.status === "UNKNOWN" && pending.action === "failed")}
+        requireReference={pending.action === "paid" || pending.action === "failed"}
+          requireEvidence={pending.action === "paid" || pending.action === "failed"}
         onSubmit={(input) => adminApi.markPayout(pending.payout.payoutId, pending.action, input)}
         onCancel={() => setPending(null)}
         onDone={() => { setPending(null); setSaved(true); list.reload(); }}
@@ -240,8 +241,9 @@ export function AdminReconciliation() {
         description={pending.code ?? pending.orderId ?? pending.referenceId}
         requireOutcome={isTopUp}
         requireReference={isTopUp}
-        onSubmit={({ reason, result, externalReference }) => {
-          if (isTopUp && result && externalReference) return adminApi.resolveTopUp(pending.referenceId, { reason, result, externalReference });
+          requireEvidence={isTopUp}
+        onSubmit={({ reason, result, externalReference, sourceEvidence }) => {
+          if (isTopUp && result && externalReference) return adminApi.resolveTopUp(pending.referenceId, { reason, result, externalReference, sourceEvidence });
           if (!isTopUp && pending.orderId) return adminApi.retryOrderSync(pending.orderId, { reason });
           return Promise.reject(new Error(t("invalidCase")));
         }}
@@ -252,15 +254,16 @@ export function AdminReconciliation() {
   );
 }
 
-type PaymentEvidence = { reason: string; externalReference?: string; result?: "SUCCEEDED" | "FAILED" };
+type PaymentEvidence = { sourceEvidence?: Record<string,string>; reason: string; externalReference?: string; result?: "SUCCEEDED" | "FAILED" };
 
 function PaymentOperation({
-  title, description, requireReference, requireOutcome, onSubmit, onCancel, onDone,
+  title, description, requireReference, requireOutcome, requireEvidence, onSubmit, onCancel, onDone,
 }: {
   title: string;
   description: string;
   requireReference?: boolean;
   requireOutcome?: boolean;
+  requireEvidence?: boolean;
   onSubmit: (input: PaymentEvidence) => Promise<unknown>;
   onCancel: () => void;
   onDone: () => void;
@@ -268,10 +271,11 @@ function PaymentOperation({
   const t = useTranslations("adminOperations");
   const [reason, setReason] = useState("");
   const [reference, setReference] = useState("");
+  const [sourceEvidence, setSourceEvidence] = useState<Record<string,string> | null>(null);
   const [result, setResult] = useState<"" | "SUCCEEDED" | "FAILED">("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const canSubmit = Boolean(reason.trim() && (!requireReference || reference.trim()) && (!requireOutcome || result));
+  const canSubmit = Boolean(reason.trim() && (!requireReference || reference.trim()) && (!requireOutcome || result) && (!requireEvidence || sourceEvidence));
 
   const confirm = async () => {
     if (!canSubmit || busy) return;
@@ -282,6 +286,7 @@ function PaymentOperation({
         reason: reason.trim(),
         ...(reference.trim() && { externalReference: reference.trim() }),
         ...(result && { result }),
+        ...(sourceEvidence && {sourceEvidence}),
       });
       onDone();
     } catch (err) {
@@ -309,6 +314,11 @@ function PaymentOperation({
             <option value="FAILED">{t("gatewayFailed")}</option>
           </select>
         </label>}
+        {requireEvidence && <label className={styles.field}>X?c nh?n c? ch? k? t? ng?n h?ng/??i t?c
+          <input type="file" accept="application/json,.json" disabled={busy} onChange={async e=>{setSourceEvidence(null);try{
+            const file=e.target.files?.[0];if(!file||file.size>65536)throw new Error('Invalid evidence file');const value=JSON.parse(await file.text());
+            if(!value||Array.isArray(value)||typeof value!=='object'||Object.values(value).some(v=>typeof v!=='string'))throw new Error('Invalid signed evidence');setSourceEvidence(value);
+          }catch(err){setError(errorMessage(err,t));}}}/></label>}
         {requireReference && <label className={styles.field}>
           {t("bankReference")}
           <input required value={reference} onChange={(e) => setReference(e.target.value)} disabled={busy} />

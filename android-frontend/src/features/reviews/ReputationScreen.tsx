@@ -2,6 +2,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import * as React from 'react';
 import { Text, View } from 'react-native';
 
+import { useAuth } from '@/auth/AuthProvider';
+import { providerApi } from '@/api/providerApi';
 import { qk } from '@/api/queryKeys';
 import { trustApi } from '@/api/trustApi';
 import type { AppealReq, ReputationLedgerEntry } from '@/api/types';
@@ -12,39 +14,10 @@ type Props = {
   onBack?: () => void;
 };
 
-const DEFAULT_LEDGER: ReputationLedgerEntry[] = [
-  {
-    id: 'REP-01',
-    timestamp: '2026-10-15 14:30',
-    event: 'Hoàn thành đơn hàng đúng chuẩn',
-    source: 'ORDER_COMPLETED',
-    delta: 5,
-    balance: 85,
-    referenceId: 'ORD-1042',
-    note: 'Khách hàng nghiệm thu đạt chất lượng 100%',
-  },
-  {
-    id: 'REP-02',
-    timestamp: '2026-10-10 09:15',
-    event: 'Nhận đánh giá 5 sao từ khách hàng',
-    source: 'REVIEW_5_STAR',
-    delta: 2,
-    balance: 80,
-    referenceId: 'ORD-1038',
-  },
-  {
-    id: 'REP-03',
-    timestamp: '2026-10-02 16:45',
-    event: 'Trễ hạn bàn giao công việc 1 ngày',
-    source: 'LATE_DELIVERY',
-    delta: -1,
-    balance: 78,
-    referenceId: 'ORD-1019',
-    note: 'Khấu trừ theo công thức n(n+1)/2 (n=1)',
-  },
-];
-
-export function ReputationScreen({ providerId = 'current', onBack }: Props) {
+export function ReputationScreen({ providerId: requestedProviderId, onBack }: Props) {
+  const {claims,status}=useAuth();
+  const profile=useQuery({queryKey:['ownProvider',claims?.userId],enabled:status==='signedIn',queryFn:async()=>(await providerApi.getMyProfile()).result});
+  const providerId=requestedProviderId??profile.data?.providerProfileId??'';
   const styles = useStyles();
   const colors = useColors();
 
@@ -52,20 +25,13 @@ export function ReputationScreen({ providerId = 'current', onBack }: Props) {
   const [appealRefId, setAppealRefId] = React.useState('');
   const [appealReason, setAppealReason] = React.useState('');
   const [appealExplanation, setAppealExplanation] = React.useState('');
-  const [appealEvidence, setAppealEvidence] = React.useState('');
   const [appealError, setAppealError] = React.useState<string | null>(null);
   const [appealSuccess, setAppealSuccess] = React.useState(false);
 
   const repQuery = useQuery({
     queryKey: qk.reputation(providerId),
-    queryFn: async () => {
-      try {
-        const res = await trustApi.getProviderReputation(providerId);
-        return res?.result ?? null;
-      } catch {
-        return null;
-      }
-    },
+    enabled:Boolean(providerId),
+    queryFn: async () => (await trustApi.getProviderReputation(providerId)).result,
   });
 
   const appealMutation = useMutation({
@@ -74,7 +40,6 @@ export function ReputationScreen({ providerId = 'current', onBack }: Props) {
         sanctionId: appealRefId.trim() || undefined,
         reason: appealReason.trim(),
         explanation: appealExplanation.trim(),
-        evidenceUrl: appealEvidence.trim() || undefined,
       };
       return (await trustApi.submitAppeal(body)).result;
     },
@@ -84,7 +49,6 @@ export function ReputationScreen({ providerId = 'current', onBack }: Props) {
       setAppealRefId('');
       setAppealReason('');
       setAppealExplanation('');
-      setAppealEvidence('');
       setAppealError(null);
     },
     onError: (err: Error) => {
@@ -93,6 +57,7 @@ export function ReputationScreen({ providerId = 'current', onBack }: Props) {
   });
 
   const handleAppealSubmit = () => {
+    if (!appealRefId || appealMutation.isPending) return;
     if (appealReason.trim().length < 20) {
       setAppealError('Lý do kháng nghị phải từ 20 ký tự trở lên!');
       return;
@@ -101,25 +66,39 @@ export function ReputationScreen({ providerId = 'current', onBack }: Props) {
     appealMutation.mutate();
   };
 
-  const score = repQuery.data?.score ?? 85;
-  const ledger = repQuery.data?.ledger && repQuery.data.ledger.length > 0 ? repQuery.data.ledger : DEFAULT_LEDGER;
+  const ledgerQuery=useQuery({queryKey:['reputationLedger',claims?.userId],enabled:status==='signedIn'&&Boolean(profile.data?.providerProfileId)&&providerId===profile.data?.providerProfileId,queryFn:async()=>(await trustApi.getReputationLedger()).result});
+  const isOwner = status === 'signedIn' && Boolean(providerId) && providerId === profile.data?.providerProfileId;
+  const scoreReviews = useQuery({queryKey:['providerScoreReviews',claims?.userId,providerId],enabled:isOwner,queryFn:async()=>(await trustApi.getProviderScoreReviews(providerId)).result});
+  const sanctionQuery = useQuery({queryKey:['providerSanctions',claims?.userId,providerId],enabled:isOwner,queryFn:async()=>(await trustApi.getProviderSanctions(providerId)).result});
+  const [now, setNow] = React.useState(() => Date.now());
+  React.useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, []);
+  const activeSanctions = (sanctionQuery.data ?? []).filter(row => !row.revokedAt && Date.parse(row.effectiveAt) <= now && (!row.expiresAt || Date.parse(row.expiresAt) > now));
+  const score = repQuery.data?.score ?? null;
+  const ledger:ReputationLedgerEntry[]=(ledgerQuery.data?.content??[]).map(e=>({id:e.id,timestamp:e.createdAt,event:e.kind,source:e.kind,delta:e.appliedDelta,balance:e.afterScore,referenceId:e.orderId,note:e.reason}));
 
   const getTier = (s: number) => {
-    if (s >= 80) return { label: 'Hạng A — Xuất sắc', tone: 'success' as const, max: 'Không giới hạn việc đồng thời' };
-    if (s >= 60) return { label: 'Hạng B — Tốt', tone: 'info' as const, max: 'Tối đa 5 việc đồng thời' };
-    if (s >= 40) return { label: 'Hạng C — Trung bình', tone: 'warning' as const, max: 'Tối đa 3 việc đồng thời' };
+    if (s >= 80) return { label: 'Hạng A — Xuất sắc', tone: 'success' as const, max: 'Tối đa 5 việc đồng thời sau giai đoạn Provider mới' };
+    if (s >= 60) return { label: 'Hạng B — Tốt', tone: 'info' as const, max: 'Tối đa 3 việc đồng thời' };
+    if (s >= 40) return { label: 'Hạng C — Trung bình', tone: 'warning' as const, max: 'Tối đa 2 việc đồng thời' };
     if (s >= 20) return { label: 'Hạng D — Cảnh báo', tone: 'danger' as const, max: 'Tối đa 1 việc đồng thời' };
-    return { label: 'Hạng E — Nguy cơ khóa', tone: 'danger' as const, max: 'Tạm đình chỉ nhận việc' };
+    return { label: s < 5 ? 'Chờ xét điểm 0–4' : 'Phục hồi có giám sát', tone: 'danger' as const, max: 'Tạm dừng nhận việc mới; phục hồi cần quyết định SUPER_ADMIN' };
   };
 
-  const tier = getTier(score);
+  const tier = score===null?{label:'Chưa có dữ liệu uy tín',tone:'neutral' as const,max:'Chờ server xác minh'}:getTier(score);
 
   return (
-    <Screen refreshing={repQuery.isRefetching} onRefresh={() => void repQuery.refetch()}>
+    <Screen refreshing={repQuery.isRefetching || scoreReviews.isRefetching || sanctionQuery.isRefetching} onRefresh={() => {
+      void repQuery.refetch();
+      if (isOwner) { void ledgerQuery.refetch(); void scoreReviews.refetch(); void sanctionQuery.refetch(); }
+    }}>
       {onBack ? (
         <Button title="← Quay lại" variant="secondary" onPress={onBack} />
       ) : null}
 
+      {(repQuery.error||profile.error||ledgerQuery.error)&&<Text accessibilityRole="alert">{(repQuery.error??profile.error??ledgerQuery.error)?.message}</Text>}
       {/* Score Overview Card */}
       <Card style={styles.scoreCard}>
         <Text style={styles.title}>Chỉ số tín nhiệm Provider</Text>
@@ -129,23 +108,23 @@ export function ReputationScreen({ providerId = 'current', onBack }: Props) {
 
         <View style={styles.scoreRow}>
           <View style={styles.scoreCircle}>
-            <Text style={styles.scoreNumber}>{score}</Text>
+            <Text style={styles.scoreNumber}>{score ?? "?"}</Text>
             <Text style={styles.scoreMax}>/ 100</Text>
           </View>
 
           <View style={styles.tierInfo}>
             <Badge label={tier.label} tone={tier.tone} />
-            <Text style={styles.tierLimit}>Quyền nhận đơn: {tier.max}</Text>
+            <Text style={styles.tierLimit}>Giới hạn theo điểm: {tier.max}. Provider mới tối đa 1 việc tới khi đủ 3 Order/3 CLIENT; server kiểm thêm nợ, chế tài và slot đang dùng.</Text>
           </View>
         </View>
 
         <Text style={styles.sectionTitle}>Quy chế tính điểm WorkGo:</Text>
         <View style={styles.rulesGrid}>
-          <Text style={styles.ruleItem}>• Hoàn thành đơn hàng: <Text style={{ color: colors.success, fontWeight: '700' }}>+5 điểm</Text></Text>
-          <Text style={styles.ruleItem}>• Đánh giá 5 sao: <Text style={{ color: colors.success, fontWeight: '700' }}>+2 điểm</Text></Text>
+          <Text style={styles.ruleItem}>• Hoàn thành đơn hàng: <Text style={{ color: colors.success, fontWeight: '700' }}>Theo quote 2–5 điểm, có giới hạn</Text></Text>
+          <Text style={styles.ruleItem}>• Đánh giá sao: <Text style={{ color: colors.success, fontWeight: '700' }}>Không trực tiếp cộng uy tín</Text></Text>
           <Text style={styles.ruleItem}>• Trễ hạn giao việc: <Text style={{ color: colors.danger, fontWeight: '700' }}>-n(n+1)/2 điểm</Text></Text>
           <Text style={styles.ruleItem}>• Tự ý bỏ dở việc: <Text style={{ color: colors.danger, fontWeight: '700' }}>-50 điểm</Text></Text>
-          <Text style={styles.ruleItem}>• Thua khiếu nại tranh chấp: <Text style={{ color: colors.danger, fontWeight: '700' }}>-10 điểm</Text></Text>
+          <Text style={styles.ruleItem}>• Kết luận lỗi năng lực: <Text style={{ color: colors.danger, fontWeight: '700' }}>-10 điểm</Text></Text>
         </View>
       </Card>
 
@@ -177,40 +156,44 @@ export function ReputationScreen({ providerId = 'current', onBack }: Props) {
         </View>
       </Card>
 
-      {/* Sanctions & Appeals Card */}
-      <Card style={styles.sanctionCard}>
+      {isOwner && <Card style={styles.ledgerCard}>
+        <Text style={styles.cardTitle}>Lịch sử xét điểm 0–4</Text>
+        {scoreReviews.isPending ? <Text>Đang tải lịch sử…</Text> : scoreReviews.error ? <Text accessibilityRole="alert">{scoreReviews.error.message}</Text> : <>
+          {!scoreReviews.data?.length && <Text>Chưa có kết luận xét điểm.</Text>}
+          {scoreReviews.data?.map(row => <View key={row.reviewId}>
+            <Text>{row.outcome === 'BAN_PROVIDER' ? 'Cấm hoạt động Provider' : 'Tiếp tục hạn chế nhận việc'}</Text>
+            <Text>Điểm {row.score} · Phiên bản {row.sourceVersion} · {row.reviewedAt}</Text>
+            <Text>{row.reason} · Hồ sơ: {row.reference}</Text>
+            {row.sanctionId && <Text>Chế tài: {row.sanctionId}</Text>}
+          </View>)}
+          <Text>Kết luận không tự tăng điểm hoặc mở quyền nhận việc.</Text>
+        </>}
+      </Card>}
+
+      {isOwner && <Card style={styles.sanctionCard}>
         <View style={styles.row}>
           <Text style={styles.cardTitle}>Chế tài & Kháng nghị</Text>
-          <Badge label="Hoạt động bình thường" tone="success" />
+          <Badge label={sanctionQuery.isPending || sanctionQuery.error ? 'Chưa xác minh chế tài' : activeSanctions.length ? 'Có chế tài đang hiệu lực' : 'Không có chế tài đang hiệu lực'} tone={sanctionQuery.isPending || sanctionQuery.error ? 'neutral' : activeSanctions.length ? 'danger' : 'success'} />
         </View>
-        <Text style={styles.bodyText}>
-          Tài khoản của bạn hiện tại không chịu bất kỳ chế tài hay án phạt hạn chế nhận việc nào.
-        </Text>
+        {sanctionQuery.error && <Text accessibilityRole="alert">{sanctionQuery.error.message}</Text>}
+        {sanctionQuery.data?.map(row => <View key={row.id}>
+          <Text>{row.scope} · {row.reason}</Text><Text>Hồ sơ: {row.reference} · Hiệu lực: {row.effectiveAt}</Text>
+          <Text>{row.revokedAt ? `Đã gỡ: ${row.revokedAt}` : row.expiresAt ? `Hết hạn: ${row.expiresAt}` : 'Không có ngày hết hạn'}</Text>
+          {!row.revokedAt && now >= Date.parse(row.effectiveAt) && now <= Date.parse(row.effectiveAt) + 7 * 86400000 && <Button title="Kháng nghị chế tài này" variant="secondary" onPress={() => { setAppealRefId(row.id); setShowAppeal(true); setAppealError(null); setAppealSuccess(false); }} />}
+        </View>)}
 
         {appealSuccess ? (
           <Text style={[styles.bodyText, { color: colors.success, fontWeight: '700' }]}>
-            ✓ Đã gửi đơn kháng nghị tới SUPER_ADMIN. Hệ thống sẽ xem xét trong vòng 48h.
+            ✓ Đã nhận biên nhận kháng nghị. Mục tiêu xem xét trong 3 ngày làm việc.
           </Text>
         ) : null}
 
-        {!showAppeal ? (
-          <Button
-            title="Gửi đơn khiếu nại / Kháng nghị"
-            variant="secondary"
-            onPress={() => setShowAppeal(true)}
-          />
-        ) : null}
 
         {showAppeal ? (
           <View style={styles.appealForm}>
             <Text style={styles.sectionTitle}>Đơn kháng nghị tới Ban Quản Trị:</Text>
 
-            <TextField
-              label="Mã tham chiếu chế tài hoặc quyết định (tùy chọn)"
-              placeholder="Ví dụ: SNC-001 hoặc DISP-101"
-              value={appealRefId}
-              onChangeText={setAppealRefId}
-            />
+            <Text>Chế tài: {appealRefId}</Text>
 
             <TextField
               label="Lý do kháng nghị (tối thiểu 20 ký tự)"
@@ -228,13 +211,6 @@ export function ReputationScreen({ providerId = 'current', onBack }: Props) {
               numberOfLines={3}
             />
 
-            <TextField
-              label="Link tài liệu chứng cứ đính kèm (URL)"
-              placeholder="https://..."
-              value={appealEvidence}
-              onChangeText={setAppealEvidence}
-              autoCapitalize="none"
-            />
 
             {appealError ? <Text style={styles.errorText}>{appealError}</Text> : null}
 
@@ -252,7 +228,7 @@ export function ReputationScreen({ providerId = 'current', onBack }: Props) {
             </View>
           </View>
         ) : null}
-      </Card>
+      </Card>}
     </Screen>
   );
 }

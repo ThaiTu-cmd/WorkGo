@@ -5,6 +5,7 @@ import { Text, View } from 'react-native';
 
 import { errorMessage, orderErrorMessage } from '@/api/errors';
 import { orderApi } from '@/api/orderApi';
+import { paymentApi } from '@/api/paymentApi';
 import { qk } from '@/api/queryKeys';
 import type { ExecutionDto, OrderRole } from '@/api/types';
 import { LoginRequired } from '@/auth/LoginRequired';
@@ -46,6 +47,9 @@ export function OrderDetailScreen({
   const onsite = execution.data?.onsite;
   const scheduled = order.data?.orderStatus === 'CONFIRMED' && onsite?.status === 'SCHEDULED';
   const [code, setCode] = useState('');
+  const [cashAmount,setCashAmount]=useState('');
+  const cashReturn=useQuery({queryKey:['cashReturn',id],enabled:signedIn&&order.data?.paymentMethod==='CASH',retry:false,queryFn:()=>paymentApi.getCashReturn(id)});
+  const returnMutation=useMutation({mutationFn:async()=>{const receipt=cashReturn.data;if(!receipt)throw new Error('Missing cash return receipt');const ack=await paymentApi.confirmCashReturn(receipt.decisionId,receipt.cashReturnDue);if(ack.decisionId!==receipt.decisionId||ack.orderId!==receipt.orderId||ack.cashReturnDue!==receipt.cashReturnDue||ack.status!=='COMPLETED')throw new Error('Missing cash return acknowledgement');return ack;},onSuccess:ack=>{queryClient.setQueryData(['cashReturn',id],ack);void order.refetch();}});
   const checkin = useQuery({
     queryKey: [...qk.order(id), 'checkin-code'],
     enabled: signedIn && role === 'CLIENT' && scheduled,
@@ -86,7 +90,9 @@ export function OrderDetailScreen({
   const cash = o.paymentMethod === 'CASH';
   const awaitingPayment = !cash && o.orderStatus === 'PENDING_PAYMENT';
   const canConfirmCash = cash && role === 'PROVIDER' && !onsite?.cashReceivedAt &&
-    (o.orderStatus === 'IN_PROGRESS' || o.orderStatus === 'DELIVERED');
+    (o.orderStatus === 'IN_PROGRESS' || o.orderStatus === 'DELIVERED'||o.orderStatus==='COMPLETED'&&o.paymentStatus==='CASH_ON_SITE');
+  const canClaimCash=cash&&role==='CLIENT'&&!onsite?.clientCashPaidAt&&['IN_PROGRESS','DELIVERED','COMPLETED'].includes(o.orderStatus);
+  const cashAmountValid=/^\d+$/.test(cashAmount.trim())&&Number.isSafeInteger(Number(cashAmount))&&Number(cashAmount)>=0&&Number(cashAmount)<=Number(o.totalAmount);
   const refresh = () => {
     void order.refetch();
     void history.refetch();
@@ -183,17 +189,24 @@ export function OrderDetailScreen({
               ? t('orderDetailScreen.cash_received_at', { p0: formatDateTime(onsite.cashReceivedAt) })
               : t('orderDetailScreen.cash_not_confirmed')}</Text>
           )}
+          {cash&&<><Text>Nghiệm thu: {onsite.clientAcceptedAt?'Đã nghiệm thu':'Đang chờ'} · Phí: {o.paymentStatus==='CASH_SETTLED'?'Đã ghi sổ':'Chờ receipt'}</Text><Text>Khách khai đã trả: {onsite.clientCashPaidAmount!=null?money(onsite.clientCashPaidAmount):'Chưa ghi nhận'} · Provider thực nhận: {onsite.actualReceivedAmount!=null?money(onsite.actualReceivedAmount):'Chưa ghi nhận'}</Text></>}
+          {(canConfirmCash||canClaimCash)&&<TextField label={role==='PROVIDER'?'Số tiền thực nhận (VND)':'Số tiền khách khai đã trả (VND)'} keyboardType="number-pad" value={cashAmount} onChangeText={setCashAmount}/>}
+          {canClaimCash&&<Button title="Ghi nhận số tiền tôi đã trả" disabled={!cashAmountValid} loading={onsiteAction.isPending} onPress={()=>runAction(()=>orderApi.recordCashPaid(id,Number(cashAmount)))}/>}
           {canConfirmCash && (
             <Button
               title={t('orderDetailScreen.confirm_cash_received')}
               loading={onsiteAction.isPending}
-              onPress={() => runAction(() => orderApi.confirmCashReceived(id))}
+              disabled={!cashAmountValid}
+              onPress={() => runAction(() => orderApi.confirmCashReceived(id,Number(cashAmount)))}
             />
           )}
           {onsiteAction.error && <Text accessibilityLiveRegion="polite" style={styles.error}>{orderErrorMessage(onsiteAction.error)}</Text>}
         </Card>
       ) : null}
 
+      {cashReturn.data&&<Card><Text>Phí hủy: {money(cashReturn.data.feeAmount)} · Tiền mặt cần hoàn trực tiếp: {money(cashReturn.data.cashReturnDue)} · {cashReturn.data.status}</Text>{role==='CLIENT'&&cashReturn.data.status==='AWAITING_CASH_RETURN'&&<Button title="Tôi xác nhận đã nhận đủ tiền mặt hoàn lại" loading={returnMutation.isPending} onPress={()=>void once(()=>returnMutation.mutateAsync().catch(()=>undefined))}/>}</Card>}
+      {cashReturn.error&&(cashReturn.error as {status?:number}).status!==404&&<Text style={styles.error}>{orderErrorMessage(cashReturn.error)}</Text>}
+      {returnMutation.error&&<Text style={styles.error}>{orderErrorMessage(returnMutation.error)}</Text>}
       <Card>
         <Text style={styles.section}>{t('orderDetailScreen.lich_su')}</Text>
         {(history.data ?? []).length === 0 ? (

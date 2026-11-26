@@ -45,6 +45,7 @@ public class AccountAdminService {
     UserRepository userRepository;
     RoleRepository roleRepository;
     UserRoleRepository userRoleRepository;
+    com.workgo.identity.repository.ProviderSanctionRepository sanctions;
     UserMapper userMapper;
     AdminAuditService adminAuditService;
 
@@ -81,7 +82,7 @@ public class AccountAdminService {
             updatedFields.add("phone");
         }
 
-        User savedUser = userRepository.save(user);
+        User savedUser = userRepository.saveAndFlush(user);
 
         adminAuditService.record(AdminAction.builder()
                 .action(AdminActionType.USER_UPDATED)
@@ -151,7 +152,7 @@ public class AccountAdminService {
         user.getUserRoles().add(userRole);
         user.setAuthorizationVersion(user.getAuthorizationVersion() + 1);
 
-        User savedUser = userRepository.save(user);
+        User savedUser = userRepository.saveAndFlush(user);
 
         adminAuditService.record(AdminAction.builder()
                 .action(AdminActionType.ROLE_GRANTED)
@@ -189,7 +190,7 @@ public class AccountAdminService {
         userRoleRepository.delete(userRole);
         user.setAuthorizationVersion(user.getAuthorizationVersion() + 1);
 
-        User savedUser = userRepository.save(user);
+        User savedUser = userRepository.saveAndFlush(user);
 
         adminAuditService.record(AdminAction.builder()
                 .action(AdminActionType.ROLE_REVOKED)
@@ -211,7 +212,8 @@ public class AccountAdminService {
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
         User actor = userRepository.lockActiveById(UUID.fromString(currentJwt().getClaimAsString("userId")))
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED));
-        if (actor.getStatus() != UserStatus.ACTIVE || !hasRole(actor, RoleName.SUPER_ADMIN)) {
+        if (actor.getStatus() != UserStatus.ACTIVE || !hasRole(actor, RoleName.SUPER_ADMIN)
+                || sanctions.active(actor.getUserId(), Set.of("ACCOUNT", "SECURITY"), Instant.now()) > 0) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 

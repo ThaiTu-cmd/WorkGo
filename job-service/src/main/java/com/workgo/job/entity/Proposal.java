@@ -36,6 +36,8 @@ public class Proposal {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "proposal_id")
     UUID proposalId;
+    String rewardQuoteRef;
+    Instant acceptedAt;
 
     // Application writes both FK columns; this association exposes the same job_id.
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

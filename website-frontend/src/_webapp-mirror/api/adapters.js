@@ -107,6 +107,7 @@ export const toProvider = (profile, fallbackProviderId = null) => {
     level: null,
     badge: isVerified ? 'Đã xác thực' : null,
     bio: profile?.bio || known?.bio || '',
+    acceptingOrders: typeof profile?.acceptingOrders === 'boolean' ? profile.acceptingOrders : (typeof profile?.isAcceptingOrders === 'boolean' ? profile.isAcceptingOrders : null),
     providerType: profile?.providerType ?? null,
     verificationStatus: profile?.verificationStatus || known?.verificationStatus || null,
     joinedAt: profile?.joinedAt ?? null,

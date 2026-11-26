@@ -42,15 +42,15 @@ public class ProposalSnapshotService {
                         frozen.proposalId(), frozen.jobId(), frozen.clientId(), frozen.providerId(),
                         frozen.executionType(), frozen.price(), frozen.currency(), frozen.estimatedDays(),
                         frozen.jobTitle(), frozen.jobDescription(), frozen.locationSnapshot(), frozen.terms(),
-                        proposal.getStatus().name(), job.getStatus().name(), application.getStatus().name());
-            } catch (Exception ignored) {
-                // Fall back to entity projection only if outbox payload cannot be parsed.
+                        proposal.getStatus().name(), job.getStatus().name(), application.getStatus().name(),frozen.rewardQuoteRef(),frozen.acceptedAt());
+            } catch (Exception corrupted) {
+                throw new AppException(ErrorCode.INVALID_STATUS_TRANSITION);
             }
         }
         return new AcceptedProposalResponse(proposal.getProposalId(), job.getJobId(), job.getClientId(),
                 application.getProviderId(), job.getExecutionType().name(), proposal.getPrice(),
                 proposal.getCurrency(), proposal.getEstimatedDays(), job.getTitle(), job.getDescription(),
                 job.getLocationSnapshot(), proposal.getTerms(), proposal.getStatus().name(),
-                job.getStatus().name(), application.getStatus().name());
+                job.getStatus().name(), application.getStatus().name(),proposal.getRewardQuoteRef(),proposal.getAcceptedAt());
     }
 }

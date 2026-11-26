@@ -67,6 +67,7 @@ public class DisputeService {
             d.setResolvedAt(Instant.now());
             d.setResolution(req == null ? null : req.note());
             repository.saveAndFlush(d);
+            if(Set.of("POST_PAYMENT","CASH_PAYMENT").contains(d.getCaseType()))return mapper.toDto(d);
             outbox.add("DISPUTE", id, "dispute.cancelled.unfreeze_escrow", new EscrowFreezeRequest(d.getOrderId(), id, "DISPUTE_WITHDRAWN"));
             outbox.add("DISPUTE", id, "dispute.timer.resume", new EscrowFreezeRequest(d.getOrderId(), id, "DISPUTE_WITHDRAWN"));
             return mapper.toDto(d);
@@ -335,6 +336,8 @@ public class DisputeService {
             String description,
             String evidenceUrl) {
         var d = repository.saveAndFlush(Dispute.builder()
+                .caseType("COMPLETED".equals(order.orderStatus())&&"CASH_ON_SITE".equals(order.paymentStatus())?"CASH_PAYMENT":
+                        "COMPLETED".equals(order.orderStatus())&&Set.of("RELEASED","CASH_SETTLED").contains(order.paymentStatus())?"POST_PAYMENT":"ESCROW")
                 .orderId(order.orderId())
                 .openedBy(user)
                 .openedByRole(client ? "CLIENT" : "PROVIDER")
@@ -344,10 +347,12 @@ public class DisputeService {
                 .description(description)
                 .evidenceUrl(evidenceUrl)
                 .build());
+        if(!Set.of("POST_PAYMENT","CASH_PAYMENT").contains(d.getCaseType())){
         outbox.add("DISPUTE", d.getDisputeId(), "dispute.opened.freeze_escrow",
                 new EscrowFreezeRequest(d.getOrderId(), d.getDisputeId(), "DISPUTE_OPENED"));
         outbox.add("DISPUTE", d.getDisputeId(), "dispute.timer.pause",
                 new EscrowFreezeRequest(d.getOrderId(), d.getDisputeId(), "DISPUTE_OPENED"));
+        }
         outbox.notify(client ? null : order.clientId(), client ? order.providerId() : null,
                 "DISPUTE_OPENED", "DISPUTE", d.getDisputeId());
         return d;

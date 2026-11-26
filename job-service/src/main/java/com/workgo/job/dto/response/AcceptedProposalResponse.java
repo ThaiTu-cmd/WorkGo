@@ -8,5 +8,7 @@ public record AcceptedProposalResponse(
         UUID proposalId, UUID jobId, UUID clientId, UUID providerId,
         String executionType, BigDecimal price, String currency, Integer estimatedDays,
         String jobTitle, String jobDescription, String locationSnapshot, String terms,
-        String proposalStatus, String jobStatus, String applicationStatus) {
+        String proposalStatus, String jobStatus, String applicationStatus,String rewardQuoteRef,java.time.Instant acceptedAt) {
+    public AcceptedProposalResponse(UUID proposalId,UUID jobId,UUID clientId,UUID providerId,String executionType,BigDecimal price,String currency,Integer estimatedDays,String jobTitle,String jobDescription,String locationSnapshot,String terms,String proposalStatus,String jobStatus,String applicationStatus){this(proposalId,jobId,clientId,providerId,executionType,price,currency,estimatedDays,jobTitle,jobDescription,locationSnapshot,terms,proposalStatus,jobStatus,applicationStatus,null,null);}
+
 }

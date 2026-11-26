@@ -55,10 +55,21 @@ public class InternalProviderProfileService {
 
         var current = repository.lockFinancialRestriction(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.PROVIDER_PROFILE_NOT_EXISTED));
+        if (request.getVersion() == current.version()
+                && getProviderProfile(current.providerId()).financiallyRestricted() != request.getRestricted())
+            throw new AppException(ErrorCode.RATING_SNAPSHOT_CONFLICT);
         if (request.getVersion() > current.version()) {
             repository.updateFinancialRestriction(current.providerId(), request.getRestricted(), request.getVersion());
         }
 
         return getProviderProfile(current.providerId());
+    }
+
+    public record RestrictionAck(UUID providerId, UUID userId, String source, long sourceVersion, boolean blocked) {}
+    @Transactional
+    public RestrictionAck applyFinancialRestriction(UUID userId, FinancialRestrictionRequest request) {
+        var profile = updateFinancialRestriction(userId,request);
+        var state = repository.lockFinancialRestriction(userId).orElseThrow();
+        return new RestrictionAck(profile.providerProfileId(),userId,"FINANCIAL",state.version(),profile.financiallyRestricted());
     }
 }

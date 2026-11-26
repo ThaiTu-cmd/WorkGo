@@ -48,6 +48,9 @@ public class Dispute {
 
     @Column(name = "reason", nullable = false, length = 150)
     private String reason;
+    @Builder.Default
+    @Column(name="case_type",nullable=false)
+    @org.hibernate.annotations.ColumnDefault("'ESCROW'") private String caseType="ESCROW";
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;

@@ -54,6 +54,15 @@ public class OnsiteExecution {
     @Column(name = "cash_received_at")
     Instant cashReceivedAt;
 
+    @Column(name = "actual_received_amount")
+    java.math.BigDecimal actualReceivedAmount;
+
+    @Column(name = "client_cash_paid_at")
+    Instant clientCashPaidAt;
+
+    @Column(name = "client_cash_paid_amount")
+    java.math.BigDecimal clientCashPaidAmount;
+
     @Column(name = "slot_hold_expires_at")
     Instant slotHoldExpiresAt;
 

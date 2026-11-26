@@ -23,6 +23,9 @@ public class OnsiteExecutionResponse {
     Instant serviceCompletedAt;
     Instant clientAcceptedAt;
     Instant cashReceivedAt;
+    java.math.BigDecimal actualReceivedAmount;
+    Instant clientCashPaidAt;
+    java.math.BigDecimal clientCashPaidAmount;
     OnsiteExecutionStatus status;
     UUID bookingSlotId;
 

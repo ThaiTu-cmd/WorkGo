@@ -21,6 +21,11 @@ public class OrderFeeService {
 
     PaymentClient paymentClient;
 
+    public FeePolicyResponse version(java.util.UUID id){
+        try{var p=paymentClient.getFeePolicy(id);if(p==null||!id.equals(p.getFeePolicyVersionId())||p.getSuccessFeeRate()==null)throw new AppException(ErrorCode.PAYMENT_SERVICE_UNAVAILABLE);return p;}
+        catch(FeignException e){throw new AppException(ErrorCode.PAYMENT_SERVICE_UNAVAILABLE);}
+    }
+
     //phien ban phi dang hieu luc, order chot vao snapshot; policy moi khong hoi to order cu
     public FeePolicyResponse currentPolicy() {
 

@@ -11,8 +11,11 @@ import org.mapstruct.MappingTarget;
 public interface ProviderProfileMapper {
 
     @Mapping(target = "userId", source = "user.userId")
+    @Mapping(target = "isAcceptingOrders", source = "acceptingOrders")
     ProviderProfileResponse toProviderProfileResponse(ProviderProfile providerProfile);
 
+    @org.mapstruct.BeanMapping(nullValuePropertyMappingStrategy = org.mapstruct.NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "acceptingOrders", source = "isAcceptingOrders")
     void updateProviderProfile(@MappingTarget ProviderProfile providerProfile,
                                ProviderProfileUpdateRequest request);
 }

@@ -34,6 +34,8 @@ import java.util.UUID;
         + "or ((source_type is null or source_type <> 'PROPOSAL') and proposal_slot is null)")
 @SQLRestriction("is_deleted =  0")
 public class Order {
+    @Column(name="recovery_grant_id",updatable=false,unique=true)
+    UUID recoveryGrantId;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

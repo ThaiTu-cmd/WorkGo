@@ -31,6 +31,7 @@ public class SecurityConfig {
     CustomJwtDecoder customJwtDecoder;
 
     private final String[] PUBLIC_ENDPOINTS = {
+            "/support/security-access",
             "/users/registration" ,
             "/auth/token",
             "/auth/introspect",
@@ -58,7 +59,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request ->{
             request.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                    .requestMatchers(HttpMethod.GET, "/providers/myProfile").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/providers/myProfile", "/providers/*/sanctions", "/providers/*/score-reviews").authenticated()
                     .requestMatchers(HttpMethod.GET, "/providers", "/providers/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/provider-verifications/documents/*/content").permitAll()
                     .anyRequest().authenticated();

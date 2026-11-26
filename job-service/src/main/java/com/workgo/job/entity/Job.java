@@ -24,7 +24,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "jobs")
+@Table(name = "jobs", uniqueConstraints = @UniqueConstraint(name="uk_job_creation_key",columnNames={"client_id","creation_key"}))
 @SQLRestriction("is_deleted = false")
 @SQLDelete(sql = "UPDATE jobs SET is_deleted = true, version = version + 1 WHERE job_id = ? AND version = ?",
         verify = Expectation.RowCount.class)
@@ -36,6 +36,12 @@ public class Job {
 
     @Column(name = "client_id", nullable = false)
     UUID clientId;
+
+    @Column(name="creation_key",length=128)
+    String creationKey;
+
+    @Column(name="creation_hash",length=64)
+    String creationHash;
 
     @Column(name = "category_id", nullable = false)
     UUID categoryId;

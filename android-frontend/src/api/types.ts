@@ -178,6 +178,7 @@ export type OrderInputChecklist = {
 export type OrderAmendmentDraft = { baseVersionNo: number; reason: string; newScope?: string; newPrice?: number; newDurationDays?: number };
 
 export type OrderAmendment = {
+  rewardQuoteRef?:string;
   amendmentId: string;
   oldScope?: string | null;
   oldPrice?: Num | null;
@@ -243,6 +244,9 @@ export type ExecutionDto = {
     scheduledEnd?: string | null;
     bookingSlotId?: string | null;
     cashReceivedAt?: string | null;
+    actualReceivedAmount?: Num | null;
+    clientCashPaidAt?: string | null;
+    clientCashPaidAmount?: Num | null;
     clientAcceptedAt?: string | null;
   } | null;
 };
@@ -283,7 +287,9 @@ export type EvidenceDto = {
   createdAt?: string;
 };
 
+export type RewardQuoteDto={reference:string;inputHash:string;points:number;expiresAt:string;remainingPairCap:number;remainingProviderCap:number;needsReview:boolean;modelVersion:string;input:{price:number;currency:string}};
 export type OrderCreationRequest = {
+  rewardQuoteRef?:string;
   serviceId: string;
   packageId: string;
   addonIds: string[];
@@ -385,6 +391,7 @@ export type TopUpDto = {
 };
 
 export type PayoutRequest = {
+  verifiedBeneficiaryId: string;
   amount: number;
   bankCode: string;
   accountName: string;
@@ -525,7 +532,7 @@ export type DisputeStatus =
 
 export type DisputeKind = 'REPORT' | 'DISPUTE';
 
-export type DisputeDecisionType = 'RELEASE' | 'REFUND' | 'SPLIT';
+export type DisputeDecisionType = 'RELEASE' | 'REFUND' | 'REJECT' | 'SPLIT';
 
 export type SettlementStatus =
   | 'FROZEN'
@@ -639,3 +646,5 @@ export type AppealResponse = {
 
 
 
+
+export type CashReturnDto={decisionId:string;orderId:string;feeAmount:number;cashReturnDue:number;currency:string;status:string;returnConfirmedAt?:string|null};

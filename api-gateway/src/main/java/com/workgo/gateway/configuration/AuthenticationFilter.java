@@ -39,6 +39,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     ObjectMapper objectMapper;
 
     private final String[] PUBLIC_ENDPOINTS = {
+            "/identity/support/security-access",
             "/identity/users/registration",
             "/identity/auth/token",
             "/identity/auth/introspect",
@@ -70,7 +71,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     // Matches PUBLIC_GET_ENDPOINTS but still needs the caller's identity.
     private final String[] PROTECTED_GET_ENDPOINTS = {
             "/catalog/services/my-services",
-            "/job/jobs/my-jobs"
+            "/job/jobs/my-jobs", "/job/jobs/receipt"
     };
 
     AntPathMatcher pathMatcher = new AntPathMatcher();
@@ -138,6 +139,11 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         String relative = path.startsWith(apiPrefix) ? path.substring(apiPrefix.length()) : path;
         var roles = scope == null ? java.util.Set.<String>of() : new java.util.HashSet<>(Arrays.asList(scope.trim().split("\\s+")));
         boolean read = HttpMethod.GET.equals(request.getMethod());
+        if(relative.equals("/job/jobs/receipt"))return read && roles.contains("ROLE_CLIENT");
+        if((relative.equals("/job/jobs")||relative.equals("/job/jobs/drafts"))&&HttpMethod.POST.equals(request.getMethod()))return roles.contains("ROLE_CLIENT");
+        if(!read&&relative.matches("/identity/providers/[^/]+/(?:sanctions|recovery-grants|recovery-completion|reputation-initialization|score-review)")
+                ||read&&relative.equals("/identity/sanction-appeals/pending")
+                ||!read&&relative.matches("/identity/sanction-appeals/[^/]+/review"))return roles.contains("ROLE_SUPER_ADMIN");
         if (relative.matches("/(identity|catalog|payment|job|trust|communication)/admin/audit-logs(?:/.*)?")) {
             if (!read) return false;
             if (relative.endsWith("/export")) return roles.contains("ROLE_SUPER_ADMIN");
@@ -145,6 +151,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         }
         if (relative.matches("/order/admin/preview-support(?:/.*)?")) return roles.contains("ROLE_ADMIN");
         if (relative.matches("/order/admin/(?:input-support|revision-support)(?:/.*)?")) return read && roles.contains("ROLE_ADMIN");
+        if (relative.matches("/payment/admin/(?:payouts|reconciliation)(?:/.*)?")) return roles.contains("ROLE_ADMIN");
         if (relative.matches("/(identity|catalog|payment|order)/admin(?:/.*)?")) return roles.contains("ROLE_SUPER_ADMIN");
         if (relative.matches("/(job|trust|communication)/admin/audit-logs(?:/.*)?")) return read && roles.contains("ROLE_SUPER_ADMIN");
         if (relative.matches("/job/admin(?:/.*)?")) return roles.contains("ROLE_ADMIN") || read && roles.contains("ROLE_SUPER_ADMIN");

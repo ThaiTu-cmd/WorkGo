@@ -15,6 +15,7 @@ import {
   paymentErrorMessage,
   newIdempotencyKey,
   useAuthToken,
+  decodeToken,
   MOCK_PAYMENT_ENABLED,
   TOP_UP_MINIMUM_VND
 } from "../../webapp-bridge/backend";
@@ -42,7 +43,8 @@ export type WalletTopUpEmbedProps = {
 
 type GatewayOption = "VNPAY" | "MOMO" | "MOCK";
 
-export default function WalletTopUpEmbed({
+export default function WalletTopUpEmbed(props:WalletTopUpEmbedProps){const token=useAuthToken();return <WalletTopUpContent key={String(decodeToken(token)?.userId??'guest')+':'+(props.initialTopUpId??'')} {...props}/>;}
+function WalletTopUpContent({
   requiredAmount = 0,
   currentBalance = 0,
   initialTopUpId,
@@ -58,20 +60,24 @@ export default function WalletTopUpEmbed({
   const shortfall = Math.max(0, requiredAmount - currentBalance);
 
   const initialAmount = Math.max(TOP_UP_MINIMUM_VND, shortfall);
-  const [amountRaw, setAmountRaw] = useState(String(initialAmount));
-  const [gateway, setGateway] = useState<GatewayOption>("VNPAY");
+  const storageKey='workgo.topup.pending:'+String(decodeToken(token)?.userId??'');
+  const [saved]=useState(()=>{try{const value=JSON.parse(sessionStorage.getItem(storageKey)??'null');return value?.key&&Number.isSafeInteger(value.amount)&&['VNPAY','MOMO','MOCK'].includes(value.gateway)?value:null;}catch{return null;}});
+  const [amountRaw, setAmountRaw] = useState(String(saved?.amount??initialAmount));
+  const [gateway, setGateway] = useState<GatewayOption>(saved?.gateway??"VNPAY");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const submission = useRef(false);
-  const attempt = useRef<{ amount: number; gateway: GatewayOption; key: string } | null>(null);
+  const attempt = useRef<{ amount: number; gateway: GatewayOption; key: string } | null>(saved?{amount:saved.amount,gateway:saved.gateway,key:saved.key}:null);
+  const [simulated,setSimulated]=useState(false);
 
   // Polling state
-  const [activeTopUpId, setActiveTopUpId] = useState<string | null>(initialTopUpId || null);
+  const [activeTopUpId, setActiveTopUpId] = useState<string | null>(initialTopUpId || saved?.topUpId || null);
   const [topUpCode, setTopUpCode] = useState<string | null>(null);
   const [hostedUrl, setHostedUrl] = useState<string | null>(null);
   const [topUpStatus, setTopUpStatus] = useState<TopUpStatus | null>(initialTopUpId ? 'PENDING' : null);
   const [refreshAttempt, setRefreshAttempt] = useState(0);
   const [pollCount, setPollCount] = useState(0);
+
 
   const callbacks = useRef({ onSuccess, onShowToast });
   useEffect(() => { callbacks.current = { onSuccess, onShowToast }; }, [onSuccess, onShowToast]);
@@ -92,9 +98,11 @@ export default function WalletTopUpEmbed({
         setTopUpCode(typeof data.topUpCode === 'string' ? data.topUpCode : null);
         setHostedUrl(data.gateway !== 'MOCK' && typeof data.paymentUrl === 'string' ? data.paymentUrl : null);
         setTopUpStatus(status);
+        setSimulated(data.simulated===true||data.currency==='TEST_VND'||data.gateway==='MOCK');
         setError('');
         if (status === 'SUCCEEDED') {
-          callbacks.current.onSuccess?.();
+          try{sessionStorage.removeItem(storageKey);}catch{/* receipt remains queryable */}
+          if(data.simulated!==true&&data.currency!=='TEST_VND'&&data.gateway!=='MOCK')callbacks.current.onSuccess?.();
           return;
         }
         if (status === 'FAILED') return;
@@ -108,7 +116,7 @@ export default function WalletTopUpEmbed({
     };
     void check();
     return () => { stopped = true; clearTimeout(timer); };
-  }, [activeTopUpId, token, refreshAttempt, tr]);
+  }, [activeTopUpId, token, refreshAttempt, tr,storageKey]);
   const handleCreateTopUp = async () => {
     if (submission.current) return;
     const amt = /^\d+$/.test(amountRaw.trim()) ? Number(amountRaw) : NaN;
@@ -130,6 +138,7 @@ export default function WalletTopUpEmbed({
       if (attempt.current?.amount !== amt || attempt.current.gateway !== gateway) {
         attempt.current = { amount: amt, gateway, key: newIdempotencyKey() };
       }
+      try{sessionStorage.setItem(storageKey,JSON.stringify(attempt.current));}catch{/* in-memory key retained */}
       const res = await paymentApi.createTopUp({
         amount: amt,
         gateway,
@@ -138,8 +147,9 @@ export default function WalletTopUpEmbed({
 
       const data = (res as { result?: Record<string, unknown> })?.result ?? res ?? {};
       if (typeof data.topUpId !== "string") throw new Error(tr("topUpUnavailable"));
-      attempt.current = null;
       const topUpId = data.topUpId;
+      try{sessionStorage.setItem(storageKey,JSON.stringify({...attempt.current,topUpId}));}catch{/* in-memory key retained */}
+      setSimulated(data.simulated===true||data.currency==='TEST_VND'||data.gateway==='MOCK');
       onTrackTopUp?.(topUpId);
       const paymentUrl = data.paymentUrl ? String(data.paymentUrl) : null;
       const initialStatus = (data.status ?? "PENDING") as TopUpStatus;
@@ -229,7 +239,7 @@ export default function WalletTopUpEmbed({
         topUpStatus === "SUCCEEDED" ? (
           <div className={styles.successBox}>
             <CheckCircle2 size={20} color="#059669" />
-            <span>Nạp tiền thành công! Bạn có thể tiếp tục thanh toán đơn hàng.</span>
+            <span>{simulated?'Thử nghiệm TEST_VND — không cộng số dư ví.':'Nạp tiền thành công. Số dư được lấy lại từ server.'}</span>
             {shortfall > 0 && <button type="button" onClick={() => {
               onTrackTopUp?.();
               setActiveTopUpId(null);

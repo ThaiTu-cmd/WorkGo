@@ -27,6 +27,14 @@ spring:
 
 app:
   storage:
+    type: ${TRUST_STORAGE_TYPE:local}
+    s3:
+      endpoint: ${TRUST_S3_ENDPOINT:https://s3.amazonaws.com}
+      bucket: ${TRUST_S3_BUCKET:}
+      region: ${TRUST_S3_REGION:ap-southeast-1}
+      access-key: ${TRUST_S3_ACCESS_KEY:}
+      secret-key: ${TRUST_S3_SECRET_KEY:}
+      prefix: trust
     local-dir: ${TRUST_STORAGE_LOCAL_DIR:./.workgo-storage/trust}
     signing-key: ${TRUST_STORAGE_SIGNING_KEY:}
     public-base-url: ${TRUST_STORAGE_PUBLIC_BASE_URL:/api/v1/trust}

@@ -77,6 +77,15 @@ public class DisputeDecisionApplicationService {
 
         assertSettlementMatches(order, command, release);
 
+        if (order.getPaymentStatus() == PaymentStatus.CASH_ON_SITE && release) {
+            var onsite = onsiteExecutionRepository.findByExecution_Order_OrderId(orderId)
+                    .orElseThrow(() -> new AppException(ErrorCode.ORDER_DECISION_SETTLEMENT_MISMATCH));
+            onsite.setClientAcceptedAt(command.getEffectiveAt());
+            onsite.setActualReceivedAmount(command.getActualReceivedAmount());
+            if (Boolean.TRUE.equals(command.getPaymentReceived())) onsite.setCashReceivedAt(command.getEffectiveAt());
+            onsiteExecutionRepository.save(onsite);
+        }
+
         //tien da chot o payment: danh dau de PaymentSync khong goi release / refund nua
         if (order.getPaymentStatus() == PaymentStatus.SUCCEEDED) {
             order.setPaymentStatus(release ? PaymentStatus.RELEASED : PaymentStatus.REFUNDED);
@@ -87,6 +96,8 @@ public class DisputeDecisionApplicationService {
         syncCancellationRequest(orderId, command, release);
 
         OrderDisputeDecision decision = orderDisputeDecisionRepository.saveAndFlush(OrderDisputeDecision.builder()
+                .cashOutcomeId(command.getCashOutcomeId()).workAccepted(command.getWorkAccepted())
+                .paymentReceived(command.getPaymentReceived()).actualReceivedAmount(command.getActualReceivedAmount())
                 .decisionId(command.getDecisionId())
                 .orderId(orderId)
                 .disputeId(command.getDisputeId())
@@ -124,6 +135,12 @@ public class DisputeDecisionApplicationService {
 
         if (order.getPaymentStatus() == PaymentStatus.CASH_ON_SITE) {
             if (hasSettlement) throw new AppException(ErrorCode.ORDER_DECISION_SETTLEMENT_MISMATCH);
+            if (!command.getDecisionId().equals(command.getCashOutcomeId()) || command.getWorkAccepted()==null
+                    || command.getPaymentReceived()==null || command.getActualReceivedAmount()==null
+                    || command.getActualReceivedAmount().signum()<0 || command.getActualReceivedAmount().stripTrailingZeros().scale()>0
+                    || release != command.getWorkAccepted()
+                    || Boolean.TRUE.equals(command.getPaymentReceived()) && order.getTotalAmount().compareTo(command.getActualReceivedAmount())!=0)
+                throw new AppException(ErrorCode.ORDER_DECISION_SETTLEMENT_MISMATCH);
             return;
         }
 
@@ -203,6 +220,9 @@ public class DisputeDecisionApplicationService {
                 .map(value -> Objects.toString(value, "-"))
                 .reduce((first, second) -> first + "|" + second)
                 .orElseThrow();
+        if(command.getCashOutcomeId()!=null||command.getWorkAccepted()!=null||command.getPaymentReceived()!=null||command.getActualReceivedAmount()!=null)
+            payload += "|"+Objects.toString(command.getCashOutcomeId(),"-")+"|"+Objects.toString(command.getWorkAccepted(),"-")+"|"+Objects.toString(command.getPaymentReceived(),"-")
+                    +"|"+(command.getActualReceivedAmount()==null?"-":command.getActualReceivedAmount().stripTrailingZeros().toPlainString());
 
         try {
             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")

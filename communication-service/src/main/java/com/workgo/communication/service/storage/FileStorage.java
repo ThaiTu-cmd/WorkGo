@@ -4,6 +4,8 @@ public interface FileStorage {
 
     void put(String key, byte[] content);
 
+    default void put(String key, byte[] content, String mime) { put(key,content); }
+
     byte[] get(String key);
 
     default boolean exists(String key) {

@@ -3,6 +3,7 @@
 // Trung Tâm Khiếu Nại Demo
 import { useTranslations } from "next-intl";
 import { useEffect, useState, useRef } from "react";
+import ScoreReviewHistory from "../provider/ScoreReviewHistory";
 import {
   ShieldAlert,
   FileText,
@@ -20,18 +21,15 @@ import {
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
 import {
   trustApi,
-  providerApi,
   orderApi,
   useAuthToken,
   decodeToken,
-  compressImage,
 } from "../../webapp-bridge/backend";
 import type {
   Dispute,
   DisputeKind,
   DisputeStatus,
   ReportTargetType,
-  SupplementaryEvidence,
   ReputationLedgerEntry,
   ProviderSanction,
   SanctionAppeal,
@@ -55,40 +53,8 @@ function sanitizeText(s: unknown): string {
 
 export const QUOTA_ERROR_MESSAGE = "Bộ nhớ trình duyệt bị đầy hoặc bị chặn — thay đổi chỉ được giữ trong phiên này.";
 
-const DEFAULT_REPUTATION_LEDGER: ReputationLedgerEntry[] = [
-  {
-    id: "REP-001",
-    timestamp: "2026-10-15 14:30",
-    event: "Hoàn thành đơn hàng đúng hạn và đạt chuẩn",
-    source: "ORDER_COMPLETED",
-    delta: 5,
-    balance: 85,
-    referenceId: "ORD-1042",
-    note: "Khách hàng nghiệm thu đạt chất lượng 100%",
-  },
-  {
-    id: "REP-002",
-    timestamp: "2026-10-10 09:15",
-    event: "Nhận đánh giá 5 sao từ khách hàng",
-    source: "REVIEW_5_STAR",
-    delta: 2,
-    balance: 80,
-    referenceId: "ORD-1038",
-    note: "Đánh giá xuất sắc về thái độ và chuyên môn",
-  },
-  {
-    id: "REP-003",
-    timestamp: "2026-10-02 16:45",
-    event: "Trễ hạn bàn giao công việc 1 ngày",
-    source: "LATE_DELIVERY",
-    delta: -1,
-    balance: 78,
-    referenceId: "ORD-1019",
-    note: "Khấu trừ theo công thức n(n+1)/2 (n=1)",
-  },
-];
-
-export default function DisputeCenterPage({
+export default function DisputeCenterPage(props:TrungPageProps){const token=useAuthToken();return <DisputeCenterContent key={String(decodeToken(token)?.userId??'guest')} {...props}/>;}
+function DisputeCenterContent({
   onShowToast,
   orderId: initialOrderId,
 }: TrungPageProps) {
@@ -142,9 +108,11 @@ export default function DisputeCenterPage({
   const [targetId, setTargetId] = useState("");
   const [reason, setReason] = useState("");
   const [description, setDescription] = useState("");
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
+  const [supplementFile, setSupplementFile] = useState<File | null>(null);
   const [evidenceUrl, setEvidenceUrl] = useState("");
   const [evidencePreview, setEvidencePreview] = useState("");
-  const [uploadingEvidence, setUploadingEvidence] = useState(false);
+  const [uploadingEvidence] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -156,8 +124,8 @@ export default function DisputeCenterPage({
   const [submittingSupplement, setSubmittingSupplement] = useState(false);
 
   // Reputation & Ledger state
-  const [reputationScore, setReputationScore] = useState<number>(85);
-  const [reputationLedger, setReputationLedger] = useState<ReputationLedgerEntry[]>(DEFAULT_REPUTATION_LEDGER);
+  const [reputationScore, setReputationScore] = useState<number | null>(null);
+  const [reputationLedger, setReputationLedger] = useState<ReputationLedgerEntry[]>([]);
 
   // Sanctions & Appeal state
   const [sanctions, setSanctions] = useState<ProviderSanction[]>([]);
@@ -170,6 +138,18 @@ export default function DisputeCenterPage({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supplementFileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if(!expanded || !token)return;
+    let active=true;
+    trustApi.listEvidence(expanded).then((r: {result?: Array<{id:string;originalName:string;createdAt:string}>}) => {
+      if(!active)return;
+      setItems(old=>old.map(d=>d.id===expanded?{...d,supplementaryEvidences:(r.result??[]).map(f=>({fileId:f.id,evidenceUrl:'',note:f.originalName,submittedAt:f.createdAt}))}:d));
+    }).catch(e=>{if(active)setError((e as Error).message);});
+    trustApi.getDecisionProgress(expanded).then((r:{result?:Dispute['progress']})=>{if(active&&r.result)setItems(old=>old.map(d=>d.id===expanded?{...d,progress:r.result}:d));}).catch(()=>undefined);
+    return ()=>{active=false;};
+  },[expanded,token]);
+
 
   // 1. Fetch user disputes
   useEffect(() => {
@@ -199,17 +179,17 @@ export default function DisputeCenterPage({
               .filter(d => Boolean(d.disputeId))
               .map(d => {
                 const status = (d.status as DisputeStatus) || "OPEN";
-                let settlementStatus: SettlementStatus = "FROZEN";
+                let settlementStatus: SettlementStatus = "RECONCILIATION_PENDING";
                 let decisionType: "RELEASE" | "REFUND" | "SPLIT" = "RELEASE";
 
                 if (status === "RESOLVED" || status === "RESOLVED_CLIENT") {
-                  settlementStatus = "REFUNDED";
+                  settlementStatus = "RECONCILIATION_PENDING";
                   decisionType = "REFUND";
                 } else if (status === "RESOLVED_PROVIDER") {
-                  settlementStatus = "SETTLED";
+                  settlementStatus = "RECONCILIATION_PENDING";
                   decisionType = "RELEASE";
                 } else if (status === "CLOSED" && d.resolution?.toLowerCase().includes("split")) {
-                  settlementStatus = "SPLIT_COMPLETED";
+                  settlementStatus = "RECONCILIATION_PENDING";
                   decisionType = "SPLIT";
                 }
 
@@ -270,21 +250,20 @@ export default function DisputeCenterPage({
           setReputationLedger(res.result.ledger);
         }
       })
-      .catch(() => {
-        // Fallback to providerApi profile rating
-        providerApi.getMyProfile().then((pres: { result?: { ratingAvg?: number } }) => {
-          if (cancelled || !pres?.result) return;
-          const avg = pres.result.ratingAvg || 4.25;
-          setReputationScore(Math.round(Math.min(100, Math.max(0, avg * 20))));
-        }).catch(() => undefined);
-      });
+      .catch(() => { if (!cancelled) { setReputationScore(null); setReputationLedger([]); } });
+    trustApi.getReputationLedger(providerId).then((res: { result?: {content?: Array<{id:string;createdAt:string;kind:string;requestedDelta:number;appliedDelta:number;afterScore:number;orderId?:string;reason?:string}>} }) => {
+      if (cancelled) return;
+      setReputationLedger((res.result?.content ?? []).map(e => ({id:e.id,timestamp:e.createdAt,event:e.kind,
+        source:'ADMIN_ADJUSTMENT',delta:e.appliedDelta,balance:e.afterScore,referenceId:e.orderId ?? '',note:e.reason})));
+    }).catch(() => { if (!cancelled) setReputationLedger([]); });
 
+    trustApi.getMyAppeals().then((r:{result?:Array<{id:string;sanctionId:string;explanation:string;status:'PENDING'|'ACCEPTED'|'REJECTED';submittedAt:string}>})=>{if(!cancelled&&Array.isArray(r.result))setSubmittedAppeals(r.result.map(a=>({...a,reason:'Kháng nghị chế tài'})));}).catch(()=>undefined);
     // Fetch provider sanctions
     trustApi
       .getSanctions(providerId)
       .then((res: { result?: ProviderSanction[] } | null) => {
         if (cancelled || !res?.result) return;
-        if (Array.isArray(res.result)) setSanctions(res.result);
+        if (Array.isArray(res.result)) setSanctions(res.result.map((s: ProviderSanction & {effectiveAt?:string;actorId?:string;revokedAt?:string})=>({...s,type:'RESTRICTED',issuedAt:s.effectiveAt??s.issuedAt,issuedBy:s.actorId??s.issuedBy,status:s.revokedAt?'LIFTED':'ACTIVE'})));
       })
       .catch(() => {
         if (!cancelled) setSanctions([]);
@@ -295,55 +274,13 @@ export default function DisputeCenterPage({
     };
   }, [token, providerId]);
 
-  // Evidence file upload handler
   const handleEvidenceFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingEvidence(true);
-    try {
-      if (file.type.startsWith("image/")) {
-        const compressed = await compressImage(file);
-        setEvidenceUrl(compressed);
-        setEvidencePreview(compressed);
-      } else {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const res = String(reader.result ?? "");
-          setEvidenceUrl(res);
-          setEvidencePreview(res);
-        };
-        reader.readAsDataURL(file);
-      }
-    } catch (err: unknown) {
-      setError((err as Error)?.message || "Không xử lý được file tải lên.");
-    } finally {
-      setUploadingEvidence(false);
-    }
+    const file=e.target.files?.[0] ?? null; setEvidenceFile(file); setEvidenceUrl(''); setEvidencePreview('');
   };
-
-  // Supplement evidence file upload handler
   const handleSupplementFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      if (file.type.startsWith("image/")) {
-        const compressed = await compressImage(file);
-        setSupplementUrl(compressed);
-      } else {
-        const reader = new FileReader();
-        reader.onload = () => {
-          setSupplementUrl(String(reader.result ?? ""));
-        };
-        reader.readAsDataURL(file);
-      }
-    } catch {
-      onShowToast("Không đọc được file ảnh bổ sung.");
-    }
+    const file=e.target.files?.[0] ?? null; setSupplementFile(file); setSupplementUrl(file?.name ?? '');
   };
 
-  // Submit dispute or report
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanOrder = sanitizeText(orderId);
@@ -396,7 +333,7 @@ export default function DisputeCenterPage({
           description: cleanDesc || cleanReason,
           evidenceUrl: cleanEvidence || undefined,
         });
-        newId = res?.result?.disputeId || `DISP-${Date.now()}`;
+        newId = res?.result?.disputeId ?? "";
       } else {
         const res = await trustApi.submitReport({
           targetType,
@@ -405,9 +342,10 @@ export default function DisputeCenterPage({
           description: cleanDesc || cleanReason,
           evidenceUrl: cleanEvidence || undefined,
         });
-        newId = res?.result?.reportId || `REP-${Date.now()}`;
+        newId = res?.result?.reportId ?? "";
       }
 
+      if (!newId) throw new Error("Invalid server case receipt");
       const newDispute: Dispute = {
         id: newId,
         ticketId: newId,
@@ -424,6 +362,10 @@ export default function DisputeCenterPage({
       };
 
       setItems(prev => [newDispute, ...prev]);
+      if (evidenceFile && kind === "DISPUTE") {
+        try { await trustApi.supplementEvidence(newId,evidenceFile); setEvidenceFile(null); }
+        catch (err) { setShowCreateForm(false);setExpanded(newId);throw new Error(`Case ${newId} đã tạo; chứng cứ chưa tải lên: ${(err as Error).message}. Bổ sung file vào case này.`); }
+      }
       setOrderId("");
       setTargetId("");
       setReason("");
@@ -465,38 +407,18 @@ export default function DisputeCenterPage({
 
   // Submit supplementary evidence on admin request
   const submitSupplement = async (ticketId: string) => {
-    const cleanUrl = sanitizeText(supplementUrl);
-    const cleanNote = sanitizeText(supplementNote);
 
-    if (!cleanUrl && !cleanNote) {
+    if (!supplementFile) {
       onShowToast("Vui lòng đính kèm chứng cứ hoặc lời giải trình.");
       return;
     }
 
     setSubmittingSupplement(true);
     try {
-      await trustApi.supplementEvidence(ticketId, {
-        evidenceUrl: cleanUrl,
-        note: cleanNote,
-      });
-
-      const newEvidence: SupplementaryEvidence = {
-        evidenceUrl: cleanUrl,
-        note: cleanNote,
-        submittedAt: new Date().toISOString().replace("T", " ").slice(0, 16),
-      };
-
-      setItems(prev =>
-        prev.map(d =>
-          d.ticketId === ticketId
-            ? {
-                ...d,
-                supplementaryEvidences: [...(d.supplementaryEvidences || []), newEvidence],
-              }
-            : d
-        )
-      );
-
+      if (!supplementFile) throw new Error('Select an evidence file');
+      await trustApi.supplementEvidence(ticketId, supplementFile);
+      await trustApi.listEvidence(ticketId);
+      setSupplementFile(null);
       setSupplementingTicket(null);
       setSupplementUrl("");
       setSupplementNote("");
@@ -524,13 +446,13 @@ export default function DisputeCenterPage({
     setSubmittingAppeal(true);
     try {
       const res = await trustApi.submitAppeal({
-        sanctionId: cleanRef || "SNC-GENERAL",
+        sanctionId: cleanRef,
         reason: cleanReason,
         explanation: cleanExp,
-        evidenceUrl: cleanEvidence || undefined,
       });
 
-      const appealId = res?.result?.appealId || `APP-${Date.now()}`;
+      const appealId = res?.result?.id;
+      if (!appealId) throw new Error("Invalid appeal receipt");
       setSubmittedAppeals(prev => [
         {
           id: appealId,
@@ -539,7 +461,7 @@ export default function DisputeCenterPage({
           explanation: cleanExp,
           evidenceUrl: cleanEvidence || undefined,
           status: "PENDING",
-          submittedAt: new Date().toISOString().slice(0, 10),
+          submittedAt: res.result.submittedAt,
         },
         ...prev,
       ]);
@@ -548,7 +470,7 @@ export default function DisputeCenterPage({
       setAppealReason("");
       setAppealExplanation("");
       setAppealEvidence("");
-      onShowToast("Đã gửi đơn kháng nghị tới SUPER_ADMIN. Hệ thống sẽ xem xét trong 48 giờ.");
+      onShowToast("Đã nhận biên nhận kháng nghị. Mục tiêu xem xét trong 3 ngày làm việc.");
     } catch (err: unknown) {
       onShowToast((err as Error)?.message || "Không gửi được đơn kháng nghị.");
     } finally {
@@ -560,14 +482,14 @@ export default function DisputeCenterPage({
 
   // Determine reputation tier
   const getReputationTier = (score: number) => {
-    if (score >= 80) return { label: "Hạng A — Xuất sắc (Uy tín cao)", cls: styles.tierA, maxOrders: "Không giới hạn" };
-    if (score >= 60) return { label: "Hạng B — Tốt (Tiêu chuẩn)", cls: styles.tierB, maxOrders: "5 việc đồng thời" };
-    if (score >= 40) return { label: "Hạng C — Trung bình (Cần cải thiện)", cls: styles.tierC, maxOrders: "3 việc đồng thời" };
+    if (score >= 80) return { label: "Hạng A — Xuất sắc (Uy tín cao)", cls: styles.tierA, maxOrders: "5 việc đồng thời sau giai đoạn Provider mới" };
+    if (score >= 60) return { label: "Hạng B — Tốt (Tiêu chuẩn)", cls: styles.tierB, maxOrders: "3 việc đồng thời" };
+    if (score >= 40) return { label: "Hạng C — Trung bình (Cần cải thiện)", cls: styles.tierC, maxOrders: "2 việc đồng thời" };
     if (score >= 20) return { label: "Hạng D — Cảnh báo (Hạn chế nhận việc)", cls: styles.tierD, maxOrders: "1 việc đồng thời" };
-    return { label: "Hạng E — Nguy cơ khóa tài khoản", cls: styles.tierE, maxOrders: "Tạm đình chỉ nhận việc" };
+    return { label: score < 5 ? "Chờ xét điểm 0–4" : "Phục hồi có giám sát", cls: styles.tierE, maxOrders: "Dừng nhận việc mới; phục hồi cần quyết định SUPER_ADMIN" };
   };
 
-  const currentTier = getReputationTier(reputationScore);
+  const currentTier = reputationScore === null ? {label:"Chưa có dữ liệu uy tín",cls:styles.tierE,maxOrders:"Chờ xác minh từ server"} : getReputationTier(reputationScore);
 
   return (
     <main className={styles.wrap}>
@@ -593,7 +515,7 @@ export default function DisputeCenterPage({
           onClick={() => setActiveTab("reputation")}
         >
           <Award size={18} />
-          Điểm uy tín Provider ({reputationScore}/100)
+          Điểm uy tín Provider ({reputationScore ?? "?"}/100)
         </button>
         <button
           type="button"
@@ -745,7 +667,7 @@ export default function DisputeCenterPage({
                       type="button"
                       className={styles.uploadBtn}
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingEvidence}
+                      disabled={uploadingEvidence || kind!=="DISPUTE"}
                     >
                       <Upload size={16} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} />
                       {uploadingEvidence ? "Đang xử lý..." : "Chọn file ảnh"}
@@ -840,6 +762,7 @@ export default function DisputeCenterPage({
                         </div>
                       )}
 
+                      {t.progress&&<p>Kết luận: {t.progress.operation} · Tiền: {t.progress.paymentStatus} · Order: {t.progress.orderStatus} · Timer: {t.progress.timerStatus} · Thực thi: {t.progress.executionStatus} {t.progress.lastError}</p>}
                       {/* Supplementary Evidences List */}
                       {t.supplementaryEvidences && t.supplementaryEvidences.length > 0 && (
                         <div className={styles.evidenceSection}>
@@ -847,7 +770,7 @@ export default function DisputeCenterPage({
                           <ul style={{ margin: "6px 0 0 16px", padding: 0 }}>
                             {t.supplementaryEvidences.map((ev, idx) => (
                               <li key={idx} style={{ marginBottom: 6 }}>
-                                <span>[{ev.submittedAt}] </span>
+                                <span>[{ev.submittedAt}] </span>{ev.fileId && <button type="button" onClick={async()=>{try{const blob=await trustApi.downloadEvidence(ev.fileId);const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=ev.note??'evidence';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(err){onShowToast((err as Error).message);}}}>Tải chứng cứ</button>}
                                 <em>{ev.note || "Bổ sung ảnh/tài liệu đối chiếu"}</em>
                                 {ev.evidenceUrl && ev.evidenceUrl.startsWith("data:") ? (
                                   /* eslint-disable-next-line @next/next/no-img-element */
@@ -975,20 +898,20 @@ export default function DisputeCenterPage({
                               <RefreshCw size={16} /> 2. REFUND (Khách Hàng)
                             </span>
                             <span className={styles.decisionTypeDesc}>
-                              Hoàn tiền 100% về ví Khách Hàng do Provider vi phạm cam kết hoặc không bàn giao.
+                              Nghĩa vụ hoàn và phí theo receipt nguồn; tiền mặt được xác nhận riêng, không cộng giả vào ví.
                             </span>
                           </div>
 
                           <div
                             className={`${styles.decisionItem} ${
-                              t.decision?.type === "SPLIT" ? styles.decisionSelected : ""
+                              t.decision?.type === "REJECT" ? styles.decisionSelected : ""
                             }`}
                           >
                             <span className={styles.decisionTypeTitle} style={{ color: "#9333ea" }}>
-                              <Scale size={16} /> 3. SPLIT (Hòa Giải Chia Đôi)
+                              <Scale size={16} /> 3. REJECT (Từ Chối Khiếu Nại)
                             </span>
                             <span className={styles.decisionTypeDesc}>
-                              Phân chia giá trị theo tỷ lệ công việc thực tế (Ví dụ: 50% Khách - 50% Thợ).
+                              Từ chối khiếu nại; mở lại xử lý công việc theo ACK nguồn, không tự chuyển tiền.
                             </span>
                           </div>
                         </div>
@@ -1098,10 +1021,11 @@ export default function DisputeCenterPage({
       {/* TAB 2: PROVIDER REPUTATION (0..100) & HISTORY LEDGER */}
       {activeTab === "reputation" && (
         <div className={styles.reputationWrap}>
+          {providerId && <ScoreReviewHistory providerId={providerId} />}
           {/* Reputation Card */}
           <div className={styles.reputationCard}>
             <div className={styles.scoreCircle}>
-              <span className={styles.scoreNum}>{reputationScore}</span>
+              <span className={styles.scoreNum}>{reputationScore ?? "?"}</span>
               <span className={styles.scoreMax}>/ 100 điểm</span>
             </div>
 
@@ -1113,18 +1037,18 @@ export default function DisputeCenterPage({
                 </span>
               </div>
               <p style={{ margin: "4px 0 0 0", color: "var(--wg-text-secondary)", fontSize: "0.9rem" }}>
-                Điểm uy tín được tính toán tự động dựa trên chất lượng dịch vụ, thời gian bàn giao và tỷ lệ giải quyết tranh chấp. Quyền nhận việc: <strong>{currentTier.maxOrders}</strong>.
+                Giới hạn theo điểm: <strong>{currentTier.maxOrders}</strong>. Provider mới tối đa 1 việc tới khi đủ 3 Order/3 CLIENT; server kiểm thêm nợ, chế tài và slot đang dùng.
               </p>
 
               {/* Policy Quick Cards */}
               <div className={styles.policyGrid}>
                 <div className={styles.policyItem}>
                   <span>Hoàn thành đơn hàng:</span>
-                  <strong style={{ color: "#16a34a" }}>+5 điểm</strong>
+                  <strong style={{ color: "#16a34a" }}>Theo quote 2–5 điểm, có giới hạn</strong>
                 </div>
                 <div className={styles.policyItem}>
                   <span>Đánh giá 5 sao:</span>
-                  <strong style={{ color: "#16a34a" }}>+2 điểm</strong>
+                  <strong>Không trực tiếp cộng uy tín</strong>
                 </div>
                 <div className={styles.policyItem}>
                   <span>Trễ hạn n ngày:</span>

@@ -10,6 +10,7 @@ import type {
   TopUpDto,
   PayoutRequest,
   PayoutDto,
+  CashReturnDto,
 } from './types';
 
 // payment-service endpoints via gateway (/api/v1/payment/**).
@@ -19,6 +20,8 @@ import type {
 // order. The browser redirect never reaches the app, so the app polls
 // GET /payments/{id} for the result.
 export const paymentApi = {
+  getCashReturn:(orderId:string)=>http.get<CashReturnDto>(`/payment/wallet/cash-returns/${orderId}`),
+  confirmCashReturn:(decisionId:string,amount:number)=>http.post<CashReturnDto>(`/payment/wallet/cash-returns/${decisionId}/confirm`,{amount}),
   // A still-valid PENDING payment of the same gateway is returned instead of a new one.
   createPayment: ({ orderId, gateway, paymentMethod }: PaymentCreationRequest, idempotencyKey: string) =>
     http.post<ApiResponse<PaymentDto>>(
@@ -45,6 +48,8 @@ export const paymentApi = {
   getWallet: () => http.get<ApiResponse<WalletDto>>('/payment/wallet'),
 
   getTopUps: () => http.get<ApiResponse<TopUpDto[]>>('/payment/wallet/top-ups'),
+  getBeneficiaries: () => http.get<ApiResponse<Array<{id:string;bankCode:string;accountName:string;accountNumber:string}>>>('/payment/wallet/beneficiaries'),
+  getPayoutReceipt: (key:string) => http.get<ApiResponse<PayoutDto>>('/payment/wallet/payouts/receipt',{params:{key}}),
   getPayouts: () => http.get<ApiResponse<PayoutDto[]>>('/payment/wallet/payouts'),
   getFees: () => http.get<ApiResponse<FeeAssessmentDto[]>>('/payment/wallet/fees'),
 

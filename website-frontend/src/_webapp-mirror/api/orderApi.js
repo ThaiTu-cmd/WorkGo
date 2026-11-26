@@ -11,6 +11,9 @@ const newIdempotencyKey = () => {
 
 // order-service endpoints via gateway (/api/v1/order/**).
 export const orderApi = {
+  getRewardQuote: (body) => axiosClient.post('/order/orders/reward-quote',body),
+  getAmendmentRewardQuote: (id,amendmentId) => axiosClient.get(`/order/orders/${encodeURIComponent(id)}/amendments/${encodeURIComponent(amendmentId)}/reward-quote`),
+  getOrderRewardQuote: (id) => axiosClient.get(`/order/orders/${encodeURIComponent(id)}/reward-quote`),
   // roleName: 'CLIENT' | 'PROVIDER' — which side of the order the caller is on.
   getMyOrders: (roleName, page = 0, size = 10) =>
     axiosClient.get('/order/orders', { params: { roleName, page, size } }),
@@ -75,7 +78,8 @@ export const orderApi = {
   checkin: (orderId, code) => axiosClient.post(`/order/orders/onsite/${orderId}/checkin`, { code }),
   completeOnsite: (orderId) => axiosClient.post(`/order/orders/onsite/${orderId}/complete`),
   acceptOnsite: (orderId) => axiosClient.post(`/order/orders/onsite/${orderId}/accept`),
-  confirmCashReceived: (orderId) => axiosClient.post(`/order/orders/onsite/${orderId}/cash-received`),
+  confirmCashReceived: (orderId, amount) => axiosClient.post(`/order/orders/onsite/${orderId}/cash-received`, {amount}),
+  recordCashPaid: (orderId, amount) => axiosClient.post(`/order/orders/onsite/${orderId}/cash-paid`, {amount}),
 
   // DIGITAL flow. Client sends requirements (CONFIRMED → IN_PROGRESS), then on the
   // latest delivery either asks for a revision (DELIVERED → IN_PROGRESS) or accepts it

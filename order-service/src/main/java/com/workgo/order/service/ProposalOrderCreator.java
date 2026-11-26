@@ -73,6 +73,15 @@ public class ProposalOrderCreator {
         this.agreementVersions = agreementVersions;
     }
 
+    public OrderRewardQuoteService.Quote preview(CreateProposalOrderRequest request){
+        var policy=orderFeeService.currentPolicy();return rewardQuotes.preview(proposalQuoteInput(request,policy.getFeePolicyVersionId()));
+    }
+    public OrderRewardQuoteService.Quote checkQuote(CreateProposalOrderRequest request){
+        var policy=orderFeeService.currentPolicy();var input=proposalQuoteInput(request,policy.getFeePolicyVersionId());
+        rewardQuotes.referenceAt(input,request.rewardQuoteRef(),request.acceptedAt());return rewardQuotes.historic(request.rewardQuoteRef());
+    }
+    private OrderRewardQuoteService.Input proposalQuoteInput(CreateProposalOrderRequest r,UUID policy){return new OrderRewardQuoteService.Input(r.clientId(),r.providerId(),"PROPOSAL",r.proposalId(),r.jobTitle()+(r.jobDescription()==null||r.jobDescription().isBlank()?"":"\n"+r.jobDescription()),r.price(),r.currency(),r.estimatedDays(),policy);}
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ProposalOrderService.CreationResult create(CreateProposalOrderRequest request) {
         if ((request.currency() == null || "VND".equalsIgnoreCase(request.currency()))
@@ -98,18 +107,18 @@ public class ProposalOrderCreator {
         }
         ProposalSnapshot frozen = ProposalSnapshot.from(request);
         if (source == null || !"ACCEPTED".equals(source.proposalStatus()) || !"CLOSED".equals(source.jobStatus())
-                || !"ACCEPTED".equals(source.applicationStatus()) || !frozen.equals(source.snapshot())) {
+                || !"ACCEPTED".equals(source.applicationStatus()) || !frozen.equals(source.snapshot())||!java.util.Objects.equals(request.rewardQuoteRef(),source.rewardQuoteRef())||!java.util.Objects.equals(request.acceptedAt(),source.acceptedAt())) {
             throw new AppException(ErrorCode.PROPOSAL_ORDER_CONFLICT);
         }
         providerFinancialEligibility.assertMayStartNewWork(request.providerId());
-        FeePolicyResponse feePolicy = orderFeeService.currentPolicy();
+        FeePolicyResponse feePolicy=request.rewardQuoteRef()==null?orderFeeService.currentPolicy():orderFeeService.version(rewardQuotes.historic(request.rewardQuoteRef()).input().feePolicyVersionId());
         BigDecimal fee = orderFeeService.successFee(request.price(), feePolicy.getSuccessFeeRate());
         BigDecimal net = request.price().subtract(fee);
-        String rewardQuoteRef = rewardQuotes.quote(new OrderRewardQuoteService.Input(request.clientId(), request.providerId(),
-                "PROPOSAL", request.proposalId(), request.jobTitle()+" - "+request.terms(), request.price(), request.currency(),
-                request.estimatedDays(), feePolicy.getFeePolicyVersionId()));
-        Instant placedAt = Instant.now();
+        String rewardQuoteRef=request.rewardQuoteRef()==null?rewardQuotes.quote(proposalQuoteInput(request,feePolicy.getFeePolicyVersionId())):
+                rewardQuotes.referenceAt(proposalQuoteInput(request,feePolicy.getFeePolicyVersionId()),request.rewardQuoteRef(),request.acceptedAt());
+        Instant placedAt = request.acceptedAt()==null?Instant.now():request.acceptedAt();
         Order order = orders.saveAndFlush(Order.builder()
+                .recoveryGrantId(providerFinancialEligibility.recoveryGrant(request.providerId()))
                 .orderNumber("WG-P-" + UUID.randomUUID())
                 .sourceType(SourceType.PROPOSAL).sourceId(request.proposalId())
                 .clientId(request.clientId()).providerId(request.providerId())
@@ -165,6 +174,7 @@ public class ProposalOrderCreator {
         Order order = orders.findBySourceTypeAndSourceId(SourceType.PROPOSAL, request.proposalId()).orElse(null);
         if (order == null) return null;
         ProposalSnapshot frozen = snapshots.findById(order.getOrderId()).map(OrderSnapshot::getProposalSnapshot).orElse(null);
+        if(request.rewardQuoteRef()!=null&&(!java.util.Objects.equals(request.acceptedAt(),order.getPlacedAt())||!request.rewardQuoteRef().equals(snapshots.findById(order.getOrderId()).map(OrderSnapshot::getRewardQuoteRef).orElse(null))))throw new AppException(ErrorCode.PROPOSAL_ORDER_CONFLICT);
         if (!ProposalSnapshot.from(request).equals(frozen)) throw new AppException(ErrorCode.PROPOSAL_ORDER_CONFLICT);
         return result(order, frozen, false);
     }

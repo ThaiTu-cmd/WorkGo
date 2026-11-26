@@ -37,6 +37,8 @@ public class FeePolicyService {
     AdminAuditService adminAuditService;
     TokenUtils tokenUtils;
 
+    @Transactional(readOnly=true) public FeePolicyResponse getVersion(UUID id){return feePolicyMapper.toResponse(loadForOrder(id));}
+
     //chi tao phien ban moi, khong sua phien ban cu; order da chot giu snapshot phien ban cu
     @Transactional
     public FeePolicyResponse createVersion(FeePolicyCreationRequest request) {
@@ -52,7 +54,7 @@ public class FeePolicyService {
             throw new AppException(ErrorCode.FEE_POLICY_INVALID);
         }
 
-        FeePolicyResponse before = feePolicyMapper.toResponse(loadEffective(now));
+        FeePolicyResponse before = feePolicyVersionRepository.findTopByEffectiveFromLessThanEqualOrderByEffectiveFromDescVersionNoDesc(now).map(feePolicyMapper::toResponse).orElse(null);
         int versionNo = feePolicyVersionRepository.findTopByOrderByVersionNoDesc()
                 .map(FeePolicyVersion::getVersionNo)
                 .orElse(0) + 1;

@@ -1,12 +1,15 @@
 import { http } from './client';
-import type { ApiResponse, Paged } from './types';
+import type { ApiResponse, Paged, RewardQuoteDto } from './types';
 
 export type JobExecutionType = 'DIGITAL' | 'ONSITE' | 'DELIVERY' | 'APPOINTMENT';
 
 export type JobStatus = 'OPEN' | 'CLOSED' | 'CANCELLED' | 'IN_PROGRESS' | 'COMPLETED';
 
 export type JobAttachmentDto = {
+  id?: string;
   attachmentId?: string;
+  status?: string;
+  sha256?: string;
   fileUrl: string;
   fileName: string;
   fileSize?: number;
@@ -127,6 +130,7 @@ export type JobSearchParams = {
 
 // job-service endpoints via gateway (/api/v1/job/**)
 export const jobApi = {
+  getProposalRewardQuote: (id:string) => http.post<ApiResponse<RewardQuoteDto>>(`/job/proposals/${id}/reward-quote`),
   searchJobs: ({ keyword, categoryId, executionType, minBudget, maxBudget, page = 0, size = 20, sort = 'createdAt,desc' }: JobSearchParams = {}) =>
     http.get<Paged<JobSummaryDto>>('/job/jobs', {
       params: {
@@ -146,7 +150,11 @@ export const jobApi = {
 
   getJob: (jobId: string) => http.get<ApiResponse<JobDetailDto>>(`/job/jobs/${jobId}`),
 
-  createJob: (body: JobCreateRequest) => http.post<ApiResponse<JobDetailDto>>('/job/jobs', body),
+  createJob: (body: JobCreateRequest, key?:string) => http.post<ApiResponse<JobDetailDto>>('/job/jobs', body, key?{headers:{'Idempotency-Key':key}}:{}),
+  createDraft: (body:JobCreateRequest,key:string) => http.post<ApiResponse<JobDetailDto>>('/job/jobs/drafts',body,{headers:{'Idempotency-Key':key}}),
+  getCreationReceipt: (key:string) => http.get<ApiResponse<JobDetailDto>>('/job/jobs/receipt',{params:{key}}),
+  uploadAttachment: (id:string,body:FormData,signal?:AbortSignal) => http.post<ApiResponse<JobAttachmentDto>>(`/job/jobs/${encodeURIComponent(id)}/attachments`,body,{signal}),
+  publishJob: (id:string) => http.put<ApiResponse<JobDetailDto>>(`/job/jobs/${encodeURIComponent(id)}`,{status:'OPEN'}),
 
   updateJob: (jobId: string, body: Partial<JobCreateRequest>) => http.put<ApiResponse<JobDetailDto>>(`/job/jobs/${jobId}`, body),
 

@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatusCode;
 @NoArgsConstructor
 @AllArgsConstructor
 public enum ErrorCode {
+    SECURITY_SUPPORT_RATE_LIMIT(1090,"Too many support requests; try again later",HttpStatus.TOO_MANY_REQUESTS),
     //=============SYSTEM====================
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorize Exception", HttpStatus.INTERNAL_SERVER_ERROR),
     SUCCESS(1000, "Success", HttpStatus.ACCEPTED),

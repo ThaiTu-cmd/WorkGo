@@ -97,7 +97,8 @@ public enum ErrorCode {
     PAYOUT_NOT_FOUND(3704, "Payout not found", HttpStatus.NOT_FOUND),
     PAYOUT_INVALID_STATUS(3705, "Payout cannot move to that status", HttpStatus.CONFLICT),
     PAYOUT_IDEMPOTENCY_KEY_REUSED(3706, "Idempotency-Key was already used for another payout", HttpStatus.CONFLICT),
-    PAYOUT_REFERENCE_REQUIRED(3707, "Bank or partner reference and a reason are required", HttpStatus.BAD_REQUEST);
+    PAYOUT_REFERENCE_REQUIRED(3707, "Verified bank evidence and a reason are required", HttpStatus.BAD_REQUEST),
+    PAYOUT_RESTRICTED(3708, "Outgoing payout is restricted pending account review", HttpStatus.CONFLICT);
 
     private int code;
     private String message;

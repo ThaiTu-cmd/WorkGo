@@ -108,6 +108,16 @@ public class WalletController {
                 .build();
     }
 
+    @GetMapping("/payouts/{payoutId}")
+    ApiResponse<PayoutResponse> getPayout(@PathVariable UUID payoutId) {
+        return ApiResponse.<PayoutResponse>builder().result(payoutService.getMyPayout(payoutId)).build();
+    }
+
+    @GetMapping("/payouts/receipt")
+    ApiResponse<PayoutResponse> getPayoutReceipt(@RequestParam String key) {
+        return ApiResponse.<PayoutResponse>builder().result(payoutService.getMyPayoutByKey(key)).build();
+    }
+
     //phi minh phai chiu: da thu / con no (OUTSTANDING)
     @GetMapping("/fees")
     ApiResponse<List<FeeAssessmentResponse>> getMyFees(){

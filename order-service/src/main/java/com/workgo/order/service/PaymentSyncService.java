@@ -38,6 +38,7 @@ public class PaymentSyncService {
     OrderSnapshotRepository orderSnapshotRepository;
     PaymentClient paymentClient;
     TrustDisputeGuard trustDisputeGuard;
+    com.workgo.order.reppository.OnsiteExecutionRepository onsiteExecutions;
 
     //goi tu afterCommit + PaymentSyncJob nen can transaction rieng
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -122,7 +123,7 @@ public class PaymentSyncService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordCashFee(UUID orderId) {
 
-        Order order = orderRepository.findById(orderId).orElse(null);
+        Order order = orderRepository.findByIdForUpdate(orderId).orElse(null);
 
         if (order == null
                 || order.getOrderStatus() != OrderStatus.COMPLETED
@@ -130,17 +131,35 @@ public class PaymentSyncService {
             return;
         }
 
+        var outcome = onsiteExecutions.findByExecution_Order_OrderId(orderId).orElse(null);
+        if (outcome == null || outcome.getClientAcceptedAt() == null || outcome.getCashReceivedAt() == null
+                || outcome.getActualReceivedAmount() == null || order.getTotalAmount().compareTo(outcome.getActualReceivedAmount()) != 0) return;
+
         try {
-            paymentClient.recordCashFee(CashFeeRequest.builder()
+            UUID policyId = orderSnapshotRepository.findById(orderId)
+                    .map(OrderSnapshot::getPricingSnapshot).map(PricingSnapshot::getFeePolicyVersionId).orElse(null);
+            if (policyId == null) return;
+            var receipt = paymentClient.recordCashFee(CashFeeRequest.builder()
                     .orderId(orderId)
+                    .outcomeId(orderId)
+                    .workAccepted(true)
+                    .paymentReceived(true)
+                    .actualReceivedAmount(outcome.getActualReceivedAmount())
                     .providerId(order.getProviderId())
                     .orderAmount(order.getTotalAmount().setScale(0, RoundingMode.HALF_UP))
                     .fee(order.getPlatformFee().setScale(0, RoundingMode.HALF_UP))
-                    .feePolicyVersionId(orderSnapshotRepository.findById(orderId)
-                            .map(OrderSnapshot::getPricingSnapshot)
-                            .map(PricingSnapshot::getFeePolicyVersionId)
-                            .orElse(null))
+                    .feePolicyVersionId(policyId)
                     .build());
+            if (receipt == null || receipt.getFeeAssessmentId() == null || !orderId.equals(receipt.getOrderId())
+                    || !policyId.equals(receipt.getFeePolicyVersionId())
+                    || receipt.getAmount() == null || order.getPlatformFee().compareTo(java.math.BigDecimal.valueOf(receipt.getAmount())) != 0
+                    || receipt.getBaseAmount() == null || order.getTotalAmount().compareTo(java.math.BigDecimal.valueOf(receipt.getBaseAmount())) != 0
+                    || receipt.getCollectedAmount() == null || receipt.getOutstandingAmount() == null
+                    || receipt.getCollectedAmount() < 0 || receipt.getOutstandingAmount() < 0
+                    || receipt.getCollectedAmount() + receipt.getOutstandingAmount() != receipt.getAmount()) {
+                log.warn("Invalid cash fee ACK for order {}",orderId);
+                return;
+            }
         } catch (FeignException e) {
             //giu CASH_ON_SITE, PaymentSyncJob goi lai sau
             log.warn("Record cash fee failed for order {}, status {}", orderId, e.status());

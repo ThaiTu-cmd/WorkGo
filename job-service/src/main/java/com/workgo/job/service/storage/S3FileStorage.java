@@ -67,14 +67,17 @@ public class S3FileStorage implements FileStorage {
     }
 
     @Override
-    public void put(String key, byte[] content) {
+    public void put(String key, byte[] content) { put(key,content,"application/octet-stream"); }
+
+    @Override
+    public void put(String key, byte[] content, String mime) {
         requireConfigured();
         if (content == null || content.length == 0) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
         String objectPath = objectPath(key);
         String payloadSha = sha256Hex(content);
-        HttpRequest request = signedRequest("PUT", objectPath, payloadSha, HttpRequest.BodyPublishers.ofByteArray(content));
+        HttpRequest request = signedRequest("PUT", objectPath, payloadSha, HttpRequest.BodyPublishers.ofByteArray(content), mime);
         try {
             HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
@@ -106,25 +109,28 @@ public class S3FileStorage implements FileStorage {
     @Override
     public boolean exists(String key) {
         requireConfigured();
-        String objectPath = objectPath(key);
-        HttpRequest request = signedRequest("HEAD", objectPath, EMPTY_SHA256, HttpRequest.BodyPublishers.noBody());
+        HttpRequest request = signedRequest("HEAD", objectPath(key), EMPTY_SHA256, HttpRequest.BodyPublishers.noBody());
         try {
             HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            if (response.statusCode() == 404) return false;
+            if (response.statusCode() < 200 || response.statusCode() >= 300) throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);
+            return true;
         } catch (IOException | InterruptedException e) {
             if (e instanceof InterruptedException) Thread.currentThread().interrupt();
-            return false;
+            throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);
         }
     }
 
     @Override
     public void delete(String key) {
-        if (bucket.isBlank() || accessKey.isBlank() || secretKey.isBlank()) return;
+        requireConfigured();
+        HttpRequest request = signedRequest("DELETE", objectPath(key), EMPTY_SHA256, HttpRequest.BodyPublishers.noBody());
         try {
-            String objectPath = objectPath(key);
-            HttpRequest request = signedRequest("DELETE", objectPath, EMPTY_SHA256, HttpRequest.BodyPublishers.noBody());
-            httpClient.send(request, HttpResponse.BodyHandlers.discarding());
-        } catch (Exception ignored) {
+            HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
+            if (response.statusCode() != 404 && (response.statusCode() < 200 || response.statusCode() >= 300)) throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);
+        } catch (IOException | InterruptedException e) {
+            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);
         }
     }
 
@@ -143,7 +149,7 @@ public class S3FileStorage implements FileStorage {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
         String fullKey = keyPrefix.isEmpty() ? clean : keyPrefix + "/" + clean;
-        StringBuilder path = new StringBuilder("/").append(encodeSegment(bucket));
+        StringBuilder path = new StringBuilder(awsEndpoint() ? "" : "/" + encodeSegment(bucket));
         for (String segment : fullKey.split("/")) {
             if (segment.isBlank() || ".".equals(segment) || "..".equals(segment)) {
                 throw new AppException(ErrorCode.INVALID_REQUEST);
@@ -153,11 +159,17 @@ public class S3FileStorage implements FileStorage {
         return path.toString();
     }
 
+    private boolean awsEndpoint() { return endpoint.getHost().endsWith(".amazonaws.com"); }
+    private URI requestEndpoint() { return awsEndpoint() ? URI.create("https://" + bucket + ".s3." + region + ".amazonaws.com") : endpoint; }
     private HttpRequest signedRequest(String method, String canonicalUri, String payloadHash, HttpRequest.BodyPublisher body) {
+        return signedRequest(method,canonicalUri,payloadHash,body,null);
+    }
+    private HttpRequest signedRequest(String method, String canonicalUri, String payloadHash, HttpRequest.BodyPublisher body, String mime) {
         ZonedDateTime now = ZonedDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
         String amzDate = AMZ_DATE.format(now);
         String dateStamp = DATE_STAMP.format(now);
-        String hostHeader = endpoint.getPort() > 0 ? endpoint.getHost() + ":" + endpoint.getPort() : endpoint.getHost();
+        URI target=requestEndpoint();
+        String hostHeader = target.getPort() > 0 ? target.getHost() + ":" + target.getPort() : target.getHost();
 
         String canonicalHeaders = "host:" + hostHeader + "\n"
                 + "x-amz-content-sha256:" + payloadHash + "\n"
@@ -172,14 +184,14 @@ public class S3FileStorage implements FileStorage {
         String authorization = "AWS4-HMAC-SHA256 Credential=" + accessKey + "/" + credentialScope
                 + ", SignedHeaders=" + signedHeaders + ", Signature=" + signature;
 
-        return HttpRequest.newBuilder(URI.create(endpoint.toString() + canonicalUri))
+        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(target.toString() + canonicalUri))
                 .timeout(Duration.ofSeconds(10))
                 .method(method, body)
                 .header("x-amz-content-sha256", payloadHash)
                 .header("x-amz-date", amzDate)
-                .header("x-amz-acl", "private")
-                .header("Authorization", authorization)
-                .build();
+                .header("Authorization", authorization);
+        if (mime != null && mime.matches("[a-zA-Z0-9!#$&^_.+\\-]+/[a-zA-Z0-9!#$&^_.+\\-]+")) request.header("Content-Type",mime);
+        return request.build();
     }
 
     private static String encodeSegment(String segment) {

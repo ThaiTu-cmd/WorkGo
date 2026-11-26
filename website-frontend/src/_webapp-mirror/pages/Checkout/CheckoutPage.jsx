@@ -49,6 +49,19 @@ export default function CheckoutPage({
   const attempt = useRef(null);
   const [feePolicy, setFeePolicy] = useState(null);
   const [snapshotAt] = useState(() => new Date());
+  const [rewardQuote,setRewardQuote]=useState(null);
+  const [quoteError,setQuoteError]=useState('');
+  const [quoteReload,setQuoteReload]=useState(0);
+  const quoteRequest=JSON.stringify({serviceId:order?.service?.serviceId,packageId:order?.pkg?.id,addonIds:(order?.addons??[]).map(a=>a.id)});
+  useEffect(()=>{
+    let active=true;setRewardQuote(null);setQuoteError('');
+    const body=JSON.parse(quoteRequest);if(!body.serviceId||!body.packageId)return;
+    Promise.resolve().then(()=>orderApi.getRewardQuote(body)).then(res=>{
+      const q=res?.result;if(!q?.reference||!Number.isInteger(q.points)||!q.inputHash||!q.expiresAt)throw new Error('Invalid reward quote');
+      if(active)setRewardQuote(q);
+    }).catch(err=>{if(active)setQuoteError(err.message||'Reward quote unavailable');});
+    return()=>{active=false;};
+  },[quoteRequest,quoteReload]);
   const hasOrder = Boolean(order);
   useEffect(() => {
     if (!hasOrder) return undefined;
@@ -88,7 +101,7 @@ export default function CheckoutPage({
     submission.current = true;
     setCreating(true);
     try {
-      const body = {
+      let body = {
         serviceId: service.serviceId,
         packageId: pkg.id,
         addonIds: addons.map(a => a.id),
@@ -98,9 +111,12 @@ export default function CheckoutPage({
           address: formatOrderAddress(booking.address)
         })
       };
-      const payload = JSON.stringify(body);
-      if (attempt.current?.payload !== payload) {
-        attempt.current = { payload, key: newIdempotencyKey() };
+      const base=JSON.stringify(body);
+      if(attempt.current?.base===base){body=JSON.parse(attempt.current.payload);}
+      else{
+        if(!rewardQuote||Date.parse(rewardQuote.expiresAt)<=Date.now())throw new Error('Quote expired; refresh before confirming');
+        body.rewardQuoteRef=rewardQuote.reference;
+        attempt.current={base,payload:JSON.stringify(body),key:newIdempotencyKey()};
       }
       const res = await orderApi.createOrder(body, attempt.current.key);
       const created = res?.result;
@@ -268,7 +284,11 @@ export default function CheckoutPage({
                   </p>}
                 {orderable && !bookingReady && <p className={styles.notOrderable}>{tr("m500")}</p>}
 
-                <button type="button" className={styles.btnPay} disabled={!agreed || creating || !orderable || !bookingReady} onClick={handlePay}>{walletTr(method === 'CASH' ? 'bookCash' : 'continueWallet')}
+                <div role="status">
+                  {rewardQuote?<p>Thưởng dự kiến: {rewardQuote.points} điểm · Giá nguồn: {rewardQuote.input?.price} {rewardQuote.input?.currency} · Còn cap cặp: {rewardQuote.remainingPairCap}, Provider: {rewardQuote.remainingProviderCap}. Chỉ ghi thưởng khi đủ điều kiện hoàn tất; model {rewardQuote.modelVersion}.</p>:<p>{quoteError||'Đang lấy quote thưởng từ server…'}</p>}
+                  <button type="button" disabled={creating} onClick={()=>setQuoteReload(n=>n+1)}>Làm mới quote</button>
+                </div>
+                <button type="button" className={styles.btnPay} disabled={!agreed || creating || !orderable || !bookingReady || (!rewardQuote&&!attempt.current)} onClick={handlePay}>{walletTr(method === 'CASH' ? 'bookCash' : 'continueWallet')}
                 </button>
                 <p className={styles.snapshotTime}>{tr("m1496")}{formatTime(snapshotAt)}{tr("m1497")}</p>
               </aside>

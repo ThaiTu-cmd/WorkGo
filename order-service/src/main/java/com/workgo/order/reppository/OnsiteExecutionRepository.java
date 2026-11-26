@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface OnsiteExecutionRepository extends JpaRepository<OnsiteExecution, UUID> {
 
     Optional<OnsiteExecution> findByExecution_ExecutionId(UUID executionId);
+
+    Optional<OnsiteExecution> findByExecution_Order_OrderId(UUID orderId);
 }

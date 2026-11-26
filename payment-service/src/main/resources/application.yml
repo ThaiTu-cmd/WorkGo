@@ -37,12 +37,16 @@ app:
     identity: ${IDENTITY_SERVICE_URL:http://localhost:8081/identity}
     order: ${ORDER_SERVICE_URL:http://localhost:8083/order}
     catalog: ${CATALOG_SERVICE_URL:http://localhost:8082/catalog}
+    job: ${JOB_SERVICE_URL:http://localhost:8085/job}
     communication: ${COMMUNICATION_SERVICE_URL:http://localhost:8086/communication}
-    trust: ${TRUST_HTTP_URL:http://localhost:8087/trust}
+    trust: ${TRUST_SERVICE_URL:http://localhost:8087/trust}
   internal-key: ${INTERNAL_API_KEY:}
   frontend-result-url: ${PAYMENT_RESULT_URL:http://localhost:3000/payment/result}
 
 payment:
+  payout:
+    verification-secret: ${PAYOUT_VERIFICATION_SECRET:}
+    merchant: ${PAYOUT_MERCHANT:}
   expire-minutes: 15
   slot-min-remaining-minutes: 2
   sync:

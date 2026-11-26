@@ -29,6 +29,7 @@ public interface PaymentClient {
     @PostMapping("/internal/escrows/adjust")
     EscrowResponse adjust(@RequestBody EscrowAdjustRequest request);
 
+    @GetMapping("/internal/fee-policies/{id}") FeePolicyResponse getFeePolicy(@PathVariable java.util.UUID id);
     @GetMapping("/internal/fee-policies/current")
     FeePolicyResponse getCurrentFeePolicy();
 

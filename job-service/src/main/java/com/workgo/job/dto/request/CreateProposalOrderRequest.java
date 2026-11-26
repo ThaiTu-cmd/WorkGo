@@ -17,5 +17,8 @@ public record CreateProposalOrderRequest(
         @NotBlank @Size(max = 255) String jobTitle,
         String jobDescription,
         String locationSnapshot,
-        String terms) {
+        String terms,
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL) String rewardQuoteRef,
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL) java.time.Instant acceptedAt) {
+    public CreateProposalOrderRequest(UUID proposalId,UUID jobId,UUID clientId,UUID providerId,String executionType,BigDecimal price,String currency,Integer estimatedDays,String jobTitle,String jobDescription,String locationSnapshot,String terms){this(proposalId,jobId,clientId,providerId,executionType,price,currency,estimatedDays,jobTitle,jobDescription,locationSnapshot,terms,null,null);}
 }

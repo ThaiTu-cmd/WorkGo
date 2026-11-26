@@ -16,7 +16,8 @@ export type TrungPageProps = {
   jobId?: string;
 };
 
-export default function ProposalReviewPage({
+export default function ProposalReviewPage(props:TrungPageProps){const token=useAuthToken();return <ProposalReviewContent key={token??'guest'} {...props}/>;}
+function ProposalReviewContent({
   onNavigate,
   onShowToast,
   jobId
@@ -30,6 +31,7 @@ export default function ProposalReviewPage({
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   // Concurrency & action locks
+  const [rewardQuotes,setRewardQuotes]=useState<Record<string,{reference:string;points:number;expiresAt:string;remainingPairCap:number;remainingProviderCap:number}>>({});
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   // Order sync states for accepted proposal: { [proposalId]: { status, orderId } }
@@ -248,6 +250,12 @@ export default function ProposalReviewPage({
     setProcessingId(id);
 
     try {
+      const q=rewardQuotes[id];
+      if(!q||Date.parse(q.expiresAt)<=Date.now()){
+        const receipt=await jobApi.getProposalRewardQuote(id);const next=receipt?.result;
+        if(!next?.reference||!Number.isInteger(next.points))throw new Error('Invalid reward quote receipt');
+        setRewardQuotes(old=>({...old,[id]:next}));return;
+      }
       const res = await jobApi.acceptProposal(id);
       const resResult = (res as { result?: { orderSyncStatus?: OrderSyncStatus; status?: OrderSyncStatus; orderId?: string } })?.result;
       const initialStatus: OrderSyncStatus = resResult?.orderSyncStatus || resResult?.status || "PENDING";
@@ -497,6 +505,7 @@ export default function ProposalReviewPage({
                   </div>
                 )}
 
+                {rewardQuotes[p.proposalId]&&<p role="status">Thưởng dự kiến {rewardQuotes[p.proposalId].points} điểm · Cap còn lại cặp {rewardQuotes[p.proposalId].remainingPairCap}, Provider {rewardQuotes[p.proposalId].remainingProviderCap}. Chỉ grant khi đủ điều kiện hoàn tất.</p>}
                 {/* Accept & Reject Action buttons (with concurrency lock) */}
                 {p.status === "PENDING" && !hasAccepted && (
                   <div className={styles.actions}>
@@ -512,7 +521,7 @@ export default function ProposalReviewPage({
                       ) : (
                         <CheckCircle2 size={16} aria-hidden="true" />
                       )}
-                      {tr("m1240")}
+                      {rewardQuotes[p.proposalId]?tr("m1240"):"Xem quote trước khi chấp nhận"}
                     </button>
                     <button
                       type="button"

@@ -78,16 +78,20 @@ export const paymentApi = {
    * @param {string} [idempotencyKey]
    */
   requestPayout: (
-    { amount, accountName, accountNumber, bankCode },
+    { amount, accountName, accountNumber, bankCode, verifiedBeneficiaryId, beneficiaryEvidence },
     idempotencyKey = newIdempotencyKey(),
   ) =>
     axiosClient.post(
       '/payment/wallet/payouts',
-      { amount, bankCode, accountName, accountNumber },
+      { amount, bankCode, accountName, accountNumber, verifiedBeneficiaryId, ...(beneficiaryEvidence && {beneficiaryEvidence}) },
       { headers: { 'Idempotency-Key': idempotencyKey } },
     ),
 
   getPayouts: () => axiosClient.get('/payment/wallet/payouts'),
+  getPayoutReceipt: (key) => axiosClient.get('/payment/wallet/payouts/receipt', { params: { key } }),
+  getBeneficiaries: () => axiosClient.get('/payment/wallet/beneficiaries'),
+  getCashReturn: (orderId) => axiosClient.get(`/payment/wallet/cash-returns/${encodeURIComponent(orderId)}`),
+  confirmCashReturn: (decisionId,amount) => axiosClient.post(`/payment/wallet/cash-returns/${encodeURIComponent(decisionId)}/confirm`,{amount}),
 };
 
 // The MOCK gateway has no hosted page; it only exists while payment-service runs

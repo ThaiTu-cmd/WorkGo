@@ -31,6 +31,12 @@ public class PayoutResponse {
 
     String accountName;
 
+    UUID verifiedBeneficiaryId;
+
+    UUID holdTransactionId;
+
+    UUID settleTransactionId;
+
     PayoutStatus status;
 
     String externalReference;

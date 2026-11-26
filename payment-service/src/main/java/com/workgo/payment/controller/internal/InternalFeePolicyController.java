@@ -17,6 +17,8 @@ public class InternalFeePolicyController {
 
     FeePolicyService feePolicyService;
 
+    @GetMapping("/{id}") public FeePolicyResponse version(@org.springframework.web.bind.annotation.PathVariable java.util.UUID id){return feePolicyService.getVersion(id);}
+
     //order chot phien ban phi vao snapshot luc tao don
     @GetMapping("/current")
     FeePolicyResponse getCurrent() {

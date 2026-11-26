@@ -48,12 +48,22 @@ public class WalletPayout {
     @Column(name = "idempotency_key", unique = true, nullable = false)
     String idempotencyKey;
 
+    @Column(name = "payload_hash", length = 64, updatable = false)
+    String payloadHash;
+
+    @Column(name = "verified_beneficiary_id", updatable = false)
+    UUID verifiedBeneficiaryId;
+    @Column(name="source_evidence_hash",length=64)
+    String sourceEvidenceHash;
+    @Column(name="source_verified_at")
+    Instant sourceVerifiedAt;
+
     @Builder.Default
     @Enumerated(value = EnumType.STRING)
     @Column(name = "status", nullable = false)
     PayoutStatus status = PayoutStatus.REQUESTED;
 
-    @Column(name = "external_reference")
+    @Column(name = "external_reference", unique = true)
     String externalReference;
 
     @Column(name = "failure_reason", columnDefinition = "TEXT")

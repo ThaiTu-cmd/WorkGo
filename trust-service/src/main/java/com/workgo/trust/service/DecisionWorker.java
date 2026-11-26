@@ -35,6 +35,12 @@ public class DecisionWorker {
         try(var trace=com.workgo.trust.configuration.CorrelationTrace.use(c.correlationId())){
             if("REJECT".equals(c.operation())){
                 if(c.receipt()==null){
+                    var snapshot=orders.getOrderSnapshot(c.orderId());
+                    if(snapshot==null||!c.orderId().equals(snapshot.orderId()))throw new InvalidAck();
+                    if("ONSITE".equals(snapshot.executionType())
+                            && Set.of("CASH_ON_SITE","CASH_SETTLED").contains(snapshot.paymentStatus())) {
+                        store.unfreeze(c);return;
+                    }
                     var ack=payment.unfreeze(new EscrowFreezeRequest(c.orderId(),c.disputeId(),"DISPUTE_REJECTED"));
                     if(ack==null||!c.orderId().equals(ack.orderId())||ack.status()==null
                             ||!Set.of("PENDING","HOLDING","FROZEN","RELEASED","REFUNDED","PARTIALLY_REFUNDED").contains(ack.status()))throw new InvalidAck();
@@ -45,6 +51,30 @@ public class DecisionWorker {
                         ||ack.paused()==null||ack.requiresNewDelivery()==null||ack.paused()&&ack.resumeAt()!=null
                         ||ack.requiresNewDelivery()&&!ack.paused())throw new InvalidAck();
                 store.resumed(c,ack);return;
+            }
+            if("CASH".equals(json.readTree(c.payload()).path("paymentMethod").asText())) {
+                var command=json.readValue(c.payload(),CashDecisionCommand.class);
+                PaymentClient.CashReceipt cashReceipt=null;
+                if("REFUND".equals(c.operation())){
+                    cashReceipt=payment.cancelCash(command);
+                    if(cashReceipt==null||!c.id().equals(cashReceipt.decisionId())||!c.orderId().equals(cashReceipt.orderId())
+                            ||!c.disputeId().equals(cashReceipt.disputeId())||cashReceipt.feeAssessmentId()==null
+                            ||!java.util.Objects.equals(command.feePolicyVersionId(),cashReceipt.feePolicyVersionId())
+                            ||command.totalAmount().compareTo(java.math.BigDecimal.valueOf(cashReceipt.orderAmount()))!=0
+                            ||cashReceipt.cashReturnDue()!=command.actualReceivedAmount().longValueExact()||cashReceipt.feeAmount()<0
+                            ||!"VND".equals(cashReceipt.currency())||!Set.of("COMPLETED","AWAITING_CASH_RETURN").contains(cashReceipt.status()))throw new InvalidAck();
+                }
+                var ack=orders.applyCashDecision(c.orderId(),command);
+                if(ack==null || !c.id().equals(ack.decisionId()) || !c.orderId().equals(ack.orderId())
+                        ||!c.disputeId().equals(ack.disputeId()) ||!c.operation().equals(ack.operation())
+                        ||!("RELEASE".equals(c.operation())?"COMPLETED":"CANCELLED").equals(ack.orderStatus())
+                        ||ack.settlementReceiptId()!=null) throw new InvalidAck();
+                var snapshot=orders.getOrderSnapshot(c.orderId());
+                if(snapshot==null ||!c.orderId().equals(snapshot.orderId())) throw new InvalidAck();
+                // CASH has no wallet refund. Pending cash receipt/fee/return obligation needs explicit reconciliation.
+                boolean settled="RELEASE".equals(c.operation())?"CASH_SETTLED".equals(snapshot.paymentStatus()):cashReceipt!=null&&"COMPLETED".equals(cashReceipt.status());
+                store.cash(c,settled,json.writeValueAsString(cashReceipt==null?ack:cashReceipt));
+                return;
             }
             var command=json.readValue(c.payload(),SettlementCommand.class);
             if(c.receipt()==null){

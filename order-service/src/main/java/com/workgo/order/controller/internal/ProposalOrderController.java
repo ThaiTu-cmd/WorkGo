@@ -21,6 +21,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProposalOrderController {
     private final ProposalOrderService service;
+    private final com.workgo.order.service.ProposalOrderCreator quotes;
+    @PostMapping("/reward-quote") public ApiResponse<com.workgo.order.service.OrderRewardQuoteService.Quote> quote(@Valid @RequestBody CreateProposalOrderRequest request){return ApiResponse.<com.workgo.order.service.OrderRewardQuoteService.Quote>builder().code(1000).result(quotes.preview(request)).build();}
+    @PostMapping("/reward-quote/check") public ApiResponse<com.workgo.order.service.OrderRewardQuoteService.Quote> check(@Valid @RequestBody CreateProposalOrderRequest request){return ApiResponse.<com.workgo.order.service.OrderRewardQuoteService.Quote>builder().code(1000).result(quotes.checkQuote(request)).build();}
 
     @PostMapping
     public ResponseEntity<ProposalOrderResponse> create(@RequestHeader("Idempotency-Key") UUID key,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useState } from "react";
 import { LogIn } from "lucide-react";
 import type { CatalogFilterParams, TrungPageKey } from "../../webapp-bridge/webapp-shell";
@@ -16,6 +16,7 @@ export default function LoginPage({
   onShowToast
 }: TrungPageProps) {
   const tr = useTranslations("misc");
+  const locale=useLocale();
   const token = useAuthToken();
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
@@ -100,6 +101,7 @@ export default function LoginPage({
           <LogIn size={24} className={styles.titleIcon} aria-hidden="true" />{tr("m1145")}</h1>
         <p className={styles.sub}>{tr("m1146")}</p>
         <form onSubmit={submit} noValidate className={styles.form}>
+          <a href={`/${locale}/security-support`}>Không truy cập được tài khoản?</a>
           <label className={styles.field}>
             <span>{tr("m22")}</span>
             <input type="text" autoFocus autoComplete="username" value={userName} onChange={e => setUserName(e.target.value)} placeholder={tr("m24")} aria-invalid={errors.userName ? true : undefined} />

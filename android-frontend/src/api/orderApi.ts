@@ -1,8 +1,11 @@
 import { http } from './client';
-import type { ApiResponse, CancellationBody, CancellationDto, ExecutionDto, OrderAgreementVersion, OrderAmendment, OrderAmendmentDraft, OrderCreationRequest, OrderDelivery, OrderDetailDto, OrderDto, OrderHistoryDto, OrderRevision, OrderRole, Paged } from './types';
+import type { RewardQuoteDto, ApiResponse, CancellationBody, CancellationDto, ExecutionDto, OrderAgreementVersion, OrderAmendment, OrderAmendmentDraft, OrderCreationRequest, OrderDelivery, OrderDetailDto, OrderDto, OrderHistoryDto, OrderRevision, OrderRole, Paged } from './types';
 
 // order-service endpoints via gateway (/api/v1/order/**).
 export const orderApi = {
+  getRewardQuote: (body:Pick<OrderCreationRequest,'serviceId'|'packageId'|'addonIds'>)=>http.post<ApiResponse<RewardQuoteDto>>('/order/orders/reward-quote',body),
+  getAmendmentRewardQuote:(id:string,amendmentId:string)=>http.get<ApiResponse<RewardQuoteDto>>(`/order/orders/${id}/amendments/${amendmentId}/reward-quote`),
+  getOrderRewardQuote: (id:string)=>http.get<ApiResponse<RewardQuoteDto>>(`/order/orders/${id}/reward-quote`),
   getInputs: (id: string) => http.get<ApiResponse<import('./types').OrderInputChecklist>>(`/order/orders/${id}/inputs`),
   proposeInputs: (id: string, body: { agreementVersion: number; requirements: string[] }) => http.post(`/order/orders/${id}/inputs`, body),
   confirmInputs: (id: string, body: { checklistVersion: number; expectedVersion: number }) => http.post(`/order/orders/${id}/inputs/confirm`, body),
@@ -59,8 +62,9 @@ export const orderApi = {
   settleAmendment: (orderId: string, amendmentId: string) =>
     http.post<ApiResponse<OrderAmendment>>(`/order/orders/${orderId}/amendments/${amendmentId}/settle`),
 
-  confirmCashReceived: (orderId: string) =>
-    http.post<ApiResponse<NonNullable<ExecutionDto['onsite']>>>(`/order/orders/onsite/${orderId}/cash-received`),
+  recordCashPaid: (orderId:string,amount:number)=>http.post<ApiResponse<NonNullable<ExecutionDto['onsite']>>>(`/order/orders/onsite/${orderId}/cash-paid`,{amount}),
+  confirmCashReceived: (orderId: string, amount:number) =>
+    http.post<ApiResponse<NonNullable<ExecutionDto['onsite']>>>(`/order/orders/onsite/${orderId}/cash-received`, {amount}),
 
   getCheckinCode: (orderId: string) =>
     http.get<ApiResponse<{ checkinCode: string }>>(`/order/orders/onsite/${orderId}/checkin-code`),

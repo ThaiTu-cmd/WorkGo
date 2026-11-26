@@ -25,6 +25,11 @@ public class JsonBodyLimitFilter extends OncePerRequestFilter {
 
     @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+        String contentType = request.getContentType();
+        if (contentType != null && "multipart/form-data".equalsIgnoreCase(contentType.split(";", 2)[0].strip())) {
+            // The servlet multipart parser owns this stream and enforces the separate file/request limits.
+            chain.doFilter(request, response); return;
+        }
         if (!("POST".equals(request.getMethod()) || "PUT".equals(request.getMethod()) || "PATCH".equals(request.getMethod()))) {
             chain.doFilter(request, response); return;
         }

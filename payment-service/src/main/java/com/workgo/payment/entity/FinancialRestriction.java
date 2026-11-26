@@ -39,6 +39,14 @@ public class FinancialRestriction {
     @Column(name = "catalog_synced_version", nullable = false)
     long catalogSyncedVersion = 0;
 
+    @Builder.Default
+    @Column(name = "job_synced_version", nullable = false)
+    @org.hibernate.annotations.ColumnDefault("0")
+    long jobSyncedVersion = 0;
+
+    @Column(name = "last_error", length = 200)
+    String lastError;
+
     @Column(name = "updated_at")
     Instant updatedAt;
 

@@ -14,6 +14,13 @@ import java.util.UUID;
 @FeignClient(name = "identity-service", contextId = "paymentIdentityInternalClient",
         url = "${app.services.identity}", configuration = FeignInternalConfig.class)
 public interface IdentityInternalClient {
+    record PayoutEligibility(UUID userId,boolean allowed) {}
+    @GetMapping("/internal/users/{id}/payout-eligibility")
+    PayoutEligibility payoutEligibility(@PathVariable UUID id);
+
+    record RestrictionAck(UUID providerId,UUID userId,String source,long sourceVersion,boolean blocked) {}
+    @PutMapping("/internal/providers/by-user/{userId}/financial-restriction/receipt")
+    RestrictionAck updateWithReceipt(@PathVariable UUID userId,@RequestBody FinancialRestrictionSyncRequest request);
 
     @GetMapping("/internal/providers/{providerId}")
     ProviderProfileResponse getProviderProfile(@PathVariable UUID providerId);

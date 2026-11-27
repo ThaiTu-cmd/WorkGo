@@ -20,23 +20,24 @@
 
 .faqItem {
   background: var(--wg-surface);
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1px solid var(--wg-border);
+  border-radius: 10px;
   overflow: hidden;
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease;
 }
 
 .faqItem:hover {
-  border-color: #cbd5e1;
+  border-color: var(--wg-primary);
 }
 
 .faqItemOpen {
-  border-color: #a7f3d0;
+  border-color: var(--wg-primary);
 }
 
 .faqQuestionBtn {
   width: 100%;
-  padding: 16px 20px;
+  min-height: 48px;
+  padding: 14px 20px;
   background: transparent;
   border: none;
   font-family: inherit;
@@ -56,23 +57,22 @@
 }
 
 .chevronIcon {
-  color: #64748b;
+  color: var(--wg-text-muted);
   flex-shrink: 0;
-  transition: transform 0.25s ease;
+  transition: transform 0.2s ease, color 0.15s ease;
 }
 
 .chevronRotated {
   transform: rotate(180deg);
-  color: #10b981;
+  color: var(--wg-primary-text);
 }
 
 .faqAnswer {
-  padding: 0 20px 18px 20px;
+  padding: 14px 20px 18px;
   font-size: 0.9rem;
   color: var(--wg-text-secondary);
   line-height: 1.6;
-  border-top: 1px solid #f1f5f9;
-  padding-top: 14px;
+  border-top: 1px solid var(--wg-border-light);
 }
 
 .faqAnswer p {

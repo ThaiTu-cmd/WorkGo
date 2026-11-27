@@ -2,12 +2,12 @@ import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-
 import { Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as React from 'react';
-import { AppState, useColorScheme } from 'react-native';
+import { AppState } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from '@/auth/AuthProvider';
 import { CommunicationProvider } from '@/features/chat/CommunicationProvider';
-import { loadPreferences } from '@/settings/preferences';
+import { loadPreferences, useResolvedScheme } from '@/settings/preferences';
 import { OfflineBanner } from '@/ui';
 import { navigationTheme } from '@/ui/navigationTheme';
 import { useT } from '@/i18n';
@@ -24,7 +24,7 @@ const queryClient = new QueryClient({
 
 export default function RootLayout() {
   const t = useT();
-  const scheme = useColorScheme();
+  const scheme = useResolvedScheme();
   React.useEffect(() => {
     void loadPreferences();
   }, []);

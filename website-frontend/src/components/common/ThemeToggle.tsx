@@ -8,20 +8,41 @@ interface ThemeToggleProps {
   showLabel?: boolean;
 }
 
+function readValidTheme(): "dark" | "light" | null {
+  try {
+    const saved = localStorage.getItem("workgo_theme");
+    if (saved === "dark" || saved === "light") return saved;
+  } catch {
+    // storage blocked
+  }
+  return null;
+}
+
+function resolveInitialTheme(): "dark" | "light" {
+  if (typeof window === "undefined") return "light";
+  const saved = readValidTheme();
+  if (saved) return saved;
+  const domTheme = document.documentElement.getAttribute("data-theme");
+  if (domTheme === "dark" || domTheme === "light") return domTheme;
+  if (typeof window.matchMedia === "function" && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    return "dark";
+  }
+  return "light";
+}
+
+function applyThemeToDom(nextTheme: "dark" | "light") {
+  const root = document.documentElement;
+  root.setAttribute("data-theme", nextTheme);
+  root.classList.remove("light", "dark");
+  root.classList.add(nextTheme);
+  root.style.colorScheme = nextTheme;
+}
+
 export default function ThemeToggle({
   className = "",
   showLabel = false,
 }: ThemeToggleProps) {
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    if (typeof window === "undefined") return "dark";
-    try {
-      const savedTheme = localStorage.getItem("workgo_theme") as "dark" | "light" | null;
-      const domTheme = document.documentElement.getAttribute("data-theme") as "dark" | "light" | null;
-      return savedTheme || domTheme || "dark";
-    } catch {
-      return "dark";
-    }
-  });
+  const [theme, setTheme] = useState<"dark" | "light">(resolveInitialTheme);
 
   const [mounted, setMounted] = useState(false);
 
@@ -31,37 +52,51 @@ export default function ThemeToggle({
 
     // Re-apply theme on mount: soft navigations (language switch) do not re-run
     // the beforeInteractive script, so data-theme/class may be missing.
-    try {
-      const savedTheme = localStorage.getItem("workgo_theme") as "dark" | "light" | null;
-      const domTheme = document.documentElement.getAttribute("data-theme") as "dark" | "light" | null;
-      const initial = savedTheme || domTheme || "dark";
-      setTheme(initial);
-      document.documentElement.setAttribute("data-theme", initial);
-      document.documentElement.classList.remove("light", "dark");
-      document.documentElement.classList.add(initial);
-    } catch {
-      // storage blocked
-    }
+    const initial = resolveInitialTheme();
+    setTheme(initial);
+    applyThemeToDom(initial);
 
     const handleThemeChange = (e: Event) => {
       const detail = (e as CustomEvent<{ theme: "dark" | "light" }>).detail;
-      if (detail?.theme) {
+      if (detail?.theme === "dark" || detail?.theme === "light") {
         setTheme(detail.theme);
+        applyThemeToDom(detail.theme);
+      }
+    };
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "workgo_theme" && (e.newValue === "dark" || e.newValue === "light")) {
+        setTheme(e.newValue);
+        applyThemeToDom(e.newValue);
+      }
+    };
+
+    const mediaQuery =
+      typeof window.matchMedia === "function"
+        ? window.matchMedia("(prefers-color-scheme: dark)")
+        : null;
+    const handleMediaChange = (e: MediaQueryListEvent) => {
+      if (!readValidTheme()) {
+        const systemTheme = e.matches ? "dark" : "light";
+        setTheme(systemTheme);
+        applyThemeToDom(systemTheme);
       }
     };
 
     window.addEventListener("workgo-theme-changed", handleThemeChange);
-    return () => window.removeEventListener("workgo-theme-changed", handleThemeChange);
+    window.addEventListener("storage", handleStorage);
+    mediaQuery?.addEventListener("change", handleMediaChange);
+    return () => {
+      window.removeEventListener("workgo-theme-changed", handleThemeChange);
+      window.removeEventListener("storage", handleStorage);
+      mediaQuery?.removeEventListener("change", handleMediaChange);
+    };
   }, []);
 
   const toggleTheme = () => {
-    if (typeof window !== "undefined" && (window as unknown as { __workgoNavigating?: boolean }).__workgoNavigating) return;
     const nextTheme = theme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
-
-    document.documentElement.setAttribute("data-theme", nextTheme);
-    document.documentElement.classList.remove("light", "dark");
-    document.documentElement.classList.add(nextTheme);
+    applyThemeToDom(nextTheme);
 
     try {
       localStorage.setItem("workgo_theme", nextTheme);
@@ -85,8 +120,12 @@ export default function ThemeToggle({
     return (
       <button
         type="button"
-        className={`inline-flex items-center justify-center p-2 rounded-lg min-h-[44px] min-w-[44px] cursor-pointer opacity-70 ${className}`}
-        style={{ color: "var(--text-secondary, #94a3b8)" }}
+        className={`inline-flex items-center justify-center p-2 rounded-lg min-h-[44px] min-w-[44px] cursor-pointer opacity-70 border ${className}`}
+        style={{
+          color: "var(--text-secondary)",
+          background: "var(--bg-surface)",
+          borderColor: "var(--border-default)",
+        }}
         aria-label="Chuyển chế độ giao diện Sáng / Tối"
         disabled
       >
@@ -99,22 +138,22 @@ export default function ThemeToggle({
     <button
       type="button"
       onClick={toggleTheme}
-      className={`inline-flex items-center justify-center gap-2 p-2 rounded-lg transition-all min-h-[44px] min-w-[44px] cursor-pointer shadow-sm ${className}`}
+      className={`inline-flex items-center justify-center gap-2 px-2.5 py-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] cursor-pointer border ${className}`}
       style={{
-        color: isDark ? "var(--text-primary, #F8FCFF)" : "var(--text-primary, #06142F)",
-        background: isDark ? "var(--bg-muted, #0A1F4D)" : "var(--bg-muted, #EDF5FF)",
-        border: "1px solid var(--border-default, #D3E3F8)",
+        color: "var(--text-primary)",
+        background: "var(--bg-surface)",
+        borderColor: "var(--border-default)",
       }}
       aria-label={`Chuyển sang giao diện ${isDark ? "Sáng" : "Tối"}`}
       title={`Đang dùng giao diện ${isDark ? "Tối" : "Sáng"}. Nhấn để đổi sang ${isDark ? "Sáng" : "Tối"}.`}
     >
       {isDark ? (
-        <Sun size={18} style={{ color: "#F59E0B" }} className="transition-transform hover:rotate-45" aria-hidden="true" />
+        <Sun size={18} style={{ color: "var(--primary-text)" }} aria-hidden="true" />
       ) : (
-        <Moon size={18} style={{ color: "#1dbf73" }} className="transition-transform hover:-rotate-12" aria-hidden="true" />
+        <Moon size={18} style={{ color: "var(--primary-text)" }} aria-hidden="true" />
       )}
       {showLabel && (
-        <span className="text-xs font-medium">
+        <span className="text-xs font-medium whitespace-nowrap">
           {isDark ? "Chế độ Sáng" : "Chế độ Tối"}
         </span>
       )}

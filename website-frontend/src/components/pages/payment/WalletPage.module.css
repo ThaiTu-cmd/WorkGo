@@ -17,12 +17,12 @@
 
 .titleIcon {
   flex-shrink: 0;
-  color: var(--wg-primary, #1677FF);
+  color: var(--wg-primary);
 }
 
 .sub {
   margin-top: 6px;
-  color: var(--wg-text-secondary, #64748b);
+  color: var(--wg-text-secondary);
   font-size: 0.92rem;
   overflow-wrap: break-word;
 }
@@ -39,29 +39,30 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 44px;
   padding: 8px 14px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--wg-text-secondary, #64748b);
-  background: var(--wg-surface, #ffffff);
-  border: 1px solid var(--wg-border, #e2e8f0);
+  color: var(--wg-text-secondary);
+  background: var(--wg-surface);
+  border: 1px solid var(--wg-border);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .refreshBtn:hover {
-  background: var(--wg-bg, #f8fafc);
-  color: var(--wg-primary, #1677FF);
-  border-color: var(--wg-primary, #1677FF);
+  background: var(--wg-surface-alt);
+  color: var(--wg-primary-text);
+  border-color: var(--wg-primary);
 }
 
 /* Debt Warning Banner */
 .debtBanner {
   margin-top: 16px;
   padding: 16px 20px;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
+  background-color: var(--danger-bg);
+  border: 1px solid var(--danger);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -70,7 +71,7 @@
 }
 
 .debtIcon {
-  color: #dc2626;
+  color: var(--danger);
   flex-shrink: 0;
 }
 
@@ -81,33 +82,34 @@
 
 .debtContent strong {
   display: block;
-  color: #991b1b;
+  color: var(--danger);
   font-size: 0.95rem;
   margin-bottom: 4px;
 }
 
 .debtContent p {
-  color: #7f1d1d;
+  color: var(--wg-text);
   font-size: 0.85rem;
   line-height: 1.4;
   margin: 0;
 }
 
 .debtButton {
-  background: #dc2626;
+  min-height: 44px;
+  background: var(--danger);
   color: #ffffff;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 8px 16px;
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background-color 0.15s ease;
   white-space: nowrap;
 }
 
 .debtButton:hover {
-  background: #b91c1c;
+  background: var(--danger-hover);
 }
 
 /* Auth Banner */
@@ -161,39 +163,39 @@
 }
 
 .balanceAvailable {
-  border-left: 4px solid var(--wg-primary, #1677FF);
+  border-left: 4px solid var(--wg-primary);
 }
 
 .balanceHeld {
-  border-left: 4px solid #f59e0b;
+  border-left: 4px solid var(--warning);
 }
 
 .balanceDebt {
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid var(--danger);
 }
 
 .balanceLabel {
-  color: var(--wg-text-secondary, #64748b);
+  color: var(--wg-text-secondary);
   font-size: 0.85rem;
   font-weight: 600;
 }
 
 .balanceValue {
   font-size: 1.5rem;
-  color: var(--wg-text, #1e293b);
+  color: var(--wg-text);
   overflow-wrap: break-word;
 }
 
 .balanceValueAvailable {
-  color: var(--wg-primary-active, #0958d9);
+  color: var(--wg-primary-text);
 }
 
 .balanceValueHeld {
-  color: #d97706;
+  color: var(--warning);
 }
 
 .balanceValueDebt {
-  color: #dc2626;
+  color: var(--danger);
 }
 
 .balanceDesc {
@@ -211,8 +213,8 @@
 
 .primary {
   min-height: 44px;
-  border-radius: 8px;
-  background: var(--wg-primary, #1677FF);
+  border-radius: 10px;
+  background: var(--wg-primary);
   color: #ffffff;
   font-weight: 600;
   font-size: 0.88rem;
@@ -222,37 +224,37 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: background 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
 .primary:hover {
-  background: var(--wg-primary-hover, #4096ff);
+  background: var(--wg-primary-hover);
 }
 
 .ghost {
   min-height: 44px;
-  border: 1px solid var(--wg-border, #e2e8f0);
-  border-radius: 8px;
+  border: 1px solid var(--wg-border);
+  border-radius: 10px;
   padding: 8px 16px;
   font-weight: 600;
   font-size: 0.88rem;
-  background: var(--wg-surface, #ffffff);
-  color: var(--wg-text, #1e293b);
+  background: var(--wg-surface);
+  color: var(--wg-text);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .ghost:hover {
-  background: var(--wg-bg, #f8fafc);
-  border-color: var(--wg-text-secondary, #64748b);
+  background: var(--wg-surface-alt);
+  border-color: var(--wg-text-secondary);
 }
 
 .primary:focus-visible,
 .ghost:focus-visible {
-  outline: 2px solid var(--wg-primary-active, #0958d9);
+  outline: 2px solid var(--wg-primary-active);
   outline-offset: 2px;
 }
 
@@ -268,7 +270,7 @@
 .sectionTitle {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--wg-text, #1e293b);
+  color: var(--wg-text);
   margin: 0;
 }
 
@@ -279,30 +281,31 @@
 }
 
 .filterTab {
+  min-height: 36px;
   padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  border: 1px solid var(--wg-border, #e2e8f0);
-  background: var(--wg-surface, #ffffff);
-  color: var(--wg-text-secondary, #64748b);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1px solid var(--wg-border);
+  background: var(--wg-surface);
+  color: var(--wg-text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .filterTab:hover {
-  background: var(--wg-bg, #f8fafc);
+  background: var(--wg-surface-alt);
 }
 
 .filterTabActive {
-  background: var(--wg-primary, #1677FF);
+  background: var(--wg-primary);
   color: #ffffff;
-  border-color: var(--wg-primary, #1677FF);
+  border-color: var(--wg-primary);
   font-weight: 600;
 }
 
 .filterTabActive:hover {
-  background: var(--wg-primary, #1677FF);
+  background: var(--wg-primary-hover);
 }
 
 .empty {
@@ -338,16 +341,14 @@
 }
 
 .table th {
-  background: var(--wg-bg, #f8fafc);
-  color: var(--wg-text-secondary, #64748b);
-  font-size: 0.78rem;
-  text-transform: uppercase;
+  background: var(--wg-surface-alt);
+  color: var(--wg-text-secondary);
+  font-size: 0.82rem;
   font-weight: 600;
-  letter-spacing: 0.03em;
 }
 
 .table tbody tr:hover {
-  background: #f8fafc;
+  background: var(--wg-surface-alt);
 }
 
 /* Badges */
@@ -361,59 +362,59 @@
 }
 
 .badgeTopup {
-  background: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid var(--wg-primary);
 }
 
 .badgeHold {
-  background: #fffbeb;
-  color: #d97706;
-  border: 1px solid #fde68a;
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid var(--warning);
 }
 
 .badgeRelease {
-  background: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
+  background: var(--wg-primary-light);
+  color: var(--wg-primary-text);
+  border: 1px solid var(--wg-primary);
 }
 
 .badgeRefund {
-  background: #f0fdf4;
-  color: #16a34a;
-  border: 1px solid #bbf7d0;
+  background: var(--info-bg);
+  color: var(--info);
+  border: 1px solid var(--info);
 }
 
 .badgeDebt {
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid var(--danger);
 }
 
 .badgePayout {
-  background: #faf5ff;
-  color: #7c3aed;
-  border: 1px solid #e9d5ff;
+  background: var(--wg-primary-light);
+  color: var(--wg-primary-text);
+  border: 1px solid var(--wg-border);
 }
 
 .badgeAdjustment {
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #cbd5e1;
+  background: var(--wg-surface-alt);
+  color: var(--wg-text-secondary);
+  border: 1px solid var(--wg-border);
 }
 
 .amountPlus {
-  color: #059669;
+  color: var(--success);
   font-weight: 600;
 }
 
 .amountMinus {
-  color: #dc2626;
+  color: var(--danger);
   font-weight: 600;
 }
 
 .amountNeutral {
-  color: #64748b;
+  color: var(--wg-text-secondary);
   font-weight: 600;
 }
 

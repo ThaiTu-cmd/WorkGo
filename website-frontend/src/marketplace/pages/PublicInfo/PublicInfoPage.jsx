@@ -227,11 +227,10 @@ export default function PublicInfoPage({
                 <h2 className={styles.formTitle}>{tr("m911")}</h2>
                 <div className={styles.channelCards}>
                   {content.channels?.map((chan, cIdx) => <div key={cIdx} className={styles.channelCard}>
-                      <div className={styles.channelIcon}>{chan.icon}</div>
                       <div>
-                        <h3 className={styles.channelLabel}>{chan.label}</h3>
+                        <h3 className={styles.channelLabel}>{chan.title}</h3>
                         <p className={styles.channelValue}>{chan.value}</p>
-                        <p className={styles.channelSub}>{chan.desc}</p>
+                        <p className={styles.channelSub}>{chan.note}</p>
                       </div>
                     </div>)}
                 </div>

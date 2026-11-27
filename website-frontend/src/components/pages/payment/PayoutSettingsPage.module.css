@@ -33,20 +33,20 @@
 
 .titleIcon {
   flex-shrink: 0;
-  color: var(--wg-primary, #1677FF);
+  color: var(--wg-primary);
 }
 
 .sub {
   margin-top: 6px;
-  color: var(--wg-text-secondary, #64748b);
+  color: var(--wg-text-secondary);
   font-size: 0.92rem;
   overflow-wrap: break-word;
 }
 
 .saved {
   margin-top: 12px;
-  background: var(--wg-primary-light, #e6f4ff);
-  color: var(--wg-primary-active, #0958d9);
+  background: var(--success-bg);
+  color: var(--success);
   border-radius: 10px;
   padding: 10px 14px;
   font-weight: 600;
@@ -67,32 +67,33 @@
   gap: 6px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--wg-text, #1e293b);
+  color: var(--wg-text);
 }
 
 .field input,
 .field select {
   min-height: 44px;
-  border: 1px solid var(--wg-border, #cbd5e1);
+  border: 1px solid var(--wg-border);
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 1rem;
   font-weight: 400;
   width: 100%;
   max-width: 100%;
-  background: var(--wg-surface, #ffffff);
+  background: var(--wg-surface);
+  color: var(--wg-text);
 }
 
 .field input:focus-visible,
 .field select:focus-visible {
-  outline: 2px solid var(--wg-primary, #1677FF);
+  outline: 2px solid var(--wg-primary);
   outline-offset: 1px;
 }
 
 .error {
   font-style: normal;
   font-weight: 500;
-  color: #b91c1c;
+  color: var(--danger);
   font-size: 0.85rem;
   overflow-wrap: break-word;
 }
@@ -100,7 +101,7 @@
 .submit {
   min-height: 44px;
   border-radius: 10px;
-  background: var(--wg-primary, #1677FF);
+  background: var(--wg-primary);
   color: #ffffff;
   font-weight: 700;
   font-size: 1rem;
@@ -111,11 +112,11 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: background 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
 .submit:hover {
-  background: var(--wg-primary-hover, #4096ff);
+  background: var(--wg-primary-hover);
 }
 
 .submit:disabled {
@@ -124,17 +125,17 @@
 }
 
 .submit:focus-visible {
-  outline: 2px solid var(--wg-primary-active, #0958d9);
+  outline: 2px solid var(--wg-primary-active);
   outline-offset: 2px;
 }
 
 /* Withdraw Section */
 .withdrawCard {
-  background: var(--wg-surface, #ffffff);
-  border: 1px solid var(--wg-border, #e2e8f0);
+  background: var(--wg-surface);
+  border: 1px solid var(--wg-border);
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .withdrawBalanceBox {
@@ -142,46 +143,89 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: var(--wg-bg, #f8fafc);
-  border: 1px solid var(--wg-border, #e2e8f0);
+  background: var(--wg-surface-alt);
+  border: 1px solid var(--wg-border);
   border-radius: 10px;
   margin: 14px 0;
 }
 
 .withdrawBalanceLabel {
   font-size: 0.85rem;
-  color: var(--wg-text-secondary, #64748b);
+  color: var(--wg-text-secondary);
   font-weight: 600;
 }
 
 .withdrawBalanceVal {
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--wg-primary-active, #0958d9);
+  color: var(--wg-primary-text);
 }
 
 .quickBanks {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   margin-top: 4px;
 }
 
 .quickBankBtn {
-  font-size: 0.78rem;
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--wg-border, #cbd5e1);
-  background: var(--wg-surface, #ffffff);
-  color: var(--wg-text, #334155);
+  font-size: 0.8rem;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--wg-border);
+  background: var(--wg-surface);
+  color: var(--wg-text);
   cursor: pointer;
   font-weight: 500;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
 .quickBankBtn:hover {
-  border-color: var(--wg-primary, #1677FF);
-  color: var(--wg-primary, #1677FF);
+  border-color: var(--wg-primary);
+  color: var(--wg-primary-text);
+  background: var(--wg-primary-light);
+}
+
+.historyTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--wg-text);
+  margin: 0 0 12px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--wg-border);
+  border-radius: 12px;
+  background: var(--wg-surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  min-width: 480px;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--wg-border-light);
+  color: var(--wg-text);
+  overflow-wrap: break-word;
+}
+
+.table th {
+  background: var(--wg-surface-alt);
+  color: var(--wg-text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.table tbody tr:hover {
+  background: var(--wg-surface-alt);
 }
 
 @media (max-width: 768px) {

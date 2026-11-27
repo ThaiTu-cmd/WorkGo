@@ -112,9 +112,9 @@
 }
 
 .tabWarning.tabActive {
-  border-color: #f59e0b;
-  background-color: #fffbeb;
-  color: #b45309;
+  border-color: var(--warning);
+  background-color: var(--warning-bg);
+  color: var(--warning);
 }
 
 .tabCount {
@@ -134,12 +134,15 @@
 
 .tile {
   position: relative;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   aspect-ratio: 4 / 3;
   overflow: hidden;
   border-radius: var(--radius-sm);
   background-color: var(--wg-surface-alt);
+  color: var(--wg-text-muted);
 }
 
 .tile:focus-visible {
@@ -184,10 +187,10 @@
   align-self: flex-start;
 }
 
-.tone_info { background-color: #eff6ff; color: #1d4ed8; }
-.tone_progress { background-color: #f5f3ff; color: #6d28d9; }
-.tone_success { background-color: #ecfdf5; color: #047857; }
-.tone_warning { background-color: #fffbeb; color: #b45309; }
+.tone_info { background-color: var(--badge-digital-bg); color: var(--badge-digital-text); }
+.tone_progress { background-color: var(--badge-appointment-bg); color: var(--badge-appointment-text); }
+.tone_success { background-color: var(--success-bg); color: var(--success); }
+.tone_warning { background-color: var(--warning-bg); color: var(--warning); }
 
 .tileMeta {
   position: absolute;
@@ -240,7 +243,7 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background-color: rgba(15, 23, 42, 0.55);
+  background-color: rgba(0, 0, 0, 0.6);
 }
 
 .dialog {
@@ -335,10 +338,10 @@
   border-color: var(--wg-primary);
 }
 
-.segmentActive_info { border-color: #1d4ed8; background-color: #eff6ff; color: #1d4ed8; }
-.segmentActive_progress { border-color: #6d28d9; background-color: #f5f3ff; color: #6d28d9; }
-.segmentActive_success { border-color: #047857; background-color: #ecfdf5; color: #047857; }
-.segmentActive_warning { border-color: #b45309; background-color: #fffbeb; color: #b45309; }
+.segmentActive_info { border-color: var(--badge-digital-border); background-color: var(--badge-digital-bg); color: var(--badge-digital-text); }
+.segmentActive_progress { border-color: var(--badge-appointment-border); background-color: var(--badge-appointment-bg); color: var(--badge-appointment-text); }
+.segmentActive_success { border-color: var(--wg-primary); background-color: var(--success-bg); color: var(--success); }
+.segmentActive_warning { border-color: var(--warning); background-color: var(--warning-bg); color: var(--warning); }
 
 .dropzone {
   display: grid;
@@ -396,10 +399,11 @@
   position: absolute;
   right: 8px;
   bottom: 8px;
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: var(--radius-full);
-  background-color: rgba(255, 255, 255, 0.92);
-  color: var(--wg-text);
+  background-color: rgba(16, 19, 17, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
   font-size: 0.76rem;
   font-weight: 600;
 }
@@ -414,25 +418,43 @@
 }
 
 .geoOk {
-  color: #047857;
+  color: var(--success);
 }
 
 .error {
   margin: 0;
   padding: 8px 10px;
   border-radius: var(--radius-sm);
-  background-color: #fef2f2;
-  color: #b91c1c;
+  background-color: var(--danger-bg);
+  color: var(--danger);
   font-size: 0.8rem;
 }
 
 .secondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
   padding: 8px 14px;
   border: 1px solid var(--wg-border);
   border-radius: var(--radius-sm);
+  background-color: var(--wg-surface);
   color: var(--wg-text);
   font-size: 0.82rem;
   font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.secondaryBtn:hover:not(:disabled) {
+  background-color: var(--wg-surface-alt);
+  border-color: var(--wg-primary);
+}
+
+.secondaryBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .spin {
@@ -493,9 +515,13 @@
   position: absolute;
   top: 50%;
   display: inline-flex;
-  padding: 8px;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--wg-border);
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: var(--wg-surface);
   color: var(--wg-text);
   transform: translateY(-50%);
 }

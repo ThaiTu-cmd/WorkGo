@@ -1,5 +1,5 @@
 .pageContainer {
-  background-color: var(--wg-surface);
+  background-color: var(--wg-bg);
   min-height: 100vh;
   padding: calc(var(--header-height) + 24px) 0 60px 0;
 }
@@ -540,8 +540,8 @@
 
 .totalRow strong {
   font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--wg-primary-active);
+  font-weight: 700;
+  color: var(--wg-primary-text);
 }
 
 .netNote {
@@ -558,14 +558,58 @@
   padding: 12px;
   border-radius: var(--radius-md);
   background-color: var(--wg-primary-light);
-  border: 1px solid #c7efd9;
-  font-size: 0.8rem;
-  color: #1f5f3f;
+  border: 1px solid rgba(29, 191, 115, 0.28);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--wg-primary-text);
 }
 
 .escrowBox svg {
   flex-shrink: 0;
-  color: var(--wg-primary-active);
+  color: var(--wg-primary-text);
+}
+
+.quoteBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background-color: var(--wg-surface-alt);
+  border: 1px solid var(--wg-border);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--wg-text-secondary);
+}
+
+.quoteBox p {
+  margin: 0;
+}
+
+.quoteRefreshBtn {
+  align-self: flex-start;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--wg-border);
+  background-color: var(--wg-surface);
+  color: var(--wg-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.quoteRefreshBtn:hover:not(:disabled) {
+  background-color: var(--wg-primary-light);
+  border-color: var(--wg-primary);
+  color: var(--wg-primary-text);
+}
+
+.quoteRefreshBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .agree {
@@ -601,7 +645,8 @@
 }
 
 .btnPay:disabled {
-  background-color: #cbd5e1;
+  background-color: var(--wg-border);
+  color: var(--wg-text-muted);
   cursor: not-allowed;
 }
 
@@ -648,10 +693,12 @@
 }
 
 .btnSecondary {
-  padding: 12px 24px;
+  min-height: 44px;
+  padding: 10px 24px;
+  background-color: var(--wg-surface);
   border: 1px solid var(--wg-border);
   border-radius: var(--radius-md);
-  font-size: 0.98rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--wg-text);
 }
@@ -669,7 +716,7 @@
 }
 
 .dangerIcon {
-  color: var(--color-danger, #dc2626);
+  color: var(--danger);
 }
 
 /* ---------- Overlay ---------- */
@@ -679,7 +726,7 @@
   z-index: 1000;
   display: grid;
   place-items: center;
-  background-color: rgba(15, 23, 42, 0.5);
+  background-color: rgba(0, 0, 0, 0.55);
 }
 
 .overlayBox {

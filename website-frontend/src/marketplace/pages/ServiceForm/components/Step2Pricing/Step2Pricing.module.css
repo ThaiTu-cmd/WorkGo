@@ -1,13 +1,13 @@
 .card {
   background: var(--wg-surface);
-  border: 1px solid var(--border-color, #e2e8f0);
+  border: 1px solid var(--wg-border);
   border-radius: 16px;
   padding: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 
 .cardHeader {
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--wg-border-light);
   padding-bottom: 1.25rem;
   margin-bottom: 1.5rem;
 }
@@ -15,19 +15,19 @@
 .heading {
   font-family: var(--font-heading, sans-serif);
   font-size: 1.25rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--wg-text);
   margin-bottom: 0.25rem;
 }
 
 .desc {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--wg-text-muted);
 }
 
 .matrixWrapper {
   overflow-x: auto;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wg-border);
   border-radius: 16px;
   background: var(--wg-surface);
   margin-bottom: 2rem;
@@ -41,8 +41,8 @@
 
 .table th, .table td {
   padding: 1rem 1.25rem;
-  border-right: 1px solid #e2e8f0;
-  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid var(--wg-border-light);
+  border-bottom: 1px solid var(--wg-border-light);
   vertical-align: top;
 }
 
@@ -52,11 +52,10 @@
 
 .thTitle {
   width: 24%;
-  background: var(--wg-surface);
+  background: var(--wg-surface-alt);
   font-size: 0.8125rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #64748b;
+  font-weight: 600;
+  color: var(--wg-text-secondary);
   text-align: left;
 }
 
@@ -65,31 +64,32 @@
   background: var(--wg-surface);
   text-align: center;
   position: relative;
+  padding-top: 1.75rem !important;
 }
 
 .thPkg.recommended {
   background: var(--wg-primary-light);
-  border-top: 3px solid #10b981;
+  border-top: 3px solid var(--wg-primary);
 }
 
 .recBadge {
   position: absolute;
-  top: -12px;
+  top: 6px;
   left: 50%;
   transform: translateX(-50%);
-  background: #10b981;
+  background: var(--wg-primary);
   color: #ffffff;
   font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  padding: 0.125rem 0.5rem;
+  font-weight: 600;
+  padding: 0.15rem 0.6rem;
   border-radius: 9999px;
+  white-space: nowrap;
 }
 
 .pkgName {
   font-family: var(--font-heading, sans-serif);
   font-size: 1.125rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--wg-text);
   margin-bottom: 0.25rem;
 }
@@ -109,7 +109,7 @@
 .featureSub {
   display: block;
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--wg-text-muted);
   font-weight: normal;
   margin-top: 0.125rem;
 }
@@ -122,14 +122,14 @@
 .checkbox {
   width: 18px;
   height: 18px;
-  accent-color: #10b981;
+  accent-color: var(--wg-primary);
   cursor: pointer;
 }
 
 .inputTitle {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--wg-border);
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 600;
@@ -140,14 +140,14 @@
 }
 
 .inputTitle:focus {
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  border-color: var(--wg-primary);
+  box-shadow: 0 0 0 3px var(--wg-primary-glow);
 }
 
 .textareaDesc {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--wg-border);
   border-radius: 6px;
   font-size: 0.8125rem;
   height: 60px;
@@ -158,22 +158,22 @@
 }
 
 .textareaDesc:focus {
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  border-color: var(--wg-primary);
+  box-shadow: 0 0 0 3px var(--wg-primary-glow);
 }
 
 /* Dropdown: same box as .inputTitle, custom chevron instead of the native arrow. */
 .select {
   width: 100%;
   padding: 0.5rem 2.25rem 0.5rem 0.75rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--wg-border);
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.5;
   color: var(--wg-text);
   background-color: var(--wg-surface);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2366736b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.625rem center;
   background-size: 14px;
@@ -185,12 +185,12 @@
 }
 
 .select:hover:not(:focus) {
-  border-color: #94a3b8;
+  border-color: var(--wg-primary);
 }
 
 .select:focus {
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  border-color: var(--wg-primary);
+  box-shadow: 0 0 0 3px var(--wg-primary-glow);
 }
 
 .select option {
@@ -208,7 +208,7 @@
 .priceInput {
   width: 100%;
   padding: 0.625rem 0.75rem;
-  border: 1.5px solid #cbd5e1;
+  border: 1.5px solid var(--wg-border);
   border-radius: 8px;
   font-size: 0.9375rem;
   font-weight: 700;
@@ -218,7 +218,7 @@
 }
 
 .priceInput:focus {
-  border-color: #10b981;
+  border-color: var(--wg-primary);
 }
 
 .currency {
@@ -230,14 +230,14 @@
 /* Addons */
 .addonsSectionTitle {
   font-size: 1.05rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--wg-text);
   margin-bottom: 0.375rem;
 }
 
 .addonsSectionDesc {
   font-size: 0.8125rem;
-  color: #64748b;
+  color: var(--wg-text-muted);
   margin-bottom: 1rem;
 }
 
@@ -248,22 +248,22 @@
 }
 
 .addonCard {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wg-border);
   border-radius: 10px;
   padding: 1rem;
   background: var(--wg-surface);
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  transition: all 0.2s;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .addonCard:hover {
-  border-color: #cbd5e1;
+  border-color: var(--wg-primary);
 }
 
 .addonCard.active {
-  border-color: #10b981;
+  border-color: var(--wg-primary);
   background: var(--wg-primary-light);
 }
 
@@ -271,7 +271,7 @@
   margin-top: 0.25rem;
   width: 18px;
   height: 18px;
-  accent-color: #10b981;
+  accent-color: var(--wg-primary);
   cursor: pointer;
 }
 
@@ -288,7 +288,7 @@
 
 .addonDesc {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--wg-text-muted);
   line-height: 1.4;
   margin-bottom: 0.5rem;
 }
@@ -303,7 +303,7 @@
   width: 140px;
   padding: 0.375rem 0.625rem;
   font-size: 0.8125rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--wg-border);
   border-radius: 6px;
   color: var(--wg-text);
   background: var(--wg-surface);
@@ -320,18 +320,19 @@
   align-items: center;
   gap: 0.25rem;
   margin-left: auto;
-  padding: 0.375rem 0.625rem;
-  border: 1px solid #fecaca;
+  min-height: 36px;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--danger);
   border-radius: 6px;
-  background: var(--wg-surface);
-  color: #dc2626;
+  background: var(--danger-bg);
+  color: var(--danger);
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
 }
 
 .addonRemove:hover {
-  background: rgba(239, 68, 68, 0.12);
+  opacity: 0.9;
 }
 
 .addonAdd {
@@ -340,7 +341,7 @@
   justify-content: center;
   gap: 0.375rem;
   min-height: 120px;
-  border: 2px dashed #cbd5e1;
+  border: 2px dashed var(--wg-border);
   border-radius: 10px;
   background: var(--wg-surface);
   color: var(--wg-text-secondary);
@@ -350,8 +351,8 @@
 }
 
 .addonAdd:hover {
-  border-color: #10b981;
-  color: #047857;
+  border-color: var(--wg-primary);
+  color: var(--wg-primary-text);
 }
 
 @media (max-width: 900px) {

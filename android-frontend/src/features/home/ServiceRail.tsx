@@ -6,7 +6,7 @@ import type { ServiceCard } from '@/api/adapters';
 import { categoryVisual } from '@/features/catalog/categoryVisuals';
 import type { HomeRail } from '@/features/catalog/homeRails';
 import { formatVnd } from '@/lib/format';
-import { font, makeStyles, radius, spacing } from '@/ui';
+import { font, makeStyles, radius, spacing, useColors } from '@/ui';
 import { useT } from '@/i18n';
 
 export function ServiceRail({ rail }: { rail: HomeRail }) {
@@ -40,6 +40,7 @@ export function ServiceRail({ rail }: { rail: HomeRail }) {
 function ServiceTile({ service, onPress }: { service: ServiceCard; onPress: () => void }) {
   const t = useT();
   const styles = useStyles();
+  const colors = useColors();
   const v = categoryVisual(service.categorySlug);
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={service.title} onPress={onPress} style={styles.tile}>
@@ -56,7 +57,7 @@ function ServiceTile({ service, onPress }: { service: ServiceCard; onPress: () =
           {service.title}
         </Text>
         <View style={styles.meta}>
-          <Ionicons name="star" size={12} color="#EF9F27" />
+          <Ionicons name="star" size={12} color={colors.star} />
           <Text style={styles.metaText}>{t('serviceRail.don', { p0: service.reviewCount > 0 ? service.avgRating.toFixed(1) : t('serviceRail.moi'), p1: service.orderCount })}</Text>
         </View>
         <Text style={styles.price}>{formatVnd(service.basePrice)}</Text>
@@ -77,7 +78,7 @@ const useStyles = makeStyles((colors) => ({
     position: 'absolute',
     top: 6,
     left: 6,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: radius.pill,
     paddingHorizontal: 6,
     paddingVertical: 1,

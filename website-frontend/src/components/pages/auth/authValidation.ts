@@ -11,17 +11,17 @@ export function sanitizeText(s: unknown): string {
 export const emailSchema = z
   .string()
   .transform((v) => stripHtml(v).trim())
-  .pipe(z.string().email("Email chưa đúng định dạng!"));
+  .pipe(z.string().email("Email chưa đúng định dạng."));
 
 export const passwordSchema = z
   .string()
   .transform((v) => stripHtml(v))
-  .pipe(z.string().min(6, "Mật khẩu tối thiểu 6 ký tự!"));
+  .pipe(z.string().min(6, "Mật khẩu tối thiểu 6 ký tự."));
 
 export const nameSchema = z
   .string()
   .transform((v) => sanitizeText(v))
-  .pipe(z.string().min(2, "Vui lòng nhập tên từ 2 ký tự!"));
+  .pipe(z.string().min(2, "Vui lòng nhập tên từ 2 ký tự."));
 
 export const userNameSchema = z
   .string()
@@ -29,7 +29,7 @@ export const userNameSchema = z
   .pipe(
     z
       .string()
-      .min(3, "Tên đăng nhập tối thiểu 3 ký tự!")
+      .min(3, "Tên đăng nhập tối thiểu 3 ký tự.")
       .regex(/^[A-Za-z0-9._-]+$/, "Tên đăng nhập chỉ gồm chữ, số, dấu . _ -")
   );
 
@@ -37,13 +37,13 @@ export const loginIdentifierSchema = z
   .string()
   .transform((v) => stripHtml(v).trim())
   .pipe(
-    z.string().min(3, "Tên đăng nhập hoặc Email tối thiểu 3 ký tự!")
+    z.string().min(3, "Tên đăng nhập hoặc Email tối thiểu 3 ký tự.")
   );
 
 export const phoneSchema = z
   .string()
   .transform((v) => stripHtml(v).replace(/\s+/g, ""))
-  .pipe(z.string().regex(/^0\d{9}$/, "Số điện thoại gồm 10 số, bắt đầu bằng 0!"));
+  .pipe(z.string().regex(/^0\d{9}$/, "Số điện thoại gồm 10 số, bắt đầu bằng 0."));
 
 export const registerSchema = z.object({
   name: nameSchema,

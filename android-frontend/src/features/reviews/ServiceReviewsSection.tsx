@@ -7,12 +7,13 @@ import { reviewApi } from '@/api/reviewApi';
 import { qk } from '@/api/queryKeys';
 import type { ReviewDto } from '@/api/types';
 import { formatDateTime } from '@/lib/format';
-import { Avatar, Card, font, makeStyles, spacing } from '@/ui';
+import { Avatar, Card, font, makeStyles, spacing, useColors } from '@/ui';
 import { useT } from '@/i18n';
 
 export function ServiceReviewsSection({ serviceId }: { serviceId: string }) {
   const t = useT();
   const styles = useStyles();
+  const colors = useColors();
 
   const query = useQuery({
     queryKey: qk.serviceReviews(serviceId),
@@ -32,7 +33,7 @@ export function ServiceReviewsSection({ serviceId }: { serviceId: string }) {
         <Text style={styles.sectionTitle}>{t('reviews.danh_gia_tu_khach_hang')}</Text>
         {summary && summary.ratingCount > 0 ? (
           <View style={styles.ratingBadge}>
-            <Ionicons name="star" size={16} color="#f59e0b" />
+            <Ionicons name="star" size={16} color={colors.star} />
             <Text style={styles.ratingText}>
               {summary.ratingAvg.toFixed(1)} ({summary.ratingCount})
             </Text>
@@ -54,7 +55,7 @@ export function ServiceReviewsSection({ serviceId }: { serviceId: string }) {
                       key={star}
                       name={star <= rev.rating ? 'star' : 'star-outline'}
                       size={14}
-                      color="#f59e0b"
+                      color={colors.star}
                     />
                   ))}
                 </View>

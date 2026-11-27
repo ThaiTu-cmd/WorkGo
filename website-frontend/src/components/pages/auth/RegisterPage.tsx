@@ -81,7 +81,7 @@ export default function RegisterPage({
             <button type="button" className={styles.submit} onClick={() => onNavigate("profile-settings")}>
               Quản lý hồ sơ cá nhân
             </button>
-            <button type="button" className={styles.submit} style={{ background: "transparent", color: "var(--wg-primary)", border: "1px solid var(--wg-primary)" }} onClick={() => onNavigate("catalog")}>
+            <button type="button" className={styles.submit} style={{ background: "transparent", color: "var(--wg-primary-text)", border: "1px solid var(--wg-primary)" }} onClick={() => onNavigate("catalog")}>
               Đến danh mục dịch vụ
             </button>
           </div>

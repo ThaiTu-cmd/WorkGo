@@ -20,7 +20,7 @@
 
 .sectionSubtitle {
   font-size: 0.92rem;
-  color: #64748b;
+  color: var(--wg-text-muted);
   margin: 0;
   line-height: 1.5;
 }
@@ -28,9 +28,9 @@
 .tableWrapper {
   overflow-x: auto;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wg-border);
   background: var(--wg-surface);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .comparisonTable {
@@ -42,9 +42,9 @@
 
 /* Headers */
 .comparisonTable th {
-  padding: 20px 16px;
+  padding: 24px 16px 20px;
   background-color: var(--wg-surface);
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 1px solid var(--wg-border);
   vertical-align: top;
 }
 
@@ -59,7 +59,7 @@
   width: 22.6%;
   text-align: center;
   position: relative;
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease;
 }
 
 .standardTh {
@@ -71,28 +71,26 @@
   top: 6px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #10b981;
+  background-color: var(--wg-primary);
   color: #ffffff;
-  font-size: 0.65rem;
-  font-weight: 700;
+  font-size: 0.7rem;
+  font-weight: 600;
   padding: 2px 8px;
-  border-radius: 10px;
-  text-transform: uppercase;
+  border-radius: 9999px;
   white-space: nowrap;
 }
 
 .pkgTier {
-  font-size: 0.82rem;
-  font-weight: 700;
-  text-transform: uppercase;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--wg-text-secondary);
   margin-top: 6px;
 }
 
 .pkgPrice {
   font-size: 1.25rem;
-  font-weight: 800;
-  color: #059669;
+  font-weight: 700;
+  color: var(--wg-primary-text);
   font-family: var(--font-heading);
   margin: 4px 0 6px 0;
 }
@@ -107,7 +105,7 @@
 /* Cells */
 .comparisonTable td {
   padding: 14px 16px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--wg-border-light);
 }
 
 .altRow {
@@ -131,11 +129,11 @@
 }
 
 .iconCheck {
-  color: #10b981;
+  color: var(--wg-primary);
 }
 
 .iconClose {
-  color: #cbd5e1;
+  color: var(--wg-text-muted);
 }
 
 .activeCol {
@@ -146,39 +144,40 @@
 .comparisonTable tfoot td {
   padding: 20px 16px;
   background-color: var(--wg-surface);
-  border-top: 2px solid #e2e8f0;
+  border-top: 1px solid var(--wg-border);
 }
 
 .selectBtn {
   width: 100%;
-  max-width: 150px;
-  padding: 9px 12px;
+  max-width: 160px;
+  min-height: 40px;
+  padding: 8px 14px;
   background-color: var(--wg-surface);
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--wg-border);
   color: var(--wg-text-secondary);
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
 .selectBtn:hover {
-  border-color: #10b981;
-  color: #059669;
+  border-color: var(--wg-primary);
+  color: var(--wg-primary-text);
   background-color: var(--wg-primary-light);
 }
 
 .primarySelectBtn {
-  background-color: #ecfdf5;
-  border-color: #10b981;
-  color: #059669;
+  background-color: var(--wg-primary-light);
+  border-color: var(--wg-primary);
+  color: var(--wg-primary-text);
 }
 
 .selectedBtn {
-  background-color: #10b981 !important;
+  background-color: var(--wg-primary) !important;
   color: #ffffff !important;
-  border-color: #10b981 !important;
+  border-color: var(--wg-primary) !important;
 }
 
 @media (max-width: 768px) {

@@ -51,7 +51,48 @@
 }
 
 .warn {
-  color: #b45309;
+  color: var(--warning);
+}
+
+.fieldLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--wg-text-secondary);
+}
+
+.checkRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  color: var(--wg-text);
+  cursor: pointer;
+}
+
+.checkRow input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--wg-primary);
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.subCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--wg-border-light);
+  border-radius: var(--radius-sm);
+  background-color: var(--wg-surface-alt);
 }
 
 .fileList {
@@ -166,14 +207,14 @@
   font-weight: 600;
 }
 
-.chip_SUBMITTED { background-color: #eff6ff; color: #1d4ed8; }
-.chip_ACCEPTED { background-color: #ecfdf5; color: #047857; }
-.chip_REVISION_REQUESTED { background-color: #fffbeb; color: #b45309; }
-.chip_OPEN { background-color: #fffbeb; color: #b45309; }
-.chip_RESOLVED { background-color: #ecfdf5; color: #047857; }
+.chip_SUBMITTED { background-color: var(--badge-digital-bg); color: var(--badge-digital-text); }
+.chip_ACCEPTED { background-color: var(--success-bg); color: var(--success); }
+.chip_REVISION_REQUESTED { background-color: var(--warning-bg); color: var(--warning); }
+.chip_OPEN { background-color: var(--warning-bg); color: var(--warning); }
+.chip_RESOLVED { background-color: var(--success-bg); color: var(--success); }
 
 .fileLink {
-  color: var(--wg-primary-active);
+  color: var(--wg-primary-text);
   text-decoration: none;
 }
 
@@ -217,8 +258,8 @@
 
 .escrowTxns {
   display: grid;
-  grid-template-columns: max-content max-content max-content;
-  gap: 6px 24px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 6px 18px;
   margin: 0;
   padding: 0;
   list-style: none;

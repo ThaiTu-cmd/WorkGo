@@ -9,7 +9,7 @@ import { jobApi, type OrderSyncStatus, type ProposalDto } from '@/api/jobApi';
 import type {RewardQuoteDto} from '@/api/types';
 import { qk } from '@/api/queryKeys';
 import { formatDate, formatVnd } from '@/lib/format';
-import { Badge, Button, Card, EmptyState, ErrorState, font, makeStyles, radius, SkeletonList, spacing } from '@/ui';
+import { Badge, Button, Card, EmptyState, ErrorState, font, makeStyles, radius, SkeletonList, spacing, useColors } from '@/ui';
 
 export function ProposalReviewScreen({
   jobId: propJobId,
@@ -19,6 +19,7 @@ export function ProposalReviewScreen({
   onNavigateToOrder?: (orderId: string) => void;
 } = {}) {
   const styles = useStyles();
+  const colors = useColors();
   const router = useRouter();
   const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ id?: string }>();
@@ -234,7 +235,7 @@ export function ProposalReviewScreen({
                   <View style={styles.syncBanner}>
                     {sync?.status === 'SUCCESS' ? (
                       <View style={styles.syncSuccessRow}>
-                        <Ionicons name="checkmark-circle" size={18} color="#16a34a" />
+                        <Ionicons name="checkmark-circle" size={18} color={colors.success} />
                         <Text style={styles.syncSuccessText}>
                           Đã tạo đơn hàng thành công! {sync.orderId ? `(#${sync.orderId.slice(0, 8)})` : ''}
                         </Text>
@@ -248,7 +249,7 @@ export function ProposalReviewScreen({
                       </View>
                     ) : sync?.status === 'FAILED' ? (
                       <View style={styles.syncFailedRow}>
-                        <Ionicons name="alert-circle" size={18} color="#dc2626" />
+                        <Ionicons name="alert-circle" size={18} color={colors.danger} />
                         <Text style={styles.syncFailedText}>Đồng bộ tạo đơn hàng chưa thành công.</Text>
                         <Button
                           title="Thử lại"
@@ -259,7 +260,7 @@ export function ProposalReviewScreen({
                       </View>
                     ) : (
                       <View style={styles.syncPendingRow}>
-                        <ActivityIndicator size="small" color="#2563eb" />
+                        <ActivityIndicator size="small" color={colors.primary} />
                         <Text style={styles.syncPendingText}>Đang đồng bộ tạo đơn hàng qua outbox...</Text>
                       </View>
                     )}
@@ -334,9 +335,10 @@ const useStyles = makeStyles((colors) => ({
     marginTop: spacing.xs,
   },
   syncSuccessRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
-  syncSuccessText: { fontSize: font.small, color: '#16a34a', fontWeight: '600', flex: 1 },
+  syncSuccessText: { fontSize: font.small, color: colors.success, fontWeight: '600', flex: 1 },
   syncFailedRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
-  syncFailedText: { fontSize: font.small, color: '#dc2626', fontWeight: '600', flex: 1 },
+  syncFailedText: { fontSize: font.small, color: colors.danger, fontWeight: '600', flex: 1 },
   syncPendingRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  syncPendingText: { fontSize: font.small, color: '#2563eb' },
+  syncPendingText: { fontSize: font.small, color: colors.primary },
+  quoteText: { fontSize: font.small, color: colors.muted },
 }));

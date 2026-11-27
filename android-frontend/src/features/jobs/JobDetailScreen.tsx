@@ -9,7 +9,7 @@ import { jobApi, type JobDetailDto } from '@/api/jobApi';
 import { qk } from '@/api/queryKeys';
 import { useAuth } from '@/auth/AuthProvider';
 import { formatDate, formatVnd } from '@/lib/format';
-import { Badge, Button, Card, EmptyState, ErrorState, font, makeStyles, radius, SkeletonList, spacing } from '@/ui';
+import { Badge, Button, Card, EmptyState, ErrorState, font, makeStyles, radius, SkeletonList, spacing, useColors } from '@/ui';
 
 export function JobDetailScreen({
   jobId: propJobId,
@@ -21,6 +21,7 @@ export function JobDetailScreen({
   onReviewProposals?: (jobId: string) => void;
 } = {}) {
   const styles = useStyles();
+  const colors = useColors();
   const router = useRouter();
   const params = useLocalSearchParams<{ id?: string }>();
   const activeJobId = propJobId || params.id || '';
@@ -110,7 +111,7 @@ export function JobDetailScreen({
               <View style={styles.section}>
                 <Text style={styles.sectionHeading}>Địa điểm thực hiện</Text>
                 <View style={styles.inlineInfo}>
-                  <Ionicons name="location-outline" size={18} color="#64748b" />
+                  <Ionicons name="location-outline" size={18} color={colors.muted} />
                   <Text style={styles.infoText}>{job.locationSnapshot}</Text>
                 </View>
               </View>
@@ -120,7 +121,7 @@ export function JobDetailScreen({
               <View style={styles.section}>
                 <Text style={styles.sectionHeading}>Hạn hoàn thành</Text>
                 <View style={styles.inlineInfo}>
-                  <Ionicons name="time-outline" size={18} color="#64748b" />
+                  <Ionicons name="time-outline" size={18} color={colors.muted} />
                   <Text style={styles.infoText}>{formatDate(job.deadlineAt)}</Text>
                 </View>
               </View>
@@ -130,7 +131,7 @@ export function JobDetailScreen({
               <View style={styles.section}>
                 <Text style={styles.sectionHeading}>Khách hàng đăng tin</Text>
                 <View style={styles.inlineInfo}>
-                  <Ionicons name="person-circle-outline" size={20} color="#64748b" />
+                  <Ionicons name="person-circle-outline" size={20} color={colors.muted} />
                   <Text style={styles.infoText}>{job.client.fullName}</Text>
                 </View>
               </View>

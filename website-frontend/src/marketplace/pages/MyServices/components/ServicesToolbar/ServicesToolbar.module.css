@@ -1,6 +1,6 @@
 .toolbarContainer {
   background: var(--wg-surface);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wg-border);
   border-radius: 12px;
   padding: 16px 20px;
   display: flex;
@@ -8,13 +8,13 @@
   gap: 16px;
   margin-bottom: 20px;
   min-width: 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-sm);
 }
 
 .tabsRow {
   display: flex;
-  gap: 12px;
-  border-bottom: 1px solid #f1f5f9;
+  gap: 10px;
+  border-bottom: 1px solid var(--wg-border-light);
   padding-bottom: 12px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -30,15 +30,16 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-height: 40px;
   padding: 8px 14px;
   border-radius: 8px;
   border: 1px solid transparent;
   background: transparent;
-  color: #64748b;
+  color: var(--wg-text-secondary);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   white-space: nowrap;
   flex-shrink: 0;
   min-width: 0;
@@ -53,28 +54,28 @@
 }
 
 .tabBtn:hover {
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
   color: var(--wg-text);
 }
 
 .tabActive {
-  background-color: #ecfdf5 !important;
-  color: #059669 !important;
-  border-color: #a7f3d0 !important;
+  background-color: var(--wg-primary-light) !important;
+  color: var(--wg-primary-text) !important;
+  border-color: var(--wg-primary) !important;
   font-weight: 700;
 }
 
 .countBadge {
   font-size: 0.72rem;
   padding: 2px 7px;
-  border-radius: 10px;
-  background-color: var(--wg-surface);
-  color: #64748b;
-  font-weight: 700;
+  border-radius: 9999px;
+  background-color: var(--wg-surface-alt);
+  color: var(--wg-text-muted);
+  font-weight: 600;
 }
 
 .badgeActive {
-  background-color: #10b981;
+  background-color: var(--wg-primary);
   color: #ffffff;
 }
 
@@ -97,24 +98,26 @@
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
+  color: var(--wg-text-muted);
   pointer-events: none;
 }
 
 .searchInput {
   width: 100%;
+  min-height: 44px;
   padding: 9px 14px 9px 36px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--wg-border);
   border-radius: 8px;
   font-size: 0.88rem;
+  background-color: var(--wg-surface);
   color: var(--wg-text);
   outline: none;
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease;
 }
 
 .searchInput:focus {
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  border-color: var(--wg-primary);
+  box-shadow: 0 0 0 3px var(--wg-primary-glow);
 }
 
 .filterBox {
@@ -128,26 +131,27 @@
 .filterIcon {
   position: absolute;
   left: 12px;
-  color: #64748b;
+  color: var(--wg-text-muted);
   pointer-events: none;
 }
 
 .categorySelect {
+  min-height: 44px;
   padding: 9px 14px 9px 34px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--wg-border);
   border-radius: 8px;
   font-size: 0.88rem;
-  color: var(--wg-text-secondary);
+  color: var(--wg-text);
   background-color: var(--wg-surface);
   outline: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease;
   max-width: 100%;
   min-width: 0;
 }
 
 .categorySelect:focus {
-  border-color: #10b981;
+  border-color: var(--wg-primary);
 }
 
 .createBtn {
@@ -156,21 +160,19 @@
   gap: 8px;
   padding: 10px 18px;
   min-height: 44px;
-  background-color: #10b981;
+  background-color: var(--wg-primary);
   color: #ffffff;
   border: none;
   border-radius: 8px;
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+  transition: background-color 0.15s ease;
   white-space: nowrap;
 }
 
 .createBtn:hover {
-  background-color: #059669;
-  transform: translateY(-1px);
+  background-color: var(--wg-primary-hover);
 }
 
 @media (max-width: 768px) {

@@ -192,7 +192,7 @@ export default function ReviewFormPage({
     } catch (err: unknown) {
       const msg = (err as Error)?.message || tr("m1140");
       if (msg.toLowerCase().includes("already") || msg.toLowerCase().includes("reviewed")) {
-        setError("Đơn hàng này đã được đánh giá!");
+        setError("Đơn hàng này đã được đánh giá.");
       } else {
         setError(msg);
       }
@@ -247,7 +247,7 @@ export default function ReviewFormPage({
           </label>
           {alreadyReviewed && (
             <div className={styles.checkedNote}>
-              Đơn hàng này đã được đánh giá! Bạn có thể xem lại trong lịch sử bên dưới.
+              Đơn hàng này đã được đánh giá. Bạn có thể xem lại trong lịch sử bên dưới.
             </div>
           )}
           <fieldset className={styles.stars} role="radiogroup" aria-label="Đánh giá số sao">
@@ -264,7 +264,7 @@ export default function ReviewFormPage({
                     className={styles.radio}
                     aria-label={`${s} sao`}
                   />
-                  <span aria-hidden="true">★</span>
+                  <Star size={22} fill={s <= stars ? "currentColor" : "none"} aria-hidden="true" />
                 </label>
               ))}
             </div>
@@ -300,9 +300,10 @@ export default function ReviewFormPage({
               <li key={`${r.orderId}-${i}`} className={styles.reviewItem}>
                 <div className={styles.reviewItemHead}>
                   <span className={styles.reviewOrder}>Đơn #{r.orderId}</span>
-                  <span className={styles.reviewStars}>
-                    {"★".repeat(r.stars)}
-                    {"☆".repeat(5 - r.stars)}
+                  <span className={styles.reviewStars} aria-label={`${r.stars}/5 sao`}>
+                    {[1, 2, 3, 4, 5].map(idx => (
+                      <Star key={idx} size={14} fill={idx <= r.stars ? "currentColor" : "none"} aria-hidden="true" />
+                    ))}
                   </span>
                 </div>
                 <p className={styles.reviewComment}>{r.comment}</p>

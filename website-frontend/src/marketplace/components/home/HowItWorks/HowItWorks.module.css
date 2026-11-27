@@ -22,8 +22,8 @@
 
 .title {
   font-family: var(--font-heading);
-  font-size: 2.3rem;
-  font-weight: 800;
+  font-size: 2.2rem;
+  font-weight: 700;
   color: var(--wg-text);
   letter-spacing: -0.02em;
   margin-bottom: 16px;
@@ -38,7 +38,7 @@
 .stepsGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 28px;
+  gap: 24px;
   position: relative;
 }
 
@@ -57,13 +57,13 @@
 .stepCard {
   background-color: var(--wg-bg);
   border-radius: var(--radius-lg);
-  padding: 32px 24px;
+  padding: 28px 24px;
   border: 1px solid var(--wg-border);
   display: flex;
   flex-direction: column;
   position: relative;
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.2s ease,
               background-color 0.2s ease,
               border-color 0.2s ease;
   cursor: default;
@@ -71,34 +71,31 @@
 
 .stepCard:hover {
   background-color: var(--wg-surface);
-  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.12), 0 4px 14px rgba(29, 191, 115, 0.14);
-  transform: translateY(-6px);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
   border-color: var(--wg-primary);
-}
-
-.stepCard:active {
-  transform: translateY(-2px) scale(0.985);
 }
 
 .stepTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .stepNum {
   font-family: var(--font-heading);
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: rgba(0, 0, 0, 0.12);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--wg-text-muted);
+  opacity: 0.45;
   line-height: 1;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: color 0.2s ease, opacity 0.2s ease;
 }
 
 .stepCard:hover .stepNum {
-  color: var(--wg-primary);
-  transform: scale(1.05);
+  color: var(--wg-primary-text);
+  opacity: 1;
 }
 
 .stepIconBox {
@@ -107,19 +104,17 @@
   border-radius: var(--radius-md);
   background-color: var(--wg-surface);
   border: 1px solid var(--wg-border);
-  color: var(--wg-primary);
+  color: var(--wg-primary-text);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: var(--shadow-sm);
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
-              background-color 0.2s ease,
+  transition: background-color 0.2s ease,
               color 0.2s ease,
               border-color 0.2s ease;
 }
 
 .stepCard:hover .stepIconBox {
-  transform: scale(1.12) rotate(4deg);
   background-color: var(--wg-primary);
   color: #ffffff;
   border-color: var(--wg-primary);
@@ -142,11 +137,11 @@
 
 /* Bottom Assurance Bar */
 .bottomBar {
-  margin-top: 48px;
-  background: linear-gradient(135deg, rgba(29, 191, 115, 0.08) 0%, rgba(22, 119, 255, 0.05) 100%);
-  border: 1px solid rgba(29, 191, 115, 0.25);
-  border-radius: 20px;
-  padding: 24px 32px;
+  margin-top: 40px;
+  background-color: var(--wg-primary-light);
+  border: 1px solid rgba(29, 191, 115, 0.24);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -169,11 +164,12 @@
 }
 
 .assuranceIcon {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  background-color: rgba(29, 191, 115, 0.15);
-  color: var(--wg-primary);
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background-color: var(--wg-surface);
+  border: 1px solid var(--wg-border);
+  color: var(--wg-primary-text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -198,25 +194,23 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
+  min-height: 44px;
+  padding: 10px 22px;
   border-radius: 9999px;
   background-color: var(--wg-primary);
   color: #ffffff;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 0.95rem;
   white-space: nowrap;
   flex-shrink: 0;
-  box-shadow: 0 4px 14px rgba(29, 191, 115, 0.25);
-  transition: all var(--transition-fast), transform 0.14s cubic-bezier(0.2, 0, 0, 1);
+  transition: background-color var(--transition-fast);
   cursor: pointer;
 }
 
 .detailLink:hover {
   background-color: var(--wg-primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(29, 191, 115, 0.35);
 }
 
 .detailLink:active {
-  transform: translateY(0) scale(0.96);
+  background-color: var(--wg-primary-fill-active);
 }

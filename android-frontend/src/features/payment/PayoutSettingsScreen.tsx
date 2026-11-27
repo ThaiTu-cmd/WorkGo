@@ -299,8 +299,8 @@ const useStyles = makeStyles((colors) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: '#ebf8ff',
-    borderColor: '#bee3f8',
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.primary,
     borderWidth: 1,
   },
   savedContent: {
@@ -355,7 +355,7 @@ const useStyles = makeStyles((colors) => ({
     alignItems: 'center',
     gap: spacing.xs,
     padding: spacing.sm,
-    backgroundColor: '#fff5f5',
+    backgroundColor: colors.dangerBg,
     borderRadius: 8,
   },
   debtAlertText: {

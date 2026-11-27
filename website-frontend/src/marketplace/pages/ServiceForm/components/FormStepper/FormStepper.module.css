@@ -1,9 +1,9 @@
 .stepperSection {
   background: var(--wg-surface);
-  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  border-bottom: 1px solid var(--wg-border);
   padding: 1.25rem 0;
   margin-bottom: 2rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .stepperContainer {
@@ -38,9 +38,9 @@
   font-weight: 700;
   font-size: 0.875rem;
   background: var(--wg-surface);
-  border: 2px solid #cbd5e1;
-  color: #64748b;
-  transition: all 0.25s ease;
+  border: 2px solid var(--wg-border);
+  color: var(--wg-text-muted);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .stepContent {
@@ -50,22 +50,22 @@
 
 .stepTitle {
   font-size: 0.875rem;
-  font-weight: 700;
-  color: #64748b;
-  transition: color 0.25s ease;
+  font-weight: 600;
+  color: var(--wg-text-secondary);
+  transition: color 0.2s ease;
 }
 
 .stepSubtitle {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--wg-text-muted);
 }
 
 /* Active State */
 .stepItem.active .stepCircle {
-  background: var(--primary, #10b981);
-  border-color: var(--primary, #10b981);
+  background: var(--wg-primary);
+  border-color: var(--wg-primary);
   color: #ffffff;
-  box-shadow: 0 0 0 4px #ecfdf5;
+  box-shadow: 0 0 0 4px var(--wg-primary-glow);
 }
 
 .stepItem.active .stepTitle {
@@ -74,13 +74,13 @@
 
 /* Completed State */
 .stepItem.completed .stepCircle {
-  background: var(--primary, #10b981);
-  border-color: var(--primary, #10b981);
+  background: var(--wg-primary);
+  border-color: var(--wg-primary);
   color: #ffffff;
 }
 
 .stepItem.completed .stepTitle {
-  color: #047857;
+  color: var(--wg-primary-text);
 }
 
 .stepperLine {
@@ -89,13 +89,13 @@
   left: 60px;
   right: 60px;
   height: 2px;
-  background: #e2e8f0;
+  background: var(--wg-border);
   z-index: 1;
 }
 
 .stepperLineFill {
   height: 100%;
-  background: var(--primary, #10b981);
+  background: var(--wg-primary);
   transition: width 0.3s ease;
 }
 

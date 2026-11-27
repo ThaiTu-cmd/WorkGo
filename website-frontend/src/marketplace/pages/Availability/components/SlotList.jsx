@@ -40,7 +40,7 @@ export default function SlotList({
       </div>
       <div className={styles.legend}>
         {Object.entries(STATUS).map(([key, s]) => <span key={key} className={`${styles.slotBadge} ${s.cls}`}>
-            {s.label}
+            {tr(s.label)}
           </span>)}
       </div>
 

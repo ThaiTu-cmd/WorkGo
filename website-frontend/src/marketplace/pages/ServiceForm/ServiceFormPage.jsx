@@ -14,6 +14,7 @@ import Step1Info from './components/Step1Info/Step1Info';
 import Step2Pricing from './components/Step2Pricing/Step2Pricing';
 import Step3Media from './components/Step3Media/Step3Media';
 import { ArrowLeft, Check, FilePlus2, PencilLine, Save } from 'lucide-react';
+import ThemeToggle from '@/components/common/ThemeToggle';
 import styles from './ServiceFormPage.module.css';
 import { validateTitle, validateDescription, validatePackagePrices, validateAddons, isHttpUrl } from './formValidation';
 export default function ServiceFormPage({
@@ -315,10 +316,13 @@ export default function ServiceFormPage({
               {isEdit ? tr("m1126") : tr("m1127")}
             </h1>
           </div>
-          <div className={styles.modeBadge}>
-            {isEdit ? tr("m1128", {
-            p0: serviceId
-          }) : tr("m1129")}
+          <div className={styles.topBarActions}>
+            <div className={styles.modeBadge}>
+              {isEdit ? tr("m1128", {
+              p0: serviceId
+            }) : tr("m1129")}
+            </div>
+            <ThemeToggle />
           </div>
         </div>
       </div>

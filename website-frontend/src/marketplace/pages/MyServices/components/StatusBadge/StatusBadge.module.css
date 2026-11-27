@@ -18,60 +18,59 @@
 
 /* Active */
 .badgeActive {
-  background-color: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
+  background-color: var(--success-bg);
+  color: var(--success);
+  border: 1px solid var(--wg-primary);
 }
 .dotActive {
-  background-color: #10b981;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  background-color: var(--wg-primary);
 }
 
 /* Pending */
 .badgePending {
-  background-color: #fefce8;
-  color: #ca8a04;
-  border: 1px solid #fef08a;
+  background-color: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid var(--warning);
 }
 .dotPending {
-  background-color: #eab308;
+  background-color: var(--warning);
 }
 
 /* Paused */
 .badgePaused {
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
   color: var(--wg-text-secondary);
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--wg-border);
 }
 .dotPaused {
-  background-color: #94a3b8;
+  background-color: var(--wg-text-muted);
 }
 
 /* Draft */
 .badgeDraft {
-  background-color: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
+  background-color: var(--wg-surface-alt);
+  color: var(--wg-primary-text);
+  border: 1px solid var(--wg-border);
 }
 .dotDraft {
-  background-color: #3b82f6;
+  background-color: var(--wg-primary-text);
 }
 
 /* Rejected */
 .badgeRejected {
-  background-color: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  background-color: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid var(--danger);
 }
 .dotRejected {
-  background-color: #ef4444;
+  background-color: var(--danger);
 }
 
 .badgeDefault {
-  background-color: var(--wg-surface);
-  color: #64748b;
-  border: 1px solid #e2e8f0;
+  background-color: var(--wg-surface-alt);
+  color: var(--wg-text-muted);
+  border: 1px solid var(--wg-border);
 }
 .dotDefault {
-  background-color: #94a3b8;
+  background-color: var(--wg-text-muted);
 }

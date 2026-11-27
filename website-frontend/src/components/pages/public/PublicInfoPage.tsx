@@ -365,7 +365,7 @@ export default function PublicInfoPage({
                     <p style={{
                 marginTop: "12px",
                 fontSize: "0.8rem",
-                color: "#64748b",
+                color: "var(--wg-text-muted)",
                 fontStyle: "italic"
               }}>{tr("m1399")}</p>
                   </form>}
@@ -424,7 +424,7 @@ export default function PublicInfoPage({
             <p style={{
           marginTop: "16px",
           fontSize: "0.8rem",
-          color: "#64748b",
+          color: "var(--wg-text-muted)",
           fontStyle: "italic",
           textAlign: "center"
         }}>{tr("m1399")}</p>
@@ -444,7 +444,7 @@ export default function PublicInfoPage({
             <p style={{
           marginTop: "16px",
           fontSize: "0.8rem",
-          color: "#64748b",
+          color: "var(--wg-text-muted)",
           fontStyle: "italic",
           textAlign: "center"
         }}>{tr("m1399")}</p>

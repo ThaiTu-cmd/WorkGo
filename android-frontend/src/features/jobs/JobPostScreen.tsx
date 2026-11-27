@@ -13,7 +13,7 @@ import { catalogApi } from '@/api/catalogApi';
 import { jobApi, type JobCreateRequest, type JobExecutionType } from '@/api/jobApi';
 import { qk } from '@/api/queryKeys';
 import type { CategoryDto } from '@/api/types';
-import { Button, Card, Chip, font, makeStyles, radius, spacing, TextField } from '@/ui';
+import { Button, Card, Chip, font, makeStyles, radius, spacing, TextField, useColors } from '@/ui';
 
 export const TITLE_MIN = 15;
 export const TITLE_MAX = 100;
@@ -32,6 +32,7 @@ function JobPostContent({
   onSuccess?: (jobId: string) => void;
 } = {}) {
   const styles = useStyles();
+  const colors = useColors();
   const router = useRouter();
   const queryClient = useQueryClient();
   const {claims}=useAuth();const userId=claims?.userId??'';const storageKey='workgo.job.pending:'+userId;
@@ -182,14 +183,14 @@ function JobPostContent({
           {/* Interactive Input Checklist Widget */}
           <Card style={styles.checklistCard}>
             <View style={styles.checklistTitleRow}>
-              <Ionicons name="checkbox-outline" size={18} color="#0284c7" />
+              <Ionicons name="checkbox-outline" size={18} color={colors.primary} />
               <Text style={styles.checklistTitle}>Tiêu chuẩn đăng việc</Text>
             </View>
             <View style={styles.checkItem}>
               <Ionicons
                 name={isTitleValid ? 'checkmark-circle' : 'ellipse-outline'}
                 size={18}
-                color={isTitleValid ? '#16a34a' : '#94a3b8'}
+                color={isTitleValid ? colors.success : colors.muted}
               />
               <Text style={isTitleValid ? styles.checkTextValid : styles.checkText}>
                 Tiêu đề từ 15 đến 100 ký tự ({cleanTitle.length}/100)
@@ -200,7 +201,7 @@ function JobPostContent({
               <Ionicons
                 name={isDescValid ? 'checkmark-circle' : 'ellipse-outline'}
                 size={18}
-                color={isDescValid ? '#16a34a' : '#94a3b8'}
+                color={isDescValid ? colors.success : colors.muted}
               />
               <Text style={isDescValid ? styles.checkTextValid : styles.checkText}>
                 Mô tả chi tiết ít nhất 20 ký tự ({cleanDesc.length})
@@ -211,7 +212,7 @@ function JobPostContent({
               <Ionicons
                 name={isCategoryValid ? 'checkmark-circle' : 'ellipse-outline'}
                 size={18}
-                color={isCategoryValid ? '#16a34a' : '#94a3b8'}
+                color={isCategoryValid ? colors.success : colors.muted}
               />
               <Text style={isCategoryValid ? styles.checkTextValid : styles.checkText}>
                 Đã chọn ngành nghề phù hợp
@@ -222,7 +223,7 @@ function JobPostContent({
               <Ionicons
                 name={isBudgetValid ? 'checkmark-circle' : 'ellipse-outline'}
                 size={18}
-                color={isBudgetValid ? '#16a34a' : '#94a3b8'}
+                color={isBudgetValid ? colors.success : colors.muted}
               />
               <Text style={isBudgetValid ? styles.checkTextValid : styles.checkText}>
                 Ngân sách từ 50.000 ₫ đến 100.000.000 ₫
@@ -234,7 +235,7 @@ function JobPostContent({
                 <Ionicons
                   name={isLocationValid ? 'checkmark-circle' : 'ellipse-outline'}
                   size={18}
-                  color={isLocationValid ? '#16a34a' : '#94a3b8'}
+                  color={isLocationValid ? colors.success : colors.muted}
                 />
                 <Text style={isLocationValid ? styles.checkTextValid : styles.checkText}>
                   Địa chỉ thực hiện tại chỗ
@@ -356,7 +357,7 @@ const useStyles = makeStyles((colors) => ({
   checklistCard: {
     backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: '#bae6fd',
+    borderColor: colors.border,
     borderRadius: radius.md,
     padding: spacing.md,
     gap: spacing.xs,
@@ -365,7 +366,7 @@ const useStyles = makeStyles((colors) => ({
   checklistTitle: { fontSize: font.body, fontWeight: '700', color: colors.text },
   checkItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   checkText: { fontSize: font.small, color: colors.muted },
-  checkTextValid: { fontSize: font.small, color: '#16a34a', fontWeight: '600' },
+  checkTextValid: { fontSize: font.small, color: colors.success, fontWeight: '600' },
   fieldSection: { gap: spacing.xs },
   fieldLabel: { fontSize: font.small, fontWeight: '700', color: colors.text },
   chipRow: { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap' },

@@ -51,9 +51,9 @@
   flex-shrink: 0;
   min-width: 0;
   font-family: var(--font-heading);
-  font-size: 1.6rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   color: inherit;
 }
 
@@ -78,10 +78,12 @@
   transition: color var(--transition-fast);
 }
 
-/* On a white header the whole wordmark turns dark green. */
-.headerScrolled .logoWork,
+.headerScrolled .logoWork {
+  color: var(--wg-text);
+}
+
 .headerScrolled .logoGo {
-  color: var(--wg-primary-active);
+  color: var(--wg-primary-text);
 }
 
 .navSearch {
@@ -193,29 +195,26 @@
   align-items: center;
   gap: 8px;
   min-height: 44px;
-  padding: 10px 16px;
+  padding: 10px 14px;
   border-radius: 9999px;
   white-space: nowrap;
   font-weight: 600;
-  font-size: 1rem;
-  transition: color var(--transition-fast), background-color var(--transition-fast), opacity var(--transition-fast), transform 0.12s cubic-bezier(0.2, 0, 0, 1);
+  font-size: 0.95rem;
+  transition: color var(--transition-fast), background-color var(--transition-fast), opacity var(--transition-fast);
   color: inherit;
   opacity: 0.92;
   cursor: pointer;
 }
 
-.navLink:active {
-  transform: scale(0.96);
-}
-
 .navLink:hover {
   opacity: 1;
-  color: var(--wg-primary);
-  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.14);
 }
 
 .headerScrolled .navLink:hover {
   background-color: var(--wg-primary-light);
+  color: var(--wg-primary-text);
 }
 
 .navLink:focus-visible {
@@ -224,7 +223,7 @@
 }
 
 .navLinkActive {
-  color: var(--wg-primary) !important;
+  color: var(--wg-primary-text) !important;
   opacity: 1 !important;
   position: relative;
 }
@@ -233,8 +232,8 @@
   content: '';
   position: absolute;
   bottom: 2px;
-  left: 16px;
-  right: 16px;
+  left: 14px;
+  right: 14px;
   height: 2px;
   background-color: var(--wg-primary);
   border-radius: var(--radius-full);
@@ -245,7 +244,7 @@
 }
 
 .headerScrolled .navLink:hover {
-  color: var(--wg-primary);
+  color: var(--wg-primary-text);
 }
 
 .actionButtons {
@@ -259,8 +258,8 @@
 .signInBtn {
   gap: 8px;
   font-weight: 600;
-  font-size: 1rem;
-  padding: 10px 20px;
+  font-size: 0.95rem;
+  padding: 10px 18px;
   white-space: nowrap;
   flex-shrink: 0;
   min-height: 44px;
@@ -268,17 +267,18 @@
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  transition: all var(--transition-fast), transform 0.12s cubic-bezier(0.2, 0, 0, 1);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
   color: inherit;
   cursor: pointer;
 }
 
 .signInBtn:hover {
-  color: var(--wg-primary);
+  background-color: rgba(255, 255, 255, 0.14);
 }
 
-.signInBtn:active {
-  transform: scale(0.96);
+.headerScrolled .signInBtn:hover {
+  background-color: var(--wg-surface-alt);
+  color: var(--wg-primary-text);
 }
 
 .signInBtn:focus-visible,
@@ -295,8 +295,8 @@
 .joinBtn {
   gap: 8px;
   font-weight: 600;
-  font-size: 1rem;
-  padding: 10px 22px;
+  font-size: 0.95rem;
+  padding: 10px 20px;
   white-space: nowrap;
   flex-shrink: 0;
   min-height: 44px;
@@ -306,18 +306,16 @@
   border-radius: 9999px;
   background-color: var(--wg-primary);
   color: #ffffff;
-  transition: all var(--transition-fast), transform 0.14s cubic-bezier(0.2, 0, 0, 1);
-  box-shadow: 0 2px 8px var(--wg-primary-glow);
+  transition: background-color var(--transition-fast);
   cursor: pointer;
 }
 
 .joinBtn:hover {
   background-color: var(--wg-primary-hover);
-  transform: translateY(-1px);
 }
 
 .joinBtn:active {
-  transform: translateY(0) scale(0.96);
+  background-color: var(--wg-primary-fill-active);
 }
 
 .menuToggle {
@@ -379,19 +377,20 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  min-height: 44px;
   text-align: left;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: 10px;
   border-bottom: 1px solid var(--wg-border-light);
-  transition: all var(--transition-fast), transform 0.12s ease;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
   cursor: pointer;
 }
 
+.mobileNavLink:hover,
 .mobileNavLink:active {
-  transform: scale(0.98);
-  background-color: var(--wg-surface-alt, rgba(0, 0, 0, 0.04));
+  background-color: var(--wg-surface-alt);
 }
 
 .mobileGroup {
@@ -401,11 +400,9 @@
 }
 
 .mobileGroupTitle {
-  margin: 8px 0 0;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  margin: 8px 0 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
   color: var(--wg-text-muted);
 }
 

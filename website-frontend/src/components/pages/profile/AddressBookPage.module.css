@@ -58,12 +58,16 @@
 
 .danger {
   min-height: 44px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--danger);
   color: var(--danger);
   border-radius: 10px;
   padding: 10px 16px;
   font-weight: 600;
   background: var(--wg-surface);
+}
+
+.danger:hover {
+  background: var(--danger-bg);
 }
 
 .empty {
@@ -105,7 +109,7 @@
   margin-left: 8px;
   font-size: 0.75rem;
   background: var(--wg-primary-light);
-  color: var(--wg-primary-active);
+  color: var(--wg-primary-text);
   border-radius: 9999px;
   padding: 2px 10px;
 }
@@ -137,12 +141,14 @@
 
 .dialog {
   background: var(--wg-surface);
+  border: 1px solid var(--wg-border);
   border-radius: 16px;
   padding: 24px;
   width: 100%;
   max-width: 480px;
   max-height: 90vh;
   overflow-y: auto;
+  box-shadow: var(--shadow-lg);
 }
 
 .dialogTitle {

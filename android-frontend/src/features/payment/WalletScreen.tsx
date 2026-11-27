@@ -268,8 +268,8 @@ const useStyles = makeStyles((colors) => ({
     color: colors.muted,
   },
   debtCard: {
-    backgroundColor: '#fff5f5',
-    borderColor: '#fed7d7',
+    backgroundColor: colors.dangerBg,
+    borderColor: colors.danger,
     borderWidth: 1,
     gap: spacing.sm,
   },

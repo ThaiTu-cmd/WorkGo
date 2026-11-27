@@ -1,34 +1,40 @@
 :root {
-  /* Brand Identity - WorkGo Green (legacy) */
+  /* Brand Identity - WorkGo Green */
   --wg-primary: #1dbf73;
   --wg-primary-hover: #19a463;
-  --wg-primary-active: #158852;
-  --wg-primary-light: #f0fbf5;
-  --wg-primary-glow: rgba(29, 191, 115, 0.25);
+  --wg-primary-active: #147a49;
+  --wg-primary-fill-active: #158852;
+  --wg-primary-text: #147a49;
+  --wg-primary-light: #eaf9f1;
+  --wg-primary-glow: rgba(29, 191, 115, 0.16);
 
-  --wg-secondary: #0d1117;
-  --wg-hero-bg: #012b1d;
+  --wg-secondary: #0f1712;
+  --wg-hero-bg: #07291c;
   --wg-hero-gradient: linear-gradient(
     135deg,
-    #012b1d 0%,
-    #032115 55%,
-    #158852 100%
+    #07291c 0%,
+    #0a3625 55%,
+    #147a49 100%
   );
-  --wg-hero-banner-accent: #158852;
+  --wg-hero-banner-accent: #147a49;
 
-  --wg-accent: #ff7640;
-  --wg-accent-hover: #e86330;
-  --wg-star: #ffb33e;
+  --wg-accent: #d97706;
+  --wg-accent-hover: #b45309;
+  --wg-star: #d97706;
 
   /* Neutrals - Light */
-  --wg-bg: #fafafa;
+  --wg-bg: #f7f9f8;
+  --wg-background: #f7f9f8;
   --wg-surface: #ffffff;
-  --wg-surface-alt: #f5f5f5;
-  --wg-text: #222325;
-  --wg-text-secondary: #62646a;
-  --wg-text-muted: #95979d;
-  --wg-border: #e4e5e7;
-  --wg-border-light: #efeff0;
+  --wg-surface-alt: #eff3f0;
+  --wg-text: #141a16;
+  --wg-text-secondary: #435048;
+  --wg-text-muted: #66736b;
+  --wg-border: #d8e0db;
+  --wg-border-light: #e7ece9;
+  --wg-danger: #dc2626;
+  --surface-subtle: #eff3f0;
+  --border-color: #d8e0db;
 
   /* Badges - Execution Type */
   --badge-digital-bg: #e0f2fe;
@@ -82,29 +88,36 @@
 [data-theme="dark"],
 .dark {
   --wg-primary: #1dbf73;
-  --wg-primary-hover: #34d399;
+  --wg-primary-hover: #19a463;
   --wg-primary-active: #34d399; /* text / focus-ring color, see MarketplaceShell.module.css */
+  --wg-primary-fill-active: #158852;
+  --wg-primary-text: #34d399;
   --wg-primary-light: rgba(29, 191, 115, 0.14);
-  --wg-primary-glow: rgba(29, 191, 115, 0.35);
+  --wg-primary-glow: rgba(29, 191, 115, 0.22);
 
-  --wg-secondary: #0d1117;
-  --wg-hero-bg: #121212;
+  --wg-secondary: #0f1712;
+  --wg-hero-bg: #101311;
   --wg-hero-gradient: linear-gradient(
     135deg,
-    #121212 0%,
-    #1e1e1e 55%,
-    #158852 100%
+    #101311 0%,
+    #171b18 55%,
+    #147a49 100%
   );
-  --wg-hero-banner-accent: #158852;
+  --wg-hero-banner-accent: #147a49;
+  --wg-star: #fbbf24;
 
-  --wg-bg: #121212;
-  --wg-surface: #1e1e1e;
-  --wg-surface-alt: #2a2a2a;
-  --wg-text: #e8e8e8;
-  --wg-text-secondary: #D4D4D8;
-  --wg-text-muted: #A1A1AA;
-  --wg-border: rgba(255, 255, 255, 0.14);
-  --wg-border-light: rgba(255, 255, 255, 0.08);
+  --wg-bg: #101311;
+  --wg-background: #101311;
+  --wg-surface: #171b18;
+  --wg-surface-alt: #202622;
+  --wg-text: #edf2ee;
+  --wg-text-secondary: #bcc7c0;
+  --wg-text-muted: #8d9991;
+  --wg-border: rgba(237, 242, 238, 0.14);
+  --wg-border-light: rgba(237, 242, 238, 0.08);
+  --wg-danger: #f87171;
+  --surface-subtle: #202622;
+  --border-color: rgba(237, 242, 238, 0.14);
 
   /* Badges - dark variants */
   --badge-digital-bg: rgba(3, 105, 161, 0.22);

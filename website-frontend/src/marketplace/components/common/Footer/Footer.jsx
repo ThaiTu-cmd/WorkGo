@@ -34,7 +34,7 @@ export default function Footer({
             </span>
           </div>
 
-          {FOOTER_COLUMNS.map(col => <div key={col.title} className={styles.col}>
+          {FOOTER_COLUMNS.map(col => <div key={col.titleKey} className={styles.col}>
               <h4 className={styles.colTitle}>{tf(col.titleKey)}</h4>
               <ul className={styles.linkList}>
                 {col.links.map(link => <li key={link.labelKey}>

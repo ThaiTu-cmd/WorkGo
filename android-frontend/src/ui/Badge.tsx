@@ -8,7 +8,7 @@ export function Badge({ label, tone = 'neutral' }: { label: string; tone?: Tone 
   const c = useColors();
   const TONES: Record<Tone, { bg: string; fg: string }> = {
     neutral: { bg: c.bg, fg: c.muted },
-    info: { bg: c.primaryLight, fg: c.primary },
+    info: { bg: c.primaryLight, fg: c.primaryDark },
     success: { bg: c.successBg, fg: c.success },
     warning: { bg: c.warningBg, fg: c.warning },
     danger: { bg: c.dangerBg, fg: c.danger },

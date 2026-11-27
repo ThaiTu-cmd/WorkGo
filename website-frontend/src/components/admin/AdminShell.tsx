@@ -9,6 +9,7 @@ import { authApi, decodeToken, useAuthToken } from "@/components/shell/backend";
 import { canAccessAdminPath } from "./adminPolicy";
 import { ADMIN_NAV, adminHref } from "./adminNav";
 import { cx, errorMessage } from "./ui";
+import ThemeToggle from "@/components/common/ThemeToggle";
 import styles from "./admin.module.css";
 
 const noopSubscribe = () => () => {};
@@ -83,6 +84,9 @@ export default function AdminShell({ children }: { children: ReactNode }) {
               Đăng nhập: <strong>{userName}</strong>
             </p>
           )}
+          <div className={styles.sidebarThemeRow}>
+            <ThemeToggle showLabel className={styles.sidebarThemeBtn} />
+          </div>
           <Link href={`/${locale}`} className={styles.navItem}>
             <Home size={18} aria-hidden="true" /> Về trang chính
           </Link>
@@ -105,7 +109,8 @@ export default function AdminShell({ children }: { children: ReactNode }) {
           >
             {menuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
-          WorkGo Admin
+          <span className={styles.topbarTitle}>WorkGo Admin</span>
+          <ThemeToggle className={styles.topbarThemeBtn} />
         </div>
         <main key={token} className={styles.content}>{children}</main>
       </div>

@@ -13,23 +13,22 @@
   max-width: 520px;
   width: 100%;
   background-color: var(--wg-surface);
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid var(--wg-border);
+  border-radius: 16px;
   padding: 40px 28px;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-md);
 }
 
 .iconBadge {
   display: inline-block;
   font-size: 2.25rem;
-  font-weight: 800;
-  color: #2563eb;
-  background-color: #eff6ff;
+  font-weight: 700;
+  color: var(--wg-primary-text);
+  background-color: var(--wg-primary-light);
   padding: 8px 24px;
   border-radius: 9999px;
   margin-bottom: 20px;
-  letter-spacing: 0.05em;
 }
 
 .title {
@@ -42,7 +41,7 @@
 
 .description {
   font-size: 0.95rem;
-  color: #64748b;
+  color: var(--wg-text-secondary);
   line-height: 1.6;
   margin: 0 0 20px;
 }
@@ -51,9 +50,9 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background-color: var(--wg-surface);
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  background-color: var(--wg-surface-alt);
+  border: 1px solid var(--wg-border);
+  border-radius: 8px;
   padding: 6px 12px;
   font-size: 0.8125rem;
   color: var(--wg-text-secondary);
@@ -70,7 +69,7 @@
 .keyCode {
   font-family: monospace;
   font-weight: 600;
-  color: #dc2626;
+  color: var(--danger);
   word-break: break-all;
 }
 
@@ -88,52 +87,52 @@
 }
 
 .btnPrimary {
-  background-color: #2563eb;
+  background-color: var(--wg-primary);
   color: #ffffff;
   border: none;
   padding: 10px 20px;
   font-size: 0.95rem;
   font-weight: 600;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.15s;
+  transition: background-color 0.15s ease;
 }
 
 .btnPrimary:hover {
-  background-color: #1d4ed8;
+  background-color: var(--wg-primary-hover);
 }
 
 .btnPrimary:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--wg-primary-active);
   outline-offset: 2px;
 }
 
 .btnSecondary {
   background-color: var(--wg-surface);
   color: var(--wg-text);
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--wg-border);
   padding: 10px 20px;
   font-size: 0.95rem;
   font-weight: 600;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.15s, border-color 0.15s;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .btnSecondary:hover {
   background-color: var(--wg-surface-alt);
-  border-color: #94a3b8;
+  border-color: var(--border-strong, var(--wg-border));
 }
 
 .btnSecondary:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--wg-primary-active);
   outline-offset: 2px;
 }

@@ -288,15 +288,13 @@ export default function CatalogSearchPage({
           {/* Services Grid Column */}
           <main className={styles.servicesColumn}>
             <div className={styles.servicesInner}>
-              <div className="container">
-                <SearchToolbar categoryName={categoryName} totalResults={sortedServices.length} sortBy={sortBy} onChangeSortBy={val => {
+              <SearchToolbar categoryName={categoryName} totalResults={sortedServices.length} sortBy={sortBy} onChangeSortBy={val => {
               setSortBy(val);
               setCurrentPage(1);
             }} activeFilterCount={activeFilters.length} onOpenMobileFilter={() => setMobileFilterOpen(true)} onGoHome={onGoHome} searchQuery={searchQuery} onClearSearchQuery={() => {
               setSearchQuery('');
               setCurrentPage(1);
             }} activeFilters={activeFilters} />
-              </div>
               {isFiltering || servicesStatus === 'loading' ? <div className={styles.servicesGrid} aria-busy="true" aria-label={tr("m391")}>
                 <SkeletonServiceCard count={pageSize} />
               </div> : paginatedServices.length > 0 ? <>

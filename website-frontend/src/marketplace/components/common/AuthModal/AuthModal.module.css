@@ -52,8 +52,8 @@
   position: absolute;
   top: 20px;
   right: 20px;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   min-width: 44px;
   min-height: 44px;
   border-radius: var(--radius-full);
@@ -62,11 +62,11 @@
   justify-content: center;
   color: var(--wg-text-secondary);
   background-color: var(--wg-bg);
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 .closeBtn:hover {
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
   color: var(--wg-text);
 }
 
@@ -80,20 +80,20 @@
   height: 42px;
   border-radius: var(--radius-md);
   background-color: var(--wg-primary);
-  color: white;
+  color: #ffffff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-heading);
-  font-weight: 900;
-  font-size: 1.4rem;
+  font-weight: 700;
+  font-size: 1.35rem;
   margin-bottom: 14px;
 }
 
 .modalTitle {
   font-family: var(--font-heading);
-  font-size: 1.6rem;
-  font-weight: 800;
+  font-size: 1.55rem;
+  font-weight: 700;
   color: var(--wg-text);
   margin-bottom: 8px;
 }
@@ -115,12 +115,13 @@
 
 .tabBtn {
   flex: 1;
-  padding: 9px;
-  font-weight: 700;
+  min-height: 40px;
+  padding: 8px;
+  font-weight: 600;
   font-size: 0.92rem;
   border-radius: var(--radius-sm);
   color: var(--wg-text-secondary);
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 .tabActive {
@@ -141,15 +142,15 @@
 }
 
 .feedbackSuccess {
-  background-color: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+  background-color: var(--success-bg);
+  color: var(--success);
+  border: 1px solid var(--wg-primary);
 }
 
 .feedbackError {
-  background-color: #fef2f2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
+  background-color: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid var(--danger);
 }
 
 .authForm {
@@ -200,6 +201,7 @@
   outline: none;
   transition: border-color var(--transition-fast);
   background-color: var(--wg-surface);
+  color: var(--wg-text);
 }
 
 .fieldWithIcon .inputField {
@@ -244,9 +246,10 @@
   justify-content: space-between;
   gap: 10px;
   background-color: var(--wg-primary-light);
-  border: 1px solid #bbf7d0;
+  border: 1px solid var(--wg-primary);
+  color: var(--wg-text);
   border-radius: var(--radius-sm);
-  padding: 8px 12px;
+  padding: 10px 12px;
   margin-bottom: 16px;
 }
 
@@ -255,8 +258,9 @@
   color: #ffffff;
   font-size: 0.78rem;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  min-height: 32px;
+  border-radius: 6px;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -271,8 +275,8 @@
 }
 
 .switchModeBtn {
-  color: var(--wg-primary);
-  font-weight: 700;
+  color: var(--wg-primary-text);
+  font-weight: 600;
   margin-left: 6px;
   text-decoration: underline;
 }

@@ -83,7 +83,7 @@ export default function LoginPage({
             <button type="button" className={styles.submit} onClick={() => onNavigate("profile-settings")}>
               Quản lý hồ sơ cá nhân
             </button>
-            <button type="button" className={styles.submit} style={{ background: "transparent", color: "var(--wg-primary)", border: "1px solid var(--wg-primary)" }} onClick={() => onNavigate("catalog")}>
+            <button type="button" className={styles.secondaryBtn} onClick={() => onNavigate("catalog")}>
               Đến danh mục dịch vụ
             </button>
             <button type="button" className={styles.link} style={{ marginTop: "12px", textAlign: "center" }} onClick={handleLogout}>

@@ -12,8 +12,8 @@
 }
 
 .embedded {
-  border-color: #cbd5e1;
-  background: #f8fafc;
+  border-color: var(--wg-border);
+  background: var(--wg-surface-alt);
 }
 
 .header {
@@ -63,7 +63,7 @@
 }
 
 .balanceShortfall {
-  color: #dc2626;
+  color: var(--danger);
 }
 
 .gateways {
@@ -73,56 +73,57 @@
 
 .gatewayBtn {
   flex: 1;
-  min-height: 38px;
-  border-radius: 8px;
-  border: 1px solid var(--wg-border, #cbd5e1);
-  background: var(--wg-surface, #ffffff);
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--wg-border);
+  background: var(--wg-surface);
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--wg-text, #334155);
+  color: var(--wg-text);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .gatewayBtnActive {
-  background: var(--wg-primary-light, #e6f4ff);
-  border-color: var(--wg-primary, #1677FF);
-  color: var(--wg-primary, #1677FF);
+  background: var(--wg-primary-light);
+  border-color: var(--wg-primary);
+  color: var(--wg-primary-text);
 }
 
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .chip {
-  padding: 5px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--wg-border, #cbd5e1);
-  background: var(--wg-surface, #ffffff);
-  font-size: 0.8rem;
+  min-height: 40px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--wg-border);
+  background: var(--wg-surface);
+  font-size: 0.82rem;
   font-weight: 600;
-  color: var(--wg-text, #334155);
+  color: var(--wg-text);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .chipActive {
-  background: var(--wg-primary, #1677FF);
-  border-color: var(--wg-primary, #1677FF);
+  background: var(--wg-primary);
+  border-color: var(--wg-primary);
   color: #ffffff;
 }
 
 .chipShortfall {
-  border-color: #f87171;
-  background: #fff5f5;
-  color: #b91c1c;
+  border-color: var(--danger);
+  background: var(--danger-bg);
+  color: var(--danger);
 }
 
 .chipShortfallActive {
-  background: #dc2626;
-  border-color: #dc2626;
+  background: var(--danger);
+  border-color: var(--danger);
   color: #ffffff;
 }
 
@@ -135,32 +136,34 @@
 .inputLabel {
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--wg-text, #1e293b);
+  color: var(--wg-text);
 }
 
 .inputField {
-  min-height: 40px;
-  border-radius: 8px;
-  border: 1px solid var(--wg-border, #cbd5e1);
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--wg-border);
+  background: var(--wg-surface);
+  color: var(--wg-text);
   padding: 8px 12px;
   font-size: 0.95rem;
   width: 100%;
 }
 
 .inputField:focus-visible {
-  outline: 2px solid var(--wg-primary, #1677FF);
+  outline: 2px solid var(--wg-primary);
   outline-offset: 1px;
 }
 
 .error {
   font-size: 0.82rem;
-  color: #dc2626;
+  color: var(--danger);
 }
 
 .submitBtn {
   min-height: 44px;
-  border-radius: 8px;
-  background: var(--wg-primary, #1677FF);
+  border-radius: 10px;
+  background: var(--wg-primary);
   color: #ffffff;
   font-weight: 700;
   font-size: 0.95rem;
@@ -171,11 +174,11 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: background 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
 .submitBtn:hover {
-  background: var(--wg-primary-hover, #4096ff);
+  background: var(--wg-primary-hover);
 }
 
 .submitBtn:disabled {
@@ -190,33 +193,67 @@
   text-align: center;
   gap: 8px;
   padding: 16px;
-  background: var(--wg-surface, #ffffff);
-  border: 1px solid #93c5fd;
-  border-radius: 10px;
+  background: var(--wg-surface);
+  border: 1px solid var(--wg-border);
+  border-radius: 12px;
 }
 
 .pollingTitle {
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--wg-primary-active, #0958d9);
+  color: var(--wg-primary-text);
   margin: 0;
 }
 
 .pollingText {
   font-size: 0.82rem;
-  color: var(--wg-text-secondary, #64748b);
+  color: var(--wg-text-secondary);
   margin: 0;
 }
 
 .successBox {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   padding: 12px 16px;
-  background: #f0fdf4;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  color: #065f46;
+  background: var(--success-bg);
+  border: 1px solid var(--wg-primary);
+  border-radius: 10px;
+  color: var(--success);
   font-size: 0.88rem;
   font-weight: 600;
+}
+
+.failedBox {
+  padding: 12px 16px;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger);
+  border-radius: 10px;
+  color: var(--danger);
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.linkBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: var(--wg-primary);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+
+.linkBtn:hover {
+  background: var(--wg-primary-hover);
 }

@@ -48,7 +48,7 @@ export const paymentApi = {
   getWallet: () => http.get<ApiResponse<WalletDto>>('/payment/wallet'),
 
   getTopUps: () => http.get<ApiResponse<TopUpDto[]>>('/payment/wallet/top-ups'),
-  getBeneficiaries: () => http.get<ApiResponse<Array<{id:string;bankCode:string;accountName:string;accountNumber:string}>>>('/payment/wallet/beneficiaries'),
+  getBeneficiaries: () => http.get<ApiResponse<{id:string;bankCode:string;accountName:string;accountNumber:string}[]>>('/payment/wallet/beneficiaries'),
   getPayoutReceipt: (key:string) => http.get<ApiResponse<PayoutDto>>('/payment/wallet/payouts/receipt',{params:{key}}),
   getPayouts: () => http.get<ApiResponse<PayoutDto[]>>('/payment/wallet/payouts'),
   getFees: () => http.get<ApiResponse<FeeAssessmentDto[]>>('/payment/wallet/fees'),

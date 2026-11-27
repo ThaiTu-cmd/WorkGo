@@ -24,13 +24,12 @@
 .iconBadge {
   display: inline-block;
   font-size: 2.25rem;
-  font-weight: 800;
-  color: var(--wg-primary-active);
+  font-weight: 700;
+  color: var(--wg-primary-text);
   background-color: var(--wg-primary-light);
   padding: 8px 24px;
   border-radius: var(--radius-full);
   margin-bottom: 20px;
-  letter-spacing: 0.05em;
 }
 
 .title {

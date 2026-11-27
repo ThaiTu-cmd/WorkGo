@@ -130,7 +130,9 @@ export default function ProfileSettingsPage({
           {state === "loading" ? <p className={styles.sub}>{tr("m1339")}</p> : null}
           {state === "needs-login" ? <>
               <p className={styles.sub}>{tr("m1340")}</p>
-              <button type="button" className={styles.submit} onClick={() => onNavigate("login")}>{tr("m32")}</button>
+              <div className={styles.needLoginActions}>
+                <button type="button" className={styles.submit} onClick={() => onNavigate("login")}>{tr("m32")}</button>
+              </div>
             </> : null}
           {state === "error" ? <p className={styles.error} role="alert">{tr("m1341")}</p> : null}
         </div>
@@ -166,11 +168,11 @@ export default function ProfileSettingsPage({
           </button>
         </form>
 
-        <div style={{ marginTop: "24px", paddingTop: "16px", borderTop: "1px solid var(--wg-border)", display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          <button type="button" onClick={() => onNavigate("address-book")} className={styles.submit} style={{ flex: 1, minWidth: "160px", background: "transparent", color: "var(--wg-primary)", border: "1px solid var(--wg-primary)" }}>
+        <div className={styles.footerLinks}>
+          <button type="button" onClick={() => onNavigate("address-book")} className={styles.secondaryBtn}>
             Sổ địa chỉ
           </button>
-          <button type="button" onClick={() => onNavigate("provider-onboarding")} className={styles.submit} style={{ flex: 1, minWidth: "160px", background: "transparent", color: "var(--wg-primary)", border: "1px solid var(--wg-primary)" }}>
+          <button type="button" onClick={() => onNavigate("provider-onboarding")} className={styles.secondaryBtn}>
             Đăng ký làm Chuyên gia (Provider)
           </button>
         </div>

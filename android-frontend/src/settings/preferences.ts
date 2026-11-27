@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import * as React from 'react';
-import { Appearance } from 'react-native';
+import { Appearance, useColorScheme } from 'react-native';
 
 import { getLanguage, setLanguage, subscribeLanguage, type Language } from '@/i18n';
 
@@ -35,6 +35,17 @@ export function getPreferences(): Preferences {
 
 export function usePreferences(): Preferences {
   return React.useSyncExternalStore(subscribe, getPreferences, getPreferences);
+}
+
+// The preference is the source of truth for the app palette. Deriving the
+// scheme here (instead of relying only on Appearance.setColorScheme) keeps
+// manual Light/Dark selection working on every platform, including web where
+// React Native has no native scheme setter.
+export function useResolvedScheme(): 'light' | 'dark' {
+  const { theme } = usePreferences();
+  const systemScheme = useColorScheme();
+  if (theme === 'light' || theme === 'dark') return theme;
+  return systemScheme === 'dark' ? 'dark' : 'light';
 }
 
 function applyTheme(next: ThemePreference) {

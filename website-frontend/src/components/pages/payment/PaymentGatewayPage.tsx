@@ -315,11 +315,11 @@ export default function PaymentGatewayPage({
               </>
             ) : topUpStatus === "UNKNOWN" ? (
               <>
-                <AlertTriangle size={36} color="#d97706" />
-                <h2 className={styles.statusTitle} style={{ color: "#92400e" }}>
+                <AlertTriangle size={36} color="var(--warning)" />
+                <h2 className={styles.statusTitle} style={{ color: "var(--warning)" }}>
                   Giao dịch đang chờ đối soát (UNKNOWN)
                 </h2>
-                <p className={styles.statusDesc} style={{ color: "#78350f" }}>
+                <p className={styles.statusDesc}>
                   Kết quả giao dịch từ cổng thanh toán chưa được xác nhận hoàn tất. Hệ thống WorkGo đang tự động đối soát với ngân hàng để bảo đảm không trừ tiền 2 lần. Số dư ví sẽ được cập nhật tự động ngay khi nhận được xác nhận từ phía đối tác.
                 </p>
                 <div className={styles.statusActions}>
@@ -343,11 +343,11 @@ export default function PaymentGatewayPage({
               </>
             ) : topUpStatus === "SUCCEEDED" ? (
               <>
-                <CheckCircle2 size={36} color="#059669" />
-                <h2 className={styles.statusTitle} style={{ color: "#065f46" }}>
-                  Nạp tiền thành công!
+                <CheckCircle2 size={36} color="var(--success)" />
+                <h2 className={styles.statusTitle}>
+                  Nạp tiền thành công
                 </h2>
-                <p className={styles.statusDesc} style={{ color: "#047857" }}>
+                <p className={styles.statusDesc}>
                   Đã nạp thành công{" "}
                   <strong>{topUpAmount.toLocaleString("vi-VN")} ₫</strong> vào ví WorkGo của bạn.
                 </p>
@@ -371,11 +371,11 @@ export default function PaymentGatewayPage({
               </>
             ) : (
               <>
-                <XCircle size={36} color="#dc2626" />
-                <h2 className={styles.statusTitle} style={{ color: "#991b1b" }}>
+                <XCircle size={36} color="var(--danger)" />
+                <h2 className={styles.statusTitle} style={{ color: "var(--danger)" }}>
                   Giao dịch không thành công
                 </h2>
-                <p className={styles.statusDesc} style={{ color: "#7f1d1d" }}>
+                <p className={styles.statusDesc}>
                   Giao dịch nạp tiền đã bị hủy hoặc không nhận được xác nhận thanh toán hợp lệ.
                 </p>
                 <div className={styles.statusActions}>
@@ -433,7 +433,7 @@ export default function PaymentGatewayPage({
                 backgroundColor: "var(--surface-subtle, #f8fafc)"
               }}
             >
-              <ShieldCheck size={32} color="var(--primary, #1677FF)" style={{ marginBottom: "6px" }} />
+              <ShieldCheck size={32} color="var(--wg-primary)" style={{ marginBottom: "6px" }} />
               <p style={{ fontWeight: 600, color: "var(--text-primary, #1e293b)", marginBottom: "2px" }}>
                 Thanh toán bảo mật qua {tab === "VNPAY" ? "VNPay" : tab === "MOMO" ? "MoMo" : "Cổng Sandbox"}
               </p>

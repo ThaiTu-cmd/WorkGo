@@ -14,22 +14,24 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 36px;
   padding: 6px 12px;
   background-color: var(--wg-surface);
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--wg-border);
   border-radius: var(--radius-sm);
   color: var(--wg-text);
   font-size: 0.85rem;
   font-weight: 600;
-  transition: background-color var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .backBtn:hover {
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
+  border-color: var(--wg-primary);
 }
 
 .sep {
-  color: #cbd5e1;
+  color: var(--wg-border);
 }
 
 .current {
@@ -39,8 +41,8 @@
 
 .pageTitle {
   font-size: clamp(1.4rem, 2.4vw, 1.8rem);
-  font-weight: 800;
-  letter-spacing: -0.3px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--wg-text);
 }
 
@@ -455,6 +457,7 @@
 }
 
 @media (max-width: 640px) {
+
   .card,
   .summary {
     padding: 16px;

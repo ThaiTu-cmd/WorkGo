@@ -15,8 +15,8 @@
 /* Summary Card */
 .summaryCard {
   background: var(--wg-surface);
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid var(--wg-border);
+  border-radius: var(--radius-lg, 16px);
   padding: 24px;
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -30,13 +30,13 @@
   align-items: center;
   text-align: center;
   gap: 8px;
-  border-right: 1px solid #f1f5f9;
+  border-right: 1px solid var(--wg-border-light);
   padding-right: 24px;
 }
 
 .bigScore {
-  font-size: 3rem;
-  font-weight: 800;
+  font-size: 2.75rem;
+  font-weight: 700;
   color: var(--wg-text);
   font-family: var(--font-heading);
   line-height: 1;
@@ -48,13 +48,13 @@
 }
 
 .starFill {
-  color: #f59e0b;
-  fill: #f59e0b;
+  color: var(--wg-star);
+  fill: var(--wg-star);
 }
 
 .scoreLabel {
-  font-size: 0.8rem;
-  color: #64748b;
+  font-size: 0.82rem;
+  color: var(--wg-text-muted);
   line-height: 1.35;
 }
 
@@ -80,20 +80,20 @@
 .barTrack {
   flex: 1;
   height: 8px;
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .barFill {
   height: 100%;
-  background-color: #f59e0b;
+  background-color: var(--wg-star);
   border-radius: 4px;
 }
 
 .barCount {
   width: 45px;
-  color: #94a3b8;
+  color: var(--wg-text-muted);
   font-size: 0.8rem;
   text-align: right;
 }
@@ -101,30 +101,32 @@
 /* Filter Tabs */
 .filterTabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
 .filterBtn {
-  padding: 7px 14px;
+  min-height: 36px;
+  padding: 6px 14px;
   background-color: var(--wg-surface);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wg-border);
   color: var(--wg-text-secondary);
-  border-radius: 20px;
+  border-radius: 9999px;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .filterBtn:hover {
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
   color: var(--wg-text);
 }
 
 .filterBtn.filterActive {
-  background-color: #0f172a;
+  background-color: var(--wg-primary);
   color: #ffffff;
-  border-color: #0f172a;
+  border-color: var(--wg-primary);
 }
 
 /* Reviews List */
@@ -136,7 +138,7 @@
 
 .reviewCard {
   background: var(--wg-surface);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wg-border);
   border-radius: 12px;
   padding: 20px;
   display: flex;
@@ -179,7 +181,7 @@
   align-items: center;
   gap: 4px;
   font-size: 0.72rem;
-  color: #059669;
+  color: var(--wg-primary-text);
   font-weight: 600;
 }
 
@@ -195,27 +197,27 @@
 }
 
 .starSmall {
-  color: #f59e0b;
-  fill: #f59e0b;
+  color: var(--wg-star);
+  fill: var(--wg-star);
 }
 
 .dot {
-  color: #cbd5e1;
+  color: var(--wg-border);
 }
 
 .reviewDate {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--wg-text-muted);
 }
 
 .packageUsedBadge {
   font-size: 0.8rem;
   color: var(--wg-text-secondary);
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
   padding: 4px 10px;
   border-radius: 6px;
   align-self: flex-start;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--wg-border-light);
 }
 
 .reviewComment {
@@ -233,20 +235,21 @@
 
 .helpfulBtn {
   background: transparent;
-  border: none;
-  color: #64748b;
-  font-size: 0.8rem;
-  display: flex;
+  border: 1px solid transparent;
+  color: var(--wg-text-muted);
+  font-size: 0.82rem;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  min-height: 32px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .helpfulBtn:hover {
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
   color: var(--wg-text);
 }
 
@@ -257,7 +260,7 @@
   }
   .scoreBlock {
     border-right: none;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--wg-border-light);
     padding-right: 0;
     padding-bottom: 16px;
   }

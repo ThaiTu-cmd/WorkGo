@@ -1,9 +1,9 @@
 .sidebarContainer {
   background: var(--wg-surface);
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid var(--wg-border);
+  border-radius: var(--radius-lg, 16px);
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
   position: sticky;
   top: 90px;
   width: 100%;
@@ -13,21 +13,22 @@
 .tabsHeader {
   display: flex;
   background-color: var(--wg-surface);
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--wg-border);
 }
 
 .tabBtn {
   flex: 1;
-  padding: 14px 8px;
+  min-height: 44px;
+  padding: 12px 8px;
   border: none;
   background: transparent;
   font-family: inherit;
   font-size: 0.92rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--wg-text-secondary);
   cursor: pointer;
   position: relative;
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -36,11 +37,11 @@
 
 .tabBtn:hover {
   color: var(--wg-text);
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
 }
 
 .tabBtn.tabActive {
-  color: #059669;
+  color: var(--wg-primary-text);
   background-color: var(--wg-surface);
   font-weight: 700;
 }
@@ -52,18 +53,17 @@
   left: 0;
   right: 0;
   height: 3px;
-  background-color: #10b981;
+  background-color: var(--wg-primary);
 }
 
 .popularBadge {
-  font-size: 0.68rem;
-  padding: 2px 6px;
-  border-radius: 10px;
-  background: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
-  font-weight: 700;
-  text-transform: uppercase;
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: var(--wg-primary-light);
+  color: var(--wg-primary-text);
+  border: 1px solid rgba(29, 191, 115, 0.28);
+  font-weight: 600;
 }
 
 /* Content */
@@ -96,8 +96,8 @@
 
 .packagePrice {
   font-size: 1.45rem;
-  font-weight: 800;
-  color: #059669;
+  font-weight: 700;
+  color: var(--wg-primary-text);
   font-family: var(--font-heading);
   white-space: nowrap;
 }
@@ -115,9 +115,9 @@
   align-items: center;
   gap: 20px;
   padding: 12px 14px;
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
   border-radius: 8px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--wg-border-light);
 }
 
 .metaItem {
@@ -129,7 +129,7 @@
 }
 
 .metaIcon {
-  color: #059669;
+  color: var(--wg-primary-text);
 }
 
 /* Features */
@@ -140,12 +140,10 @@
 }
 
 .featuresTitle {
-  font-size: 0.88rem;
-  font-weight: 700;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: var(--wg-text);
   margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .featuresList ul {
@@ -170,25 +168,25 @@
 }
 
 .featItemMuted {
-  color: #94a3b8;
+  color: var(--wg-text-muted);
   text-decoration: line-through;
 }
 
 .checkIcon {
-  color: #10b981;
+  color: var(--wg-primary);
   flex-shrink: 0;
   margin-top: 2px;
 }
 
 .checkIconMuted {
-  color: #cbd5e1;
+  color: var(--wg-text-disabled, var(--wg-text-muted));
   flex-shrink: 0;
   margin-top: 2px;
 }
 
 /* Add-ons Section */
 .addonsSection {
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--wg-border-light);
   padding-top: 18px;
   display: flex;
   flex-direction: column;
@@ -197,7 +195,7 @@
 
 .addonsTitle {
   font-size: 0.92rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--wg-text);
   margin: 0;
   display: flex;
@@ -217,25 +215,25 @@
   gap: 12px;
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wg-border);
   background: var(--wg-surface);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .addonCard:hover {
-  border-color: #cbd5e1;
-  background-color: var(--wg-surface);
+  border-color: var(--wg-primary);
+  background-color: var(--wg-surface-alt);
 }
 
 .addonCardActive {
-  border-color: #10b981;
+  border-color: var(--wg-primary);
   background-color: var(--wg-primary-light);
 }
 
 .addonCheckbox {
   margin-top: 3px;
-  accent-color: #10b981;
+  accent-color: var(--wg-primary);
   width: 16px;
   height: 16px;
   cursor: pointer;
@@ -256,22 +254,22 @@
 }
 
 .addonSub {
-  font-size: 0.76rem;
-  color: #64748b;
-  line-height: 1.3;
+  font-size: 0.78rem;
+  color: var(--wg-text-muted);
+  line-height: 1.35;
 }
 
 .addonPrice {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #059669;
+  color: var(--wg-primary-text);
   white-space: nowrap;
   font-family: var(--font-heading);
 }
 
 /* Checkout Footer */
 .checkoutFooter {
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--wg-border-light);
   padding-top: 18px;
   display: flex;
   flex-direction: column;
@@ -292,44 +290,43 @@
 }
 
 .totalAmount {
-  font-size: 1.55rem;
-  font-weight: 800;
-  color: #059669;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--wg-primary-text);
   font-family: var(--font-heading);
 }
 
 .btnOrder {
   width: 100%;
-  padding: 14px 20px;
-  background-color: #10b981;
+  min-height: 46px;
+  padding: 12px 20px;
+  background-color: var(--wg-primary);
   color: #ffffff;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.98rem;
-  font-weight: 700;
+  font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.28);
+  transition: background-color 0.15s ease;
 }
 
 .btnOrder:hover {
-  background-color: #059669;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+  background-color: var(--wg-primary-hover);
 }
 
 .btnChat {
   width: 100%;
-  padding: 11px 16px;
-  background-color: transparent;
-  color: var(--wg-text-secondary);
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  min-height: 44px;
+  padding: 10px 16px;
+  background-color: var(--wg-surface);
+  color: var(--wg-text);
+  border: 1px solid var(--wg-border);
+  border-radius: 10px;
   font-size: 0.9rem;
   font-weight: 600;
   font-family: inherit;
@@ -338,13 +335,12 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .btnChat:hover {
-  background-color: var(--wg-surface);
-  border-color: #94a3b8;
-  color: var(--wg-text);
+  background-color: var(--wg-surface-alt);
+  border-color: var(--wg-primary);
 }
 
 /* Escrow Notice */
@@ -353,21 +349,21 @@
   align-items: flex-start;
   gap: 10px;
   padding: 12px;
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wg-border-light);
   margin-top: 4px;
 }
 
 .escrowIcon {
-  color: #059669;
+  color: var(--wg-primary-text);
   flex-shrink: 0;
   margin-top: 2px;
 }
 
 .escrowText {
   font-size: 0.78rem;
-  color: #64748b;
+  color: var(--wg-text-secondary);
   line-height: 1.45;
 }
 

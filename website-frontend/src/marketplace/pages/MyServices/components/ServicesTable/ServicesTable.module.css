@@ -1,21 +1,22 @@
 .tableWrapper {
   background: var(--wg-surface);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wg-border);
   border-radius: 12px;
   overflow-x: auto;
   overflow-y: visible;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-sm);
   position: relative;
 }
 
 .bulkActionBar {
-  background-color: #0f172a;
+  background-color: var(--wg-secondary, #0f1712);
   color: #ffffff;
   padding: 12px 20px;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   animation: slideDown 0.2s ease;
 }
 
@@ -57,15 +58,15 @@
 }
 
 .bulkDeleteBtn {
-  background-color: #ef4444;
-  border-color: #dc2626;
+  background-color: var(--danger);
+  border-color: var(--danger);
   display: inline-flex;
   align-items: center;
   gap: 5px;
 }
 
 .bulkDeleteBtn:hover {
-  background-color: #dc2626;
+  opacity: 0.9;
 }
 
 .dataTable {
@@ -77,13 +78,11 @@
 
 .dataTable th {
   padding: 14px 16px;
-  background-color: var(--wg-surface);
-  border-bottom: 2px solid #e2e8f0;
+  background-color: var(--wg-surface-alt);
+  border-bottom: 1px solid var(--wg-border);
   color: var(--wg-text-secondary);
   font-size: 0.82rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 600;
 }
 
 .thCheck {
@@ -118,12 +117,12 @@
 }
 
 .row {
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--wg-border-light);
   transition: background-color 0.15s ease;
 }
 
 .row:hover {
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
 }
 
 .rowSelected {
@@ -142,7 +141,7 @@
 .checkbox {
   width: 20px;
   height: 20px;
-  accent-color: #10b981;
+  accent-color: var(--wg-primary);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -158,7 +157,7 @@
   height: 48px;
   border-radius: 6px;
   object-fit: cover;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wg-border);
   flex-shrink: 0;
 }
 
@@ -187,7 +186,7 @@
 }
 
 .titleLink:hover {
-  color: #10b981;
+  color: var(--wg-primary-text);
   text-decoration: underline;
 }
 
@@ -200,8 +199,8 @@
 
 .categoryPill {
   font-size: 0.72rem;
-  color: #64748b;
-  background-color: var(--wg-surface);
+  color: var(--wg-text-secondary);
+  background-color: var(--wg-surface-alt);
   padding: 2px 7px;
   border-radius: 4px;
 }
@@ -217,18 +216,18 @@
 }
 
 .execDigital {
-  background-color: #ecfdf5;
-  color: #059669;
+  background-color: var(--wg-primary-light);
+  color: var(--wg-primary-text);
 }
 
 .execOnsite {
-  background-color: #eff6ff;
-  color: #2563eb;
+  background-color: var(--badge-digital-bg);
+  color: var(--badge-digital-text);
 }
 
 .execDelivery {
-  background-color: #fff7ed;
-  color: #ea580c;
+  background-color: var(--badge-onsite-bg);
+  color: var(--badge-onsite-text);
 }
 
 .priceCell {
@@ -246,7 +245,7 @@
 
 .pkgCountBadge {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--wg-text-muted);
 }
 
 .statsCell {
@@ -264,7 +263,7 @@
 }
 
 .statIcon {
-  color: #94a3b8;
+  color: var(--wg-text-muted);
 }
 
 .ratingLine {
@@ -275,8 +274,8 @@
 }
 
 .starIcon {
-  color: #f59e0b;
-  fill: #f59e0b;
+  color: var(--wg-star);
+  fill: var(--wg-star);
 }
 
 .switch {
@@ -300,8 +299,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #cbd5e1;
-  transition: 0.3s;
+  background-color: var(--wg-border);
+  transition: 0.25s;
   border-radius: 22px;
 }
 
@@ -312,14 +311,14 @@
   width: 22px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
-  transition: 0.3s;
+  background-color: #ffffff;
+  transition: 0.25s;
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .switch input:checked + .slider {
-  background-color: #10b981;
+  background-color: var(--wg-primary);
 }
 
 .switch input:checked + .slider:before {
@@ -345,12 +344,12 @@
   border-radius: 6px;
   background: transparent;
   border: 1px solid transparent;
-  color: #64748b;
+  color: var(--wg-text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   position: relative;
 }
 
@@ -361,8 +360,8 @@
 }
 
 .iconBtn:hover {
-  background-color: var(--wg-surface);
-  border-color: #e2e8f0;
+  background-color: var(--wg-surface-alt);
+  border-color: var(--wg-border);
   color: var(--wg-text);
 }
 
@@ -376,9 +375,9 @@
   top: 100%;
   margin-top: 4px;
   background: var(--wg-surface);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wg-border);
   border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-dropdown);
   padding: 6px;
   z-index: 60;
   min-width: 160px;
@@ -408,21 +407,21 @@
   cursor: pointer;
   border-radius: 6px;
   text-align: left;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .dropdownItem:hover {
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
   color: var(--wg-text);
 }
 
 .dropdownItemDelete {
-  color: #ef4444;
+  color: var(--danger);
 }
 
 .dropdownItemDelete:hover {
-  background-color: rgba(239, 68, 68, 0.12);
-  color: #dc2626;
+  background-color: var(--danger-bg);
+  color: var(--danger);
 }
 
 .emptyContainer {
@@ -431,11 +430,11 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  color: #64748b;
+  color: var(--wg-text-muted);
 }
 
 .emptyIcon {
-  color: #94a3b8;
+  color: var(--wg-text-muted);
   margin-bottom: 16px;
 }
 
@@ -465,40 +464,41 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background-color: #10b981;
+  background-color: var(--wg-primary);
   color: #ffffff;
   font-size: 0.88rem;
-  font-weight: 700;
+  font-weight: 600;
   padding: 12px 20px;
   min-height: 44px;
   border-radius: 8px;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.15s ease;
   position: relative;
 }
 
 .emptyResetBtn:hover {
-  background-color: #059669;
+  background-color: var(--wg-primary-hover);
 }
 
 .emptySecondaryBtn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background-color: transparent;
+  background-color: var(--wg-surface);
   color: var(--wg-text);
   font-size: 0.88rem;
-  font-weight: 700;
+  font-weight: 600;
   padding: 12px 20px;
   min-height: 44px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--wg-border);
   border-radius: 8px;
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
   position: relative;
 }
 
 .emptySecondaryBtn:hover {
-  border-color: #10b981;
-  color: #059669;
+  border-color: var(--wg-primary);
+  color: var(--wg-primary-text);
+  background-color: var(--wg-surface-alt);
 }
 
 @media (max-width: 900px) {

@@ -39,7 +39,7 @@ export default function RootLayout({
           id="workgo-theme"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=localStorage.getItem('workgo_theme');var t=s||(typeof matchMedia!=='undefined'&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');document.documentElement.classList.remove('light','dark');document.documentElement.classList.add(t);document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
+            __html: `(function(){try{var s=localStorage.getItem('workgo_theme');var t=(s==='light'||s==='dark')?s:(typeof matchMedia!=='undefined'&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');var r=document.documentElement;r.classList.remove('light','dark');r.classList.add(t);r.setAttribute('data-theme',t);r.style.colorScheme=t;}catch(e){}})();`,
           }}
         />
         <noscript>

@@ -1,5 +1,5 @@
 .pageContainer {
-  background-color: var(--wg-surface);
+  background-color: var(--wg-bg);
   min-height: 100vh;
   padding: calc(var(--header-height) + 24px) 0 60px 0;
 }
@@ -160,12 +160,12 @@
 }
 
 .statAccent {
-  border-color: #c7efd9;
+  border-color: var(--wg-primary);
   background-color: var(--wg-primary-light);
 }
 
 .statAccent .statValue {
-  color: var(--wg-primary-active);
+  color: var(--wg-primary-text);
 }
 
 /* ---------- Table card ---------- */
@@ -208,7 +208,7 @@
 }
 
 .tab:hover {
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
 }
 
 .tabCount {
@@ -223,7 +223,7 @@
 .tabActive,
 .tabActive:hover {
   background-color: var(--wg-primary-light);
-  color: var(--wg-primary-active);
+  color: var(--wg-primary-text);
 }
 
 .tabActive .tabCount {

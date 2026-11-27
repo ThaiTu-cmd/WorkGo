@@ -51,10 +51,10 @@
   text-align: left;
   cursor: pointer;
   font-family: var(--font-heading);
-  font-size: 1.6rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  color: var(--wg-primary-active);
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--wg-primary-text);
   line-height: 1.2;
 }
 
@@ -76,7 +76,7 @@
   padding: 6px 12px;
   border-radius: var(--radius-full);
   background-color: var(--wg-primary-light);
-  color: var(--wg-primary-active);
+  color: var(--wg-primary-text);
   font-size: 0.82rem;
   font-weight: 600;
 }
@@ -110,7 +110,7 @@
 }
 
 .footerLink:hover {
-  color: var(--wg-primary);
+  color: var(--wg-primary-text);
 }
 
 .footerLink:focus-visible {

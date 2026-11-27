@@ -1,7 +1,7 @@
 .pageContainer {
-  background-color: var(--wg-surface);
+  background-color: var(--wg-bg);
   min-height: 100vh;
-  padding: 24px 0 60px 0;
+  padding: calc(var(--header-height) + 24px) 0 60px 0;
 }
 
 .contentWrapper {
@@ -25,7 +25,7 @@
   align-items: center;
   gap: 8px;
   font-size: 0.88rem;
-  color: #64748b;
+  color: var(--wg-text-muted);
   flex-wrap: wrap;
 }
 
@@ -33,24 +33,25 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 36px;
   padding: 6px 12px;
   background-color: var(--wg-surface);
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border: 1px solid var(--wg-border);
+  border-radius: 8px;
   color: var(--wg-text);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .backBtn:hover {
-  background-color: var(--wg-surface);
-  border-color: #94a3b8;
+  background-color: var(--wg-surface-alt);
+  border-color: var(--wg-primary);
 }
 
 .bcSep {
-  color: #cbd5e1;
+  color: var(--wg-border);
 }
 
 .bcLink {
@@ -59,13 +60,13 @@
   padding: 0;
   font-family: inherit;
   font-size: inherit;
-  color: #64748b;
+  color: var(--wg-text-secondary);
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: color 0.15s ease;
 }
 
 .bcLink:hover {
-  color: #059669;
+  color: var(--wg-primary-text);
   text-decoration: underline;
 }
 
@@ -87,26 +88,27 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 12px;
+  min-height: 36px;
+  padding: 6px 12px;
   background: var(--wg-surface);
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border: 1px solid var(--wg-border);
+  border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--wg-text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .actionBtn:hover {
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
   color: var(--wg-text);
 }
 
 .actionSaved {
-  color: #ef4444;
-  border-color: #fca5a5;
-  background-color: #fef2f2;
+  color: var(--danger);
+  border-color: var(--danger);
+  background-color: var(--danger-bg);
 }
 
 /* Service Header */
@@ -129,43 +131,42 @@
   align-items: center;
   gap: 6px;
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 600;
   padding: 4px 10px;
-  border-radius: 20px;
-  text-transform: uppercase;
+  border-radius: 9999px;
 }
 
 .badgeDigital {
-  background-color: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
+  background-color: var(--wg-primary-light);
+  color: var(--wg-primary-text);
+  border: 1px solid rgba(29, 191, 115, 0.28);
 }
 
 .badgeOnsite {
-  background-color: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
+  background-color: var(--badge-digital-bg);
+  color: var(--badge-digital-text);
+  border: 1px solid var(--badge-digital-border);
 }
 
 .badgeDelivery {
-  background-color: #fff7ed;
-  color: #ea580c;
-  border: 1px solid #fed7aa;
+  background-color: var(--badge-onsite-bg);
+  color: var(--badge-onsite-text);
+  border: 1px solid var(--badge-onsite-border);
 }
 
 .categoryPill {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--wg-text-secondary);
   background-color: var(--wg-surface);
   padding: 4px 10px;
-  border-radius: 20px;
-  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  border: 1px solid var(--wg-border);
 }
 
 .serviceTitle {
-  font-size: 1.85rem;
-  font-weight: 800;
+  font-size: 1.75rem;
+  font-weight: 700;
   color: var(--wg-text);
   line-height: 1.35;
   margin: 0;
@@ -186,7 +187,7 @@
   height: 36px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--wg-border);
 }
 
 .miniNameRow {
@@ -201,20 +202,20 @@
 }
 
 .verifiedIcon {
-  color: #10b981;
+  color: var(--wg-primary);
 }
 
 .miniLevel {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #059669;
-  background-color: #ecfdf5;
-  padding: 1px 6px;
-  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--wg-primary-text);
+  background-color: var(--wg-primary-light);
+  padding: 2px 8px;
+  border-radius: 9999px;
 }
 
 .barDivider {
-  color: #cbd5e1;
+  color: var(--wg-border);
 }
 
 .ratingBox {
@@ -224,8 +225,8 @@
 }
 
 .starIcon {
-  color: #f59e0b;
-  fill: #f59e0b;
+  color: var(--wg-star);
+  fill: var(--wg-star);
 }
 
 .ratingScore {
@@ -234,13 +235,13 @@
 }
 
 .ratingReviews {
-  color: #64748b;
+  color: var(--wg-text-muted);
   font-size: 0.85rem;
 }
 
 .ordersQueue {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--wg-text-muted);
   font-weight: 500;
 }
 
@@ -265,8 +266,8 @@
 .descriptionSection {
   margin-top: 36px;
   background: var(--wg-surface);
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid var(--wg-border);
+  border-radius: var(--radius-lg, 16px);
   padding: 28px;
 }
 
@@ -312,13 +313,13 @@
   gap: 16px;
   padding: 18px 20px;
   background-color: var(--wg-primary-light);
-  border: 1px solid #a7f3d0;
+  border: 1px solid rgba(29, 191, 115, 0.28);
   border-radius: 10px;
   margin-top: 20px;
 }
 
 .guaranteeIcon {
-  color: #059669;
+  color: var(--wg-primary-text);
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -326,7 +327,7 @@
 .guaranteeBox h4 {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--wg-primary-active);
+  color: var(--wg-primary-text);
   margin: 0 0 6px 0;
 }
 

@@ -193,7 +193,7 @@ function WalletTopUpContent({
       {error && activeTopUpId && <p role="alert">{error}</p>}
       <div className={styles.header}>
         <h3 className={styles.title}>
-          <Wallet size={18} color="var(--primary, #1677FF)" />
+          <Wallet size={18} color="var(--wg-primary)" />
           Nạp tiền ví để thanh toán đơn hàng
         </h3>
         {onCancel ? (
@@ -201,9 +201,13 @@ function WalletTopUpContent({
             type="button"
             style={{
               background: "none",
-              border: "none",
+              border: "1px solid var(--wg-border)",
+              borderRadius: "8px",
+              padding: "6px 12px",
+              minHeight: "44px",
               color: "var(--wg-text-secondary)",
-              fontSize: "0.82rem",
+              fontSize: "0.85rem",
+              fontWeight: 600,
               cursor: "pointer"
             }}
             onClick={onCancel}
@@ -238,7 +242,7 @@ function WalletTopUpContent({
       {activeTopUpId && topUpStatus ? (
         topUpStatus === "SUCCEEDED" ? (
           <div className={styles.successBox}>
-            <CheckCircle2 size={20} color="#059669" />
+            <CheckCircle2 size={20} color="var(--wg-primary)" />
             <span>{simulated?'Thử nghiệm TEST_VND — không cộng số dư ví.':'Nạp tiền thành công. Số dư được lấy lại từ server.'}</span>
             {shortfall > 0 && <button type="button" onClick={() => {
               onTrackTopUp?.();
@@ -248,19 +252,7 @@ function WalletTopUpContent({
             }}>{tr('topUpMore')}</button>}
           </div>
         ) : topUpStatus === "FAILED" ? (
-          <div
-            style={{
-              padding: "12px",
-              background: "#fef2f2",
-              border: "1px solid #fecaca",
-              borderRadius: "8px",
-              color: "#991b1b",
-              fontSize: "0.85rem",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center"
-            }}
-          >
+          <div className={styles.failedBox}>
             <span>Giao dịch nạp tiền thất bại hoặc bị hủy.</span>
             <button
               type="button"
@@ -276,7 +268,7 @@ function WalletTopUpContent({
           </div>
         ) : (
           <div className={styles.pollingBox}>
-            <Loader2 size={28} color="var(--primary, #1677FF)" className="animate-spin" />
+            <Loader2 size={28} color="var(--wg-primary)" className="animate-spin" />
             <h4 className={styles.pollingTitle}>
               {topUpStatus === "UNKNOWN"
                 ? "Giao dịch đang chờ đối soát (UNKNOWN)"

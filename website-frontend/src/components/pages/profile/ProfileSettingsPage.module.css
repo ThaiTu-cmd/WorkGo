@@ -61,6 +61,8 @@
   padding: 10px 14px;
   font-size: 1rem;
   font-weight: 400;
+  background: var(--wg-surface);
+  color: var(--wg-text);
   width: 100%;
   max-width: 100%;
 }
@@ -73,7 +75,7 @@
 .error {
   font-style: normal;
   font-weight: 500;
-  color: #b91c1c;
+  color: var(--danger);
   font-size: 0.85rem;
   overflow-wrap: break-word;
 }
@@ -83,13 +85,51 @@
   border-radius: 10px;
   background: var(--wg-primary);
   color: #ffffff;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 1rem;
-  padding: 12px 16px;
+  padding: 10px 16px;
+  cursor: pointer;
 }
 
-.submit:hover {
+.submit:hover:not(:disabled) {
   background: var(--wg-primary-hover);
+}
+
+.submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.secondaryBtn {
+  min-height: 44px;
+  border-radius: 10px;
+  background: var(--wg-surface);
+  color: var(--wg-primary-text);
+  border: 1px solid var(--wg-primary);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 10px 16px;
+  cursor: pointer;
+  flex: 1;
+  min-width: 160px;
+  transition: background-color 0.15s ease;
+}
+
+.secondaryBtn:hover {
+  background: var(--wg-primary-light);
+}
+
+.needLoginActions {
+  margin-top: 16px;
+}
+
+.footerLinks {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--wg-border);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .submit:focus-visible {

@@ -1,4 +1,6 @@
-import { Appearance, ColorSchemeName, StyleSheet, useColorScheme } from 'react-native';
+import { Appearance, ColorSchemeName, StyleSheet } from 'react-native';
+
+import { useResolvedScheme } from '@/settings/preferences';
 
 export type ThemeColors = {
   primary: string;
@@ -11,6 +13,7 @@ export type ThemeColors = {
   warning: string;
   warningBg: string;
   info: string;
+  star: string;
   text: string;
   muted: string;
   border: string;
@@ -34,7 +37,8 @@ export const lightColors: ThemeColors = {
   dangerBg: '#fee2e2',
   warning: '#d97706',
   warningBg: '#fef3c7',
-  info: '#1dbf73',
+  info: '#147a49',
+  star: '#b45309',
   text: '#111827',
   muted: '#6b7280',
   border: '#e5e7eb',
@@ -51,12 +55,14 @@ export const lightColors: ThemeColors = {
 export const darkColors: ThemeColors = {
   ...lightColors,
   primary: '#1dbf73',
-  primaryDark: '#158852',
+  // Accessible green ink for text/icons on dark surfaces.
+  primaryDark: '#34d399',
   primaryLight: '#123a29',
   successBg: '#143823',
   warningBg: '#3d2e0f',
   dangerBg: '#3d1416',
-  info: '#1dbf73',
+  info: '#34d399',
+  star: '#fbbf24',
   text: '#e8e8e8',
   muted: '#8a8a8a',
   border: '#2a2a2a',
@@ -80,8 +86,7 @@ export function getColors(scheme: ColorSchemeName | null | undefined): ThemeColo
 }
 
 export function useColors(): ThemeColors {
-  const scheme = useColorScheme();
-  return getColors(scheme);
+  return getColors(useResolvedScheme());
 }
 
 // Builds a style hook from a factory of the theme colours. The sheet is made
@@ -90,7 +95,7 @@ export function useColors(): ThemeColors {
 export function makeStyles<T extends StyleSheet.NamedStyles<T>>(factory: (colors: ThemeColors) => T) {
   const sheets: { light?: T; dark?: T } = {};
   return function useStyles(): T {
-    const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+    const scheme = useResolvedScheme();
     return (sheets[scheme] ??= StyleSheet.create(factory(getColors(scheme))));
   };
 }

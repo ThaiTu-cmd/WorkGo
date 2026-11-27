@@ -10,10 +10,11 @@
   width: 100%;
   aspect-ratio: 16 / 10;
   max-height: 480px;
-  background-color: #0f172a;
+  background-color: var(--wg-surface-alt);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--wg-border);
+  box-shadow: var(--shadow-sm);
 }
 
 .mainImage {
@@ -30,21 +31,21 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.88);
+  background: var(--wg-surface);
   color: var(--wg-text);
-  border: none;
+  border: 1px solid var(--wg-border);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
   z-index: 2;
 }
 
 .navBtn:hover {
-  background: var(--wg-surface);
-  transform: translateY(-50%) scale(1.08);
+  background: var(--wg-surface-alt);
+  border-color: var(--wg-primary);
 }
 
 .prevBtn {

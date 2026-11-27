@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Globe } from "lucide-react";
 
 interface LanguageSwitcherProps {
@@ -12,31 +12,16 @@ export default function LanguageSwitcher({
   className = "",
   variant = "pill",
 }: LanguageSwitcherProps) {
-  const [currentLocale, setCurrentLocale] = useState<"vi" | "en">("vi");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-    if (typeof window !== "undefined") {
-      setCurrentLocale(window.location.pathname.startsWith("/en") ? "en" : "vi");
-    }
-
-    const handlePopState = () => {
-      setCurrentLocale(window.location.pathname.startsWith("/en") ? "en" : "vi");
-    };
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
+  const router = useRouter();
+  const pathname = usePathname();
+  const currentLocale: "vi" | "en" = pathname.startsWith("/en") ? "en" : "vi";
 
   const handleSwitchLanguage = (targetLocale: "vi" | "en") => {
-    if (typeof window === "undefined") return;
     if (targetLocale === currentLocale) return;
-    if ((window as unknown as { __workgoThemeSwitching?: boolean }).__workgoThemeSwitching) return;
+    if (typeof window !== "undefined" && (window as unknown as { __workgoThemeSwitching?: boolean }).__workgoThemeSwitching) return;
 
-    (window as unknown as { __workgoNavigating?: boolean }).__workgoNavigating = true;
-
-    const { pathname, search, hash } = window.location;
+    const search = typeof window !== "undefined" ? window.location.search : "";
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
     let newPathname = pathname;
 
     if (pathname.startsWith("/vi")) {
@@ -49,31 +34,32 @@ export default function LanguageSwitcher({
       newPathname = `/${targetLocale}${pathname}`;
     }
 
-    const targetUrl = `${newPathname}${search}${hash}`;
-    window.location.href = targetUrl;
+    router.push(`${newPathname}${search}${hash}`);
   };
 
   const toggleLanguage = () => {
     handleSwitchLanguage(currentLocale === "vi" ? "en" : "vi");
   };
 
+  const languageLabel = currentLocale === "en" ? "English" : "Tiếng Việt";
+  const switchLabel = `Ngôn ngữ: ${languageLabel}. Nhấn để đổi.`;
+
   if (variant === "footer") {
     return (
       <button
         type="button"
         onClick={toggleLanguage}
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer rounded border min-h-[44px] min-w-[44px] justify-center ${className}`}
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer rounded-lg border min-h-[44px] min-w-[44px] justify-center ${className}`}
         style={{
-          color: "var(--text-secondary, #62646a)",
-          background: "var(--bg-surface, #ffffff)",
-          borderColor: "var(--border-default, #e4e5e7)",
+          color: "var(--text-secondary)",
+          background: "var(--bg-surface)",
+          borderColor: "var(--border-default)",
         }}
-        aria-label={`Ngôn ngữ: ${mounted && currentLocale === "en" ? "English" : "Tiếng Việt"}. Nhấn để đổi.`}
+        aria-label={switchLabel}
         title="Chuyển đổi ngôn ngữ / Switch language"
-        suppressHydrationWarning
       >
-        <Globe size={15} style={{ color: "var(--primary, #1dbf73)" }} className="shrink-0" aria-hidden="true" />
-        <span>{mounted && currentLocale === "en" ? "English (EN)" : "Tiếng Việt (VI)"}</span>
+        <Globe size={15} style={{ color: "var(--primary-text)" }} className="shrink-0" aria-hidden="true" />
+        <span>{currentLocale === "en" ? "English (EN)" : "Tiếng Việt (VI)"}</span>
       </button>
     );
   }
@@ -83,29 +69,26 @@ export default function LanguageSwitcher({
       <button
         type="button"
         onClick={toggleLanguage}
-        className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg transition-all min-h-[44px] cursor-pointer border ${className}`}
+        className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg transition-colors min-h-[44px] cursor-pointer border ${className}`}
         style={{
           color: "var(--text-primary)",
-          background: "var(--bg-muted)",
+          background: "var(--bg-surface)",
           borderColor: "var(--border-default)",
         }}
-        aria-label={`Ngôn ngữ: ${mounted && currentLocale === "en" ? "English" : "Tiếng Việt"}. Nhấn để đổi.`}
+        aria-label={switchLabel}
         title="Chuyển đổi ngôn ngữ / Switch language"
-        suppressHydrationWarning
       >
-        <Globe size={16} style={{ color: "var(--primary, #1dbf73)" }} aria-hidden="true" />
-        <span className="text-sm font-medium">
-          {mounted && currentLocale === "en" ? "English" : "Tiếng Việt"}
-        </span>
+        <Globe size={16} style={{ color: "var(--primary-text)" }} aria-hidden="true" />
+        <span className="text-sm font-medium">{languageLabel}</span>
       </button>
     );
   }
 
   return (
     <div
-      className={`inline-flex items-center rounded-lg border p-0.5 shadow-sm text-xs select-none ${className}`}
+      className={`inline-flex items-center rounded-lg border p-0.5 text-xs select-none ${className}`}
       style={{
-        background: "var(--bg-muted)",
+        background: "var(--bg-surface)",
         borderColor: "var(--border-default)",
       }}
       role="group"
@@ -114,30 +97,28 @@ export default function LanguageSwitcher({
       <button
         type="button"
         onClick={() => handleSwitchLanguage("vi")}
-        className="flex items-center justify-center px-2 py-1.5 rounded-md min-h-[44px] min-w-[44px] text-xs font-semibold transition-all cursor-pointer"
+        className="flex items-center justify-center px-2.5 rounded-md min-h-[38px] min-w-[38px] text-xs font-semibold transition-colors cursor-pointer"
         style={
-          !mounted || currentLocale === "vi"
-            ? { background: "var(--primary, #1dbf73)", color: "#FFFFFF" }
-            : { color: "var(--text-secondary)" }
+          currentLocale === "vi"
+            ? { background: "var(--primary)", color: "#ffffff" }
+            : { color: "var(--text-secondary)", background: "transparent" }
         }
-        aria-pressed={!mounted || currentLocale === "vi"}
+        aria-pressed={currentLocale === "vi"}
         aria-label="Tiếng Việt"
-        suppressHydrationWarning
       >
         VI
       </button>
       <button
         type="button"
         onClick={() => handleSwitchLanguage("en")}
-        className="flex items-center justify-center px-2 py-1.5 rounded-md min-h-[44px] min-w-[44px] text-xs font-semibold transition-all cursor-pointer"
+        className="flex items-center justify-center px-2.5 rounded-md min-h-[38px] min-w-[38px] text-xs font-semibold transition-colors cursor-pointer"
         style={
-          mounted && currentLocale === "en"
-            ? { background: "var(--primary, #1dbf73)", color: "#FFFFFF" }
-            : { color: "var(--text-secondary)" }
+          currentLocale === "en"
+            ? { background: "var(--primary)", color: "#ffffff" }
+            : { color: "var(--text-secondary)", background: "transparent" }
         }
-        aria-pressed={mounted && currentLocale === "en"}
+        aria-pressed={currentLocale === "en"}
         aria-label="English"
-        suppressHydrationWarning
       >
         EN
       </button>

@@ -10,7 +10,7 @@ import { paymentApi } from '@/api/paymentApi';
 import { providerApi } from '@/api/providerApi';
 import { qk } from '@/api/queryKeys';
 import { formatVnd } from '@/lib/format';
-import { Button, Card, font, makeStyles, radius, spacing, TextField } from '@/ui';
+import { Button, Card, font, makeStyles, radius, spacing, TextField, useColors } from '@/ui';
 
 export function SubmitProposalScreen({
   jobId: propJobId,
@@ -20,6 +20,7 @@ export function SubmitProposalScreen({
   onSuccess?: () => void;
 } = {}) {
   const styles = useStyles();
+  const colors = useColors();
   const router = useRouter();
   const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ id?: string }>();
@@ -156,7 +157,7 @@ export function SubmitProposalScreen({
           {isWalletBlocked ? (
             <Card style={styles.debtBanner}>
               <View style={styles.bannerHeader}>
-                <Ionicons name="warning-outline" size={20} color="#b91c1c" />
+                <Ionicons name="warning-outline" size={20} color={colors.danger} />
                 <Text style={styles.debtTitle}>Cảnh báo nợ ví ({formatVnd(debtAmount)})</Text>
               </View>
               <Text style={styles.bannerDesc}>
@@ -169,7 +170,7 @@ export function SubmitProposalScreen({
           {isSanctionBlocked ? (
             <Card style={styles.sanctionBanner}>
               <View style={styles.bannerHeader}>
-                <Ionicons name="shield-outline" size={20} color="#991b1b" />
+                <Ionicons name="shield-outline" size={20} color={colors.danger} />
                 <Text style={styles.sanctionTitle}>Tài khoản đang bị chế tài</Text>
               </View>
               <Text style={styles.bannerDesc}>
@@ -230,23 +231,23 @@ const useStyles = makeStyles((colors) => ({
   headerTitle: { fontSize: font.title, fontWeight: '700', color: colors.text },
   headerSub: { fontSize: font.small, color: colors.muted, marginTop: -spacing.xs },
   debtBanner: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: colors.dangerBg,
     borderWidth: 1,
-    borderColor: '#fca5a5',
+    borderColor: colors.danger,
     borderRadius: radius.md,
     padding: spacing.md,
     gap: spacing.xs,
   },
   sanctionBanner: {
-    backgroundColor: '#fff1f2',
+    backgroundColor: colors.dangerBg,
     borderWidth: 1,
-    borderColor: '#fecdd3',
+    borderColor: colors.danger,
     borderRadius: radius.md,
     padding: spacing.md,
     gap: spacing.xs,
   },
   bannerHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  debtTitle: { fontSize: font.body, fontWeight: '700', color: '#b91c1c' },
-  sanctionTitle: { fontSize: font.body, fontWeight: '700', color: '#991b1b' },
-  bannerDesc: { fontSize: font.small, color: '#7f1d1d', lineHeight: 18 },
+  debtTitle: { fontSize: font.body, fontWeight: '700', color: colors.danger },
+  sanctionTitle: { fontSize: font.body, fontWeight: '700', color: colors.danger },
+  bannerDesc: { fontSize: font.small, color: colors.text, lineHeight: 18 },
 }));

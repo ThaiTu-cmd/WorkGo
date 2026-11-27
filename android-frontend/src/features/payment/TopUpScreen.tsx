@@ -352,7 +352,7 @@ const useStyles = makeStyles((colors) => ({
   },
   gatewayItemActive: {
     borderColor: colors.primary,
-    backgroundColor: '#ebf8ff',
+    backgroundColor: colors.primaryLight,
   },
   gatewayLabel: {
     fontSize: font.small,

@@ -36,10 +36,10 @@
 
 .headline {
   font-family: var(--font-heading);
-  font-size: 2.75rem;
-  font-weight: 800;
+  font-size: 2.7rem;
+  font-weight: 700;
   line-height: 1.18;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.025em;
   margin-bottom: 20px;
   color: #ffffff;
   text-wrap: balance;
@@ -104,16 +104,13 @@
 
 .tagBtn {
   background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   color: #ffffff;
-  padding: 4px 12px;
+  padding: 5px 12px;
   border-radius: var(--radius-full);
   font-size: 0.82rem;
   font-weight: 500;
-  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
-              background-color 0.15s ease,
-              border-color 0.15s ease,
-              box-shadow 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
   position: relative;
   min-height: 32px;
   cursor: pointer;
@@ -127,14 +124,12 @@
 }
 
 .tagBtn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: #ffffff;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.7);
 }
 
 .tagBtn:active {
-  transform: translateY(0) scale(0.95);
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .trustBanner {
@@ -158,31 +153,21 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.05);
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-              background-color 0.25s ease,
-              border-color 0.25s ease,
-              box-shadow 0.25s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .trustItem:hover {
   background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.25);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  border-color: rgba(255, 255, 255, 0.24);
 }
 
 .trustIcon {
-  color: var(--wg-primary);
+  color: #34d399;
   flex-shrink: 0;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.trustItem:hover .trustIcon {
-  transform: scale(1.15) rotate(4deg);
 }
 
 .trustText {

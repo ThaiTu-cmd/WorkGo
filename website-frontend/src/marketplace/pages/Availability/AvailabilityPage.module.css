@@ -1,5 +1,5 @@
 .pageContainer {
-  background-color: var(--wg-surface);
+  background-color: var(--wg-bg);
   min-height: 100vh;
   padding: calc(var(--header-height) + 24px) 0 60px 0;
 }
@@ -62,19 +62,19 @@
   align-items: center;
   gap: 10px;
   font-family: var(--font-heading);
-  font-size: 1.85rem;
-  font-weight: 800;
+  font-size: 1.75rem;
+  font-weight: 700;
   color: var(--wg-text);
   margin-bottom: 6px;
 }
 
 .titleIcon {
-  color: var(--wg-primary);
+  color: var(--wg-primary-text);
 }
 
 .pageSubtitle {
   font-size: 0.95rem;
-  color: #64748b;
+  color: var(--wg-text-muted);
   line-height: 1.5;
   max-width: 620px;
 }
@@ -92,9 +92,9 @@
 .servicePicker select,
 .field input,
 .field select {
-  height: 40px;
+  height: 44px;
   padding: 0 12px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--wg-border);
   border-radius: var(--radius-sm);
   background-color: var(--wg-surface);
   color: var(--wg-text);
@@ -117,9 +117,9 @@
   padding: 10px 14px;
   margin-bottom: 16px;
   border-radius: var(--radius-md);
-  background-color: #fffbeb;
-  border: 1px solid #fde68a;
-  color: #92400e;
+  background-color: var(--warning-bg);
+  border: 1px solid var(--warning);
+  color: var(--warning);
   font-size: 0.86rem;
   line-height: 1.5;
 }
@@ -280,13 +280,13 @@
   overflow: hidden;
   text-align: left;
   border-radius: var(--radius-sm);
-  border: 1px solid #86efac;
+  border: 1px solid var(--wg-primary);
   border-left: 3px solid var(--wg-primary);
   background-color: var(--wg-primary-light);
   background-image: linear-gradient(to bottom, transparent calc(100% - 1px), rgba(29, 191, 115, 0.35) 1px);
-  color: var(--wg-primary-active);
+  color: var(--wg-primary-text);
   cursor: pointer;
-  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+  transition: box-shadow var(--transition-fast);
 }
 
 .ruleBlock:hover {
@@ -299,15 +299,15 @@
 }
 
 .ruleInactive {
-  border-color: #e2e8f0;
-  border-left-color: #94a3b8;
-  background-color: var(--wg-surface);
+  border-color: var(--wg-border);
+  border-left-color: var(--wg-text-muted);
+  background-color: var(--wg-surface-alt);
   background-image: repeating-linear-gradient(
     -45deg,
     transparent 0 6px,
-    rgba(148, 163, 184, 0.15) 6px 12px
+    rgba(148, 163, 184, 0.12) 6px 12px
   );
-  color: #64748b;
+  color: var(--wg-text-muted);
 }
 
 .ruleTime {
@@ -375,14 +375,14 @@
 }
 
 .dayChip {
-  height: 34px;
+  height: 36px;
   border-radius: var(--radius-sm);
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--wg-border);
   background-color: var(--wg-surface);
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--wg-text);
-  transition: all var(--transition-fast);
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
 }
 
 .dayChip:hover {
@@ -419,8 +419,8 @@
 .formError {
   padding: 8px 10px;
   border-radius: var(--radius-sm);
-  background-color: #fef2f2;
-  color: #b91c1c;
+  background-color: var(--danger-bg);
+  color: var(--danger);
   font-size: 0.84rem;
 }
 
@@ -435,11 +435,11 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 40px;
+  height: 44px;
   padding: 0 16px;
   border-radius: var(--radius-sm);
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 600;
   transition: background-color var(--transition-fast);
 }
 
@@ -454,13 +454,13 @@
 }
 
 .dangerBtn {
-  border: 1px solid #fecaca;
-  color: #dc2626;
+  border: 1px solid var(--danger);
+  color: var(--danger);
   background-color: var(--wg-surface);
 }
 
 .dangerBtn:hover:not(:disabled) {
-  background-color: rgba(239, 68, 68, 0.12);
+  background-color: var(--danger-bg);
 }
 
 .primaryBtn:disabled,

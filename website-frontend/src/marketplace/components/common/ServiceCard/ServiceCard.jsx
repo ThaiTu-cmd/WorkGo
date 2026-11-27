@@ -88,15 +88,7 @@ export default function ServiceCard({
                 {service.provider?.name || tr("m86")}
               </span>
               {service.provider?.isVerified && <CheckCircle size={13} className={styles.verifiedIcon} />}
-              {service.providerSource && service.providerSource !== 'real' && <span style={{
-              fontSize: 10,
-              fontWeight: 600,
-              padding: '1px 6px',
-              borderRadius: 4,
-              background: 'rgba(245,158,11,0.15)',
-              color: '#b45309',
-              marginLeft: 4
-            }} title={tr("m87")}>{tr("m90")}</span>}
+              {service.providerSource && service.providerSource !== 'real' && <span className={styles.demoTag} title={tr("m87")}>{tr("m90")}</span>}
             </div>
             {service.provider?.badge && <span className={styles.providerLevel}>
                 {service.provider.badge}

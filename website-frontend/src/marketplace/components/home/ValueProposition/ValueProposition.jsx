@@ -6,25 +6,21 @@ export default function ValueProposition() {
   const tr = useTranslations("misc");
   const values = [{
     icon: ShieldCheck,
-    color: "#10b981",
     badge: tr("m152"),
     title: tr("m122"),
     desc: tr("m153")
   }, {
     icon: PackageCheck,
-    color: "#3b82f6",
     badge: tr("m154"),
     title: tr("m155"),
     desc: tr("m156")
   }, {
     icon: Repeat,
-    color: "#8b5cf6",
     badge: tr("m157"),
     title: tr("m158"),
     desc: tr("m159")
   }, {
     icon: Headphones,
-    color: "#f59e0b",
     badge: tr("m160"),
     title: tr("m161"),
     desc: tr("m162")
@@ -44,17 +40,10 @@ export default function ValueProposition() {
           const Icon = val.icon;
           return <div key={idx} className={styles.card}>
                 <div className={styles.cardTop}>
-                  <div className={styles.iconBox} style={{
-                backgroundColor: `${val.color}15`,
-                color: val.color
-              }}>
-                    <Icon size={28} />
+                  <div className={styles.iconBox}>
+                    <Icon size={24} />
                   </div>
-                  <span className={styles.valueBadge} style={{
-                backgroundColor: `${val.color}15`,
-                color: val.color,
-                borderColor: `${val.color}30`
-              }}>
+                  <span className={styles.valueBadge}>
                     {val.badge}
                   </span>
                 </div>

@@ -18,31 +18,31 @@
 }
 
 .pending {
-  background-color: #fff7ed;
-  color: #c2410c;
+  background-color: var(--badge-onsite-bg);
+  color: var(--badge-onsite-text);
 }
 
 .confirmed {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: var(--badge-digital-bg);
+  color: var(--badge-digital-text);
 }
 
 .progress {
-  background-color: #f5f3ff;
-  color: #6d28d9;
+  background-color: var(--badge-appointment-bg);
+  color: var(--badge-appointment-text);
 }
 
 .delivered {
-  background-color: #fefce8;
-  color: #a16207;
+  background-color: var(--warning-bg);
+  color: var(--warning);
 }
 
 .completed {
   background-color: var(--wg-primary-light);
-  color: var(--wg-primary-active);
+  color: var(--wg-primary-text);
 }
 
 .cancelled {
-  background-color: var(--wg-surface);
-  color: #64748b;
+  background-color: var(--wg-surface-alt);
+  color: var(--wg-text-muted);
 }

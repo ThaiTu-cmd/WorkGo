@@ -21,8 +21,8 @@
 
 .title {
   font-family: var(--font-heading);
-  font-size: 2.3rem;
-  font-weight: 800;
+  font-size: 2.2rem;
+  font-weight: 700;
   color: var(--wg-text);
   letter-spacing: -0.02em;
   margin-bottom: 16px;
@@ -38,7 +38,7 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 28px;
+  gap: 24px;
 }
 
 @media (max-width: 1100px) {
@@ -56,54 +56,50 @@
 .card {
   background-color: var(--wg-surface);
   border-radius: var(--radius-lg);
-  padding: 32px 26px;
+  padding: 28px 24px;
   border: 1px solid var(--wg-border);
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease;
-  will-change: transform;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease, border-color 0.2s ease;
   cursor: default;
 }
 
 .card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.1), 0 4px 14px rgba(29, 191, 115, 0.12);
-  border-color: rgba(29, 191, 115, 0.35);
-}
-
-.card:active {
-  transform: translateY(-2px) scale(0.985);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--wg-primary);
 }
 
 .cardTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 22px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .iconBox {
-  width: 54px;
-  height: 54px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-md);
+  background-color: var(--wg-primary-light);
+  color: var(--wg-primary-text);
+  border: 1px solid rgba(29, 191, 115, 0.22);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.card:hover .iconBox {
-  transform: scale(1.1) rotate(4deg);
+  flex-shrink: 0;
 }
 
 .valueBadge {
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 600;
   padding: 4px 10px;
   border-radius: 9999px;
-  border: 1px solid;
-  letter-spacing: 0.2px;
+  background-color: var(--wg-surface-alt);
+  color: var(--wg-text-secondary);
+  border: 1px solid var(--wg-border);
 }
 
 .cardTitle {

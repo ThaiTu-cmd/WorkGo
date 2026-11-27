@@ -12,10 +12,10 @@ export function TextField({ label, error, style, ...input }: Props) {
       <TextInput
         accessibilityLabel={label}
         placeholderTextColor={c.muted}
-        style={[styles.input, { borderColor: c.border, color: c.text, backgroundColor: c.card }, error ? styles.inputError : null, style]}
+        style={[styles.input, { borderColor: error ? c.danger : c.border, color: c.text, backgroundColor: c.card }, style]}
         {...input}
       />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={[styles.error, { color: c.danger }]}>{error}</Text> : null}
     </View>
   );
 }
@@ -30,6 +30,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     fontSize: font.body,
   },
-  inputError: { borderColor: '#dc2626' },
-  error: { fontSize: font.small, color: '#dc2626' },
+  error: { fontSize: font.small },
 });

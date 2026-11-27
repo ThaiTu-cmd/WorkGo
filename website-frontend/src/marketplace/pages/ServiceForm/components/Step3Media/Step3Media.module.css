@@ -1,13 +1,13 @@
 .card {
   background: var(--wg-surface);
-  border: 1px solid var(--border-color, #e2e8f0);
+  border: 1px solid var(--wg-border);
   border-radius: 16px;
   padding: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 
 .cardHeader {
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--wg-border-light);
   padding-bottom: 1.25rem;
   margin-bottom: 1.5rem;
 }
@@ -15,14 +15,14 @@
 .heading {
   font-family: var(--font-heading, sans-serif);
   font-size: 1.25rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--wg-text);
   margin-bottom: 0.25rem;
 }
 
 .desc {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--wg-text-muted);
 }
 
 .layoutGrid {
@@ -38,36 +38,88 @@
 .label {
   display: block;
   font-size: 0.9375rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--wg-text);
   margin-bottom: 0.5rem;
 }
 
 .required {
-  color: #ef4444;
+  color: var(--danger);
 }
 
 .input {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--wg-border);
   border-radius: 10px;
   font-size: 0.9375rem;
+  background: var(--wg-surface);
   color: var(--wg-text);
   outline: none;
 }
 
 .input:focus {
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  border-color: var(--wg-primary);
+  box-shadow: 0 0 0 3px var(--wg-primary-glow);
+}
+
+.fileInput {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed var(--wg-border);
+  border-radius: 8px;
+  background: var(--wg-surface-alt);
+  color: var(--wg-text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.fileNameText {
+  font-size: 0.82rem;
+  color: var(--wg-text-secondary);
+  margin: 0.35rem 0;
+}
+
+.videoLink {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--wg-primary-text);
+  text-decoration: underline;
+  margin: 0.35rem 0.75rem 0.35rem 0;
+}
+
+.removeFileBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 36px;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.35rem;
+}
+
+.errorMsg {
+  color: var(--danger);
+  font-size: 0.78rem;
+  margin-top: 0.375rem;
 }
 
 .coverPreviewBox {
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wg-border);
   aspect-ratio: 16 / 9;
-  background: var(--wg-surface);
+  background: var(--wg-surface-alt);
   position: relative;
   margin-top: 0.75rem;
 }
@@ -100,23 +152,23 @@
 
 .gallerySlot {
   aspect-ratio: 4 / 3;
-  border: 1.5px dashed #cbd5e1;
+  border: 1.5px dashed var(--wg-border);
   border-radius: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--wg-text-muted);
   cursor: pointer;
-  transition: all 0.2s;
-  background: var(--wg-surface);
+  transition: border-color 0.15s ease;
+  background: var(--wg-surface-alt);
   overflow: hidden;
   position: relative;
 }
 
 .gallerySlot:hover {
-  border-color: #10b981;
+  border-color: var(--wg-primary);
 }
 
 .gallerySlot img {
@@ -132,17 +184,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border: none;
   border-radius: 50%;
-  background: rgba(15, 23, 42, 0.7);
+  background: rgba(15, 23, 42, 0.75);
   color: #ffffff;
   cursor: pointer;
 }
 
 .galleryRemove:hover {
-  background: #dc2626;
+  background: var(--danger);
 }
 
 .galleryAddRow {
@@ -155,11 +207,12 @@
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
+  min-height: 40px;
   padding: 0 1rem;
-  border: 1.5px solid #10b981;
+  border: 1.5px solid var(--wg-primary);
   border-radius: 10px;
   background: var(--wg-surface);
-  color: #047857;
+  color: var(--wg-primary-text);
   font-size: 0.875rem;
   font-weight: 600;
   white-space: nowrap;
@@ -173,10 +226,10 @@
 /* Right Card Preview */
 .livePreviewBox {
   background: var(--wg-surface);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wg-border);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
   position: sticky;
   top: 90px;
 }
@@ -190,9 +243,9 @@
 
 .liveBadge {
   font-size: 0.75rem;
-  font-weight: 700;
-  color: #047857;
-  background: #ecfdf5;
+  font-weight: 600;
+  color: var(--wg-primary-text);
+  background: var(--wg-primary-light);
   padding: 0.25rem 0.625rem;
   border-radius: 9999px;
   display: inline-flex;
@@ -201,10 +254,10 @@
 }
 
 .mockCard {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wg-border);
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   background: var(--wg-surface);
 }
 
@@ -212,7 +265,7 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  background: #e2e8f0;
+  background: var(--wg-surface-alt);
 }
 
 .mockCardBody {
@@ -266,13 +319,13 @@
 }
 
 .mockPriceLabel {
-  font-size: 0.6875rem;
-  color: #64748b;
+  font-size: 0.72rem;
+  color: var(--wg-text-muted);
 }
 
 .mockPriceVal {
   font-family: var(--font-heading, sans-serif);
-  font-weight: 800;
+  font-weight: 700;
   color: var(--wg-text);
   font-size: 0.9375rem;
 }

@@ -68,11 +68,7 @@ export default function Step3Media({
             <label className={styles.label} htmlFor="catalog-cover-file">{mediaTr('cover')}</label>
             <input id="catalog-cover-file" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => selectFile(e, 5, file => onChange('coverFile', file))} />
             {formData.coverFile && <p>{formData.coverFile.name}</p>}
-            {errors.coverImage && <p style={{
-            color: '#ef4444',
-            fontSize: '0.75rem',
-            marginTop: '0.375rem'
-          }}>{errors.coverImage}</p>}
+            {errors.coverImage && <p className={styles.errorMsg}>{errors.coverImage}</p>}
 
             <div className={styles.coverPreviewBox}>
               <img src={coverUrl} alt={tr("m1098")} className={styles.coverImg} />
@@ -83,9 +79,8 @@ export default function Step3Media({
           {/* Gallery Thumbnails */}
           <div className={styles.formGroup}>
             <label className={styles.label}>{tr("m1108")}</label>
-            <p style={{
-            fontSize: '0.75rem',
-            color: '#64748b',
+            <p className={styles.desc} style={{
+            fontSize: '0.78rem',
             marginBottom: '0.5rem'
           }}>{tr("m1109")}</p>
             {gallery.length > 0 && <div className={styles.galleryGrid}>
@@ -115,11 +110,7 @@ export default function Step3Media({
             </div>
             <label className={styles.label} htmlFor="catalog-gallery-file">{mediaTr('gallery')}</label>
             <input id="catalog-gallery-file" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => selectFile(e, 5, file => onChange('gallery', [...gallery, { file }]))} />
-            {galleryError && <p style={{
-            color: '#ef4444',
-            fontSize: '0.75rem',
-            marginTop: '0.375rem'
-          }}>{galleryError}</p>}
+            {galleryError && <p className={styles.errorMsg}>{galleryError}</p>}
           </div>
 
           {/* Video URL */}
@@ -131,11 +122,7 @@ export default function Step3Media({
             {formData.videoFile && <p>{formData.videoFile.name}</p>}
             {isStoredCatalogMedia(formData.videoUrl) && <a href={catalogMediaUrl(formData.videoUrl)} target="_blank" rel="noopener noreferrer">{mediaTr('openVideo')}</a>}
             {(formData.videoFile || isStoredCatalogMedia(formData.videoUrl)) && <button type="button" onClick={() => { onChange('videoFile', null); onChange('videoUrl', ''); }}>{mediaTr('removeVideo')}</button>}
-            {errors.videoUrl && <p style={{
-            color: '#ef4444',
-            fontSize: '0.75rem',
-            marginTop: '0.375rem'
-          }}>{errors.videoUrl}</p>}
+            {errors.videoUrl && <p className={styles.errorMsg}>{errors.videoUrl}</p>}
           </div>
           {fileError && <p role="alert">{fileError}</p>}
         </div>
@@ -148,7 +135,7 @@ export default function Step3Media({
                 <Sparkles size={12} />{tr("m1112")}</span>
               <span style={{
               fontSize: '0.75rem',
-              color: '#64748b'
+              color: 'var(--wg-text-muted)'
             }}>{tr("m1113")}</span>
             </div>
 

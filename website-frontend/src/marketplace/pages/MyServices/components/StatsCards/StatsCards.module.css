@@ -7,19 +7,19 @@
 
 .statCard {
   background: var(--wg-surface);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wg-border);
   border-radius: 12px;
   padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease;
 }
 
 .statCard:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .cardHeader {
@@ -32,23 +32,23 @@
 .statTitle {
   font-size: 0.88rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--wg-text-muted);
 }
 
 .iconWrapper {
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background-color: var(--wg-surface);
+  background-color: var(--wg-surface-alt);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.iconGreen { color: #10b981; }
-.iconBlue { color: #3b82f6; }
-.iconOrange { color: #f97316; }
-.iconYellow { color: #f59e0b; }
+.iconGreen { color: var(--wg-primary-text); }
+.iconBlue { color: var(--info); }
+.iconOrange { color: var(--warning); }
+.iconYellow { color: var(--wg-star); }
 
 .cardBody {
   display: flex;
@@ -57,8 +57,8 @@
 }
 
 .statValue {
-  font-size: 1.65rem;
-  font-weight: 800;
+  font-size: 1.6rem;
+  font-weight: 700;
   color: var(--wg-text);
   font-family: var(--font-heading);
   line-height: 1.2;
@@ -74,7 +74,7 @@
 
 .statSubtext {
   font-size: 0.78rem;
-  color: #94a3b8;
+  color: var(--wg-text-muted);
 }
 
 .badgePos {
@@ -82,11 +82,11 @@
   align-items: center;
   gap: 3px;
   font-size: 0.72rem;
-  font-weight: 700;
-  color: #059669;
-  background-color: #ecfdf5;
-  padding: 2px 7px;
-  border-radius: 10px;
+  font-weight: 600;
+  color: var(--wg-primary-text);
+  background-color: var(--wg-primary-light);
+  padding: 2px 8px;
+  border-radius: 9999px;
   white-space: nowrap;
 }
 
@@ -96,8 +96,8 @@
   gap: 3px;
   font-size: 0.72rem;
   font-weight: 600;
-  color: #64748b;
-  background-color: var(--wg-surface);
+  color: var(--wg-text-secondary);
+  background-color: var(--wg-surface-alt);
   padding: 2px 7px;
   border-radius: 10px;
   white-space: nowrap;

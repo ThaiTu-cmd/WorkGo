@@ -7,12 +7,13 @@ import { reviewApi } from '@/api/reviewApi';
 import { qk } from '@/api/queryKeys';
 import type { OrderReviewStatusDto } from '@/api/types';
 import { errorMessage } from '@/api/errors';
-import { Badge, Button, Card, font, makeStyles, spacing, TextField } from '@/ui';
+import { Badge, Button, Card, font, makeStyles, spacing, TextField, useColors } from '@/ui';
 import { useT } from '@/i18n';
 
 export function OrderReviewCard({ orderId, serviceId }: { orderId: string; serviceId?: string }) {
   const t = useT();
   const styles = useStyles();
+  const colors = useColors();
   const queryClient = useQueryClient();
 
   const [rating, setRating] = React.useState<number>(5);
@@ -64,7 +65,7 @@ export function OrderReviewCard({ orderId, serviceId }: { orderId: string; servi
               key={s}
               name={s <= rev.rating ? 'star' : 'star-outline'}
               size={20}
-              color="#f59e0b"
+              color={colors.star}
             />
           ))}
           <Text style={styles.ratingLabel}>{rev.rating} / 5</Text>
@@ -91,7 +92,7 @@ export function OrderReviewCard({ orderId, serviceId }: { orderId: string; servi
             <Ionicons
               name={s <= rating ? 'star' : 'star-outline'}
               size={28}
-              color="#f59e0b"
+              color={colors.star}
             />
           </Pressable>
         ))}

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { RefreshCw } from "lucide-react";
-import { adminApi } from "@/components/webapp-bridge/backend";
+import { adminApi } from "@/components/shell/backend";
 import {
   ConfirmDialog,
   ListState,
@@ -57,7 +58,20 @@ const ACTION: Record<string, { label: string; className: string; confirm: string
 const TYPE_LABEL: Record<string, string> = { INDIVIDUAL: "Cá nhân", COMPANY: "Doanh nghiệp" };
 
 export default function AdminProvidersPage() {
-  const [status, setStatus] = useState("PENDING");
+  return <Suspense fallback={null}><ProvidersContent /></Suspense>;
+}
+
+function ProvidersContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const requestedStatus = searchParams.get("status");
+  const status = requestedStatus && VERIFICATION_STATUSES.includes(requestedStatus) ? requestedStatus : "PENDING";
+  const setStatus = (next: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("status", next);
+    router.replace(`${pathname}?${params.toString()}`);
+  };
   const list = useAdminList<Provider>((page) => adminApi.listProviders({ status, page, size: 10 }), status);
   const [pending, setPending] = useState<{ provider: Provider; next: string } | null>(null);
   const [busy, setBusy] = useState(false);

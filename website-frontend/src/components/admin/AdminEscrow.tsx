@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useState} from "react";
-import {adminApi,useAuthToken} from "@/components/webapp-bridge/backend";
+import {adminApi,useAuthToken} from "@/components/shell/backend";
 import {Notice,PageHeader,errorMessage} from "./ui";
 type Escrow={escrowAccountId:string;orderId:string;heldAmount:number;status:string;fundingSource:string;currency:string};
 export default function AdminEscrow(){const token=useAuthToken();return <AdminEscrowContent key={token??'guest'}/>;}

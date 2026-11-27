@@ -1,6 +1,6 @@
 "use client";
 import {useRef,useState} from "react";
-import {adminApi,trustApi,useAuthToken} from "@/components/webapp-bridge/backend";
+import {adminApi,trustApi,useAuthToken} from "@/components/shell/backend";
 import {Notice,PageHeader,errorMessage} from "./ui";
 type Sanction={id:string;scope:string;reason:string;reference:string;effectiveAt:string;expiresAt?:string;revokedAt?:string};
 export default function AdminSanctions(){const token=useAuthToken();return <AdminSanctionsContent key={token??'guest'}/>;}

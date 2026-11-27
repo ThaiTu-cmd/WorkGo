@@ -1,13 +1,13 @@
 {
-  "walletHistory": {
-    "loginToView": "Sign in to view wallet transactions.",
-    "loadError": "Unable to load wallet data. Please refresh and try again.",
-    "escrowDetails": "View escrow amounts for each order.",
-    "loading": "Loading wallet data…",
-    "status": "Status",
-    "resumeTopUp": "Resume top-up"
+  "walletHistory": { "loginToView": "Sign in to view wallet transactions.", "loadError": "Unable to load wallet data. Please refresh and try again.", "escrowDetails": "View escrow amounts for each order.", "loading": "Loading wallet data…", "status": "Status", "resumeTopUp": "Resume top-up" },
+  "adminModeration": {
+    "faultType": "Fault type", "faultNONE": "No fault", "faultLATE": "Late DIGITAL delivery", "faultABANDONMENT": "Abandonment", "faultCAPABILITY": "Insufficient capability", "faultCORRECTION": "Correct an earlier decision", "lateCycles": "Late cycles (1–6)", "supersedesDecisionId": "Decision ID to correct", "faultRules": "Late penalties apply only to DIGITAL orders. Abandonment and capability require a Provider-fault refund. Corrections require a rejected dispute and the previous decision ID; the server checks the order and independent decision maker.",
+    "jobs": "Job moderation", "reviews": "Review moderation", "reports": "Reports", "disputes": "Dispute cases",
+    "item": "Case", "status": "Status", "createdAt": "Created", "actions": "Actions", "open": "View detail", "detail": "Detail", "loading": "Loading…", "retryLoad": "Reload", "id": "ID", "version": "Version", "client": "Client", "budget": "Budget", "order": "Order", "comment": "Comment", "target": "Target", "assigned": "Assigned admin", "evidenceRequest": "Evidence request", "evidence": "Evidence", "noEvidence": "No evidence yet.", "evidenceAssignedOnly": "Only the assigned admin can view private evidence.", "download": "Download evidence", "decision": "Decision and execution", "paymentStep": "Payment step", "orderStep": "Order step", "bytes": "bytes", "history": "Admin history", "historyAll": "Admin history is available under your current permissions.", "historyOwn": "Only actions by this admin account are shown.", "action": "Action", "actor": "Actor", "correlationId": "Trace ID", "reason": "Reason", "operation": "Decision", "faultParty": "At-fault party", "evidenceSummary": "Evidence summary", "confirm": "Confirm", "cancel": "Cancel", "saved": "Saved on the server.",
+    "hide": "Hide Job", "show": "Show Job", "APPROVED": "Approve review", "REJECTED": "Reject", "HIDDEN": "Hide review", "REVIEWING": "Reviewing", "RESOLVED": "Resolved", "takeOver": "Take over", "requestEvidence": "Request evidence", "resolve": "Resolve case", "retry": "Retry execution", "rejectCase": "Reject dispute", "release": "Release", "refund": "Refund"
   },
   "adminOperations": {
+    "editUser": "Edit profile", "firstName": "First name", "lastName": "Last name", "email": "Email", "phone": "Phone number", "noChanges": "No changes to save.", "invalidProfile": "Enter a name and valid email; phone must be 10 digits starting with 0 if provided.",
     "loading": "Loading…",
     "retry": "Try again",
     "empty": "No data.",

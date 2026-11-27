@@ -1,5 +1,5 @@
 "use client";
-import {useRef,useState} from 'react';import {adminApi,useAuthToken} from '@/components/webapp-bridge/backend';import {Notice,errorMessage} from './ui';
+import {useRef,useState} from 'react';import {adminApi,useAuthToken} from '@/components/shell/backend';import {Notice,errorMessage} from './ui';
 type Review={orderId:string;status:string;requestedAt:string;dueAt:string;version:number};
 type Detail={review:Review;snapshot:{points:number;inputHash:string;lockedAt:string;modelVersion:string;ruleVersion:string};quote?:{reference:string;input:{scope:string;price:number;currency:string;durationDays:number};remainingPairCap:number;remainingProviderCap:number}|null};
 export default function AdminRewardReviews(){const token=useAuthToken();return <AdminRewardReviewsContent key={token??'guest'}/>;}

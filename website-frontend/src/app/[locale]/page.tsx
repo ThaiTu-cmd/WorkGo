@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import WebAppShell from "@/components/webapp-bridge/webapp-shell";
+import MarketplaceShell from "@/components/shell/MarketplaceShell";
 
 export const metadata: Metadata = {
   title: "WorkGo — Sàn Dịch vụ",
@@ -17,5 +17,5 @@ export default async function LocaleRootPage({
   await params;
   const sp = await searchParams;
   const pageParam = typeof sp?.page === "string" ? sp.page : undefined;
-  return <WebAppShell initialPage={pageParam} />;
+  return <MarketplaceShell initialPage={pageParam} />;
 }

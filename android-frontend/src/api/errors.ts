@@ -1,7 +1,7 @@
 import { translate } from '@/i18n';
 
 // Error model shared by every API module. Rules mirror the web client
-// (website-frontend/src/_webapp-mirror/api/axiosClient.js).
+// (website-frontend/src/marketplace/api/axiosClient.js).
 
 // No JSON body on a 5xx / a failed fetch means the gateway or service never
 // answered, not a business error from the API.

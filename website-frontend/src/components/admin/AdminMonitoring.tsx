@@ -2,8 +2,8 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
-import { adminApi, useAuthToken } from "@/components/webapp-bridge/backend";
-import { hasRole } from "@/_webapp-mirror/utils/jwt";
+import { adminApi, useAuthToken } from "@/components/shell/backend";
+import { hasRole } from "@/marketplace/utils/jwt";
 import { AdminTable, ListState, Notice, PageHeader, StatusBadge, cx, downloadAdminFile, errorMessage, formatDate, formatMoney, useAdminArray, useAdminList } from "./ui";
 import styles from "./admin.module.css";
 

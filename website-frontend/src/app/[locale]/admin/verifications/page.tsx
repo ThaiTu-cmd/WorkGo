@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { adminApi } from "@/components/webapp-bridge/backend";
+import { adminApi } from "@/components/shell/backend";
 import {
   AdminTable,
   ConfirmDialog,

@@ -2,7 +2,7 @@ import fs from 'fs';import path from 'path';
 import parser from '@babel/parser';
 import traverse from '@babel/traverse';
 function walk(d,exts,acc=[]){for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())walk(p,exts,acc);else if(exts.some(x=>e.name.endsWith(x)))acc.push(p)}return acc}
-const files=[...walk('src/_webapp-mirror',['.jsx']),...walk('src/components/trung-pages',['.tsx'])];
+const files=[...walk('src/marketplace',['.jsx']),...walk('src/components/pages',['.tsx'])];
 const viRe=/[àáảãạăắặẳẵẳặâấậẩẫậèéẻẽẹêếệểễệìíỉĩịòóỏõọôốộổỗộơớợởỡợùúủũụưứựửữựỳýỷỹỵđ]/i;
 const set=new Set();
 for(const f of files){

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
-import { adminApi } from "@/components/webapp-bridge/backend";
+import { adminApi } from "@/components/shell/backend";
 import { AdminTable, ConfirmDialog, Notice, PageHeader, StatusBadge, cx, errorMessage, formatDate, formatMoney, useAdminArray } from "./ui";
 import { adminHref } from "./adminNav";
 import styles from "./admin.module.css";

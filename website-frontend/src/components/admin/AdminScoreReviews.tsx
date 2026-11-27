@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { adminApi, useAuthToken } from "@/components/webapp-bridge/backend";
-import ScoreReviewHistory, { type ScoreReviewReceipt, scoreReviewLabel } from "../trung-pages/provider/ScoreReviewHistory";
+import { adminApi, useAuthToken } from "@/components/shell/backend";
+import ScoreReviewHistory, { type ScoreReviewReceipt, scoreReviewLabel } from "../pages/provider/ScoreReviewHistory";
 import { Notice, PageHeader, errorMessage } from "./ui";
 
 type Pending = { providerId: string; score: number; sourceVersion: number; lowScoreSince?: string };

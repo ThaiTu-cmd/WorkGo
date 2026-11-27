@@ -4,13 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { BadgeCheck, FileCheck2, Hourglass, Users, type LucideIcon } from "lucide-react";
-import { adminApi, useAuthToken } from "@/components/webapp-bridge/backend";
+import { adminApi, useAuthToken } from "@/components/shell/backend";
 import { canAccessAdminPath } from "@/components/admin/adminPolicy";
 import { adminHref } from "@/components/admin/adminNav";
 import { Notice, PageHeader, errorMessage } from "@/components/admin/ui";
 import styles from "@/components/admin/admin.module.css";
 
-type Stat = { key: string; label: string; hint: string; icon: LucideIcon; path: string; load: () => Promise<{ result?: { totalElements?: number } }> };
+type Stat = { key: string; label: string; hint: string; icon: LucideIcon; path: string; status?: string; load: () => Promise<{ result?: { totalElements?: number } }> };
 
 const STATS: Stat[] = [
   {
@@ -19,6 +19,7 @@ const STATS: Stat[] = [
     hint: "Hồ sơ đăng ký mới",
     icon: Hourglass,
     path: "providers",
+    status: "PENDING",
     load: () => adminApi.listProviders({ status: "PENDING", size: 1 }),
   },
   {
@@ -27,6 +28,7 @@ const STATS: Stat[] = [
     hint: "Đang có quyền PROVIDER",
     icon: BadgeCheck,
     path: "providers",
+    status: "VERIFIED",
     load: () => adminApi.listProviders({ status: "VERIFIED", size: 1 }),
   },
   {
@@ -79,7 +81,7 @@ export default function AdminDashboardPage() {
         {stats.map((s) => {
           const v = values[s.key];
           return (
-            <Link key={s.key} href={adminHref(locale, s.path)} className={`${styles.card} ${styles.stat}`}>
+            <Link key={s.key} href={`${adminHref(locale, s.path)}${s.status ? `?status=${s.status}` : ""}`} className={`${styles.card} ${styles.stat}`}>
               <span className={styles.statLabel}>
                 <s.icon size={16} aria-hidden="true" /> {s.label}
               </span>

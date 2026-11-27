@@ -91,10 +91,6 @@ export const buildAccountGroups = tr => [{
 export const buildAdminGroup = tr => ({
   title: tr("m65"),
   items: [{
-    key: 'admin-console',
-    icon: ShieldCheck,
-    label: tr("m65")
-  }, {
     key: 'admin',
     icon: ShieldCheck,
     label: tr("m65"),
@@ -102,8 +98,8 @@ export const buildAdminGroup = tr => ({
   }]
 });
 
-// Groups visible to the signed-in token (admin group only for ROLE_ADMIN).
-export const accountGroupsFor = (token, tr) => hasRole(token, 'ADMIN') ? [...buildAccountGroups(tr), buildAdminGroup(tr)] : buildAccountGroups(tr);
+// Groups visible to the signed-in token (admin group for either admin role).
+export const accountGroupsFor = (token, tr) => hasRole(token, 'ADMIN') || hasRole(token, 'SUPER_ADMIN') ? [...buildAccountGroups(tr), buildAdminGroup(tr)] : buildAccountGroups(tr);
 
 // Shell page keys go through onNavigate; items with `href` are separate routes.
 // The three wallet destinations open the Finance hub on the matching tab (Ví /

@@ -112,7 +112,14 @@
     "failed": "Confirm failed",
     "unknown": "Mark outcome unknown"
   },
-  "catalogUpload": { "cover": "Upload cover image", "gallery": "Upload gallery image", "video": "Upload MP4 video", "openVideo": "Open uploaded video", "removeVideo": "Remove video", "fileSize": "Choose a non-empty file up to {p0} MB." },
+  "catalogUpload": {
+    "cover": "Upload cover image",
+    "gallery": "Upload gallery image",
+    "video": "Upload MP4 video",
+    "openVideo": "Open uploaded video",
+    "removeVideo": "Remove video",
+    "fileSize": "Choose a non-empty file up to {p0} MB."
+  },
   "orderWallet": {
     "creationKeyInvalid": "The order request identifier is invalid. Please return to the service and try again.",
     "creationKeyConflict": "This order request cannot be reused. Please check your orders before creating a new one.",
@@ -142,8 +149,26 @@
     "topUpLimits": "The amount is below the minimum or exceeds the daily top-up limit.",
     "topUpUnavailable": "The top-up transaction details could not be loaded."
   },
-  "adminPending": { "jobs": "Job moderation", "reviews": "Review moderation", "reports": "Reports", "disputes": "Dispute cases", "fees": "Fee policies", "sanctions": "Sanctions", "monitoring": "Monitoring", "audit": "Admin history", "reconciliation": "Reconciliation", "unavailable": "Not released: this feature is waiting for an API with authorization and auditing. No data changes are available yet." },
-  "notifications": { "title": "Notifications", "readAll": "Mark all as read", "error": "Unable to load or update notifications.", "retry": "Retry", "loading": "Loading", "empty": "No new notifications" },
+  "adminPending": {
+    "jobs": "Job moderation",
+    "reviews": "Review moderation",
+    "reports": "Reports",
+    "disputes": "Dispute cases",
+    "fees": "Fee policies",
+    "sanctions": "Sanctions",
+    "monitoring": "Monitoring",
+    "audit": "Admin history",
+    "reconciliation": "Reconciliation",
+    "unavailable": "Not released: this feature is waiting for an API with authorization and auditing. No data changes are available yet."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "readAll": "Mark all as read",
+    "error": "Unable to load or update notifications.",
+    "retry": "Retry",
+    "loading": "Loading",
+    "empty": "No new notifications"
+  },
   "orderWorkspace": {
     "agreement": "Order agreement",
     "version": "Version {p0}",
@@ -2670,5 +2695,22 @@
     "m1775": "Couldn't load messages: {p0}",
     "m1776": "Opening conversation...",
     "m1777": "Retry"
+  },
+  "orderInputs": {
+    "title": "Agreement and inputs",
+    "proposal": "Required inputs (one per line)",
+    "none": "No inputs required",
+    "propose": "Propose checklist",
+    "confirm": "Accept this agreement and checklist",
+    "values": "Input details",
+    "submit": "Submit for Provider review",
+    "accept": "Confirm inputs are sufficient",
+    "missing": "Missing inputs (specify each item)",
+    "reject": "Request missing inputs",
+    "waiting": "Awaiting Provider review within 24 hours. The deadline has not started.",
+    "accepted": "Inputs confirmed.",
+    "retry": "Reload",
+    "pending": "The checklist has not been agreed; work has not started.",
+    "stored": "Submitted client inputs"
   }
 }

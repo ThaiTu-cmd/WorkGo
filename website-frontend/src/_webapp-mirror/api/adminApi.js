@@ -1,4 +1,5 @@
 import axiosClient, { getSessionGeneration } from './axiosClient.js';
+import { pendingScoreReviews, scoreReviewHistory, scoreReviewReceipt } from './scoreReviewContract.js';
 
 const springPage = async (request) => {
   const response = await request;
@@ -18,8 +19,8 @@ const springPage = async (request) => {
 /** @typedef {AccountChange & {roleName: 'ADMIN' | 'SUPER_ADMIN'}} RoleChange */
 /** @typedef {{successFeeRate: number, cancellationFeeRate: number, cancellationFeeCap: number, effectiveFrom?: string, reason: string}} FeeVersion */
 /** @typedef {'processing' | 'paid' | 'failed' | 'unknown'} PayoutAction */
-/** @typedef {{reason: string, externalReference?: string}} PayoutEvidence */
-/** @typedef {{reason: string, externalReference: string, result: 'SUCCEEDED' | 'FAILED'}} TopUpResolution */
+/** @typedef {{reason: string, externalReference?: string, sourceEvidence?: Record<string,string>}} PayoutEvidence */
+/** @typedef {{reason: string, externalReference: string, result: 'SUCCEEDED' | 'FAILED', sourceEvidence?: Record<string,string>}} TopUpResolution */
 
 export const adminApi = {
   listModerationJobs: (page = 0) => springPage(axiosClient.get('/job/admin/jobs', { params: { page } })),
@@ -45,7 +46,37 @@ export const adminApi = {
   takeOverDispute: (id, body) => axiosClient.post(`/trust/admin/disputes/${id}/take-over`, body),
   requestDisputeEvidence: (id, body) => axiosClient.post(`/trust/admin/disputes/${id}/evidence-request`, body),
   resolveDispute: (id, body) => axiosClient.post(`/trust/admin/disputes/${id}/resolve`, body),
-  retryDecision: (id, body) => axiosClient.post(`/trust/admin/decisions/${id}/retry`, body),
+  initializeProviderReputation: (id, reason) => axiosClient.post(`/identity/providers/${encodeURIComponent(id)}/reputation-initialization`, { reason }),
+  securitySupport: () => axiosClient.get('/identity/admin/security-support'),
+  listCases: (section, params = {}) => {
+    if (!['jobs','reviews','reports','disputes'].includes(section)) throw new Error('Unsupported case section');
+    return axiosClient.get(`/${section === 'jobs' ? 'job' : 'trust'}/admin/${section}`, { params });
+  },
+  getCase: (section, id) => axiosClient.get(`/${section === 'jobs' ? 'job' : 'trust'}/admin/${section}/${encodeURIComponent(id)}`),
+  caseAction: (section, id, action, body) => {
+    const route = section === 'jobs' ? 'job' : 'trust';
+    const allowed = { jobs: ['moderation'], reviews: ['moderation'], reports: ['status'],
+      disputes: ['take-over','evidence-request','evidence-extension','resolve'] };
+    if (!allowed[section]?.includes(action)) throw new Error('Unsupported case action');
+    const path = `/${route}/admin/${section}/${encodeURIComponent(id)}/${action}`;
+    return ['moderation','status'].includes(action) ? axiosClient.put(path,body) : axiosClient.post(path,body);
+  },
+  getCaseDecision: (id) => axiosClient.get(`/trust/admin/disputes/${encodeURIComponent(id)}/decision`),
+  retryDecision: (id, body) => axiosClient.post(`/trust/admin/decisions/${encodeURIComponent(id)}/retry`, body),
+  listEscrows: (page = 0) => axiosClient.get('/payment/admin/escrows', { params: { page } }),
+  createSanction: (id, body) => axiosClient.post(`/identity/providers/${encodeURIComponent(id)}/sanctions`, body),
+  pendingSanctionAppeals: () => axiosClient.get('/identity/sanction-appeals/pending'),
+  reviewSanctionAppeal: (id, body) => axiosClient.post(`/identity/sanction-appeals/${encodeURIComponent(id)}/review`, body),
+  approveRecovery: (id, reason) => axiosClient.post(`/identity/providers/${encodeURIComponent(id)}/recovery-grants`, { reason }),
+  completeRecovery: (id, reason) => axiosClient.post(`/identity/providers/${encodeURIComponent(id)}/recovery-completion`, { reason }),
+  pendingScoreReviews: () => axiosClient.get('/identity/admin/provider-score-reviews/pending').then(pendingScoreReviews),
+  reviewProviderScore: (id, body) => axiosClient.post(`/identity/providers/${encodeURIComponent(id)}/score-review`, body)
+    .then(response => scoreReviewReceipt(response, id, body)),
+  providerScoreReviews: (id) => axiosClient.get(`/identity/providers/${encodeURIComponent(id)}/score-reviews`)
+    .then(response => scoreReviewHistory(response, id)),
+  pendingRewardReviews: () => axiosClient.get('/trust/admin/reward-reviews'),
+  getRewardReview: (id) => axiosClient.get(`/trust/admin/reward-reviews/${encodeURIComponent(id)}`),
+  reviewReward: (id, body) => axiosClient.post(`/trust/admin/reward-reviews/${encodeURIComponent(id)}`, body),
   // identity-service provider profiles. `status` is required: the backend
   // filters with an exact match, so a missing status returns nothing.
   listProviders: ({ status = 'PENDING', page = 0, size = 10 } = {}) =>

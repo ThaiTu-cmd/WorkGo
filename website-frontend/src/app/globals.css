@@ -95,19 +95,19 @@
 [data-theme="dark"],
 .dark {
   color-scheme: dark;
-  --bg-app: #101311;
-  --bg-surface: #171b18;
-  --bg-muted: #202622;
-  --surface-subtle: #202622;
-  --border-subtle: rgba(237, 242, 238, 0.08);
-  --border-default: rgba(237, 242, 238, 0.14);
-  --border-strong: rgba(237, 242, 238, 0.26);
-  --border-color: rgba(237, 242, 238, 0.14);
+  --bg-app: #1b2420;
+  --bg-surface: #232d27;
+  --bg-muted: #2c3831;
+  --surface-subtle: #2c3831;
+  --border-subtle: rgba(231, 240, 234, 0.1);
+  --border-default: rgba(231, 240, 234, 0.16);
+  --border-strong: rgba(231, 240, 234, 0.26);
+  --border-color: rgba(231, 240, 234, 0.16);
   --text-primary: #edf2ee;
-  --text-secondary: #bcc7c0;
-  --text-muted: #8d9991;
-  --text-disabled: #556159;
-  --text-tertiary: #8d9991;
+  --text-secondary: #c3cec6;
+  --text-muted: #9aa99f;
+  --text-disabled: #6e7c73;
+  --text-tertiary: #9aa99f;
   --color-brand-900: #012b1d;
   --color-brand-800: #032115;
   --color-brand-700: #0b4e33;
@@ -129,19 +129,19 @@
   --danger-bg: rgba(248, 113, 113, 0.14);
   --info: #5eead4;
   --info-bg: rgba(45, 212, 191, 0.14);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
-  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.55);
-  --shadow-lg: 0 14px 36px rgba(0, 0, 0, 0.65);
-  --shadow-blue: 0 6px 20px rgba(29, 191, 115, 0.22);
+  --shadow-sm: 0 1px 3px rgba(4, 10, 7, 0.25);
+  --shadow-md: 0 6px 20px rgba(4, 10, 7, 0.32);
+  --shadow-lg: 0 14px 36px rgba(4, 10, 7, 0.38);
+  --shadow-blue: 0 6px 20px rgba(29, 191, 115, 0.18);
   --accent-mint: #1dbf73;
   --accent-mint-hover: #19a463;
   --accent-mint-ink: #ffffff;
-  --bg-deep-space: #101311;
-  --glass-bg: rgba(23, 27, 24, 0.85);
-  --glass-border: rgba(237, 242, 238, 0.14);
-  --glass-card-bg: rgba(23, 27, 24, 0.9);
-  --glass-panel-bg: rgba(16, 19, 17, 0.9);
-  --glass-dock-bg: rgba(16, 19, 17, 0.95);
+  --bg-deep-space: #1b2420;
+  --glass-bg: rgba(35, 45, 39, 0.88);
+  --glass-border: rgba(231, 240, 234, 0.16);
+  --glass-card-bg: rgba(35, 45, 39, 0.92);
+  --glass-panel-bg: rgba(27, 36, 32, 0.92);
+  --glass-dock-bg: rgba(27, 36, 32, 0.95);
   --exec-digital-bg: rgba(56, 189, 248, 0.16);
   --exec-digital-fg: #7dd3fc;
   --exec-onsite-bg: rgba(251, 191, 36, 0.16);
@@ -158,15 +158,15 @@
   --wg-primary-text: #34d399;
   --wg-primary-light: rgba(29, 191, 115, 0.14);
   --wg-primary-glow: rgba(29, 191, 115, 0.22);
-  --wg-bg: #101311;
-  --wg-background: #101311;
-  --wg-surface: #171b18;
-  --wg-surface-alt: #202622;
+  --wg-bg: #1b2420;
+  --wg-background: #1b2420;
+  --wg-surface: #232d27;
+  --wg-surface-alt: #2c3831;
   --wg-text: #edf2ee;
-  --wg-text-secondary: #bcc7c0;
-  --wg-text-muted: #8d9991;
-  --wg-border: rgba(237, 242, 238, 0.14);
-  --wg-border-light: rgba(237, 242, 238, 0.08);
+  --wg-text-secondary: #c3cec6;
+  --wg-text-muted: #9aa99f;
+  --wg-border: rgba(231, 240, 234, 0.16);
+  --wg-border-light: rgba(231, 240, 234, 0.1);
   --wg-danger: #f87171;
   --wg-star: #fbbf24;
 }
@@ -516,9 +516,11 @@ html {
   background: linear-gradient(180deg, transparent 55%, color-mix(in srgb, var(--bg-app) 88%, transparent) 100%);
 }
 
-[data-theme="light"] .landing-cta-panel {
-  background: linear-gradient(135deg, #158852 0%, #1dbf73 55%, #34d399 100%);
-  border-color: rgba(255, 255, 255, 0.35);
+/* Shared green band — the same field in light and dark so the frame never
+   reads as half green, half black. */
+.landing-cta-panel {
+  background: linear-gradient(135deg, #0b4e33 0%, #0e6b45 55%, #147a49 100%);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 /* =============================================================================
@@ -568,7 +570,7 @@ input[type="submit"]:not(:disabled):active,
   }
 }
 
-[data-theme="light"] .landing-cta-panel p {
+.landing-cta-panel p {
   color: rgba(255, 255, 255, 0.95);
 }
 

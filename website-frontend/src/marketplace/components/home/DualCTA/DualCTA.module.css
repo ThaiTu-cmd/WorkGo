@@ -34,13 +34,19 @@
 }
 
 .clientCard {
-  background: linear-gradient(135deg, #07291c 0%, #147a49 100%);
+  background: linear-gradient(135deg, #0b4e33 0%, #0e6b45 55%, #147a49 100%);
   color: #ffffff;
 }
 
 .providerCard {
   background: linear-gradient(135deg, #141a16 0%, #202822 100%);
   color: #ffffff;
+}
+
+/* In dark mode the secondary card follows the lifted neutral ramp instead of
+   collapsing into the page as another near-black block. */
+:global([data-theme="dark"]) .providerCard {
+  background: linear-gradient(135deg, #232d27 0%, #2c3831 100%);
 }
 
 .cardHeader {

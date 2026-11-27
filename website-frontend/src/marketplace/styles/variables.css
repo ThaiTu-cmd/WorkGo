@@ -95,29 +95,29 @@
   --wg-primary-light: rgba(29, 191, 115, 0.14);
   --wg-primary-glow: rgba(29, 191, 115, 0.22);
 
-  --wg-secondary: #0f1712;
-  --wg-hero-bg: #101311;
+  --wg-secondary: #2c3831;
+  --wg-hero-bg: #0b4e33;
   --wg-hero-gradient: linear-gradient(
     135deg,
-    #101311 0%,
-    #171b18 55%,
+    #0b4e33 0%,
+    #0e6b45 55%,
     #147a49 100%
   );
   --wg-hero-banner-accent: #147a49;
   --wg-star: #fbbf24;
 
-  --wg-bg: #101311;
-  --wg-background: #101311;
-  --wg-surface: #171b18;
-  --wg-surface-alt: #202622;
+  --wg-bg: #1b2420;
+  --wg-background: #1b2420;
+  --wg-surface: #232d27;
+  --wg-surface-alt: #2c3831;
   --wg-text: #edf2ee;
-  --wg-text-secondary: #bcc7c0;
-  --wg-text-muted: #8d9991;
-  --wg-border: rgba(237, 242, 238, 0.14);
-  --wg-border-light: rgba(237, 242, 238, 0.08);
+  --wg-text-secondary: #c3cec6;
+  --wg-text-muted: #9aa99f;
+  --wg-border: rgba(231, 240, 234, 0.16);
+  --wg-border-light: rgba(231, 240, 234, 0.1);
   --wg-danger: #f87171;
-  --surface-subtle: #202622;
-  --border-color: rgba(237, 242, 238, 0.14);
+  --surface-subtle: #2c3831;
+  --border-color: rgba(231, 240, 234, 0.16);
 
   /* Badges - dark variants */
   --badge-digital-bg: rgba(3, 105, 161, 0.22);

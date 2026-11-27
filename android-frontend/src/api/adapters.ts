@@ -1,5 +1,5 @@
 // Pure mappers: backend DTOs (identity / catalog / order-service) → the shapes
-// the screens render. Ported from website-frontend/src/_webapp-mirror/api/adapters.js;
+// the screens render. Ported from website-frontend/src/marketplace/api/adapters.js;
 // fields the backend does not expose yet are left out.
 import type { AddonDto, AddressDto, CategoryDto, MediaDto, PackageDto, ProviderProfileDto, ServiceDto } from './types';
 import { translate } from '@/i18n';

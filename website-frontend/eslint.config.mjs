@@ -12,8 +12,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    "src/_webapp-mirror/**",
-    "_webapp-reference/**",
+    "src/marketplace/**",
   ]),
 ]);
 

@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { adminApi, decodeToken, hasRole, useAuthToken } from "@/components/webapp-bridge/backend";
+import { adminApi, decodeToken, hasRole, useAuthToken } from "@/components/shell/backend";
 import { disputeDecisionBody, moderationActions, moderationDetailVisible } from "./moderationPolicy";
 import { AdminTable, Notice, PageHeader, StatusBadge, cx, downloadAdminFile, errorMessage, formatDate, formatMoney, useAdminList } from "./ui";
 import styles from "./admin.module.css";

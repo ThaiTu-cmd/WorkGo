@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { RefreshCw } from "lucide-react";
-import { adminApi } from "@/components/webapp-bridge/backend";
+import { adminApi } from "@/components/shell/backend";
 import {
   ConfirmDialog,
   ListState,

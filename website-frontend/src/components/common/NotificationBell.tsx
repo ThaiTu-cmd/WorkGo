@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, CheckCheck, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useAuthToken, useMessages } from "@/components/webapp-bridge/backend";
-import { notificationApi, isUnread, notificationTarget } from "@/_webapp-mirror/api/notificationApi";
+import { useAuthToken, useMessages } from "@/components/shell/backend";
+import { notificationApi, isUnread, notificationTarget } from "@/marketplace/api/notificationApi";
 
 type NotificationItem = { id: string; title: string; content: string; readAt: string | null; createdAt: string; referenceType: string; referenceId: string | null };
 

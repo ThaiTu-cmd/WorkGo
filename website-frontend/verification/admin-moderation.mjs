@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { adminApi } from '../src/_webapp-mirror/api/adminApi.js';
-import axiosClient from '../src/_webapp-mirror/api/axiosClient.js';
+import { adminApi } from '../src/marketplace/api/adminApi.js';
+import axiosClient from '../src/marketplace/api/axiosClient.js';
 import { canAccessAdminPath } from '../src/components/admin/adminPolicy.js';
 import { disputeDecisionBody, moderationActions, moderationDetailVisible } from '../src/components/admin/moderationPolicy.js';
 import { adminUserDraftValid, adminUserUpdate } from '../src/components/admin/adminUserUpdate.js';

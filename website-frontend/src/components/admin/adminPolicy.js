@@ -1,4 +1,4 @@
-import { hasRole } from '../../_webapp-mirror/utils/jwt.js';
+import { hasRole } from '../../marketplace/utils/jwt.js';
 
 export function canAccessAdminPath(token, path = '') {
   const section = path.split('/')[0];

@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useRef,useState} from "react";
-import {adminApi,useAuthToken,trustApi} from "@/components/webapp-bridge/backend";
+import {adminApi,useAuthToken,trustApi} from "@/components/shell/backend";
 import {errorMessage,Notice,PageHeader} from "./ui";
 import AdminRewardReviews from './AdminRewardReviews';
 type Row={id?:string;jobId?:string;reviewId?:string;reportId?:string;disputeId?:string;version?:number;status?:string;moderationStatus?:string;description?:string;reason?:string;title?:string;assigneeId?:string;assignedAdminId?:string;caseType?:string;job?:Row;moderationHidden?:boolean};

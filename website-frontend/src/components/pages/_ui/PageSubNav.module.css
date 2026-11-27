@@ -1,0 +1,67 @@
+/* Pinned right under the fixed Header bar. Its height is part of
+   --header-height (MarketplaceShell.module.css), so pages already leave room. */
+.bar {
+  position: fixed;
+  top: var(--header-bar-height, 76px);
+  left: 0;
+  right: 0;
+  z-index: 999;
+  height: var(--subnav-height, 56px);
+  background: var(--wg-surface);
+  border-bottom: 1px solid var(--wg-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 32px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* Still swipe/scrollable, but no visible scrollbar. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.inner::-webkit-scrollbar {
+  display: none;
+}
+
+.link {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--wg-text-secondary);
+  border-radius: 9999px;
+  white-space: nowrap;
+  overflow-wrap: break-word;
+}
+
+.link:hover {
+  background: var(--wg-surface-alt);
+  color: var(--wg-text);
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--wg-primary);
+  outline-offset: 2px;
+}
+
+.active {
+  background: var(--wg-primary-light);
+  color: var(--wg-primary-active);
+}
+
+@media (max-width: 768px) {
+  .inner {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}

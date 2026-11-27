@@ -1,5 +1,5 @@
 import fs from 'fs';
-const s=fs.readFileSync('src/components/trung-pages/jobs/SubmitProposalPage.tsx','utf8');
+const s=fs.readFileSync('src/components/pages/jobs/SubmitProposalPage.tsx','utf8');
 const lines=s.split(/\n/);
 // find validate functions
 const start=lines.findIndex(l=>/export function validate/.test(l));

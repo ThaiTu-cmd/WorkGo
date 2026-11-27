@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useParams, usePathname } from "next/navigation";
 import { Home, Loader2, LogOut, Menu, ShieldCheck, ShieldX, X } from "lucide-react";
-import { authApi, decodeToken, useAuthToken } from "@/components/webapp-bridge/backend";
+import { authApi, decodeToken, useAuthToken } from "@/components/shell/backend";
 import { canAccessAdminPath } from "./adminPolicy";
 import { ADMIN_NAV, adminHref } from "./adminNav";
 import { cx, errorMessage } from "./ui";

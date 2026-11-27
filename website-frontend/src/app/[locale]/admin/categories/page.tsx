@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { adminApi } from "@/components/webapp-bridge/backend";
+import { adminApi } from "@/components/shell/backend";
 import {
   ConfirmDialog,
   ListState,

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { BadgeCheck, FileCheck2, Hourglass, Users, type LucideIcon } from "lucide-react";
-import { adminApi, useAuthToken } from "@/components/webapp-bridge/backend";
+import { adminApi, useAuthToken } from "@/components/shell/backend";
 import { canAccessAdminPath } from "@/components/admin/adminPolicy";
 import { adminHref } from "@/components/admin/adminNav";
 import { Notice, PageHeader, errorMessage } from "@/components/admin/ui";

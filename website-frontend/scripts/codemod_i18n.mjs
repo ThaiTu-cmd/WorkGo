@@ -10,7 +10,7 @@ const keyOf=new Map();
 strings.forEach((s,i)=>keyOf.set(s.trim(),'m'+i));
 
 function walk(d,exts,acc=[]){for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);if(e.isDirectory())walk(p,exts,acc);else if(exts.some(x=>e.name.endsWith(x)))acc.push(p)}return acc}
-const files=[...walk('src/_webapp-mirror',['.jsx']),...walk('src/components/trung-pages',['.tsx'])];
+const files=[...walk('src/marketplace',['.jsx']),...walk('src/components/pages',['.tsx'])];
 
 let changed=0;
 for(const f of files){

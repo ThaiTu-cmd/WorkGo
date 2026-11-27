@@ -3,7 +3,7 @@
 import { RefreshCw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
-import { adminApi, decodeToken, joinFullName, useAuthToken } from "@/components/webapp-bridge/backend";
+import { adminApi, decodeToken, joinFullName, useAuthToken } from "@/components/shell/backend";
 import { ConfirmDialog, ListState, Notice, PageHeader, Pagination, StatusBadge, cx, errorMessage, formatDate, useAdminList } from "@/components/admin/ui";
 import { adminUserDraftValid, adminUserUpdate } from "@/components/admin/adminUserUpdate";
 import styles from "@/components/admin/admin.module.css";
@@ -125,10 +125,10 @@ export default function AdminUsersPage() {
                           <div className={styles.badgeRow}>
                             {roles.length
                               ? roles.map((r) => (
-                                  <span key={r} className={cx(styles.badge, ROLE_TONE[r])}>
-                                    {r}
-                                  </span>
-                                ))
+                                <span key={r} className={cx(styles.badge, ROLE_TONE[r])}>
+                                  {r}
+                                </span>
+                              ))
                               : "—"}
                           </div>
                         </td>

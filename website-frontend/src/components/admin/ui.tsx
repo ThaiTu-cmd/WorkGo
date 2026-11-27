@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { AlertCircle, ChevronLeft, ChevronRight, Inbox, Loader2 } from "lucide-react";
-import { ApiError } from "@/components/webapp-bridge/backend";
+import { ApiError } from "@/components/shell/backend";
 import styles from "./admin.module.css";
 
 export const cx = (...names: Array<string | false | null | undefined>) =>

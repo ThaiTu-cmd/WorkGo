@@ -2,6 +2,8 @@
 
 App React Native (Expo SDK 57) cho khách hàng và chuyên gia WorkGo. App gọi thẳng API gateway của backend (`/api/v1`), không phụ thuộc web.
 
+Hướng dẫn bàn giao hiện hành: [Android local với backend Docker và kết nối AWS](../docker/MOBILE.md). Mobile chạy bằng Android Studio/emulator/điện thoại, không nằm trong Docker Compose.
+
 ## Cài đặt
 
 ```bash
@@ -105,7 +107,7 @@ Hoặc copy file APK sang điện thoại và mở để cài (cho phép "cài t
    - "Giả lập thất bại" → "Thử thanh toán lại"; đơn chờ thanh toán có nút "Thanh toán" trong chi tiết đơn.
 5. Đăng ký chuyên gia → admin duyệt trên web → "Cập nhật quyền" → thấy "Dịch vụ của tôi".
 6. Tạo dịch vụ có ảnh chụp từ camera, thêm khung giờ: các lượt trong 4 tuần tới hiện ngay ở "Lịch sắp tới" (backend tự sinh). Sửa khung giờ thì lượt trống được tạo lại, lượt đã đặt vẫn giữ.
-7. Đơn Tại nhà đã ở `IN_PROGRESS` + onsite `IN_SERVICE` (chỉnh trong database): chuyên gia gửi bằng chứng bằng camera; khách thấy ảnh.
+7. Đưa đơn Tại nhà đến trạng thái cho phép bằng luồng API/UI đúng quyền, rồi chuyên gia gửi bằng chứng bằng camera; khách kiểm tra ảnh. Không sửa trực tiếp trạng thái database để thay nghiệm thu luồng.
 8. Tắt mạng: hiện banner "Mất kết nối mạng", "Thử lại" hoạt động khi có mạng.
 9. Để app chạy nền rồi mở lại: vẫn đăng nhập; token được làm mới khi còn dưới 2 giờ.
 

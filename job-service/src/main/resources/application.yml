@@ -9,7 +9,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:${JOB_DB_PORT:5437}/${JOB_DB:job_db}
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD}
+    password: ${DB_PASSWORD:admin123}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -53,3 +53,16 @@ app:
     catalog: ${CATALOG_SERVICE_URL:http://localhost:8082/catalog}
     order: ${ORDER_SERVICE_URL:http://localhost:8083/order}
     payment: ${PAYMENT_SERVICE_URL:http://localhost:8084/payment}
+
+---
+# Preserve schema validation profile in the single application config file.
+spring:
+  config:
+    activate:
+      on-profile: validated
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  sql:
+    init:
+      mode: never

@@ -47,3 +47,16 @@ app:
   service:
     identity:
       url: ${APP_SERVICE_IDENTITY_URL:${IDENTITY_SERVICE_URL:http://localhost:8081/identity}}
+
+---
+# Preserve schema validation profile in the single application config file.
+spring:
+  config:
+    activate:
+      on-profile: validated
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  sql:
+    init:
+      mode: never

@@ -67,3 +67,16 @@ payment:
     redirect-url: ${MOMO_REDIRECT_URL:http://localhost:8888/api/v1/payment/gateway/momo/return}
     #momo goi server-server, chay local thi phai dung ngrok
     ipn-url: ${MOMO_IPN_URL:http://localhost:8888/api/v1/payment/gateway/momo/ipn}
+
+---
+# Preserve schema validation profile in the single application config file.
+spring:
+  config:
+    activate:
+      on-profile: validated
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  sql:
+    init:
+      mode: never

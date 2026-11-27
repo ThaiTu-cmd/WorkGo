@@ -1,2 +1,7 @@
 /mvnw text eol=lf
 *.cmd text eol=crlf
+docker/*.sh text eol=lf
+docker/*.sql text eol=lf
+docker/*.js text eol=lf
+docker/*.Dockerfile text eol=lf
+/.gitattributes text eol=lf

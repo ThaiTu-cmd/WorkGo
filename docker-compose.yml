@@ -1,151 +1,210 @@
-version: "3.9"
+# Full LOCAL development stack. Defaults are not production credentials.
+# Start: docker compose up -d --build --wait --wait-timeout 300
+# Runtime schema/index files ship in docker/. Existing volumes are never reset.
+name: workgo
 
-# Docker Compose tự động đọc file .env ở cùng thư mục (root)
+x-app-env: &app-env
+  DB_USERNAME: ${DB_USERNAME:-postgres}
+  DB_PASSWORD: ${DB_PASSWORD:-admin123}
+  JWT_SIGNER_KEY: ${JWT_SIGNER_KEY:-workgo-local-jwt-key-at-least-64-characters-change-before-deploy-2026}
+  INTERNAL_API_KEY: ${INTERNAL_API_KEY:-workgo-local-internal-key-change-before-deploy}
+  SPRING_SQL_INIT_MODE: never
+  SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+  SPRING_JPA_SHOW_SQL: 'false'
+  IDENTITY_SERVICE_URL: http://identity-service:8081/identity
+  CATALOG_SERVICE_URL: http://catalog-service:8082/catalog
+  ORDER_SERVICE_URL: http://order-service:8083/order
+  PAYMENT_SERVICE_URL: http://payment-service:8084/payment
+  JOB_SERVICE_URL: http://job-service:8085/job
+  COMMUNICATION_SERVICE_URL: http://communication-service:8086/communication
+  TRUST_SERVICE_URL: http://trust-service:8087/trust
+  JOB_PROPOSAL_ACCEPT_ENABLED: 'false'
+  TRUST_DECISION_EXECUTION_ENABLED: 'false'
+
+x-app: &app
+  restart: unless-stopped
+  init: true
+  mem_limit: 640m
+  environment: *app-env
+  healthcheck:
+    test: [CMD-SHELL, 'curl -sS --max-time 4 -o /dev/null http://localhost:8081/identity/']
+    interval: 15s
+    timeout: 5s
+    retries: 16
+    start_period: 45s
 
 services:
   postgres-identity:
+    container_name: workgo-postgres-identity
     image: postgres:16-alpine
-    container_name: identity-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${IDENTITY_DB:-identity_db}
       POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin123}
+      WORKGO_SERVICE: identity
     ports:
-      - "${IDENTITY_DB_PORT:-5433}:5432"
+      - "127.0.0.1:${IDENTITY_DB_PORT:-5433}:5432"
     volumes:
       - identity_pgdata:/var/lib/postgresql/data
-    networks:
-      - identity-net
+      - ./docker/init-postgres.sh:/docker-entrypoint-initdb.d/10-workgo.sh:ro
+      - type: bind
+        source: ./docker/postgres-schema.sql
+        target: /workgo/postgres-schema.sql
+        read_only: true
+        bind:
+          create_host_path: false
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${DB_USERNAME:-postgres} -d ${IDENTITY_DB:-identity_db}",
-        ]
-      interval: 10s
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 30
+      start_period: 15s
 
   postgres-catalog:
+    container_name: workgo-postgres-catalog
     image: postgres:16-alpine
-    container_name: catalog-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${CATALOG_DB:-catalog_db}
       POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin123}
+      WORKGO_SERVICE: catalog
     ports:
-      - "${CATALOG_DB_PORT:-5434}:5432"
+      - "127.0.0.1:${CATALOG_DB_PORT:-5434}:5432"
     volumes:
       - catalog_pgdata:/var/lib/postgresql/data
-    networks:
-      - catalog-net
+      - ./docker/init-postgres.sh:/docker-entrypoint-initdb.d/10-workgo.sh:ro
+      - type: bind
+        source: ./docker/postgres-schema.sql
+        target: /workgo/postgres-schema.sql
+        read_only: true
+        bind:
+          create_host_path: false
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${DB_USERNAME:-postgres} -d ${CATALOG_DB:-catalog_db}",
-        ]
-      interval: 10s
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 30
+      start_period: 15s
 
   postgres-order:
+    container_name: workgo-postgres-order
     image: postgres:16-alpine
-    container_name: order-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${ORDER_DB:-order_db}
       POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin123}
+      WORKGO_SERVICE: order
     ports:
-      - "${ORDER_DB_PORT:-5435}:5432"
+      - "127.0.0.1:${ORDER_DB_PORT:-5435}:5432"
     volumes:
       - order_pgdata:/var/lib/postgresql/data
-    networks:
-      - order-net
+      - ./docker/init-postgres.sh:/docker-entrypoint-initdb.d/10-workgo.sh:ro
+      - type: bind
+        source: ./docker/postgres-schema.sql
+        target: /workgo/postgres-schema.sql
+        read_only: true
+        bind:
+          create_host_path: false
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${DB_USERNAME:-postgres} -d ${ORDER_DB:-order_db}",
-        ]
-      interval: 10s
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 30
+      start_period: 15s
 
   postgres-payment:
+    container_name: workgo-postgres-payment
     image: postgres:16-alpine
-    container_name: payment-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${PAYMENT_DB:-payment_db}
       POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin123}
+      WORKGO_SERVICE: payment
     ports:
-      - "${PAYMENT_DB_PORT:-5436}:5432"
+      - "127.0.0.1:${PAYMENT_DB_PORT:-5436}:5432"
     volumes:
       - payment_pgdata:/var/lib/postgresql/data
-    networks:
-      - payment-net
+      - ./docker/init-postgres.sh:/docker-entrypoint-initdb.d/10-workgo.sh:ro
+      - type: bind
+        source: ./docker/postgres-schema.sql
+        target: /workgo/postgres-schema.sql
+        read_only: true
+        bind:
+          create_host_path: false
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${PAYMENT_DB:-payment_db}"]
-      interval: 10s
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 30
+      start_period: 15s
 
   postgres-job:
+    container_name: workgo-postgres-job
     image: postgres:16-alpine
-    container_name: job-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${JOB_DB:-job_db}
       POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env or the environment}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin123}
+      WORKGO_SERVICE: job
     ports:
-      - "${JOB_DB_PORT:-5437}:5432"
+      - "127.0.0.1:${JOB_DB_PORT:-5437}:5432"
     volumes:
       - job_pgdata:/var/lib/postgresql/data
-    networks:
-      - job-net
+      - ./docker/init-postgres.sh:/docker-entrypoint-initdb.d/10-workgo.sh:ro
+      - type: bind
+        source: ./docker/postgres-schema.sql
+        target: /workgo/postgres-schema.sql
+        read_only: true
+        bind:
+          create_host_path: false
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${JOB_DB:-job_db}"]
-      interval: 10s
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 30
+      start_period: 15s
 
   postgres-trust:
+    container_name: workgo-postgres-trust
     image: postgres:16-alpine
-    container_name: trust-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${TRUST_DB:-trust_db}
       POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env or the environment}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin123}
+      WORKGO_SERVICE: trust
     ports:
-      - "${TRUST_DB_PORT:-5438}:5432"
+      - "127.0.0.1:${TRUST_DB_PORT:-5438}:5432"
     volumes:
       - trust_pgdata:/var/lib/postgresql/data
-    networks:
-      - trust-net
+      - ./docker/init-postgres.sh:/docker-entrypoint-initdb.d/10-workgo.sh:ro
+      - type: bind
+        source: ./docker/postgres-schema.sql
+        target: /workgo/postgres-schema.sql
+        read_only: true
+        bind:
+          create_host_path: false
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${TRUST_DB:-trust_db}"]
-      interval: 10s
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 30
+      start_period: 15s
 
   mongodb-communication:
+    container_name: workgo-mongodb-communication
     image: mongo:7.0
-    container_name: communication-mongo
     restart: unless-stopped
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    command: [mongod, --replSet, rs0, --bind_ip_all]
     ports:
       - "127.0.0.1:${COMMUNICATION_DB_PORT:-27017}:27017"
     volumes:
       - communication_mongodata:/data/db
-    networks:
-      - communication-net
     healthcheck:
       test:
         - CMD
@@ -155,45 +214,333 @@ services:
         - localhost:27017
         - --eval
         - >-
-          try { rs.status(); }
-          catch (e) {
+          try { rs.status(); } catch (e) {
             if (e.code !== 94) throw e;
-            rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'localhost:27017'}]});
+            rs.initiate({_id:'rs0', members:[{_id:0, host:'localhost:27017'}]});
           }
           if (!db.hello().isWritablePrimary) quit(1);
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
+  mongo-init:
+    container_name: workgo-mongo-init
+    image: mongo:7.0
+    restart: 'no'
+    entrypoint: [sh, /workgo/init-mongo.sh]
+    environment:
+      COMMUNICATION_DB: ${COMMUNICATION_DB:-communication_db}
+    volumes:
+      - ./docker/init-mongo.sh:/workgo/init-mongo.sh:ro
+      - type: bind
+        source: ./docker/mongo-indexes.js
+        target: /workgo/mongo-indexes.js
+        read_only: true
+        bind:
+          create_host_path: false
+    depends_on:
+      mongodb-communication:
+        condition: service_healthy
+
+  identity-service:
+    container_name: workgo-identity-service
+    <<: *app
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+      args:
+        SERVICE: identity-service
+    ports:
+      - "${APP_BIND_ADDRESS:-127.0.0.1}:${IDENTITY_PORT:-8081}:8081"
+    environment:
+      <<: *app-env
+      IDENTITY_PORT: '8081'
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-identity:5432/${IDENTITY_DB:-identity_db}
+      ADMIN_BOOTSTRAP_ENABLED: ${ADMIN_BOOTSTRAP_ENABLED:-true}
+      ADMIN_BOOTSTRAP_USERNAME: ${ADMIN_BOOTSTRAP_USERNAME:-localroot}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-Local-root-password-27!}
+      IDENTITY_STORAGE_DIR: /data/files
+      IDENTITY_STORAGE_SIGNING_KEY: ${IDENTITY_STORAGE_SIGNING_KEY:-workgo-local-identity-storage-key-change-before-deploy}
+    volumes:
+      - identity_files:/data
+    depends_on:
+      postgres-identity:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, 'curl -sS --max-time 4 -o /dev/null http://localhost:8081/identity/']
+      interval: 15s
+      timeout: 5s
+      retries: 16
+      start_period: 45s
+
+  catalog-service:
+    container_name: workgo-catalog-service
+    <<: *app
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+      args:
+        SERVICE: catalog-service
+    ports:
+      - "${APP_BIND_ADDRESS:-127.0.0.1}:${CATALOG_PORT:-8082}:8082"
+    environment:
+      <<: *app-env
+      CATALOG_PORT: '8082'
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-catalog:5432/${CATALOG_DB:-catalog_db}
+      CATALOG_STORAGE_DIR: /data/files
+      CATALOG_STORAGE_SIGNING_KEY: ${CATALOG_STORAGE_SIGNING_KEY:-workgo-local-catalog-storage-key-change-before-deploy}
+    volumes:
+      - catalog_files:/data
+    depends_on:
+      postgres-catalog:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, 'curl -sS --max-time 4 -o /dev/null http://localhost:8082/catalog/']
+      interval: 15s
+      timeout: 5s
+      retries: 16
+      start_period: 45s
+
+  order-service:
+    container_name: workgo-order-service
+    <<: *app
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+      args:
+        SERVICE: order-service
+    ports:
+      - "${APP_BIND_ADDRESS:-127.0.0.1}:${ORDER_PORT:-8083}:8083"
+    environment:
+      <<: *app-env
+      ORDER_PORT: '8083'
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-order:5432/${ORDER_DB:-order_db}
+      ORDER_STORAGE_DIR: /data/files
+      ORDER_STORAGE_SIGNING_KEY: ${ORDER_STORAGE_SIGNING_KEY:-workgo-local-order-storage-key-change-before-deploy}
+    volumes:
+      - order_files:/data
+    depends_on:
+      postgres-order:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, 'curl -sS --max-time 4 -o /dev/null http://localhost:8083/order/']
+      interval: 15s
+      timeout: 5s
+      retries: 16
+      start_period: 45s
+
+  payment-service:
+    container_name: workgo-payment-service
+    <<: *app
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+      args:
+        SERVICE: payment-service
+    ports:
+      - "${APP_BIND_ADDRESS:-127.0.0.1}:${PAYMENT_PORT:-8084}:8084"
+    environment:
+      <<: *app-env
+      PAYMENT_PORT: '8084'
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-payment:5432/${PAYMENT_DB:-payment_db}
+      PAYMENT_PUBLIC_URL: ${PAYMENT_PUBLIC_URL:-http://localhost:8888/api/v1/payment}
+      PAYMENT_RESULT_URL: ${PAYMENT_RESULT_URL:-http://localhost:3000/vi/payment/result}
+      VNPAY_RETURN_URL: ${VNPAY_RETURN_URL:-http://localhost:8888/api/v1/payment/gateway/vnpay/return}
+      MOMO_REDIRECT_URL: ${MOMO_REDIRECT_URL:-http://localhost:8888/api/v1/payment/gateway/momo/return}
+      MOMO_IPN_URL: ${MOMO_IPN_URL:-http://localhost:8888/api/v1/payment/gateway/momo/ipn}
+      PAYMENT_STORAGE_DIR: /data/files
+      PAYMENT_STORAGE_SIGNING_KEY: ${PAYMENT_STORAGE_SIGNING_KEY:-workgo-local-payment-storage-key-change-before-deploy}
+    volumes:
+      - payment_files:/data
+    depends_on:
+      postgres-payment:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, 'curl -sS --max-time 4 -o /dev/null http://localhost:8084/payment/']
+      interval: 15s
+      timeout: 5s
+      retries: 16
+      start_period: 45s
+
+  job-service:
+    container_name: workgo-job-service
+    <<: *app
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+      args:
+        SERVICE: job-service
+    ports:
+      - "${APP_BIND_ADDRESS:-127.0.0.1}:${JOB_PORT:-8085}:8085"
+    environment:
+      <<: *app-env
+      JOB_PORT: '8085'
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-job:5432/${JOB_DB:-job_db}
+      JOB_STORAGE_DIR: /data/files
+      JOB_STORAGE_SIGNING_KEY: ${JOB_STORAGE_SIGNING_KEY:-workgo-local-job-storage-key-change-before-deploy}
+    volumes:
+      - job_files:/data
+    depends_on:
+      postgres-job:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, 'curl -sS --max-time 4 -o /dev/null http://localhost:8085/job/']
+      interval: 15s
+      timeout: 5s
+      retries: 16
+      start_period: 45s
+
+  communication-service:
+    container_name: workgo-communication-service
+    <<: *app
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+      args:
+        SERVICE: communication-service
+    ports:
+      - "${APP_BIND_ADDRESS:-127.0.0.1}:${COMMUNICATION_PORT:-8086}:8086"
+    environment:
+      <<: *app-env
+      COMMUNICATION_PORT: '8086'
+      COMMUNICATION_BIND_ADDRESS: 0.0.0.0
+      COMMUNICATION_MONGODB_URI: mongodb://mongodb-communication:27017/${COMMUNICATION_DB:-communication_db}?replicaSet=rs0&directConnection=true
+      COMMUNICATION_AUTO_INDEX_CREATION: 'false'
+      COMMUNICATION_WS_ALLOWED_ORIGINS: ${COMMUNICATION_WS_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      COMMUNICATION_STORAGE_DIR: /data/files
+      COMMUNICATION_STORAGE_SIGNING_KEY: ${COMMUNICATION_STORAGE_SIGNING_KEY:-workgo-local-communication-storage-key-change-before-deploy}
+    volumes:
+      - communication_files:/data
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD-SHELL, 'curl -sS --max-time 4 -o /dev/null http://localhost:8086/communication/']
+      interval: 15s
+      timeout: 5s
+      retries: 16
+      start_period: 45s
+
+  trust-service:
+    container_name: workgo-trust-service
+    <<: *app
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+      args:
+        SERVICE: trust-service
+    ports:
+      - "${APP_BIND_ADDRESS:-127.0.0.1}:${TRUST_PORT:-8087}:8087"
+    environment:
+      <<: *app-env
+      TRUST_PORT: '8087'
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-trust:5432/${TRUST_DB:-trust_db}
+      TRUST_STORAGE_LOCAL_DIR: /data/files
+      TRUST_STORAGE_SIGNING_KEY: ${TRUST_STORAGE_SIGNING_KEY:-workgo-local-trust-storage-key-change-before-deploy}
+    volumes:
+      - trust_files:/data
+    depends_on:
+      postgres-trust:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, 'curl -sS --max-time 4 -o /dev/null http://localhost:8087/trust/']
+      interval: 15s
+      timeout: 5s
+      retries: 16
+      start_period: 45s
+
+  api-gateway:
+    container_name: workgo-api-gateway
+    <<: *app
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+      args:
+        SERVICE: api-gateway
+    ports:
+      - "${APP_BIND_ADDRESS:-127.0.0.1}:${GATEWAY_PORT:-8888}:8888"
+    environment:
+      <<: *app-env
+      GATEWAY_PORT: '8888'
+      IDENTITY_HTTP_URL: http://identity-service:8081
+      CATALOG_HTTP_URL: http://catalog-service:8082
+      ORDER_HTTP_URL: http://order-service:8083
+      PAYMENT_HTTP_URL: http://payment-service:8084
+      JOB_HTTP_URL: http://job-service:8085
+      COMMUNICATION_HTTP_URL: http://communication-service:8086
+      COMMUNICATION_WS_URL: ws://communication-service:8086
+      TRUST_HTTP_URL: http://trust-service:8087
+    depends_on:
+      identity-service:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+      job-service:
+        condition: service_healthy
+      communication-service:
+        condition: service_healthy
+      trust-service:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, "curl -fsS --max-time 4 -H 'Content-Type: application/json' -d '{\"token\":\"\"}' http://localhost:8888/api/v1/identity/auth/introspect | grep -q '\"valid\":false'"]
       interval: 10s
       timeout: 5s
-      retries: 12
+      retries: 20
       start_period: 20s
 
-volumes:
-  trust_pgdata:
-    driver: local
-  communication_mongodata:
-    driver: local
-  identity_pgdata:
-    driver: local
-  catalog_pgdata:
-    driver: local
-  order_pgdata:
-    driver: local
-  payment_pgdata:
-    driver: local
-  job_pgdata:
-    driver: local
+  web:
+    container_name: workgo-web
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      API_GATEWAY_URL: http://api-gateway:8888
+    ports:
+      - "${APP_BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-3000}:3000"
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/vi').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
 
-networks:
-  trust-net:
-    driver: bridge
-  communication-net:
-    driver: bridge
-  identity-net:
-    driver: bridge
-  catalog-net:
-    driver: bridge
-  order-net:
-    driver: bridge
-  payment-net:
-    driver: bridge
-  job-net:
-    driver: bridge
+
+volumes:
+  identity_pgdata:
+    name: workgo-identity-pgdata
+  catalog_pgdata:
+    name: workgo-catalog-pgdata
+  order_pgdata:
+    name: workgo-order-pgdata
+  payment_pgdata:
+    name: workgo-payment-pgdata
+  job_pgdata:
+    name: workgo-job-pgdata
+  trust_pgdata:
+    name: workgo-trust-pgdata
+  identity_files:
+    name: workgo-identity-files
+  catalog_files:
+    name: workgo-catalog-files
+  order_files:
+    name: workgo-order-files
+  payment_files:
+    name: workgo-payment-files
+  job_files:
+    name: workgo-job-files
+  communication_files:
+    name: workgo-communication-files
+  trust_files:
+    name: workgo-trust-files
+  communication_mongodata:
+    name: workgo-communication-mongodata

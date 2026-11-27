@@ -93,3 +93,25 @@ order:
   checkin-code:
     secret: ${CHECKIN_CODE_SECRET:dev-checkin-code-secret}
     salt: ${CHECKIN_CODE_SALT:5c0744940b5c369b}
+
+---
+# Preserve schema validation profile in the single application config file.
+spring:
+  config:
+    activate:
+      on-profile: validated
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  sql:
+    init:
+      mode: never
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+order:
+  reward-quote:
+    required: true

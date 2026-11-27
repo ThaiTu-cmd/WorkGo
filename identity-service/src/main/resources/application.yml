@@ -54,3 +54,16 @@ app:
     enabled: ${ADMIN_BOOTSTRAP_ENABLED:false}
     user-name: ${ADMIN_BOOTSTRAP_USERNAME:}
     password: ${ADMIN_BOOTSTRAP_PASSWORD:}
+
+---
+# Preserve schema validation profile in the single application config file.
+spring:
+  config:
+    activate:
+      on-profile: validated
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  sql:
+    init:
+      mode: never

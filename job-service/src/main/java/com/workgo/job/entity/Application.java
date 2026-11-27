@@ -38,6 +38,21 @@ public class Application {
             foreignKey = @ForeignKey(name = "fk_application_job"))
     Job job;
 
+    // Explicit logical column for Proposal's composite (application_id, job_id) reference.
+    // The association remains the writer; this read-only mapping also makes metadata
+    // independent of entity discovery order in an executable Spring Boot archive.
+    @Column(name = "job_id", insertable = false, updatable = false)
+    @Setter(AccessLevel.NONE)
+    UUID jobId;
+
+    @PrePersist
+    @PreUpdate
+    void synchronizeCompositeReference() {
+        // Hibernate also reads this value when binding Proposal's composite FK
+        // before an application has been reloaded from the database.
+        jobId = job == null ? null : job.getJobId();
+    }
+
     @Column(name = "provider_id", nullable = false)
     UUID providerId;
 

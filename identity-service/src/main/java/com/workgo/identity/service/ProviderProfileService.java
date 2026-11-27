@@ -145,8 +145,7 @@ public class ProviderProfileService {
                     .anyMatch(userRole -> userRole.getRole().getRoleName() == RoleName.PROVIDER);
 
             if(!hasProviderRole){
-                Role role = roleRepository.findById(RoleName.PROVIDER)
-                        .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+                Role role = roleRepository.getOrCreate(RoleName.PROVIDER);
 
                 UserRole userRole = UserRole.builder()
                         .grantedAt(Instant.now())

@@ -1,6 +1,6 @@
 # Full LOCAL development stack. Defaults are not production credentials.
 # Start: docker compose up -d --build --wait --wait-timeout 300
-# Runtime schema/index files ship in docker/. Existing volumes are never reset.
+# Local reset: docker compose down -v (deletes database and upload volumes).
 name: workgo
 
 x-app-env: &app-env
@@ -11,6 +11,7 @@ x-app-env: &app-env
   SPRING_SQL_INIT_MODE: never
   SPRING_JPA_HIBERNATE_DDL_AUTO: validate
   SPRING_JPA_SHOW_SQL: 'false'
+  PAYMENT_FEE_POLICY_BOOTSTRAP_ENABLED: 'true'
   IDENTITY_SERVICE_URL: http://identity-service:8081/identity
   CATALOG_SERVICE_URL: http://catalog-service:8082/catalog
   ORDER_SERVICE_URL: http://order-service:8083/order

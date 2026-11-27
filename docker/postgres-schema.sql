@@ -1,5 +1,5 @@
 -- WorkGo PostgreSQL schema and additive migrations; no demo account/business seeds.
--- Exported by docker/export-schema.py from the canonical local schema.
+-- Maintain alongside service entities; includes additional constraints, indexes and migrations.
 -- Fresh empty DB: psql -v workgo_service=identity -v workgo_mode=fresh -f postgres-schema.sql
 -- Existing DB: back up and review before using workgo_mode=upgrade.
 \set ON_ERROR_STOP on

@@ -2,7 +2,7 @@
 
 App React Native (Expo SDK 57) cho khách hàng và chuyên gia WorkGo. App gọi thẳng API gateway của backend (`/api/v1`), không phụ thuộc web.
 
-Hướng dẫn bàn giao hiện hành: [Android local với backend Docker và kết nối AWS](../docker/MOBILE.md). Mobile chạy bằng Android Studio/emulator/điện thoại, không nằm trong Docker Compose.
+Hướng dẫn bàn giao hiện hành: [Android local với backend Docker và kết nối AWS](../docker/README.md#android-local-va-aws). Mobile chạy bằng Android Studio/emulator/điện thoại, không nằm trong Docker Compose.
 
 ## Cài đặt
 

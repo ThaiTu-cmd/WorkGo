@@ -56,11 +56,6 @@ public class ApplicationInitConfig {
         log.info("Initializing application ...");
 
         return args -> {
-            initRole(roleRepository, RoleName.ADMIN);
-            initRole(roleRepository, RoleName.CLIENT);
-            initRole(roleRepository, RoleName.PROVIDER);
-            initRole(roleRepository, RoleName.SUPER_ADMIN);
-
             bootstrapSuperAdmin(userRepository, roleRepository, userRoleRepository);
         };
 
@@ -81,6 +76,8 @@ public class ApplicationInitConfig {
             log.info("Bootstrap super admin skipped: super admin account already exists");
             return;
         }
+
+        initRole(roleRepository, RoleName.SUPER_ADMIN);
 
         User user = userRepository.save(User.builder()
                 .firstName("")

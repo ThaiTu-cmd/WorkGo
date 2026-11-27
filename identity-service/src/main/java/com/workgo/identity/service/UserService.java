@@ -74,8 +74,7 @@ public class UserService {
 
         userRepository.save(user);
 
-        Role role = roleRepository.findById(RoleName.CLIENT)
-                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        Role role = roleRepository.getOrCreate(RoleName.CLIENT);
 
         UserRole userRole = UserRole.builder()
                 .grantedAt(Instant.now())

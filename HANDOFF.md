@@ -30,8 +30,7 @@ Kỳ vọng 16 container chạy/healthy và `workgo-mongo-init` kết thúc exit
 - `docker/backend.Dockerfile`, `docker/web.Dockerfile`.
 - `docker/init-postgres.sh`, `docker/postgres-schema.sql`.
 - `docker/init-mongo.sh`, `docker/mongo-indexes.js`.
-- `docker/export-schema.py` cho người bảo trì schema; máy chạy Docker không cần Python.
-- `docker/README.md`, `docker/MOBILE.md`, `HANDOFF.md`.
+- `docker/README.md` (gồm hướng dẫn Android local/AWS), `HANDOFF.md`.
 - Bản sửa `job-service/.../entity/Application.java` trong cùng bộ source để JAR Job khởi động đúng mapping.
 
 Không commit `.env`, secret/key thật, keystore Android, volume/dump database, object upload hoặc tài khoản/dữ liệu khách hàng. File SQL runtime chứa schema/migration, không có seed tài khoản demo. Quy tắc ignore cho tài liệu/test/fixture local và `WorkGo.sql` vẫn được giữ.
@@ -48,6 +47,6 @@ Nếu đã có `.env` từ lần chạy trước, kiểm tra các giá trị ghi
 
 `docker compose stop` dừng container; `docker compose down` bỏ container/network, giữ dữ liệu volume. `down -v` xóa dữ liệu của stack, không dùng để cập nhật source. Script init PostgreSQL chỉ chạy trên volume mới. Cập nhật schema trên DB có dữ liệu phải backup, review migration và kiểm tra tương thích; không tự áp dụng fresh mode.
 
-Chi tiết vận hành và các port: [docker/README.md](docker/README.md). Chạy mobile với backend Docker hoặc domain AWS HTTPS: [docker/MOBILE.md](docker/MOBILE.md).
+Chi tiết vận hành và các port: [docker/README.md](docker/README.md). Chạy mobile với backend Docker hoặc domain AWS HTTPS: [Android local và AWS](docker/README.md#android-local-va-aws).
 
 Khi triển khai AWS, cấu hình TLS/domain, routing, secrets, private network, persistent storage và quy trình backup/rollout riêng. Không dùng mặc định local hoặc mở toàn bộ cổng DB ra Internet. Source bàn giao chạy được local không đồng nghĩa đã chuẩn bị/triển khai hạ tầng AWS production.

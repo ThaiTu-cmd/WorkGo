@@ -8,6 +8,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ import java.time.Instant;
 
 //WG-POLICY-1.0: thanh cong 10%, huy co loi min(2%, 100.000d); chi tao khi chua co phien ban nao
 @Component
+@ConditionalOnProperty(name = "payment.fee-policy.bootstrap-enabled", havingValue = "true")
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Slf4j

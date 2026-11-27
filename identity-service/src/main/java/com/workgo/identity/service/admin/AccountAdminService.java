@@ -139,8 +139,7 @@ public class AccountAdminService {
 
         List<RoleName> beforeRoles = roleNames(user);
 
-        Role role = roleRepository.findById(request.getRoleName())
-                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        Role role = roleRepository.getOrCreate(request.getRoleName());
 
         UserRole userRole = userRoleRepository.save(UserRole.builder()
                 .grantedAt(Instant.now())
